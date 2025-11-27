@@ -1,5 +1,5 @@
 <?php
-//bulk_assign_suppliers.php
+//warehouse_staff_bulk_assign_suppliers_A1.php
 session_name("nobleadmin");
 session_start();
 header('Content-Type: application/json');

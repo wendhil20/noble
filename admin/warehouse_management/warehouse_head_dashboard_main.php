@@ -1,5 +1,5 @@
 <?php
-// warehouse_head_dashboard.php
+// warehouse_head_dashboard_main.php
 session_name("nobleadmin");
 session_start();
 error_reporting(E_ALL);
@@ -393,7 +393,7 @@ if ($empStatsResult) {
                     </div>
                 </div>
                 <div class="text-right">
-                    <a href="warehouse_assignment.php"
+                    <a href="warehouse_head_assignment_A.php"
                         class="bg-white text-red-600 hover:bg-red-50 px-6 py-3 rounded-xl transition-all duration-200 inline-flex items-center space-x-3 shadow-lg hover:shadow-xl hover:scale-105 font-semibold border-2 border-red-100">
                         <i class="fas fa-users-cog text-lg"></i>
                         <span>Manage Assignments</span>
@@ -433,7 +433,7 @@ if ($empStatsResult) {
                     </div>
                 </div>
                 <?php if ($unassignedCount > 0): ?>
-                    <a href="warehouse_assignment.php"
+                    <a href="warehouse_head_assignment_A.php"
                         class="mt-3 text-xs bg-white/20 hover:bg-white/30 px-3 py-1 rounded-full inline-block">
                         Assign Now →
                     </a>
@@ -727,19 +727,19 @@ foreach ($statusOrder as $status):
                                         class="hidden absolute right-0 mt-2 w-56 bg-white rounded-lg shadow-lg border border-gray-200 z-10">
                                         <div class="py-2">
                                             <?php if ($isUnassigned): ?>
-                                                <a href="warehouse_assignment.php?order_id=<?php echo urlencode($order['id']); ?>"
+                                                <a href="warehouse_head_assignment_A.php?order_id=<?php echo urlencode($order['id']); ?>"
                                                     class="block px-4 py-2 text-sm text-orange-700 hover:bg-orange-50 transition-colors">
                                                     <i class="fas fa-user-plus mr-2 w-4"></i>Assign Employee
                                                 </a>
                                             <?php else: ?>
-                                                <a href="warehouse_assignment.php?order_id=<?php echo urlencode($order['id']); ?>"
+                                                <a href="warehouse_head_assignment_A.php?order_id=<?php echo urlencode($order['id']); ?>"
                                                     class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 transition-colors">
                                                     <i class="fas fa-exchange-alt mr-2 w-4"></i>Reassign Employee
                                                 </a>
                                             <?php endif; ?>
 
                                             <?php if ($hasPOFiles): ?>
-                                                <a href="view_po_files.php?order_id=<?php echo urlencode($order['id']); ?>"
+                                                <a href="warehouse_head_staff_view_po_files_B.php?order_id=<?php echo urlencode($order['id']); ?>"
                                                     class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 transition-colors">
                                                     <i class="fas fa-file-alt mr-2 w-4"></i>View P.O. Files
                                                 </a>
@@ -1076,7 +1076,7 @@ foreach ($statusOrder as $status):
             `;
 
             // Fetch tracking data
-            fetch(`get_tracking_data.php?order_id=${orderId}`)
+            fetch(`warehouse_head_get_tracking_B.php?order_id=${orderId}`)
                 .then(response => response.json())
                 .then(data => {
                     if (data.success) {

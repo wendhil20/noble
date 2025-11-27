@@ -120,13 +120,21 @@ function logNotificationAction($conn, $history_id, $action_type, $admin_id = nul
 /**
  * Create a notification for all admins (with automatic history logging)
  */
-function createNotification($conn, $type, $title, $message, $icon_class, $color_class) {
+function createNotification($conn, $type, $title, $message, $icon_class, $color_class, $target_admin_id = null, $target_role = null) {
     $created_at = date('Y-m-d H:i:s');
     
-    error_log("Creating notification at: $created_at | Type: $type | Title: $title");
+    // ✅ KUNIN SA SESSION - SAME AS HISTORY!
+    if (empty($target_admin_id) && isset($_SESSION['noble_id'])) {
+        $target_admin_id = $_SESSION['noble_id'];
+    }
+    if (empty($target_role) && isset($_SESSION['noble_lvl'])) {
+        $target_role = $_SESSION['noble_lvl'];
+    }
     
-    $query = "INSERT INTO admin_notifications (type, title, message, icon_class, color_class, created_at, is_read) 
-              VALUES (?, ?, ?, ?, ?, ?, 0)";
+    error_log("Creating notification - Admin ID: $target_admin_id | Role: $target_role | Type: $type");
+    
+    $query = "INSERT INTO admin_notifications (type, title, message, icon_class, color_class, target_admin_id, target_role, created_at, is_read) 
+              VALUES (?, ?, ?, ?, ?, ?, ?, ?, 0)";
     
     $stmt = $conn->prepare($query);
     if (!$stmt) {
@@ -134,14 +142,15 @@ function createNotification($conn, $type, $title, $message, $icon_class, $color_
         return false;
     }
     
-    // ✅ FIXED: 6 parameters = 6 specifiers
     $stmt->bind_param(
-        "ssssss",
+        "ssssiiss",
         $type,
         $title,
         $message,
         $icon_class,
         $color_class,
+        $target_admin_id,
+        $target_role,
         $created_at
     );
     
@@ -204,11 +213,21 @@ function getNotificationStyle($type) {
 /**
  * Get all notifications with proper timezone handling
  */
-function getAllNotifications($conn, $limit = 20) {
+function getAllNotifications($conn, $limit = 20, $admin_id = null, $admin_role = null) {
     $conn->query("SET SESSION time_zone = '+08:00'");
+    
+    // If admin_id and role not provided, get from session
+    if ($admin_id === null && isset($_SESSION['noble_id'])) {
+        $admin_id = $_SESSION['noble_id'];
+    }
+    if ($admin_role === null && isset($_SESSION['noble_lvl'])) {
+        $admin_role = $_SESSION['noble_lvl'];
+    }
     
     $query = "SELECT id, type, title, message, icon_class, color_class, created_at, is_read 
               FROM admin_notifications 
+              WHERE (target_admin_id = ? OR target_admin_id IS NULL)
+              AND (target_role = ? OR target_role IS NULL)
               ORDER BY created_at DESC 
               LIMIT ?";
     
@@ -218,7 +237,8 @@ function getAllNotifications($conn, $limit = 20) {
         return [];
     }
     
-    $stmt->bind_param("i", $limit);
+    // ✅ CORRECT: Bind all 3 parameters
+    $stmt->bind_param("isi", $admin_id, $admin_role, $limit);
     $stmt->execute();
     $result = $stmt->get_result();
     
@@ -234,10 +254,26 @@ function getAllNotifications($conn, $limit = 20) {
 /**
  * Get unread notification count
  */
-function getUnreadCount($conn) {
-    $query = "SELECT COUNT(*) as count FROM admin_notifications WHERE is_read = 0";
-    $result = $conn->query($query);
+function getUnreadCount($conn, $admin_id = null, $admin_role = null) {
+    // Get from session if not provided
+    if ($admin_id === null && isset($_SESSION['noble_id'])) {
+        $admin_id = $_SESSION['noble_id'];
+    }
+    if ($admin_role === null && isset($_SESSION['noble_lvl'])) {
+        $admin_role = $_SESSION['noble_lvl'];
+    }
+    
+    $query = "SELECT COUNT(*) as count FROM admin_notifications 
+              WHERE is_read = 0 
+              AND (target_admin_id = ? OR target_admin_id IS NULL)
+              AND (target_role = ? OR target_role IS NULL)";
+    
+    $stmt = $conn->prepare($query);
+    $stmt->bind_param("is", $admin_id, $admin_role);
+    $stmt->execute();
+    $result = $stmt->get_result();
     $row = $result->fetch_assoc();
+    $stmt->close();
     return $row['count'] ?? 0;
 }
 

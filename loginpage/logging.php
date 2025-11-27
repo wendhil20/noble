@@ -240,7 +240,8 @@ try {
         'logistic' => "../admin/logistic_management/main_dashboard",
         'warehouse' => match (strtolower($user['subrole'] ?? '')) {
         'warehouse_receiver' => "../admin/warehouse_management/qr_scanner",
-        default => "../admin/warehouse_management/warehouse_head_dashboard"
+        'warehouse_staff' => "../admin/warehouse_management/warehouse_staff_management_main",
+        default => "../admin/warehouse_management/warehouse_head_dashboard_main"
     },
         'hr' => "../admin/hr/account",
         default => "../admin/client/dashboard"

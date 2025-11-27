@@ -716,9 +716,9 @@ $alreadyMarkedComplete = ($poStatus['all_items_received'] ?? 0) == 1;
     
     // Generate unique QR code value with URL - different page for replacements
     if (itemType === 'replacement') {
-        currentQRCode = `${window.location.origin}${basePath}scan_replacement.php?replacement_id=${itemId}`;
+        currentQRCode = `${window.location.origin}${basePath}receiver_scan_replacement_A1.php?replacement_id=${itemId}`;
     } else {
-        currentQRCode = `${window.location.origin}${basePath}scan_item.php?item_id=${itemId}`;
+        currentQRCode = `${window.location.origin}${basePath}receiver_scan_item_A1.php?item_id=${itemId}`;
     }
     
     // Set product name with item type indicator
@@ -769,7 +769,7 @@ $alreadyMarkedComplete = ($poStatus['all_items_received'] ?? 0) == 1;
     });
     
     // Send to server with item type
-    fetch('save_qr_code.php', {
+    fetch('receiver_save_qr_code_A2.php', {
         method: 'POST',
         headers: {
             'Content-Type': 'application/json',
@@ -844,7 +844,7 @@ $alreadyMarkedComplete = ($poStatus['all_items_received'] ?? 0) == 1;
     }
     
     // Send to server
-    fetch('update_location.php', {
+    fetch('receiver_update_location_A3.php', {
         method: 'POST',
         headers: {
             'Content-Type': 'application/json',
@@ -1117,7 +1117,7 @@ $alreadyMarkedComplete = ($poStatus['all_items_received'] ?? 0) == 1;
     console.log('Resetting QR - Item ID:', itemId, 'Type:', itemType);
     
     // Send to server
-    fetch('reset_qr_code.php', {
+    fetch('receiver_reset_qr_code_A4.php', {
         method: 'POST',
         headers: {
             'Content-Type': 'application/json',
@@ -1178,7 +1178,7 @@ $alreadyMarkedComplete = ($poStatus['all_items_received'] ?? 0) == 1;
         return;
     }
     
-    fetch('mark_po_complete.php', {
+    fetch('receiver_mark_po_complete_A5.php', {
         method: 'POST',
         headers: {
             'Content-Type': 'application/json',

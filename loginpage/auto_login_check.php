@@ -55,8 +55,9 @@ if (!isset($_SESSION['noble_user']) && isset($_COOKIE['noble_remember_token']) &
                 'productspecialist' => "admin/shop/adminshop",
                 'logistic' => "admin/logistic_management/logistics_dashboard",
                 'warehouse' => match (strtolower($user['subrole'] ?? '')) {
-        'warehouse_receiver' => "admin/warehouse_management/order_list",
-        default => "admin/warehouse_management/warehouse_head_dashboard"
+        'warehouse_receiver' => "admin/warehouse_management/qr_scanner",
+        'warehouse_staff' => "admin/warehouse_management/warehouse_staff_management_main",
+        default => "admin/warehouse_management/warehouse_head_dashboard_main"
     },
                 'hr' => "admin/hr/account",
                 default => "admin/client/dashboard"

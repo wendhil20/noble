@@ -649,7 +649,7 @@ if (!isset($_SESSION['noble_name']) || !isset($_SESSION['noble_lvl']) || !isset(
                                         <div class="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-2 px-2">Warehouse</div>
 
                                         <?php if (hasAnyRole(['superadmin']) || !hasSubrole(['warehouse_receiver', 'warehouse_staff'])): ?>
-                                            <a href="../warehouse_management/Warehouse_head_dashboard"
+                                            <a href="../warehouse_management/warehouse_head_dashboard_main"
                                                 class="quick-action-item flex items-center space-x-3 px-3 py-2.5 text-sm text-gray-700 hover:bg-orange-50 hover:text-orange-600 rounded-lg transition-all duration-150">
                                                 <i class="ri-archive-line text-lg"></i>
                                                 <span>Head Dashboard</span>
@@ -657,7 +657,7 @@ if (!isset($_SESSION['noble_name']) || !isset($_SESSION['noble_lvl']) || !isset(
                                         <?php endif; ?>
 
                                         <?php if (hasAnyRole(['superadmin']) || !hasSubrole(['warehouse_receiver'])): ?>
-                                            <a href="../warehouse_management/order_list"
+                                            <a href="../warehouse_management/warehouse_staff_management_main"
                                                 class="quick-action-item flex items-center space-x-3 px-3 py-2.5 text-sm text-gray-700 hover:bg-orange-50 hover:text-orange-600 rounded-lg transition-all duration-150">
                                                 <i class="ri-archive-line text-lg"></i>
                                                 <span>Assign Orders</span>
@@ -665,10 +665,10 @@ if (!isset($_SESSION['noble_name']) || !isset($_SESSION['noble_lvl']) || !isset(
                                         <?php endif; ?>
 
                                         <?php if (hasAnyRole(['superadmin']) || !hasSubrole(['warehouse_staff'])): ?>
-                                            <a href="../warehouse_management/view_po_items"
+                                            <a href="../warehouse_management/receiver_po_list_main"
                                                 class="quick-action-item flex items-center space-x-3 px-3 py-2.5 text-sm text-gray-700 hover:bg-orange-50 hover:text-orange-600 rounded-lg transition-all duration-150">
                                                 <i class="ri-search-eye-line text-lg"></i>
-                                                <span>Search Items</span>
+                                                <span>Assigned Receive Items</span>
                                             </a>
                                         <?php endif; ?>
 

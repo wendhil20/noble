@@ -1,5 +1,5 @@
 <?php
-//po_management.php
+//warehouse_staff_po_management_A.php
 session_name("nobleadmin");
 session_start();
 error_reporting(E_ALL);
@@ -16,7 +16,7 @@ if (!isset($_SESSION['noble_user'])) {
 
 // Check if order_id is provided instead of customer_email
 if (!isset($_GET['order_id'])) {
-    header("Location: order_list.php");
+    header("Location: warehouse_staff_management_main.php");
     exit();
 }
 
@@ -34,7 +34,7 @@ $orderStmt->execute();
 $orderResult = $orderStmt->get_result();
 
 if ($orderResult->num_rows === 0) {
-    header("Location: order_list.php");
+    header("Location: warehouse_staff_management_main.php");
     exit();
 }
 
@@ -255,7 +255,7 @@ if ($allItems[$i]['variant_id']) {
     <div class="max-w-[95%] mx-auto px-4 sm:px-6 lg:px-8">
         <div class="flex justify-between items-center py-4">
             <div class="flex items-center space-x-4">
-                <a href="order_list.php" class="text-primary-600 hover:text-primary-700">
+                <a href="warehouse_staff_management_main.php" class="text-primary-600 hover:text-primary-700">
                     <i class="fas fa-arrow-left text-xl"></i>
                 </a>
                 <div class="bg-primary-500 p-3 rounded-lg">
@@ -406,7 +406,7 @@ if ($allItems[$i]['variant_id']) {
                             <?php endif; ?>
                         </div>
                         <!-- GENERATE P.O. BUTTON -->
-                        <a href="generate_po.php?order_id=<?php echo $order['id']; ?>"
+                        <a href="warehouse_staff_generate_po_A-B.php?order_id=<?php echo $order['id']; ?>"
                             class="bg-gradient-to-r from-green-500 to-green-600 hover:from-green-600 hover:to-green-700 text-white px-6 py-2 rounded-lg shadow-lg transition-all duration-200 transform hover:scale-105 flex items-center space-x-2">
                             <i class="fas fa-file-invoice text-white"></i>
                             <span class="font-medium">Generate P.O.</span>
@@ -716,7 +716,7 @@ if ($allItems[$i]['variant_id']) {
                 return;
             }
 
-            fetch('assign_supplier.php', {
+            fetch('warehouse_staff_assign_supplier_A1&B1.php', {
                     method: 'POST',
                     headers: {
                         'Content-Type': 'application/json',
@@ -759,7 +759,7 @@ if ($allItems[$i]['variant_id']) {
                 return;
             }
 
-            fetch('assign_supplier.php', {
+            fetch('warehouse_staff_assign_supplier_A1&B1.php', {
                     method: 'POST',
                     headers: {
                         'Content-Type': 'application/json',
@@ -790,7 +790,7 @@ if ($allItems[$i]['variant_id']) {
                 return;
             }
 
-            fetch('assign_supplier.php', {
+            fetch('warehouse_staff_assign_supplier_A1&B1.php', {
                     method: 'POST',
                     headers: {
                         'Content-Type': 'application/json',
@@ -820,7 +820,7 @@ if ($allItems[$i]['variant_id']) {
                 return;
             }
 
-            fetch('assign_supplier.php', {
+            fetch('warehouse_staff_assign_supplier_A1&B1.php', {
                     method: 'POST',
                     headers: {
                         'Content-Type': 'application/json',
@@ -859,7 +859,7 @@ if ($allItems[$i]['variant_id']) {
             btn.innerHTML = '<i class="fas fa-spinner fa-spin mr-2"></i>Processing...';
             btn.disabled = true;
 
-            fetch('bulk_assign_suppliers.php', {
+            fetch('warehouse_staff_bulk_assign_suppliers_A1.php', {
                     method: 'POST',
                     headers: {
                         'Content-Type': 'application/json',

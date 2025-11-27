@@ -1,5 +1,5 @@
 <?php
-//generate_po.php (Enhanced with supplier change feature)
+//warehouse_staff_generate_po_A-B.php (Enhanced with supplier change feature)
 session_name("nobleadmin");
 session_start();
 error_reporting(E_ALL);
@@ -201,7 +201,7 @@ foreach ($allItems as $item) {
     <div class="max-w-[95%] mx-auto px-4 sm:px-6 lg:px-8">
         <div class="flex justify-between items-center py-4">
             <div class="flex items-center space-x-4">
-                <a href="po_management.php?order_id=<?php echo $order['id']; ?>" class="text-primary-600 hover:text-primary-700">
+                <a href="warehouse_staff_po_management_A.php?order_id=<?php echo $order['id']; ?>" class="text-primary-600 hover:text-primary-700">
                     <i class="fas fa-arrow-left text-xl"></i>
                 </a>
                 <div class="bg-green-500 p-3 rounded-lg">
@@ -244,7 +244,7 @@ foreach ($allItems as $item) {
                 <i class="fas fa-exclamation-triangle text-4xl mb-4 text-yellow-500"></i>
                 <h3 class="text-lg font-medium text-gray-900 mb-2">No Suppliers Assigned</h3>
                 <p class="text-sm text-gray-600 mb-4">You need to assign suppliers to order items before generating purchase orders.</p>
-                <a href="po_management.php?order_id=<?php echo $order['id']; ?>" 
+                <a href="warehouse_staff_po_management_A.php?order_id=<?php echo $order['id']; ?>" 
                    class="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-primary-600 hover:bg-primary-700">
                     <i class="fas fa-arrow-left mr-2"></i>
                     Back to P.O Management
@@ -537,7 +537,7 @@ foreach ($allItems as $item) {
     const itemIds = supplier.items.map(item => item.item_id);
     
     // Send request to reset P.O. number
-    fetch('reset_po_number.php', {
+    fetch('warehouse_staff_reset_po_number_A-B2.php', {
         method: 'POST',
         headers: {
             'Content-Type': 'application/json',
@@ -723,7 +723,7 @@ foreach ($allItems as $item) {
                     requestData.manual_supplier_name = manualSupplierName;
                 }
                 
-                fetch('assign_supplier.php', {
+                fetch('warehouse_staff_assign_supplier_A1&B1.php', {
                     method: 'POST',
                     headers: {
                         'Content-Type': 'application/json',
@@ -857,7 +857,7 @@ foreach ($allItems as $item) {
     // Create form and submit to Excel P.O. generator
     const form = document.createElement('form');
     form.method = 'POST';
-    form.action = 'generate_po_pdf.php';
+    form.action = 'warehouse_staff_generate_po_excel_A-B1.php';
     form.target = '_blank';
 
     const fields = [

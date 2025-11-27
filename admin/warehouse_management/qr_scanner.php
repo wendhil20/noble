@@ -294,10 +294,10 @@ $fullname = is_array($sessionUser) ?
 
         <!-- Quick Actions -->
         <div class="mt-4 sm:mt-6 flex flex-col sm:flex-row gap-3 sm:gap-4">
-            <a href="view_po_items.php" 
+            <a href="receiver_po_list_main.php" 
                class="flex-1 bg-primary-600 hover:bg-primary-700 text-white px-4 sm:px-6 py-2.5 sm:py-3 rounded-lg transition-all duration-200 flex items-center justify-center space-x-2 shadow-lg text-sm sm:text-base active:scale-95">
                 <i class="fas fa-list"></i>
-                <span>View P.O. Items</span>
+                <span>Show Assigned Items</span>
             </a>
             
             <a href="warehouse_dashboard.php" 
@@ -431,11 +431,11 @@ $fullname = is_array($sessionUser) ?
         const urlParams = new URLSearchParams(decodedText.split('?')[1]);
         itemId = urlParams.get('item_id');
         if (itemId) {
-            redirectUrl = `scan_item.php?item_id=${itemId}`;
+            redirectUrl = `receiver_scan_item_A1.php?item_id=${itemId}`;
         }
     }
     // Check if it's a direct URL
-    else if (decodedText.includes('scan_replacement.php')) {
+    else if (decodedText.includes('receiver_scan_replacement_A1.php')) {
         redirectUrl = decodedText;
     }
     else if (decodedText.includes('scan_item.php')) {

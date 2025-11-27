@@ -1,5 +1,5 @@
 <?php
-// resolve_defect.php
+// warehouse_staff_resolve_defect_C2.php
 session_name("nobleadmin");
 session_start();
 

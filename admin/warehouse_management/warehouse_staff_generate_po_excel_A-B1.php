@@ -1,5 +1,5 @@
 <?php
-// generate_po_pdf.php
+// warehouse_staff_generate_po_excel_A-B1.php
 session_name("nobleadmin");
 session_start();
 

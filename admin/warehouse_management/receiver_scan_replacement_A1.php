@@ -236,7 +236,7 @@ if ($replacement_id > 0) {
                         Invalid or missing replacement ID in QR code.
                     <?php endif; ?>
                 </p>
-                <a href="view_po_items.php"
+                <a href="receiver_view_po_items_A.php"
                     class="inline-flex items-center space-x-2 bg-primary-600 hover:bg-primary-700 text-white px-4 sm:px-6 py-2 sm:py-3 rounded-lg transition-colors duration-200 text-sm sm:text-base">
                     <i class="fas fa-arrow-left"></i>
                     <span>Back to P.O. Items</span>
@@ -549,7 +549,7 @@ if ($replacement_id > 0) {
 
             <!-- Action Buttons -->
             <div class="flex flex-col sm:flex-row gap-3 sm:gap-4 justify-center">
-                <a href="view_po_items.php?po_number=<?php echo urlencode($itemInfo['po_number']); ?>"
+                <a href="receiver_view_po_items_A.php?po_number=<?php echo urlencode($itemInfo['po_number']); ?>"
                     class="inline-flex items-center justify-center space-x-2 bg-primary-600 hover:bg-primary-700 text-white px-4 sm:px-6 py-2.5 sm:py-3 rounded-lg transition-colors duration-200 shadow-lg text-sm sm:text-base">
                     <i class="fas fa-list"></i>
                     <span>View All P.O. Items</span>
@@ -657,7 +657,7 @@ if ($replacement_id > 0) {
             button.disabled = true;
             button.innerHTML = '<i class="fas fa-spinner fa-spin mr-2"></i>Updating...';
 
-            fetch('update_replacement_status.php', {
+            fetch('receiver_update_replacement_status_A1-1.php', {
                     method: 'POST',
                     headers: {
                         'Content-Type': 'application/json',

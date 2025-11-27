@@ -1,5 +1,5 @@
 <?php
-// reset_po_number.php
+// warehouse_staff_reset_po_number_A-B2.php
 session_name("nobleadmin");
 session_start();
 error_reporting(E_ALL);

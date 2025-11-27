@@ -219,7 +219,7 @@ foreach ($assignments as $assignment) {
                             </div>
                             
                             <!-- Action Button -->
-                            <a href="view_po_items.php?po_number=<?php echo urlencode($assignment['po_number']); ?>&assignment_id=<?php echo $assignment['id']; ?>" 
+                            <a href="receiver_view_po_items_A.php?po_number=<?php echo urlencode($assignment['po_number']); ?>&assignment_id=<?php echo $assignment['id']; ?>" 
                                class="block w-full bg-primary-600 hover:bg-primary-700 text-white px-4 py-2 rounded-lg transition-colors duration-200 text-center font-medium">
                                 <i class="fas fa-eye mr-2"></i>
                                 View Items & Receive

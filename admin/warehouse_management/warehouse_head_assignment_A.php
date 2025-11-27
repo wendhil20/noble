@@ -1,5 +1,5 @@
 <?php
-//warehouse_assignment.php - For managers to assign warehouse employees to orders
+//warehouse_head_assignment_A.php - For managers to assign warehouse employees to orders
 session_name("nobleadmin");
 session_start();
 error_reporting(E_ALL);
@@ -402,11 +402,11 @@ if (!empty($view_assigned)) {
                         <span class="text-primary-700 font-medium"><?php echo count($orders); ?> Orders</span>
                     </div>
                     <?php if (!empty($view_assigned)): ?>
-                    <a href="warehouse_assignment.php" class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg transition-colors duration-200">
+                    <a href="warehouse_head_assignment.php" class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg transition-colors duration-200">
                         <i class="fas fa-arrow-left mr-2"></i>Back to Unassigned
                     </a>
                     <?php endif; ?>
-                    <a href="warehouse_head_dashboard.php" class="bg-gray-600 hover:bg-gray-700 text-white px-4 py-2 rounded-lg transition-colors duration-200">
+                    <a href="warehouse_head_dashboard_main.php" class="bg-gray-600 hover:bg-gray-700 text-white px-4 py-2 rounded-lg transition-colors duration-200">
                         <i class="fas fa-list mr-2"></i>Back to Orders
                     </a>
                 </div>
@@ -832,7 +832,7 @@ if (!empty($view_assigned)) {
                     <?php endif; ?>
                 </p>
                 <?php if (!empty($search_query) || !empty($date_from) || !empty($date_to)): ?>
-                <a href="warehouse_assignment.php<?php echo !empty($view_assigned) ? '?view_assigned=' . $view_assigned : ''; ?>" 
+                <a href="warehouse_head_assignment.php<?php echo !empty($view_assigned) ? '?view_assigned=' . $view_assigned : ''; ?>" 
                    class="inline-block mt-4 text-primary-600 hover:text-primary-700 font-medium">
                     Clear filters and view all orders
                 </a>

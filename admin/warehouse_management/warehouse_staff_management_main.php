@@ -1,5 +1,5 @@
 <?php
-// order_list.php
+// warehouse_staff_management_main.php
 session_name("nobleadmin");
 session_start();
 error_reporting(E_ALL);
@@ -516,7 +516,7 @@ foreach ($statusCounts as $row) {
                     <!-- ADD HEAD BUTTON HERE -->
                     <?php if ($is_head): ?>
                         <div class="mt-2">
-                            <a href="warehouse_assignment.php" class="bg-gradient-to-r from-red-500 to-red-600 hover:from-red-600 hover:to-red-700 text-white px-4 py-2 rounded-lg transition-all duration-200 flex items-center justify-center space-x-2 shadow-lg">
+                            <a href="warehouse_head_assignment.php" class="bg-gradient-to-r from-red-500 to-red-600 hover:from-red-600 hover:to-red-700 text-white px-4 py-2 rounded-lg transition-all duration-200 flex items-center justify-center space-x-2 shadow-lg">
                                 <i class="fas fa-crown"></i>
                                 <span class="font-medium">Head Dashboard</span>
                             </a>
@@ -880,7 +880,7 @@ $allPOsApproved = ($totalPOs > 0 && $totalPOs === $approvedPOs);
 
 // Show Manage P.O. only if: no PO files OR not all POs are approved
 if (!$hasPOFiles || !$allPOsApproved): ?>
-    <a href="po_management.php?order_id=<?php echo urlencode($order['id']); ?>" class="bg-primary-600 hover:bg-primary-700 text-white px-4 py-2 rounded-lg transition-colors duration-200 flex items-center space-x-2">
+    <a href="warehouse_staff_po_management_A.php?order_id=<?php echo urlencode($order['id']); ?>" class="bg-primary-600 hover:bg-primary-700 text-white px-4 py-2 rounded-lg transition-colors duration-200 flex items-center space-x-2">
         <i class="fas fa-cogs"></i><span>Manage P.O.</span>
     </a>
 <?php endif; ?>
@@ -890,7 +890,7 @@ if (!$hasPOFiles || !$allPOsApproved): ?>
                                             <i class="fas fa-paperclip"></i><span>Attach P.O.</span>
                                         </button>
                                     <?php elseif ($hasPOFiles): ?>
-                                        <a href="view_po_files.php?order_id=<?php echo urlencode($order['id']); ?>" class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg transition-colors duration-200 flex items-center space-x-2">
+                                        <a href="warehouse_head_staff_view_po_files_B.php?order_id=<?php echo urlencode($order['id']); ?>" class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg transition-colors duration-200 flex items-center space-x-2">
                                             <i class="fas fa-eye"></i><span>View P.O.</span>
                                         </a>
                                     <?php endif; ?>
@@ -915,7 +915,7 @@ if (in_array($order['status'], ['processing', 'Ready for Pickup', 'Picked Up', '
     
     if ($allPOsOrderedCheck):
 ?>
-    <a href="order_tracking.php?order_id=<?php echo urlencode($order['id']); ?>" class="bg-purple-600 hover:bg-purple-700 text-white px-3 py-2 rounded-lg transition-colors duration-200 flex items-center space-x-2 text-sm">
+    <a href="warehouse_staff_order_tracking_C.php?order_id=<?php echo urlencode($order['id']); ?>" class="bg-purple-600 hover:bg-purple-700 text-white px-3 py-2 rounded-lg transition-colors duration-200 flex items-center space-x-2 text-sm">
         <i class="fas fa-route"></i><span>Track Items</span>
     </a>
 <?php 

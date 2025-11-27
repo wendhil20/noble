@@ -1,5 +1,5 @@
 <?php
-// view_po_files.php
+// warehouse_head_staff_view_po_files_B.php
 session_name("nobleadmin");
 session_start();
 
@@ -15,7 +15,7 @@ if (!isset($_SESSION['noble_user'])) {
 $order_id = isset($_GET['order_id']) ? (int)$_GET['order_id'] : 0;
 
 if ($order_id <= 0) {
-    header("Location: order_list.php");
+    header("Location: warehouse_staff_management_main.php");
     exit();
 }
 
@@ -28,7 +28,7 @@ $order = $orderStmt->get_result()->fetch_assoc();
 $orderStmt->close();
 
 if (!$order) {
-    header("Location: order_list.php");
+    header("Location: warehouse_staff_management_main.php");
     exit();
 }
 
@@ -98,7 +98,7 @@ if (isset($_POST['mark_as_ordered'])) {
         
         if ($markStmt->execute()) {
             $success_message = "P.O. file(s) marked as ordered successfully.";
-            header("Location: view_po_files.php?order_id=" . $order_id);
+            header("Location: warehouse_head_staff_view_po_files_B.php?order_id=" . $order_id);
             exit();
         } else {
             $error_message = "Failed to mark files as ordered.";
@@ -191,7 +191,7 @@ if (isset($_POST['update_po_status'])) {
         
         if ($updateStmt->execute()) {
             $success_message = "P.O. status updated successfully.";
-            header("Location: view_po_files.php?order_id=" . $order_id);
+            header("Location: warehouse_head_staff_view_po_files_B.php?order_id=" . $order_id);
             exit();
         } else {
             $error_message = "Failed to update P.O. status.";
@@ -217,7 +217,7 @@ if (isset($_POST['request_approval'])) {
     
     if ($requestStmt->execute()) {
         $success_message = "Approval request submitted successfully.";
-        header("Location: view_po_files.php?order_id=" . $order_id);
+        header("Location: warehouse_head_staff_view_po_files_B.php?order_id=" . $order_id);
         exit();
     } else {
         $error_message = "Failed to submit approval request.";
@@ -247,7 +247,7 @@ if (isset($_POST['delete_file'])) {
             }
             $success_message = "File deleted successfully.";
             // Refresh the page to update the list
-            header("Location: view_po_files.php?order_id=" . $order_id);
+            header("Location: warehouse_head_staff_view_po_files_B.php?order_id=" . $order_id);
             exit();
         } else {
             $error_message = "Failed to delete file from database.";
@@ -290,7 +290,7 @@ if (isset($_POST['delete_file'])) {
         <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
             <div class="flex justify-between items-center py-6">
                 <div class="flex items-center space-x-4">
-                    <a href="order_list.php" class="bg-gray-100 hover:bg-gray-200 p-2 rounded-lg transition-colors duration-200">
+                    <a href="warehouse_staff_management_main.php" class="bg-gray-100 hover:bg-gray-200 p-2 rounded-lg transition-colors duration-200">
                         <i class="fas fa-arrow-left text-gray-600"></i>
                     </a>
                     <div class="bg-gradient-to-r from-blue-500 to-blue-600 p-3 rounded-xl shadow-lg">
@@ -614,7 +614,7 @@ if (isset($_POST['delete_file'])) {
                     <i class="fas fa-file-excel text-6xl mb-4"></i>
                     <h3 class="text-lg font-medium mb-2">No P.O. Files Found</h3>
                     <p class="text-sm mb-4">No purchase order files have been uploaded for this order yet.</p>
-                    <a href="order_list.php" class="bg-primary-600 hover:bg-primary-700 text-white px-4 py-2 rounded-lg transition-colors duration-200">
+                    <a href="warehouse_staff_management_main.php" class="bg-primary-600 hover:bg-primary-700 text-white px-4 py-2 rounded-lg transition-colors duration-200">
                         <i class="fas fa-arrow-left mr-2"></i>Back to Orders
                     </a>
                 </div>

@@ -1,5 +1,5 @@
 <?php
-// report_defect.php
+// warehouse_staff_report_defect_C-B.php
 session_name("nobleadmin");
 session_start();
 error_reporting(E_ALL);

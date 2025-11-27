@@ -1,5 +1,5 @@
 <?php
-// delivery_schedule.php
+// warehouse_staff_delivery_schedule_C-A.php
 session_name("nobleadmin");
 session_start();
 
@@ -18,7 +18,7 @@ $schedule_replacements = isset($_GET['schedule_replacements']) && $_GET['schedul
 
 // Validate input parameters
 if ($order_id <= 0 || (!$schedule_all && !$schedule_replacements)) {
-    header("Location: order_list.php");
+    header("Location: warehouse_staff_management_main.php");
     exit();
 }
 
@@ -31,7 +31,7 @@ $order = $orderStmt->get_result()->fetch_assoc();
 $orderStmt->close();
 
 if (!$order) {
-    header("Location: order_list.php");
+    header("Location: warehouse_staff_management_main.php");
     exit();
 }
 
@@ -131,7 +131,7 @@ if ($latestLtFrom && $latestLtTo) {
 
 // Check if there are any items ready for scheduling
 if (empty($items)) {
-    header("Location: order_tracking.php?order_id=$order_id");
+    header("Location: warehouse_staff_order_tracking_C.php?order_id=$order_id");
     exit();
 }
 
@@ -204,7 +204,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['schedule_delivery']))
         // Redirect after 2 seconds
         echo "<script>
             setTimeout(function() {
-                window.location.href = 'order_tracking.php?order_id=$order_id';
+                window.location.href = 'warehouse_staff_order_tracking_C.php?order_id=$order_id';
             }, 2000);
         </script>";
     } catch (Exception $e) {
@@ -373,7 +373,7 @@ foreach ($schedules as $schedule) {
         <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
             <div class="flex flex-col sm:flex-row sm:justify-between sm:items-center py-6 space-y-4 sm:space-y-0">
                 <div class="flex items-center space-x-4">
-                    <a href="order_tracking.php?order_id=<?php echo $order_id; ?>" class="bg-gray-100 hover:bg-gray-200 p-2 rounded-lg transition-colors duration-200">
+                    <a href="warehouse_staff_order_tracking_C.php?order_id=<?php echo $order_id; ?>" class="bg-gray-100 hover:bg-gray-200 p-2 rounded-lg transition-colors duration-200">
                         <i class="fas fa-arrow-left text-gray-600"></i>
                     </a>
                     <div class="bg-gradient-to-r from-green-500 to-green-600 p-3 rounded-xl shadow-lg">

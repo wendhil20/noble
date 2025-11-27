@@ -1,5 +1,5 @@
 <?php
-// order_tracking.php
+// warehouse_staff_order_tracking_C.php
 session_name("nobleadmin");
 session_start();
 
@@ -15,7 +15,7 @@ if (!isset($_SESSION['noble_user'])) {
 $order_id = isset($_GET['order_id']) ? (int)$_GET['order_id'] : 0;
 
 if ($order_id <= 0) {
-    header("Location: order_list.php");
+    header("Location: warehouse_staff_management_main.php");
     exit();
 }
 
@@ -28,7 +28,7 @@ $order = $orderStmt->get_result()->fetch_assoc();
 $orderStmt->close();
 
 if (!$order) {
-    header("Location: order_list.php");
+    header("Location: warehouse_staff_management_main.php");
     exit();
 }
 
@@ -103,27 +103,27 @@ $itemsSql = "
     SELECT 
         oi.id,
         oi.order_id,
-        CAST(oi.product_name AS CHAR) COLLATE utf8mb4_unicode_ci as product_name,
-        CAST(oi.codename AS CHAR) COLLATE utf8mb4_unicode_ci as codename,
-        CAST(oi.type_name AS CHAR) COLLATE utf8mb4_unicode_ci as type_name,
-        CAST(oi.variant_color AS CHAR) COLLATE utf8mb4_unicode_ci as variant_color,
+        oi.product_name,
+        oi.codename,
+        oi.type_name,
+        oi.variant_color,
         oi.price,
         oi.quantity,
         oi.subtotal,
-        CAST(oi.size AS CHAR) COLLATE utf8mb4_unicode_ci as size,
-        CAST(oi.descrip6 AS CHAR) COLLATE utf8mb4_unicode_ci as descrip6,
-        CAST(oi.descrip7 AS CHAR) COLLATE utf8mb4_unicode_ci as descrip7,
-        CAST(oi.origin AS CHAR) COLLATE utf8mb4_unicode_ci as origin,
+        oi.size,
+        oi.descrip6,
+        oi.descrip7,
+        oi.origin,
         oi.supplier_id,
-        CAST(oi.manual_supplier_name AS CHAR) COLLATE utf8mb4_unicode_ci as manual_supplier_name,
+        oi.manual_supplier_name,
         oi.product_id,
         oi.delivery_fee_per_item,
         oi.item_total_delivery,
-        CAST(COALESCE(sl.business_name, oi.manual_supplier_name) AS CHAR) COLLATE utf8mb4_unicode_ci as supplier_name,
-        CAST(COALESCE(oi.tracking_status, 'processing') AS CHAR) COLLATE utf8mb4_unicode_ci as current_status,
-        CAST('original' AS CHAR) COLLATE utf8mb4_unicode_ci as item_type,
+        COALESCE(sl.business_name, oi.manual_supplier_name) as supplier_name,
+        COALESCE(oi.tracking_status, 'processing') as current_status,
+        'original' as item_type,
         NULL as replacement_id,
-        CAST(NULL AS CHAR) COLLATE utf8mb4_unicode_ci as replacement_reason,
+        NULL as replacement_reason,
         NULL as replacement_quantity
     FROM order_items oi
     LEFT JOIN supplier_list sl ON oi.supplier_id = sl.id AND oi.supplier_id > 0
@@ -131,35 +131,35 @@ $itemsSql = "
     
     UNION ALL
     
-SELECT 
-    oi.id,
-    oi.order_id,
-    CAST(oi.product_name AS CHAR) COLLATE utf8mb4_unicode_ci as product_name,
-    CAST(oi.codename AS CHAR) COLLATE utf8mb4_unicode_ci as codename,
-    CAST(oi.type_name AS CHAR) COLLATE utf8mb4_unicode_ci as type_name,
-    CAST(oi.variant_color AS CHAR) COLLATE utf8mb4_unicode_ci as variant_color,
-    oi.price,
-    rr.replacement_quantity as quantity,
-    (rr.replacement_quantity * oi.price) as subtotal,
-    CAST(oi.size AS CHAR) COLLATE utf8mb4_unicode_ci as size,
-    CAST(oi.descrip6 AS CHAR) COLLATE utf8mb4_unicode_ci as descrip6,
-    CAST(oi.descrip7 AS CHAR) COLLATE utf8mb4_unicode_ci as descrip7,
-    CAST(oi.origin AS CHAR) COLLATE utf8mb4_unicode_ci as origin,
-    oi.supplier_id,
-    CAST(oi.manual_supplier_name AS CHAR) COLLATE utf8mb4_unicode_ci as manual_supplier_name,
-    oi.product_id,
-    oi.delivery_fee_per_item,
-    oi.item_total_delivery,
-    CAST(COALESCE(sl.business_name, oi.manual_supplier_name) AS CHAR) COLLATE utf8mb4_unicode_ci as supplier_name,
-    CAST(COALESCE(rr.status, 'approved') AS CHAR) COLLATE utf8mb4_unicode_ci as current_status,
-    CAST('replacement' AS CHAR) COLLATE utf8mb4_unicode_ci as item_type,
-    rr.id as replacement_id,
-    CAST(rr.reason AS CHAR) COLLATE utf8mb4_unicode_ci as replacement_reason,
-    rr.replacement_quantity
-FROM replacement_requests rr
-LEFT JOIN order_items oi ON rr.order_item_id = oi.id
-LEFT JOIN supplier_list sl ON oi.supplier_id = sl.id AND oi.supplier_id > 0
-WHERE rr.order_id = ? AND rr.status IN ('approved', 'processing', 'In Warehouse', 'scheduled', 'ready_for_pickup', 'out_for_delivery', 'delivered')
+    SELECT 
+        oi.id,
+        oi.order_id,
+        oi.product_name,
+        oi.codename,
+        oi.type_name,
+        oi.variant_color,
+        oi.price,
+        rr.replacement_quantity as quantity,
+        (rr.replacement_quantity * oi.price) as subtotal,
+        oi.size,
+        oi.descrip6,
+        oi.descrip7,
+        oi.origin,
+        oi.supplier_id,
+        oi.manual_supplier_name,
+        oi.product_id,
+        oi.delivery_fee_per_item,
+        oi.item_total_delivery,
+        COALESCE(sl.business_name, oi.manual_supplier_name) as supplier_name,
+        COALESCE(rr.status, 'approved') as current_status,
+        'replacement' as item_type,
+        rr.id as replacement_id,
+        rr.reason as replacement_reason,
+        rr.replacement_quantity
+    FROM replacement_requests rr
+    LEFT JOIN order_items oi ON rr.order_item_id = oi.id
+    LEFT JOIN supplier_list sl ON oi.supplier_id = sl.id AND oi.supplier_id > 0
+    WHERE rr.order_id = ? AND rr.status IN ('approved', 'processing', 'In Warehouse', 'scheduled', 'ready_for_pickup', 'out_for_delivery', 'delivered')
     
     ORDER BY origin, supplier_name, product_name, item_type
 ";
@@ -455,7 +455,7 @@ $selectableReplacementStatuses = ['approved', 'processing']; // Only these can b
             <div class="py-6">
                 <div class="flex flex-col lg:flex-row lg:items-center lg:justify-between space-y-4 lg:space-y-0">
                     <div class="flex items-center space-x-4">
-                        <a href="order_list.php" class="bg-gray-100 hover:bg-gray-200 p-3 rounded-xl transition-all duration-200 hover:scale-105">
+                        <a href="warehouse_staff_management_main.php" class="bg-gray-100 hover:bg-gray-200 p-3 rounded-xl transition-all duration-200 hover:scale-105">
                             <i class="fas fa-arrow-left text-gray-600"></i>
                         </a>
                         <div class="bg-gradient-to-r from-blue-500 to-blue-600 p-4 rounded-xl shadow-lg">
@@ -583,7 +583,7 @@ $selectableReplacementStatuses = ['approved', 'processing']; // Only these can b
                         <p class="text-green-800 mb-3">
                             All items have been received and are now stored in the warehouse. You can now schedule the delivery.
                         </p>
-                        <a href="delivery_schedule.php?order_id=<?php echo $order_id; ?>&schedule_all=true"
+                        <a href="warehouse_staff_delivery_schedule_C-A.php?order_id=<?php echo $order_id; ?>&schedule_all=true"
                             class="inline-flex items-center space-x-2 bg-gradient-to-r from-green-500 to-green-600 hover:from-green-600 hover:to-green-700 text-white px-6 py-3 rounded-lg font-medium transition-all duration-200 hover:scale-105 shadow-lg">
                             <i class="fas fa-calendar-check"></i>
                             <span>Schedule Delivery for All Items</span>
@@ -671,7 +671,7 @@ $selectableReplacementStatuses = ['approved', 'processing']; // Only these can b
                             All <?php echo $totalReplacements; ?> replacement item(s) have been received and are now stored in the warehouse. You can schedule delivery for replacements separately.
                         </p>
                         <div class="flex flex-col sm:flex-row gap-3">
-                            <a href="delivery_schedule.php?order_id=<?php echo $order_id; ?>&schedule_replacements=true"
+                            <a href="warehouse_staff_delivery_schedule_C-A.php?order_id=<?php echo $order_id; ?>&schedule_replacements=true"
                                 class="inline-flex items-center space-x-2 bg-gradient-to-r from-red-500 to-red-600 hover:from-red-600 hover:to-red-700 text-white px-6 py-3 rounded-lg font-medium transition-all duration-200 hover:scale-105 shadow-lg">
                                 <i class="fas fa-calendar-check"></i>
                                 <span>Schedule Replacement Delivery (<?php echo $totalReplacements; ?> items)</span>
@@ -976,7 +976,7 @@ if (!$isReplacement && $hasDefects && $currentStatus !== 'cancelled') {
                     </div>
                     <h3 class="text-2xl font-bold mb-4">No Items Found</h3>
                     <p class="text-gray-600 mb-6">No items found for this order.</p>
-                    <a href="order_list.php" class="bg-gradient-to-r from-blue-500 to-blue-600 hover:from-blue-600 hover:to-blue-700 text-white px-6 py-3 rounded-lg font-medium transition-all duration-200 inline-flex items-center space-x-2">
+                    <a href="warehouse_staff_management_main.php" class="bg-gradient-to-r from-blue-500 to-blue-600 hover:from-blue-600 hover:to-blue-700 text-white px-6 py-3 rounded-lg font-medium transition-all duration-200 inline-flex items-center space-x-2">
                         <i class="fas fa-arrow-left"></i>
                         <span>Back to Orders</span>
                     </a>
@@ -1055,7 +1055,7 @@ if (!$isReplacement && $hasDefects && $currentStatus !== 'cancelled') {
     <div class="floating-action flex flex-col space-y-3">
         <?php if ($allItemsReadyForDelivery && $totalItems > 0 && !$hasScheduledDeliveries): ?>
             <!-- Schedule All Delivery Button - Only shows when all items are In Warehouse -->
-            <a href="delivery_schedule.php?order_id=<?php echo $order_id; ?>&schedule_all=true"
+            <a href="warehouse_staff_delivery_schedule_C-A.php?order_id=<?php echo $order_id; ?>&schedule_all=true"
                 class="bg-gradient-to-r from-green-500 to-green-600 hover:from-green-600 hover:to-green-700 text-white px-6 py-4 rounded-full shadow-xl hover:shadow-2xl transition-all duration-200 flex items-center space-x-3 hover:scale-110 animate-pulse">
                 <i class="fas fa-calendar-check text-xl"></i>
                 <span class="font-bold">Schedule All Delivery</span>
@@ -1063,7 +1063,7 @@ if (!$isReplacement && $hasDefects && $currentStatus !== 'cancelled') {
         <?php endif; ?>
 
         <!-- Back Button -->
-        <a href="order_list.php" class="bg-gradient-to-r from-gray-600 to-gray-700 hover:from-gray-700 hover:to-gray-800 text-white p-4 rounded-full shadow-lg hover:shadow-xl transition-all duration-200 flex items-center space-x-2 hover:scale-110">
+        <a href="warehouse_staff_management_main.php" class="bg-gradient-to-r from-gray-600 to-gray-700 hover:from-gray-700 hover:to-gray-800 text-white p-4 rounded-full shadow-lg hover:shadow-xl transition-all duration-200 flex items-center space-x-2 hover:scale-110">
             <i class="fas fa-list"></i>
             <span class="hidden sm:inline">All Orders</span>
         </a>
@@ -1193,7 +1193,7 @@ if (!$isReplacement && $hasDefects && $currentStatus !== 'cancelled') {
 
         // Defect viewing functions
         function viewItemDefects(itemId) {
-            fetch(`report_defect.php?item_id=${itemId}`)
+            fetch(`warehouse_staff_report_defect_C-B.php?item_id=${itemId}`)
                 .then(response => response.json())
                 .then(data => {
                     if (data.success && data.defects) {
@@ -1328,7 +1328,7 @@ if (!$isReplacement && $hasDefects && $currentStatus !== 'cancelled') {
                 return;
             }
             
-            fetch('generate_replacement_po.php', {
+            fetch('warehouse_staff_generate_replacement_po_C1.php', {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
@@ -1358,7 +1358,7 @@ function resolveDefect(itemId, orderId) {
         return;
     }
 
-    fetch('resolve_defect.php', {
+    fetch('warehouse_staff_resolve_defect_C2.php', {
         method: 'POST',
         headers: {
             'Content-Type': 'application/json',

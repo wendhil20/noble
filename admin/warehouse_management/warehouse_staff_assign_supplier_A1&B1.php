@@ -1,5 +1,5 @@
 <?php
-//assign_supplier.php
+//warehouse_staff_assign_supplier_A1&B1.php
 session_name("nobleadmin");
 session_start();
 header('Content-Type: application/json');

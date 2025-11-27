@@ -93,55 +93,68 @@ $stmt->close();
         <div class="max-w-7xl mx-auto px-3 sm:px-4 lg:px-8">
             <div class="py-3 sm:py-4">
                 <!-- Mobile Layout -->
-                <div class="flex flex-col space-y-3 sm:hidden">
-                    <div class="flex items-center justify-between">
-                        <div class="flex items-center space-x-2">
-                            <div class="bg-gradient-to-r from-blue-500 to-blue-600 p-2 rounded-lg">
-                                <i class="fas fa-building text-white text-lg"></i>
-                            </div>
-                            <div>
-                                <h1 class="text-lg font-bold text-gray-900">Companies</h1>
-                                <p class="text-xs text-gray-600">Browse all profiles</p>
-                            </div>
-                        </div>
-                        <div class="w-10 h-10 bg-gradient-to-r from-primary-500 to-primary-600 rounded-full flex items-center justify-center shadow-lg ring-2 ring-white">
+<div class="flex flex-col space-y-3 sm:hidden">
+    <div class="flex items-center justify-between">
+        <div class="flex items-center space-x-2">
+            <div class="bg-gradient-to-r from-blue-500 to-blue-600 p-2 rounded-lg">
+                <i class="fas fa-building text-white text-lg"></i>
+            </div>
+            <div>
+                <h1 class="text-lg font-bold text-gray-900">Companies</h1>
+                <p class="text-xs text-gray-600">Browse all profiles</p>
+            </div>
+        </div>
+        <div class="w-10 h-10 bg-gradient-to-r from-primary-500 to-primary-600 rounded-full flex items-center justify-center shadow-lg ring-2 ring-white">
                             <span class="text-white font-bold text-sm">
                                 <?php echo strtoupper(substr($fullname, 0, 1)); ?>
                             </span>
                         </div>
                     </div>
+                    <!-- Add Company Button for Mobile -->
+    <a href="manage_clients.php" 
+        class="w-full bg-gradient-to-r from-blue-500 to-blue-600 hover:from-blue-600 hover:to-blue-700 text-white px-4 py-2 rounded-lg transition-all duration-200 shadow-lg flex items-center justify-center space-x-2">
+        <i class="fas fa-plus"></i>
+        <span>Add Company</span>
+    </a>
                 </div>
 
                 <!-- Desktop Layout -->
-                <div class="hidden sm:flex justify-between items-center">
-                    <div class="flex items-center space-x-4">
-                        <div class="bg-gradient-to-r from-blue-500 to-blue-600 p-3 rounded-lg">
-                            <i class="fas fa-building text-white text-2xl"></i>
-                        </div>
-                        <div>
-                            <h1 class="text-2xl lg:text-3xl font-bold text-gray-900">List of Companies</h1>
-                            <p class="text-gray-600 mt-1">Browse and manage company profiles</p>
-                        </div>
-                    </div>
+<div class="hidden sm:flex justify-between items-center">
+    <div class="flex items-center space-x-4">
+        <div class="bg-gradient-to-r from-blue-500 to-blue-600 p-3 rounded-lg">
+            <i class="fas fa-building text-white text-2xl"></i>
+        </div>
+        <div>
+            <h1 class="text-2xl lg:text-3xl font-bold text-gray-900">List of Companies</h1>
+            <p class="text-gray-600 mt-1">Browse and manage company profiles</p>
+        </div>
+    </div>
+    
+    <div class="flex items-center space-x-4">
+        <!-- Add Company Button -->
+        <a href="manage_clients.php" 
+            class="bg-gradient-to-r from-blue-500 to-blue-600 hover:from-blue-600 hover:to-blue-700 text-white px-6 py-3 rounded-lg transition-all duration-200 transform hover:scale-105 shadow-lg flex items-center space-x-2">
+            <i class="fas fa-plus"></i>
+            <span>Add Company</span>
+        </a>
 
-                    <div class="flex items-center space-x-4">
-                        <div class="text-right">
-                            <div class="text-sm font-medium text-gray-900">
-                                <i class="fas fa-user text-primary-600 mr-1"></i>
-                                <?php echo htmlspecialchars($fullname); ?>
-                            </div>
-                            <div class="text-xs text-gray-500">
-                                <i class="fas fa-shield-alt mr-1"></i>
-                                <?php echo htmlspecialchars(ucfirst($user_level)); ?>
-                            </div>
-                        </div>
-                        <div class="w-12 h-12 bg-gradient-to-r from-primary-500 to-primary-600 rounded-full flex items-center justify-center shadow-lg ring-2 ring-white">
-                            <span class="text-white font-bold text-lg">
-                                <?php echo strtoupper(substr($fullname, 0, 1)); ?>
-                            </span>
-                        </div>
-                    </div>
-                </div>
+                    <div class="text-right">
+            <div class="text-sm font-medium text-gray-900">
+                <i class="fas fa-user text-primary-600 mr-1"></i>
+                <?php echo htmlspecialchars($fullname); ?>
+            </div>
+            <div class="text-xs text-gray-500">
+                <i class="fas fa-shield-alt mr-1"></i>
+                <?php echo htmlspecialchars(ucfirst($user_level)); ?>
+            </div>
+        </div>
+        <div class="w-12 h-12 bg-gradient-to-r from-primary-500 to-primary-600 rounded-full flex items-center justify-center shadow-lg ring-2 ring-white">
+            <span class="text-white font-bold text-lg">
+                <?php echo strtoupper(substr($fullname, 0, 1)); ?>
+            </span>
+        </div>
+    </div>
+</div>
             </div>
         </div>
     </div>

@@ -100,7 +100,6 @@ if ($logo_blob) {
 
 $error = "";
 
-// Handle form submission to add new purchase order
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['submit_po'])) {
     $po_number = trim($_POST['po_number']);
     $po_date = trim($_POST['po_date']);
@@ -108,6 +107,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['submit_po'])) {
     $target_delivery = trim($_POST['target_delivery']);
     $payment_terms = trim($_POST['payment_terms']);
     $cart_data = $_POST['cart_data'] ?? '[]';
+    $client_po_path = null;
 
     // Validate required fields
     if (empty($po_number) || empty($po_date) || empty($ship_to) || empty($target_delivery) || empty($payment_terms)) {
@@ -135,11 +135,33 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['submit_po'])) {
             // Create PDF content
             $pdfContent = createQuotationPDF($company_name, $po_number, $po_date, $cartItems, $fullname, $company_address, $absolute_logo_path);
 
+            // Handle client's original PO upload
+            if (isset($_FILES['client_po']) && $_FILES['client_po']['error'] === UPLOAD_ERR_OK) {
+                $client_upload_dir = __DIR__ . '/../../uploads/client_pos/';
+                if (!file_exists($client_upload_dir)) {
+                    mkdir($client_upload_dir, 0777, true);
+                }
+                
+                $file_extension = strtolower(pathinfo($_FILES['client_po']['name'], PATHINFO_EXTENSION));
+                $allowed_extensions = ['pdf', 'jpg', 'jpeg', 'png', 'doc', 'docx'];
+                
+                if (in_array($file_extension, $allowed_extensions)) {
+                    $client_po_filename = 'client_po_' . $company_id . '_' . time() . '.' . $file_extension;
+                    $client_full_path = $client_upload_dir . $client_po_filename;
+                    $client_po_path = '../../uploads/client_pos/' . $client_po_filename;
+                    
+                    if (!move_uploaded_file($_FILES['client_po']['tmp_name'], $client_full_path)) {
+                        $error = "Failed to upload client's PO.";
+                        $client_po_path = null;
+                    }
+                }
+            }
+
             if (file_put_contents($full_path, $pdfContent)) {
                 // Insert into database
                 $status = 'pending';
-                $stmt = $conn->prepare("INSERT INTO purchase_orders (company_id, sales_user_id, po_number, po_date, ship_to, target_delivery_date, payment_terms, attachment_path, status, created_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, NOW())");
-                $stmt->bind_param("iisssssss", $company_id, $user_id, $po_number, $po_date, $ship_to, $target_delivery, $payment_terms, $attachment_path, $status);
+                $stmt = $conn->prepare("INSERT INTO purchase_orders (company_id, sales_user_id, po_number, po_date, ship_to, target_delivery_date, payment_terms, attachment_path, client_po_path, status, created_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, NOW())");
+                $stmt->bind_param("iissssssss", $company_id, $user_id, $po_number, $po_date, $ship_to, $target_delivery, $payment_terms, $attachment_path, $client_po_path, $status);
 
                 if ($stmt->execute()) {
                     $_SESSION['po_success'] = "Purchase Order created successfully!";
@@ -419,7 +441,7 @@ function createQuotationPDF($company_name, $po_number, $po_date, $cartItems, $us
     <div class="info-section">
         <div class="info-row">
             <div class="info-box">
-                <div class="info-label">Supplier</div>
+                <div class="info-label">Client</div>
                 <div class="info-value">' . htmlspecialchars($company_name) . '</div>
             </div>
             <div class="info-box alt">
@@ -483,6 +505,10 @@ function createQuotationPDF($company_name, $po_number, $po_date, $cartItems, $us
         $itemNum++;
     }
 
+    // Calculate VAT (12%)
+    $vatAmount = $grandTotal * 0.12;
+    $totalWithVat = $grandTotal + $vatAmount;
+
     $html .= '
         </tbody>
     </table>
@@ -494,12 +520,12 @@ function createQuotationPDF($company_name, $po_number, $po_date, $cartItems, $us
             <span class="total-value">P ' . number_format($grandTotal, 2) . '</span>
         </div>
         <div class="total-row">
-            <span class="total-label">Tax (0%)</span>
-            <span class="total-value">P 0.00</span>
+            <span class="total-label">VAT (12%)</span>
+            <span class="total-value">P ' . number_format($vatAmount, 2) . '</span>
         </div>
         <div class="total-row grand">
             <span class="total-label">TOTAL AMOUNT DUE</span>
-            <span class="total-value">P ' . number_format($grandTotal, 2) . '</span>
+            <span class="total-value">P ' . number_format($totalWithVat, 2) . '</span>
         </div>
     </div>
 
@@ -667,7 +693,7 @@ if ($material_results && mysqli_num_rows($material_results) > 0) {
             </div>
         <?php endif; ?>
 
-        <form method="POST" id="poForm" class="space-y-6">
+        <form method="POST" id="poForm" enctype="multipart/form-data" class="space-y-6">
 
             <!-- PO Details Section -->
             <div class="bg-white rounded-xl shadow-lg border border-gray-200 overflow-hidden">
@@ -733,6 +759,16 @@ if ($material_results && mysqli_num_rows($material_results) > 0) {
                                 class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent"
                                 placeholder="e.g., Net 30, COD, 50% deposit">
                         </div>
+                    </div>
+
+                    <!-- Client's Original PO Upload -->
+                    <div class="mt-6">
+                        <label class="block text-sm font-medium text-gray-700 mb-2">
+                            <i class="fas fa-file-upload mr-1 text-green-600"></i>Client's Original PO (Optional)
+                        </label>
+                        <input type="file" name="client_po" accept=".pdf,.jpg,.jpeg,.png,.doc,.docx"
+                            class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent">
+                        <p class="text-xs text-gray-500 mt-1">Upload the client's original purchase order document (PDF, Image, or Word)</p>
                     </div>
                 </div>
             </div>
@@ -841,9 +877,19 @@ if ($material_results && mysqli_num_rows($material_results) > 0) {
 
                     <!-- Cart Summary -->
                     <div class="bg-gray-50 px-6 py-4 border-t border-gray-200">
-                        <div class="flex justify-between mb-3 text-sm font-medium">
-                            <span class="text-gray-600">Subtotal:</span>
-                            <span id="cartTotal" class="text-green-600 font-bold">₱0.00</span>
+                        <div class="space-y-2 mb-4">
+                            <div class="flex justify-between text-sm">
+                                <span class="text-gray-600">Subtotal:</span>
+                                <span id="cartSubtotal" class="text-gray-900 font-medium">₱0.00</span>
+                            </div>
+                            <div class="flex justify-between text-sm">
+                                <span class="text-gray-600">VAT (12%):</span>
+                                <span id="cartVat" class="text-gray-900 font-medium">₱0.00</span>
+                            </div>
+                            <div class="flex justify-between text-base font-bold pt-2 border-t border-gray-300">
+                                <span class="text-gray-700">Total:</span>
+                                <span id="cartTotal" class="text-green-600">₱0.00</span>
+                            </div>
                         </div>
 
                         <button type="button" id="clearCartBtn" class="w-full bg-red-300 hover:bg-red-400 text-red-900 font-bold py-2 rounded-lg transition-all text-sm">
@@ -1156,8 +1202,13 @@ function addToCartDirect() {
                 cartDropZone.appendChild(table);
             }
 
-            const total = cartItems.reduce((sum, item) => sum + (item.price * item.quantity), 0);
+            const subtotal = cartItems.reduce((sum, item) => sum + (item.price * item.quantity), 0);
+            const vat = subtotal * 0.12;
+            const total = subtotal + vat;
+            
             document.getElementById('cartItemCount').textContent = cartItems.length;
+            document.getElementById('cartSubtotal').textContent = `₱${subtotal.toLocaleString('en-US', {minimumFractionDigits: 2})}`;
+            document.getElementById('cartVat').textContent = `₱${vat.toLocaleString('en-US', {minimumFractionDigits: 2})}`;
             document.getElementById('cartTotal').textContent = `₱${total.toLocaleString('en-US', {minimumFractionDigits: 2})}`;
             document.getElementById('cartData').value = JSON.stringify(cartItems);
         }

@@ -72,8 +72,8 @@ if (isset($_SESSION['po_success'])) {
 
 // Fetch all purchase orders for this company
 $purchase_orders = [];
-$stmt = $conn->prepare("SELECT po.id, po.po_number, po.po_date, po.ship_to, po.target_delivery_date, po.payment_terms, po.attachment_path, po.status, po.created_at, n.fullname as created_by FROM purchase_orders po LEFT JOIN nobleaccount n ON po.sales_user_id = n.id WHERE po.company_id = ? ORDER BY po.created_at DESC");
-$stmt->bind_param("i", $company_id);
+$stmt = $conn->prepare("SELECT po.id, po.po_number, po.po_date, po.ship_to, po.target_delivery_date, po.payment_terms, po.attachment_path, po.client_po_path, po.status, po.created_at, po.approved_by, po.approved_at, n.fullname as created_by, n2.fullname as approved_by_name FROM purchase_orders po LEFT JOIN nobleaccount n ON po.sales_user_id = n.id LEFT JOIN nobleaccount n2 ON po.approved_by = n2.id WHERE po.company_id = ? AND po.sales_user_id = ? ORDER BY po.created_at DESC");
+$stmt->bind_param("ii", $company_id, $user_id);
 $stmt->execute();
 $result = $stmt->get_result();
 while ($row = $result->fetch_assoc()) {
@@ -189,6 +189,58 @@ $stmt->close();
             </div>
         <?php endif; ?>
 
+        <!-- Status Summary Cards -->
+        <div class="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
+            <?php
+            $status_counts = ['pending' => 0, 'approved' => 0, 'rejected' => 0, 'processing' => 0];
+            foreach ($purchase_orders as $po) {
+                if (isset($status_counts[$po['status']])) {
+                    $status_counts[$po['status']]++;
+                }
+            }
+            ?>
+            
+            <div class="bg-white rounded-lg shadow-md p-4 border-l-4 border-yellow-500">
+                <div class="flex items-center justify-between">
+                    <div>
+                        <p class="text-xs text-gray-600 font-medium">Pending</p>
+                        <p class="text-2xl font-bold text-yellow-600"><?php echo $status_counts['pending']; ?></p>
+                    </div>
+                    <i class="fas fa-clock text-yellow-500 text-2xl"></i>
+                </div>
+            </div>
+            
+            <div class="bg-white rounded-lg shadow-md p-4 border-l-4 border-green-500">
+                <div class="flex items-center justify-between">
+                    <div>
+                        <p class="text-xs text-gray-600 font-medium">Approved</p>
+                        <p class="text-2xl font-bold text-green-600"><?php echo $status_counts['approved']; ?></p>
+                    </div>
+                    <i class="fas fa-check-circle text-green-500 text-2xl"></i>
+                </div>
+            </div>
+            
+            <div class="bg-white rounded-lg shadow-md p-4 border-l-4 border-red-500">
+                <div class="flex items-center justify-between">
+                    <div>
+                        <p class="text-xs text-gray-600 font-medium">Rejected</p>
+                        <p class="text-2xl font-bold text-red-600"><?php echo $status_counts['rejected']; ?></p>
+                    </div>
+                    <i class="fas fa-times-circle text-red-500 text-2xl"></i>
+                </div>
+            </div>
+            
+            <div class="bg-white rounded-lg shadow-md p-4 border-l-4 border-blue-500">
+                <div class="flex items-center justify-between">
+                    <div>
+                        <p class="text-xs text-gray-600 font-medium">Total</p>
+                        <p class="text-2xl font-bold text-blue-600"><?php echo count($purchase_orders); ?></p>
+                    </div>
+                    <i class="fas fa-file-invoice text-blue-500 text-2xl"></i>
+                </div>
+            </div>
+        </div>
+
         <!-- Purchase Orders List -->
         <div class="bg-white rounded-xl shadow-lg border border-gray-200 overflow-hidden">
             <div class="bg-gradient-to-r from-blue-600 to-blue-700 px-4 sm:px-6 py-3 sm:py-4 flex justify-between items-center">
@@ -216,7 +268,9 @@ $stmt->close();
                                     <th class="px-4 py-3 text-left text-xs font-bold text-gray-700 uppercase">Delivery</th>
                                     <th class="px-4 py-3 text-left text-xs font-bold text-gray-700 uppercase">Payment Terms</th>
                                     <th class="px-4 py-3 text-center text-xs font-bold text-gray-700 uppercase">Status</th>
-                                    <th class="px-4 py-3 text-center text-xs font-bold text-gray-700 uppercase">Attachment</th>
+                                    <th class="px-4 py-3 text-center text-xs font-bold text-gray-700 uppercase">Our Quotation</th>
+                                    <th class="px-4 py-3 text-center text-xs font-bold text-gray-700 uppercase">Client's PO</th>
+                                    <th class="px-4 py-3 text-center text-xs font-bold text-gray-700 uppercase">Approval Info</th>
                                     <th class="px-4 py-3 text-left text-xs font-bold text-gray-700 uppercase">Created By</th>
                                 </tr>
                             </thead>
@@ -260,11 +314,36 @@ $stmt->close();
                                             <?php if (!empty($po['attachment_path']) && file_exists($po['attachment_path'])): ?>
                                                 <a href="<?php echo htmlspecialchars($po['attachment_path']); ?>" target="_blank"
                                                     class="inline-flex items-center px-3 py-1 bg-blue-100 text-blue-700 rounded-lg hover:bg-blue-200 transition-colors text-xs font-medium">
-                                                    <i class="fas fa-file-download mr-1"></i>
-                                                    Download
+                                                    <i class="fas fa-file-pdf mr-1"></i>
+                                                    View
                                                 </a>
                                             <?php else: ?>
                                                 <span class="text-gray-400 text-xs">No file</span>
+                                            <?php endif; ?>
+                                        </td>
+                                        <td class="px-4 py-3 text-center">
+                                            <?php if (!empty($po['client_po_path']) && file_exists($po['client_po_path'])): ?>
+                                                <a href="<?php echo htmlspecialchars($po['client_po_path']); ?>" target="_blank"
+                                                    class="inline-flex items-center px-3 py-1 bg-green-100 text-green-700 rounded-lg hover:bg-green-200 transition-colors text-xs font-medium">
+                                                    <i class="fas fa-file-alt mr-1"></i>
+                                                    View
+                                                </a>
+                                            <?php else: ?>
+                                                <span class="text-gray-400 text-xs">Not uploaded</span>
+                                            <?php endif; ?>
+                                        </td>
+                                        <td class="px-4 py-3 text-center">
+                                            <?php if ($po['status'] === 'approved' || $po['status'] === 'rejected'): ?>
+                                                <div class="text-xs">
+                                                    <div class="font-semibold text-gray-700">
+                                                        <?php echo htmlspecialchars($po['approved_by_name'] ?? 'Unknown'); ?>
+                                                    </div>
+                                                    <div class="text-gray-500 mt-1">
+                                                        <?php echo $po['approved_at'] ? date('M j, Y g:i A', strtotime($po['approved_at'])) : 'N/A'; ?>
+                                                    </div>
+                                                </div>
+                                            <?php else: ?>
+                                                <span class="text-gray-400 text-xs italic">Pending review</span>
                                             <?php endif; ?>
                                         </td>
                                         <td class="px-4 py-3 text-gray-600 text-xs">

@@ -2174,7 +2174,7 @@ while ($row = $banners_result->fetch_assoc()) {
                                     <!-- CTA Button - Next to BESTSELLER -->
                                     <a href="index-bestseller-detail-B.php?slug=<?= htmlspecialchars($item['slug']) ?>"
                                         class="inline-block bg-black text-white px-4 sm:px-6 py-1.5 sm:py-2 rounded-lg font-semibold text-xs sm:text-sm hover:bg-red-600 transition-colors duration-300">
-                                        Learn More →
+                                        Learn More 
                                     </a>
                                     <!-- Navigation Arrows - Always visible next to BESTSELLER -->
                                     <div class="flex gap-2 ml-auto sm:ml-0">

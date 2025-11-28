@@ -72,7 +72,7 @@ if (isset($_SESSION['po_success'])) {
 
 // Fetch all purchase orders for this company
 $purchase_orders = [];
-$stmt = $conn->prepare("SELECT po.id, po.po_number, po.po_date, po.ship_to, po.target_delivery_date, po.payment_terms, po.attachment_path, po.client_po_path, po.status, po.created_at, po.approved_by, po.approved_at, n.fullname as created_by, n2.fullname as approved_by_name FROM purchase_orders po LEFT JOIN nobleaccount n ON po.sales_user_id = n.id LEFT JOIN nobleaccount n2 ON po.approved_by = n2.id WHERE po.company_id = ? AND po.sales_user_id = ? ORDER BY po.created_at DESC");
+$stmt = $conn->prepare("SELECT po.id, po.po_number, po.po_date, po.ship_to, po.target_delivery_date, po.payment_terms, po.attachment_path, po.client_po_path, po.status, po.accounting_status, po.created_at, po.approved_by, po.approved_at, po.accounting_approved_by, po.accounting_approved_at, n.fullname as created_by, n2.fullname as approved_by_name, n3.fullname as accounting_approved_by_name FROM purchase_orders po LEFT JOIN nobleaccount n ON po.sales_user_id = n.id LEFT JOIN nobleaccount n2 ON po.approved_by = n2.id LEFT JOIN nobleaccount n3 ON po.accounting_approved_by = n3.id WHERE po.company_id = ? AND po.sales_user_id = ? ORDER BY po.created_at DESC");
 $stmt->bind_param("ii", $company_id, $user_id);
 $stmt->execute();
 $result = $stmt->get_result();
@@ -189,16 +189,47 @@ $stmt->close();
             </div>
         <?php endif; ?>
 
+        <?php
+// Check if there are any rejected POs (both operational and accounting)
+$rejected_count = 0;
+foreach ($purchase_orders as $po) {
+    if ($po['status'] === 'rejected' || $po['accounting_status'] === 'rejected') {
+        $rejected_count++;
+    }
+}
+?>
+        <?php if ($rejected_count > 0): ?>
+            <div class="bg-orange-50 border-l-4 border-orange-500 p-4 mb-6">
+                <div class="flex items-start">
+                    <i class="fas fa-exclamation-triangle text-orange-600 text-xl mr-3 mt-1"></i>
+                    <div class="flex-1">
+                        <h3 class="text-orange-800 font-bold text-sm mb-1">
+                            <?php echo $rejected_count; ?> Purchase Order<?php echo $rejected_count > 1 ? 's' : ''; ?> Rejected
+                        </h3>
+                        <p class="text-orange-700 text-xs">
+                            You have rejected purchase orders that need attention. Please review the rejection reasons and click "Edit & Resubmit" to update and resubmit them.
+                        </p>
+                    </div>
+                </div>
+            </div>
+        <?php endif; ?>
+
         <!-- Status Summary Cards -->
         <div class="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
             <?php
-            $status_counts = ['pending' => 0, 'approved' => 0, 'rejected' => 0, 'processing' => 0];
-            foreach ($purchase_orders as $po) {
-                if (isset($status_counts[$po['status']])) {
-                    $status_counts[$po['status']]++;
-                }
-            }
-            ?>
+// Count operational statuses
+$status_counts = ['pending' => 0, 'approved' => 0, 'rejected' => 0, 'processing' => 0];
+$accounting_counts = ['pending' => 0, 'approved' => 0, 'rejected' => 0];
+
+foreach ($purchase_orders as $po) {
+    if (isset($status_counts[$po['status']])) {
+        $status_counts[$po['status']]++;
+    }
+    if (isset($accounting_counts[$po['accounting_status']])) {
+        $accounting_counts[$po['accounting_status']]++;
+    }
+}
+?>
             
             <div class="bg-white rounded-lg shadow-md p-4 border-l-4 border-yellow-500">
                 <div class="flex items-center justify-between">
@@ -239,6 +270,27 @@ $stmt->close();
                     <i class="fas fa-file-invoice text-blue-500 text-2xl"></i>
                 </div>
             </div>
+
+            <!-- Accounting Status Cards -->
+            <div class="col-span-2 md:col-span-4 bg-gradient-to-r from-indigo-50 to-blue-50 rounded-lg shadow-md p-4 border border-indigo-200">
+                <p class="text-xs font-bold text-indigo-800 mb-3 flex items-center">
+                    <i class="fas fa-calculator mr-2"></i>ACCOUNTING STATUS
+                </p>
+                <div class="grid grid-cols-3 gap-3">
+                    <div class="bg-white rounded p-3 border-l-2 border-yellow-500">
+                        <p class="text-xs text-gray-600">Pending</p>
+                        <p class="text-xl font-bold text-yellow-600"><?php echo $accounting_counts['pending']; ?></p>
+                    </div>
+                    <div class="bg-white rounded p-3 border-l-2 border-green-500">
+                        <p class="text-xs text-gray-600">Approved</p>
+                        <p class="text-xl font-bold text-green-600"><?php echo $accounting_counts['approved']; ?></p>
+                    </div>
+                    <div class="bg-white rounded p-3 border-l-2 border-red-500">
+                        <p class="text-xs text-gray-600">Rejected</p>
+                        <p class="text-xl font-bold text-red-600"><?php echo $accounting_counts['rejected']; ?></p>
+                    </div>
+                </div>
+            </div>
         </div>
 
         <!-- Purchase Orders List -->
@@ -267,11 +319,13 @@ $stmt->close();
                                     <th class="px-4 py-3 text-left text-xs font-bold text-gray-700 uppercase">Ship To</th>
                                     <th class="px-4 py-3 text-left text-xs font-bold text-gray-700 uppercase">Delivery</th>
                                     <th class="px-4 py-3 text-left text-xs font-bold text-gray-700 uppercase">Payment Terms</th>
-                                    <th class="px-4 py-3 text-center text-xs font-bold text-gray-700 uppercase">Status</th>
+                                    <th class="px-4 py-3 text-center text-xs font-bold text-gray-700 uppercase">Ops Status</th>
+                                    <th class="px-4 py-3 text-center text-xs font-bold text-gray-700 uppercase">Accounting Status</th>
                                     <th class="px-4 py-3 text-center text-xs font-bold text-gray-700 uppercase">Our Quotation</th>
                                     <th class="px-4 py-3 text-center text-xs font-bold text-gray-700 uppercase">Client's PO</th>
-                                    <th class="px-4 py-3 text-center text-xs font-bold text-gray-700 uppercase">Approval Info</th>
+                                    <th class="px-4 py-3 text-center text-xs font-bold text-gray-700 uppercase">Ops Approval</th>
                                     <th class="px-4 py-3 text-left text-xs font-bold text-gray-700 uppercase">Created By</th>
+                                    <th class="px-4 py-3 text-center text-xs font-bold text-gray-700 uppercase">Actions</th>
                                 </tr>
                             </thead>
                             <tbody class="divide-y divide-gray-200">
@@ -295,21 +349,85 @@ $stmt->close();
                                             <?php echo htmlspecialchars($po['payment_terms']); ?>
                                         </td>
                                         <td class="px-4 py-3 text-center">
-                                            <?php
-                                            $status_colors = [
-                                                'pending' => 'bg-yellow-100 text-yellow-700',
-                                                'approved' => 'bg-green-100 text-green-700',
-                                                'processing' => 'bg-blue-100 text-blue-700',
-                                                'shipped' => 'bg-purple-100 text-purple-700',
-                                                'delivered' => 'bg-green-100 text-green-800',
-                                                'cancelled' => 'bg-red-100 text-red-700'
-                                            ];
-                                            $status_class = $status_colors[$po['status']] ?? 'bg-gray-100 text-gray-700';
-                                            ?>
-                                            <span class="inline-flex items-center px-2 py-1 <?php echo $status_class; ?> rounded-full text-xs font-semibold">
-                                                <?php echo ucfirst($po['status']); ?>
-                                            </span>
-                                        </td>
+    <?php
+    $status_colors = [
+        'pending' => 'bg-yellow-100 text-yellow-700',
+        'approved' => 'bg-green-100 text-green-700',
+        'processing' => 'bg-blue-100 text-blue-700',
+        'shipped' => 'bg-purple-100 text-purple-700',
+        'delivered' => 'bg-green-100 text-green-800',
+        'cancelled' => 'bg-red-100 text-red-700',
+        'rejected' => 'bg-red-100 text-red-700'
+    ];
+    $status_class = $status_colors[$po['status']] ?? 'bg-gray-100 text-gray-700';
+    ?>
+    <span class="inline-flex items-center px-2 py-1 <?php echo $status_class; ?> rounded-full text-xs font-semibold">
+        <?php echo ucfirst($po['status']); ?>
+    </span>
+    <?php if ($po['status'] === 'rejected'): ?>
+        <?php
+        // Fetch rejection reason from logs
+        $log_stmt = $conn->prepare("SELECT notes FROM po_status_logs WHERE po_id = ? AND new_status = 'rejected' ORDER BY created_at DESC LIMIT 1");
+        $log_stmt->bind_param("i", $po['id']);
+        $log_stmt->execute();
+        $log_stmt->bind_result($rejection_notes);
+        $log_stmt->fetch();
+        $log_stmt->close();
+        ?>
+        <?php if (!empty($rejection_notes)): ?>
+            <div class="mt-2 text-xs text-red-700 bg-red-50 p-2 rounded border border-red-200">
+                <i class="fas fa-info-circle mr-1"></i>
+                <strong>Reason:</strong> <?php echo htmlspecialchars(substr($rejection_notes, 0, 100)); ?>
+                <?php if (strlen($rejection_notes) > 100): ?>...<?php endif; ?>
+            </div>
+        <?php endif; ?>
+    <?php endif; ?>
+</td>
+                                        <td class="px-4 py-3 text-center">
+    <?php
+    $accounting_status_colors = [
+        'pending' => 'bg-yellow-100 text-yellow-700',
+        'approved' => 'bg-green-100 text-green-700',
+        'rejected' => 'bg-red-100 text-red-700'
+    ];
+    $accounting_class = $accounting_status_colors[$po['accounting_status'] ?? 'pending'] ?? 'bg-gray-100 text-gray-700';
+    ?>
+    <span class="inline-flex items-center px-2 py-1 <?php echo $accounting_class; ?> rounded-full text-xs font-semibold">
+        <?php echo ucfirst($po['accounting_status'] ?? 'pending'); ?>
+    </span>
+    
+    <?php if ($po['accounting_status'] === 'rejected'): ?>
+        <?php
+        // Fetch accounting rejection reason from logs
+        $acc_rejection_notes = '';
+        $acc_log_query = "SELECT notes FROM po_status_logs WHERE po_id = ? AND new_status = 'rejected' AND old_status != 'rejected' ORDER BY created_at DESC LIMIT 1";
+        $acc_log_stmt = $conn->prepare($acc_log_query);
+        
+        if ($acc_log_stmt) {
+            $acc_log_stmt->bind_param("i", $po['id']);
+            $acc_log_stmt->execute();
+            $acc_log_result = $acc_log_stmt->get_result();
+            
+            if ($acc_log_row = $acc_log_result->fetch_assoc()) {
+                $acc_rejection_notes = $acc_log_row['notes'];
+            }
+            $acc_log_stmt->close();
+        }
+        ?>
+        
+        <?php if (!empty($acc_rejection_notes)): ?>
+            <div class="mt-2 text-xs text-red-700 bg-red-50 p-2 rounded border border-red-200 text-left">
+                <i class="fas fa-info-circle mr-1"></i>
+                <strong>Reason:</strong> <?php echo htmlspecialchars(substr($acc_rejection_notes, 0, 100)); ?>
+                <?php if (strlen($acc_rejection_notes) > 100): ?>...<?php endif; ?>
+            </div>
+        <?php else: ?>
+            <div class="mt-2 text-xs text-gray-500 italic">
+                No rejection reason provided
+            </div>
+        <?php endif; ?>
+    <?php endif; ?>
+</td>
                                         <td class="px-4 py-3 text-center">
                                             <?php if (!empty($po['attachment_path']) && file_exists($po['attachment_path'])): ?>
                                                 <a href="<?php echo htmlspecialchars($po['attachment_path']); ?>" target="_blank"
@@ -347,8 +465,19 @@ $stmt->close();
                                             <?php endif; ?>
                                         </td>
                                         <td class="px-4 py-3 text-gray-600 text-xs">
-                                            <?php echo htmlspecialchars($po['created_by'] ?? 'Unknown'); ?>
-                                        </td>
+    <?php echo htmlspecialchars($po['created_by'] ?? 'Unknown'); ?>
+</td>
+<td class="px-4 py-3 text-center">
+    <?php if ($po['status'] === 'rejected' || $po['accounting_status'] === 'rejected'): ?>
+        <a href="edit_purchase_order.php?po_id=<?php echo $po['id']; ?>" 
+           class="inline-flex items-center px-3 py-1 bg-orange-100 text-orange-700 rounded-lg hover:bg-orange-200 transition-colors text-xs font-bold">
+            <i class="fas fa-edit mr-1"></i>
+            Edit & Resubmit
+        </a>
+    <?php else: ?>
+        <span class="text-gray-400 text-xs">-</span>
+    <?php endif; ?>
+</td>
                                     </tr>
                                 <?php endforeach; ?>
                             </tbody>

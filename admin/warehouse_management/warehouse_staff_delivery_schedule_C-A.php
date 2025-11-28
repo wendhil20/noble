@@ -41,13 +41,13 @@ if ($schedule_replacements) {
     $itemsSql = "
         SELECT 
             oi.id,
-            CAST(oi.product_name AS CHAR) COLLATE utf8mb4_unicode_ci as product_name,
+            oi.product_name,
             rr.replacement_quantity as quantity,
             oi.price,
-            CAST(oi.origin AS CHAR) COLLATE utf8mb4_unicode_ci as origin,
-            CAST(rr.status AS CHAR) COLLATE utf8mb4_unicode_ci as tracking_status,
-            CAST('replacement' AS CHAR) COLLATE utf8mb4_unicode_ci as item_type,
-            CAST(rr.reason AS CHAR) COLLATE utf8mb4_unicode_ci as replacement_reason,
+            oi.origin,
+            rr.status as tracking_status,
+            'replacement' as item_type,
+            rr.reason as replacement_reason,
             oi.lt_from,
             oi.lt_to
         FROM replacement_requests rr
@@ -62,13 +62,13 @@ if ($schedule_replacements) {
     $itemsSql = "
         SELECT 
             oi.id,
-            CAST(oi.product_name AS CHAR) COLLATE utf8mb4_unicode_ci as product_name,
+            oi.product_name,
             oi.quantity,
             oi.price,
-            CAST(oi.origin AS CHAR) COLLATE utf8mb4_unicode_ci as origin,
-            CAST(oi.tracking_status AS CHAR) COLLATE utf8mb4_unicode_ci as tracking_status,
-            CAST('original' AS CHAR) COLLATE utf8mb4_unicode_ci as item_type,
-            CAST(NULL AS CHAR) COLLATE utf8mb4_unicode_ci as replacement_reason,
+            oi.origin,
+            oi.tracking_status,
+            'original' as item_type,
+            NULL as replacement_reason,
             oi.lt_from,
             oi.lt_to
         FROM order_items oi
@@ -78,13 +78,13 @@ if ($schedule_replacements) {
         
         SELECT 
             oi.id,
-            CAST(oi.product_name AS CHAR) COLLATE utf8mb4_unicode_ci as product_name,
+            oi.product_name,
             rr.replacement_quantity as quantity,
             oi.price,
-            CAST(oi.origin AS CHAR) COLLATE utf8mb4_unicode_ci as origin,
-            CAST(rr.status AS CHAR) COLLATE utf8mb4_unicode_ci as tracking_status,
-            CAST('replacement' AS CHAR) COLLATE utf8mb4_unicode_ci as item_type,
-            CAST(rr.reason AS CHAR) COLLATE utf8mb4_unicode_ci as replacement_reason,
+            oi.origin,
+            rr.status as tracking_status,
+            'replacement' as item_type,
+            rr.reason as replacement_reason,
             oi.lt_from,
             oi.lt_to
         FROM replacement_requests rr

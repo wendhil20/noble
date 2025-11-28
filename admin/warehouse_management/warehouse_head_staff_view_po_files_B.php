@@ -443,7 +443,7 @@ if (isset($_POST['delete_file'])) {
         <?php if (!empty($attachmentsBySupplier)): ?>
             <div class="space-y-6">
                 <?php foreach ($attachmentsBySupplier as $supplier => $supplierFiles): ?>
-                    <div class="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
+                    <div class="bg-white rounded-xl shadow-sm border border-gray-200 overflow-visible">
                         <div class="bg-gradient-to-r from-blue-50 to-blue-100 px-6 py-4 border-b border-gray-200">
                             <div class="flex items-center justify-between">
                                 <h3 class="text-lg font-bold text-gray-900 flex items-center">
@@ -455,12 +455,12 @@ if (isset($_POST['delete_file'])) {
                                 </span>
                             </div>
                         </div>
-                        <div class="p-6">
-                            <div class="space-y-4">
+                        <div class="p-6 overflow-visible">
+    <div class="space-y-4 overflow-visible">
                                 <?php foreach ($supplierFiles as $file): ?>
-                                    <div class="file-card flex items-center justify-between p-4 bg-gray-50 rounded-lg border border-gray-200 hover:bg-gray-100 transition-colors duration-200"
-                                         data-status="<?php echo $file['approval_status']; ?>"
-                                         data-ordered="<?php echo $file['marked_as_ordered']; ?>">
+                                    <div class="file-card flex items-center justify-between p-4 bg-gray-50 rounded-lg border border-gray-200 hover:bg-gray-100 transition-colors duration-200 relative"
+     data-status="<?php echo $file['approval_status']; ?>"
+     data-ordered="<?php echo $file['marked_as_ordered']; ?>">
                                         <div class="flex items-center space-x-3">
                                             <div class="bg-green-100 p-2 rounded-lg">
                                                 <i class="fas fa-file-excel text-green-600 text-xl"></i>
@@ -474,7 +474,7 @@ if (isset($_POST['delete_file'])) {
                                             </div>
                                         </div>
                                         <div class="flex items-center space-x-2">
-    <!-- P.O. Status Badges -->
+    <!-- P.O. Status Badges (keep these visible) -->
     <?php if ($file['all_items_received'] == 1): ?>
     <span class="inline-flex items-center px-3 py-1 text-xs font-medium bg-emerald-100 text-emerald-800 rounded-full border-2 border-emerald-300">
         <i class="fas fa-check-double mr-1"></i>
@@ -486,120 +486,133 @@ if (isset($_POST['delete_file'])) {
             <i class="fas fa-inbox mr-1"></i>
             Currently Receiving (<?php echo date('M j, Y', strtotime($file['currently_receiving_at'])); ?>)
         </span>
-            <span class="inline-flex items-center px-3 py-1 text-xs font-medium bg-purple-100 text-purple-800 rounded-full">
-                <i class="fas fa-inbox mr-1"></i>
-                Currently Receiving (<?php echo date('M j, Y', strtotime($file['currently_receiving_at'])); ?>)
-            </span>
-        <?php elseif ($file['po_status'] == 'out_for_delivery'): ?>
-            <span class="inline-flex items-center px-3 py-1 text-xs font-medium bg-orange-100 text-orange-800 rounded-full">
-                <i class="fas fa-truck mr-1"></i>
-                Out for Delivery (<?php echo date('M j, Y', strtotime($file['out_for_delivery_at'])); ?>)
-            </span>
-        <?php elseif ($file['po_status'] == 'supplier_confirmed'): ?>
-            <span class="inline-flex items-center px-3 py-1 text-xs font-medium bg-green-100 text-green-800 rounded-full">
-                <i class="fas fa-check-circle mr-1"></i>
-                Supplier Confirmed (<?php echo date('M j, Y', strtotime($file['supplier_confirmed_at'])); ?>)
-            </span>
-            <?php if ($file['expected_delivery_date']): ?>
-                <span class="inline-flex items-center px-3 py-1 text-xs font-medium bg-yellow-100 text-yellow-800 rounded-full">
-                    <i class="fas fa-calendar mr-1"></i>
-                    Expected: <?php echo date('M j, Y', strtotime($file['expected_delivery_date'])); ?>
-                </span>
-            <?php endif; ?>
-        <?php else: ?>
-            <span class="inline-flex items-center px-3 py-1 text-xs font-medium bg-blue-100 text-blue-800 rounded-full">
-                <i class="fas fa-shipping-fast mr-1"></i>
-                Ordered (<?php echo date('M j, Y', strtotime($file['marked_as_ordered_at'])); ?>)
+    <?php elseif ($file['po_status'] == 'out_for_delivery'): ?>
+        <span class="inline-flex items-center px-3 py-1 text-xs font-medium bg-orange-100 text-orange-800 rounded-full">
+            <i class="fas fa-truck mr-1"></i>
+            Out for Delivery (<?php echo date('M j, Y', strtotime($file['out_for_delivery_at'])); ?>)
+        </span>
+    <?php elseif ($file['po_status'] == 'supplier_confirmed'): ?>
+        <span class="inline-flex items-center px-3 py-1 text-xs font-medium bg-green-100 text-green-800 rounded-full">
+            <i class="fas fa-check-circle mr-1"></i>
+            Supplier Confirmed (<?php echo date('M j, Y', strtotime($file['supplier_confirmed_at'])); ?>)
+        </span>
+        <?php if ($file['expected_delivery_date']): ?>
+            <span class="inline-flex items-center px-3 py-1 text-xs font-medium bg-yellow-100 text-yellow-800 rounded-full">
+                <i class="fas fa-calendar mr-1"></i>
+                Expected: <?php echo date('M j, Y', strtotime($file['expected_delivery_date'])); ?>
             </span>
         <?php endif; ?>
-    <?php endif; ?>
-    
-    <!-- Approval Status Badge -->
-    <?php if ($file['approval_status'] == 'pending'): ?>
-        <span class="inline-flex items-center px-2 py-1 text-xs font-medium bg-yellow-100 text-yellow-800 rounded-full">
-            <i class="fas fa-clock mr-1"></i>
-            Pending Approval
-        </span>
-    <?php elseif ($file['approval_status'] == 'approved'): ?>
-        <span class="inline-flex items-center px-2 py-1 text-xs font-medium bg-green-100 text-green-800 rounded-full">
-            <i class="fas fa-check-circle mr-1"></i>
-            Approved
-        </span>
-    <?php elseif ($file['approval_status'] == 'rejected'): ?>
-        <span class="inline-flex items-center px-2 py-1 text-xs font-medium bg-red-100 text-red-800 rounded-full">
-            <i class="fas fa-times-circle mr-1"></i>
-            Rejected
-        </span>
-    <?php endif; ?>
-    
-    <a href="?order_id=<?php echo $order_id; ?>&download=1&file_id=<?php echo $file['id']; ?>" 
-       class="bg-blue-600 hover:bg-blue-700 text-white px-3 py-2 rounded-lg transition-colors duration-200 flex items-center space-x-1 text-sm">
-        <i class="fas fa-download"></i>
-        <span>Download</span>
-    </a>
-    
-    <?php if ($file['marked_as_ordered'] == 0): ?>
-    <?php if ($file['approval_status'] != 'pending' && $file['approval_requested_at'] == null): ?>
-        <form method="POST" style="display: inline;">
-            <input type="hidden" name="file_id" value="<?php echo $file['id']; ?>">
-            <button type="submit" name="request_approval"
-                    class="bg-green-600 hover:bg-green-700 text-white px-3 py-2 rounded-lg transition-colors duration-200 flex items-center space-x-1 text-sm">
-                <i class="fas fa-check"></i>
-                <span>Request Approval</span>
-            </button>
-        </form>
-    <?php endif; ?>
-    
-    <?php if ($file['approval_status'] == 'approved'): ?>
-        <button onclick="markSingleAsOrdered(<?php echo $file['id']; ?>, '<?php echo htmlspecialchars($file['original_filename'], ENT_QUOTES); ?>')"
-                class="bg-purple-600 hover:bg-purple-700 text-white px-3 py-2 rounded-lg transition-colors duration-200 flex items-center space-x-1 text-sm">
-            <i class="fas fa-paper-plane"></i>
-            <span>Mark as Ordered</span>
-        </button>
-    <?php endif; ?>
-<?php else: ?>
-    <!-- P.O. Status Update Buttons -->
-    <?php if ($file['po_status'] == 'currently_receiving'): ?>
-        <span class="inline-flex items-center px-3 py-1 text-xs font-medium bg-gray-100 text-gray-600 rounded-full">
-            <i class="fas fa-check-double mr-1"></i>
-            Process Complete
-        </span>
-    <?php elseif ($file['po_status'] == 'out_for_delivery'): ?>
-        <button onclick="updatePoStatus(<?php echo $file['id']; ?>, 'currently_receiving', '<?php echo htmlspecialchars($file['original_filename'], ENT_QUOTES); ?>')"
-                class="bg-purple-600 hover:bg-purple-700 text-white px-3 py-2 rounded-lg transition-colors duration-200 flex items-center space-x-1 text-sm">
-            <i class="fas fa-inbox"></i>
-            <span>Mark as Currently Receiving</span>
-        </button>
-        <button onclick="updatePoStatus(<?php echo $file['id']; ?>, 'supplier_confirmed', '<?php echo htmlspecialchars($file['original_filename'], ENT_QUOTES); ?>', true)"
-                class="bg-yellow-600 hover:bg-yellow-700 text-white px-3 py-2 rounded-lg transition-colors duration-200 flex items-center space-x-1 text-sm">
-            <i class="fas fa-undo"></i>
-            <span>Back to Confirmed</span>
-        </button>
-    <?php elseif ($file['po_status'] == 'supplier_confirmed'): ?>
-        <button onclick="updatePoStatus(<?php echo $file['id']; ?>, 'out_for_delivery', '<?php echo htmlspecialchars($file['original_filename'], ENT_QUOTES); ?>')"
-                class="bg-orange-600 hover:bg-orange-700 text-white px-3 py-2 rounded-lg transition-colors duration-200 flex items-center space-x-1 text-sm">
-            <i class="fas fa-truck"></i>
-            <span>Mark as Out for Delivery</span>
-        </button>
-        <button onclick="updatePoStatus(<?php echo $file['id']; ?>, 'supplier_confirmed', '<?php echo htmlspecialchars($file['original_filename'], ENT_QUOTES); ?>', true)"
-                class="bg-blue-600 hover:bg-blue-700 text-white px-3 py-2 rounded-lg transition-colors duration-200 flex items-center space-x-1 text-sm">
-            <i class="fas fa-edit"></i>
-            <span>Update Expected Date</span>
-        </button>
     <?php else: ?>
-        <button onclick="updatePoStatus(<?php echo $file['id']; ?>, 'supplier_confirmed', '<?php echo htmlspecialchars($file['original_filename'], ENT_QUOTES); ?>', true)"
-                class="bg-green-600 hover:bg-green-700 text-white px-3 py-2 rounded-lg transition-colors duration-200 flex items-center space-x-1 text-sm">
-            <i class="fas fa-check-circle"></i>
-            <span>Mark as Supplier Confirmed</span>
-        </button>
+        <span class="inline-flex items-center px-3 py-1 text-xs font-medium bg-blue-100 text-blue-800 rounded-full">
+            <i class="fas fa-shipping-fast mr-1"></i>
+            Ordered (<?php echo date('M j, Y', strtotime($file['marked_as_ordered_at'])); ?>)
+        </span>
     <?php endif; ?>
 <?php endif; ?>
-    
-    <button onclick="confirmDelete(<?php echo $file['id']; ?>, '<?php echo htmlspecialchars($file['original_filename'], ENT_QUOTES); ?>')"
-            class="bg-red-600 hover:bg-red-700 text-white px-3 py-2 rounded-lg transition-colors duration-200 flex items-center space-x-1 text-sm">
-        <i class="fas fa-trash"></i>
-        <span>Delete</span>
-    </button>
+
+<!-- Approval Status Badge -->
+<?php if ($file['approval_status'] == 'pending'): ?>
+    <span class="inline-flex items-center px-2 py-1 text-xs font-medium bg-yellow-100 text-yellow-800 rounded-full">
+        <i class="fas fa-clock mr-1"></i>
+        Pending Approval
+    </span>
+<?php elseif ($file['approval_status'] == 'approved'): ?>
+    <span class="inline-flex items-center px-2 py-1 text-xs font-medium bg-green-100 text-green-800 rounded-full">
+        <i class="fas fa-check-circle mr-1"></i>
+        Approved
+    </span>
+<?php elseif ($file['approval_status'] == 'rejected'): ?>
+    <span class="inline-flex items-center px-2 py-1 text-xs font-medium bg-red-100 text-red-800 rounded-full">
+        <i class="fas fa-times-circle mr-1"></i>
+        Rejected
+    </span>
+<?php endif; ?>
+
+    <!-- 3-Dot Dropdown Menu -->
+    <div class="relative inline-block text-left">
+        <button type="button" 
+                onclick="toggleDropdown(<?php echo $file['id']; ?>)"
+                class="bg-gray-200 hover:bg-gray-300 text-gray-700 p-2 rounded-lg transition-colors duration-200">
+            <i class="fas fa-ellipsis-v"></i>
+        </button>
+        
+        <!-- Dropdown Menu -->
+        <div id="dropdown-<?php echo $file['id']; ?>" 
+     class="hidden absolute right-0 bottom-full mb-2 w-56 rounded-lg shadow-xl bg-white ring-1 ring-black ring-opacity-5 z-[9999]">
+            <div class="py-1">
+                <!-- Download -->
+                <a href="?order_id=<?php echo $order_id; ?>&download=1&file_id=<?php echo $file['id']; ?>" 
+                   class="flex items-center px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">
+                    <i class="fas fa-download w-5 mr-2"></i>
+                    Download
+                </a>
+                
+                <?php if ($file['marked_as_ordered'] == 0): ?>
+                    <!-- Request Approval -->
+                    <?php if ($file['approval_status'] != 'pending' && $file['approval_requested_at'] == null): ?>
+                        <button onclick="submitAction('request_approval', <?php echo $file['id']; ?>)"
+                                class="w-full text-left flex items-center px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">
+                            <i class="fas fa-check w-5 mr-2"></i>
+                            Request Approval
+                        </button>
+                    <?php endif; ?>
+                    
+                    <!-- Mark as Ordered -->
+                    <?php if ($file['approval_status'] == 'approved'): ?>
+                        <button onclick="markSingleAsOrdered(<?php echo $file['id']; ?>, '<?php echo htmlspecialchars($file['original_filename'], ENT_QUOTES); ?>')"
+                                class="w-full text-left flex items-center px-4 py-2 text-sm text-purple-700 hover:bg-purple-50">
+                            <i class="fas fa-paper-plane w-5 mr-2"></i>
+                            Mark as Ordered
+                        </button>
+                    <?php endif; ?>
+                <?php else: ?>
+                    <!-- P.O. Status Updates -->
+                    <?php if ($file['po_status'] == 'currently_receiving'): ?>
+                        <div class="px-4 py-2 text-xs text-gray-500">
+                            <i class="fas fa-check-double mr-1"></i>
+                            Process Complete
+                        </div>
+                    <?php elseif ($file['po_status'] == 'out_for_delivery'): ?>
+                        <button onclick="updatePoStatus(<?php echo $file['id']; ?>, 'currently_receiving', '<?php echo htmlspecialchars($file['original_filename'], ENT_QUOTES); ?>')"
+                                class="w-full text-left flex items-center px-4 py-2 text-sm text-purple-700 hover:bg-purple-50">
+                            <i class="fas fa-inbox w-5 mr-2"></i>
+                            Mark as Currently Receiving
+                        </button>
+                        <button onclick="updatePoStatus(<?php echo $file['id']; ?>, 'supplier_confirmed', '<?php echo htmlspecialchars($file['original_filename'], ENT_QUOTES); ?>', true)"
+                                class="w-full text-left flex items-center px-4 py-2 text-sm text-yellow-700 hover:bg-yellow-50">
+                            <i class="fas fa-undo w-5 mr-2"></i>
+                            Back to Confirmed
+                        </button>
+                    <?php elseif ($file['po_status'] == 'supplier_confirmed'): ?>
+                        <button onclick="updatePoStatus(<?php echo $file['id']; ?>, 'out_for_delivery', '<?php echo htmlspecialchars($file['original_filename'], ENT_QUOTES); ?>')"
+                                class="w-full text-left flex items-center px-4 py-2 text-sm text-orange-700 hover:bg-orange-50">
+                            <i class="fas fa-truck w-5 mr-2"></i>
+                            Mark as Out for Delivery
+                        </button>
+                        <button onclick="updatePoStatus(<?php echo $file['id']; ?>, 'supplier_confirmed', '<?php echo htmlspecialchars($file['original_filename'], ENT_QUOTES); ?>', true)"
+                                class="w-full text-left flex items-center px-4 py-2 text-sm text-blue-700 hover:bg-blue-50">
+                            <i class="fas fa-edit w-5 mr-2"></i>
+                            Update Expected Date
+                        </button>
+                    <?php else: ?>
+                        <button onclick="updatePoStatus(<?php echo $file['id']; ?>, 'supplier_confirmed', '<?php echo htmlspecialchars($file['original_filename'], ENT_QUOTES); ?>', true)"
+                                class="w-full text-left flex items-center px-4 py-2 text-sm text-green-700 hover:bg-green-50">
+                            <i class="fas fa-check-circle w-5 mr-2"></i>
+                            Mark as Supplier Confirmed
+                        </button>
+                    <?php endif; ?>
+                <?php endif; ?>
+                
+                <!-- Delete (always available) -->
+                <hr class="my-1">
+                <button onclick="confirmDelete(<?php echo $file['id']; ?>, '<?php echo htmlspecialchars($file['original_filename'], ENT_QUOTES); ?>')"
+                        class="w-full text-left flex items-center px-4 py-2 text-sm text-red-700 hover:bg-red-50">
+                    <i class="fas fa-trash w-5 mr-2"></i>
+                    Delete
+                </button>
+            </div>
+        </div>
+    </div>
 </div>
                                     </div>
                                 <?php endforeach; ?>
@@ -996,6 +1009,42 @@ function closeUpdateStatusModal() {
 document.getElementById('updateStatusModal').addEventListener('click', function(e) {
     if (e.target === this) closeUpdateStatusModal();
 });
+
+// Toggle dropdown menu
+function toggleDropdown(fileId) {
+    const dropdown = document.getElementById('dropdown-' + fileId);
+    const allDropdowns = document.querySelectorAll('[id^="dropdown-"]');
+    
+    // Close all other dropdowns
+    allDropdowns.forEach(d => {
+        if (d.id !== 'dropdown-' + fileId) {
+            d.classList.add('hidden');
+        }
+    });
+    
+    // Toggle current dropdown
+    dropdown.classList.toggle('hidden');
+}
+
+// Close dropdown when clicking outside
+document.addEventListener('click', function(event) {
+    if (!event.target.closest('button') || !event.target.closest('[onclick^="toggleDropdown"]')) {
+        const allDropdowns = document.querySelectorAll('[id^="dropdown-"]');
+        allDropdowns.forEach(d => d.classList.add('hidden'));
+    }
+});
+
+// Submit form actions (for request approval)
+function submitAction(action, fileId) {
+    const form = document.createElement('form');
+    form.method = 'POST';
+    form.innerHTML = `
+        <input type="hidden" name="${action}" value="1">
+        <input type="hidden" name="file_id" value="${fileId}">
+    `;
+    document.body.appendChild(form);
+    form.submit();
+}
     </script>
 </body>
 </html>

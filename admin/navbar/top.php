@@ -463,6 +463,18 @@ if (!isset($_SESSION['noble_name']) || !isset($_SESSION['noble_lvl']) || !isset(
 
                                 <?php if (hasAnyRole(['superadmin', 'productspecialist'])): ?>
                                     <div class="px-3 py-2">
+                                        <div class="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-2 px-2">Operational Manager</div>
+                                        <a href="../client/approve_purchase_orders.php"
+                                            class="quick-action-item flex items-center space-x-3 px-3 py-2.5 text-sm text-gray-700 hover:bg-orange-50 hover:text-orange-600 rounded-lg transition-all duration-150">
+                                            <i class="ri-add-circle-line text-lg"></i>
+                                            <span>Project Approval</span>
+                                        </a>
+                                    </div>
+                                    <hr class="my-2 border-gray-200">
+                                <?php endif; ?>
+
+                                <?php if (hasAnyRole(['superadmin', 'productspecialist'])): ?>
+                                    <div class="px-3 py-2">
                                         <div class="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-2 px-2">Product Management</div>
                                         <a href="../shop/main-adminshop-page-1.php"
                                             class="quick-action-item flex items-center space-x-3 px-3 py-2.5 text-sm text-gray-700 hover:bg-orange-50 hover:text-orange-600 rounded-lg transition-all duration-150">
@@ -559,6 +571,16 @@ if (!isset($_SESSION['noble_name']) || !isset($_SESSION['noble_lvl']) || !isset(
                                             <i class="ri-gift-line text-lg"></i>
                                             <span>Referral Generate Code</span>
                                         </a>
+
+                                        <!-- Project Management -->
+<a href="../project_management/view_companies.php"
+    class="quick-action-item flex items-center space-x-3 px-3 py-2.5 text-sm text-gray-700 
+    hover:bg-orange-50 hover:text-orange-600 rounded-lg transition-all duration-150">
+    
+    <i class="ri-task-line text-lg"></i>
+    <span>Project Management</span>
+</a>
+
 
                                     </div>
 
@@ -696,6 +718,13 @@ if (!isset($_SESSION['noble_name']) || !isset($_SESSION['noble_lvl']) || !isset(
                                                 class="quick-action-item flex items-center space-x-3 px-3 py-2.5 text-sm text-gray-700 hover:bg-orange-50 hover:text-orange-600 rounded-lg transition-all duration-150">
                                                 <i class="ri-archive-line text-lg"></i>
                                                 <span>Dashboard</span>
+                                            </a>
+                                        <?php endif; ?>
+                                        <?php if (hasAnyRole(['superadmin']) || !hasSubrole(['document_controller'])): ?>
+                                            <a href="../accountant/approve_purchase_orders_accountant"
+                                                class="quick-action-item flex items-center space-x-3 px-3 py-2.5 text-sm text-gray-700 hover:bg-orange-50 hover:text-orange-600 rounded-lg transition-all duration-150">
+                                                <i class="ri-archive-line text-lg"></i>
+                                                <span>Project Approval</span>
                                             </a>
                                         <?php endif; ?>
                                         <a href="../accountant/accountant_view_orders"

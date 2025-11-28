@@ -1,5 +1,5 @@
 <?php
-// add_purchase_order.php - Add Purchase Order with Quotation Builder
+// edit_purchase_order.php - Edit Rejected Purchase Order
 use PhpOffice\PhpSpreadsheet\Spreadsheet;
 use PhpOffice\PhpSpreadsheet\Writer\Xlsx;
 use PhpOffice\PhpSpreadsheet\Style\Fill;
@@ -53,24 +53,32 @@ $user_id = $_SESSION['noble_id'];
 $fullname = $_SESSION['noble_name'];
 $user_level = $_SESSION['noble_lvl'];
 
-// Get company_id from URL
-$company_id = isset($_GET['company_id']) ? intval($_GET['company_id']) : 0;
+// Get PO ID from URL
+$po_id = isset($_GET['po_id']) ? intval($_GET['po_id']) : 0;
 
-if ($company_id <= 0) {
+if ($po_id <= 0) {
     header("Location: view_companies.php");
     exit();
 }
 
-// Get company details
-$stmt = $conn->prepare("SELECT company_name, company_address, logo_path FROM companies WHERE id = ?");
-$stmt->bind_param("i", $company_id);
+// Get PO details - ensure it belongs to this user and is rejected
+$stmt = $conn->prepare("SELECT po.*, c.company_name, c.company_address, c.logo_path FROM purchase_orders po LEFT JOIN companies c ON po.company_id = c.id WHERE po.id = ? AND po.sales_user_id = ? AND (po.status = 'rejected' OR po.accounting_status = 'rejected')");
+$stmt->bind_param("ii", $po_id, $user_id);
 $stmt->execute();
-$stmt->bind_result($company_name, $company_address, $logo_path);
-if (!$stmt->fetch()) {
+$result = $stmt->get_result();
+$po_data = $result->fetch_assoc();
+$stmt->close();
+
+if (!$po_data) {
+    $_SESSION['po_error'] = "Purchase Order not found or cannot be edited.";
     header("Location: view_companies.php");
     exit();
 }
-$stmt->close();
+
+$company_id = $po_data['company_id'];
+$company_name = $po_data['company_name'];
+$company_address = $po_data['company_address'];
+$logo_path = $po_data['logo_path'];
 
 // Function to fetch logo from database
 function getCompanyLogoBlob($conn, $company_id)
@@ -107,7 +115,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['submit_po'])) {
     $target_delivery = trim($_POST['target_delivery']);
     $payment_terms = trim($_POST['payment_terms']);
     $cart_data = $_POST['cart_data'] ?? '[]';
-    $client_po_path = null;
+    $client_po_path = $po_data['client_po_path']; // Keep existing client PO
 
     // Validate required fields
     if (empty($po_number) || empty($po_date) || empty($ship_to) || empty($target_delivery) || empty($payment_terms)) {
@@ -135,7 +143,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['submit_po'])) {
             // Create PDF content
             $pdfContent = createQuotationPDF($company_name, $po_number, $po_date, $cartItems, $fullname, $company_address, $absolute_logo_path);
 
-            // Handle client's original PO upload
+            // Handle new client's original PO upload
             if (isset($_FILES['client_po']) && $_FILES['client_po']['error'] === UPLOAD_ERR_OK) {
                 $client_upload_dir = __DIR__ . '/../../uploads/client_pos/';
                 if (!file_exists($client_upload_dir)) {
@@ -152,23 +160,28 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['submit_po'])) {
                     
                     if (!move_uploaded_file($_FILES['client_po']['tmp_name'], $client_full_path)) {
                         $error = "Failed to upload client's PO.";
-                        $client_po_path = null;
+                        $client_po_path = $po_data['client_po_path']; // Revert to old path
                     }
                 }
             }
 
             if (file_put_contents($full_path, $pdfContent)) {
-                // Insert into database
+                // Delete old attachment if exists
+                if (!empty($po_data['attachment_path']) && file_exists($po_data['attachment_path'])) {
+                    @unlink($po_data['attachment_path']);
+                }
+
+                // Update database - reset status to pending and clear approval data
                 $status = 'pending';
-                $stmt = $conn->prepare("INSERT INTO purchase_orders (company_id, sales_user_id, po_number, po_date, ship_to, target_delivery_date, payment_terms, attachment_path, client_po_path, status, created_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, NOW())");
-                $stmt->bind_param("iissssssss", $company_id, $user_id, $po_number, $po_date, $ship_to, $target_delivery, $payment_terms, $attachment_path, $client_po_path, $status);
+                $stmt = $conn->prepare("UPDATE purchase_orders SET po_number = ?, po_date = ?, ship_to = ?, target_delivery_date = ?, payment_terms = ?, attachment_path = ?, client_po_path = ?, status = ?, approved_by = NULL, approved_at = NULL, accounting_status = 'pending', accounting_approved_by = NULL, accounting_approved_at = NULL, updated_at = NOW() WHERE id = ?");
+                $stmt->bind_param("ssssssssi", $po_number, $po_date, $ship_to, $target_delivery, $payment_terms, $attachment_path, $client_po_path, $status, $po_id);
 
                 if ($stmt->execute()) {
-                    $_SESSION['po_success'] = "Purchase Order created successfully!";
+                    $_SESSION['po_success'] = "Purchase Order updated and resubmitted for approval!";
                     header("Location: purchase_orders.php?company_id=" . $company_id);
                     exit();
                 } else {
-                    $error = "Failed to save purchase order. Please try again.";
+                    $error = "Failed to update purchase order. Please try again.";
                     @unlink($full_path);
                 }
                 $stmt->close();
@@ -624,7 +637,7 @@ if ($material_results && mysqli_num_rows($material_results) > 0) {
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Add Purchase Order - <?php echo htmlspecialchars($company_name); ?></title>
+    <title>Edit Purchase Order - <?php echo htmlspecialchars($company_name); ?></title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
     <script>
@@ -676,10 +689,10 @@ if ($material_results && mysqli_num_rows($material_results) > 0) {
 
                         <div>
                             <h1 class="text-xl sm:text-2xl lg:text-3xl font-bold text-gray-900">
-                                Create Purchase Order
+                                Edit Rejected Purchase Order
                             </h1>
                             <p class="text-sm text-gray-600">
-                                <?php echo htmlspecialchars($company_name); ?>
+                                <?php echo htmlspecialchars($company_name); ?> - PO #<?php echo htmlspecialchars($po_data['po_number']); ?>
                             </p>
                         </div>
                     </div>
@@ -690,6 +703,17 @@ if ($material_results && mysqli_num_rows($material_results) > 0) {
 
     <!-- Main Content -->
     <div class="max-w-7xl mx-auto px-3 sm:px-4 lg:px-8 py-4 sm:py-8">
+
+        <!-- Rejection Info Banner -->
+        <div class="bg-red-50 border-l-4 border-red-500 p-4 mb-6">
+            <div class="flex items-start">
+                <i class="fas fa-exclamation-triangle text-red-600 text-xl mr-3 mt-1"></i>
+                <div class="flex-1">
+                    <h3 class="text-red-800 font-bold text-sm mb-1">This Purchase Order was Rejected</h3>
+                    <p class="text-red-700 text-xs">Please review and update the information below, then resubmit for approval.</p>
+                </div>
+            </div>
+        </div>
 
         <?php if ($error): ?>
             <div class="bg-red-50 border-2 border-red-300 rounded-lg p-4 mb-6 flex items-center">
@@ -702,10 +726,10 @@ if ($material_results && mysqli_num_rows($material_results) > 0) {
 
             <!-- PO Details Section -->
             <div class="bg-white rounded-xl shadow-lg border border-gray-200 overflow-hidden">
-                <div class="bg-gradient-to-r from-green-500 to-green-600 px-4 sm:px-6 py-3 sm:py-4">
+                <div class="bg-gradient-to-r from-orange-500 to-orange-600 px-4 sm:px-6 py-3 sm:py-4">
                     <h2 class="text-lg sm:text-2xl font-bold text-white flex items-center">
                         <i class="fas fa-file-invoice mr-2 sm:mr-3"></i>
-                        Purchase Order Details
+                        Update Purchase Order Details
                     </h2>
                 </div>
 
@@ -714,54 +738,54 @@ if ($material_results && mysqli_num_rows($material_results) > 0) {
                         <!-- PO Number -->
                         <div>
                             <label class="block text-sm font-medium text-gray-700 mb-2">
-                                <i class="fas fa-hashtag mr-1 text-green-600"></i>Purchase Order # *
+                                <i class="fas fa-hashtag mr-1 text-orange-600"></i>Purchase Order # *
                             </label>
                             <input type="text" name="po_number" required
-                                value="<?php echo isset($_POST['po_number']) ? htmlspecialchars($_POST['po_number']) : ''; ?>"
-                                class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent"
+                                value="<?php echo htmlspecialchars($po_data['po_number']); ?>"
+                                class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent"
                                 placeholder="e.g., PO-2024-001">
                         </div>
 
                         <!-- PO Date -->
                         <div>
                             <label class="block text-sm font-medium text-gray-700 mb-2">
-                                <i class="fas fa-calendar mr-1 text-green-600"></i>Purchase Order Date *
+                                <i class="fas fa-calendar mr-1 text-orange-600"></i>Purchase Order Date *
                             </label>
                             <input type="date" name="po_date" required
-                                value="<?php echo isset($_POST['po_date']) ? htmlspecialchars($_POST['po_date']) : date('Y-m-d'); ?>"
-                                class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent">
+                                value="<?php echo htmlspecialchars($po_data['po_date']); ?>"
+                                class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent">
                         </div>
                     </div>
 
                     <!-- Ship To -->
                     <div class="mt-6">
-                        <label class="block text-sm font-medium text-gray-700 mb-2">
-                            <i class="fas fa-shipping-fast mr-1 text-green-600"></i>Ship To *
+                        <label class="block text-sm font-medium text-gray-700 mb-2"></label>
+                        <i class="fas fa-shipping-fast mr-1 text-orange-600"></i>Ship To *
                         </label>
                         <textarea name="ship_to" required rows="3"
-                            class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent"
-                            placeholder="Enter complete shipping address"><?php echo isset($_POST['ship_to']) ? htmlspecialchars($_POST['ship_to']) : ''; ?></textarea>
+                            class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent"
+                            placeholder="Enter complete shipping address"><?php echo htmlspecialchars($po_data['ship_to']); ?></textarea>
                     </div>
 
                     <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mt-6">
                         <!-- Target Delivery Date -->
                         <div>
                             <label class="block text-sm font-medium text-gray-700 mb-2">
-                                <i class="fas fa-truck mr-1 text-green-600"></i>Target Delivery Date *
+                                <i class="fas fa-truck mr-1 text-orange-600"></i>Target Delivery Date *
                             </label>
                             <input type="date" name="target_delivery" required
-                                value="<?php echo isset($_POST['target_delivery']) ? htmlspecialchars($_POST['target_delivery']) : ''; ?>"
-                                class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent">
+                                value="<?php echo htmlspecialchars($po_data['target_delivery_date']); ?>"
+                                class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent">
                         </div>
 
                         <!-- Payment Terms -->
                         <div>
                             <label class="block text-sm font-medium text-gray-700 mb-2">
-                                <i class="fas fa-money-bill-wave mr-1 text-green-600"></i>Payment Terms *
+                                <i class="fas fa-money-bill-wave mr-1 text-orange-600"></i>Payment Terms *
                             </label>
                             <input type="text" name="payment_terms" required
-                                value="<?php echo isset($_POST['payment_terms']) ? htmlspecialchars($_POST['payment_terms']) : ''; ?>"
-                                class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent"
+                                value="<?php echo htmlspecialchars($po_data['payment_terms']); ?>"
+                                class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent"
                                 placeholder="e.g., Net 30, COD, 50% deposit">
                         </div>
                     </div>
@@ -769,11 +793,23 @@ if ($material_results && mysqli_num_rows($material_results) > 0) {
                     <!-- Client's Original PO Upload -->
                     <div class="mt-6">
                         <label class="block text-sm font-medium text-gray-700 mb-2">
-                            <i class="fas fa-file-upload mr-1 text-green-600"></i>Client's Original PO (Optional)
+                            <i class="fas fa-file-upload mr-1 text-orange-600"></i>Update Client's Original PO (Optional)
                         </label>
+                        <?php if (!empty($po_data['client_po_path']) && file_exists($po_data['client_po_path'])): ?>
+                            <div class="mb-2 p-3 bg-blue-50 border border-blue-200 rounded-lg flex items-center justify-between">
+                                <div class="flex items-center">
+                                    <i class="fas fa-file text-blue-600 mr-2"></i>
+                                    <span class="text-sm text-blue-800">Current file: <?php echo basename($po_data['client_po_path']); ?></span>
+                                </div>
+                                <a href="<?php echo htmlspecialchars($po_data['client_po_path']); ?>" target="_blank" 
+                                   class="text-blue-600 hover:text-blue-800 text-xs font-medium">
+                                    <i class="fas fa-external-link-alt mr-1"></i>View
+                                </a>
+                            </div>
+                        <?php endif; ?>
                         <input type="file" name="client_po" accept=".pdf,.jpg,.jpeg,.png,.doc,.docx"
-                            class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent">
-                        <p class="text-xs text-gray-500 mt-1">Upload the client's original purchase order document (PDF, Image, or Word)</p>
+                            class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent">
+                        <p class="text-xs text-gray-500 mt-1">Upload a new client's PO to replace the existing one (PDF, Image, or Word)</p>
                     </div>
                 </div>
             </div>
@@ -782,7 +818,7 @@ if ($material_results && mysqli_num_rows($material_results) > 0) {
             <div class="grid grid-cols-1 lg:grid-cols-3 gap-3">
 
                 <!-- Products Section (1 column) - Enhanced UI -->
-                <div class="lg:col-span-1 bg-white  overflow-hidden flex flex-col h-full">
+                <div class="lg:col-span-1 bg-white overflow-hidden flex flex-col h-full">
                     <!-- Header with gradient -->
                     <div class="bg-black px-6 py-5">
                         <div class="flex items-center justify-between">
@@ -802,7 +838,7 @@ if ($material_results && mysqli_num_rows($material_results) > 0) {
                     <div class="p-4 overflow-y-auto flex-1" style="max-height: calc(100vh - 250px);">
                         <div id="productsList" class="grid grid-cols-1 gap-3">
                             <?php foreach ($products_data as $product): ?>
-                                <div class="group relative  p-3 hover:from-orange-50 hover:to-orange-100 transition-all duration-300 cursor-pointer shadow-sm hover:shadow-lg hover:scale-102 border border-transparent hover:border-orange-200"
+                                <div class="group relative p-3 hover:from-orange-50 hover:to-orange-100 transition-all duration-300 cursor-pointer shadow-sm hover:shadow-lg hover:scale-102 border border-transparent hover:border-orange-200"
                                     data-product-id="<?php echo $product['id']; ?>"
                                     data-color-id="<?php echo $product['color_id']; ?>"
                                     data-product-name="<?php echo htmlspecialchars($product['name']); ?>"
@@ -866,11 +902,11 @@ if ($material_results && mysqli_num_rows($material_results) > 0) {
 
                 <!-- Cart Section (2 columns) -->
                 <div class="lg:col-span-2 bg-white rounded-xl shadow-lg border border-gray-200 overflow-hidden flex flex-col">
-                    <div class="bg-gradient-to-r from-green-600 to-green-700 px-6 py-4">
+                    <div class="bg-gradient-to-r from-orange-600 to-orange-700 px-6 py-4">
                         <h2 class="text-lg font-bold text-white flex items-center">
-                            <i class="fas fa-shopping-cart mr-2"></i>Quotation Items
+                            <i class="fas fa-shopping-cart mr-2"></i>Updated Quotation Items
                         </h2>
-                        <p class="text-xs text-green-100 mt-1">Items: <span id="cartItemCount" class="font-bold">0</span></p>
+                        <p class="text-xs text-orange-100 mt-1">Items: <span id="cartItemCount" class="font-bold">0</span></p>
                     </div>
 
                     <div id="cartDropZone" class="p-4 min-h-96 bg-gray-50 border-t-2 border-dashed border-gray-300 flex-1 overflow-x-auto">
@@ -897,7 +933,7 @@ if ($material_results && mysqli_num_rows($material_results) > 0) {
                             </div>
                             <div class="flex justify-between text-base font-bold pt-2">
                                 <span class="text-gray-700">Total:</span>
-                                <span id="cartTotal" class="text-green-600">₱0.00</span>
+                                <span id="cartTotal" class="text-orange-600">₱0.00</span>
                             </div>
                         </div>
 
@@ -918,9 +954,9 @@ if ($material_results && mysqli_num_rows($material_results) > 0) {
                     <i class="fas fa-times mr-2"></i>Cancel
                 </a>
                 <button type="submit" name="submit_po"
-                    class="flex-1 bg-gradient-to-r from-green-500 to-green-600 hover:from-green-600 hover:to-green-700 text-white px-6 py-3 rounded-lg transition-all duration-200 transform hover:scale-105 shadow-lg flex items-center justify-center space-x-2 font-medium">
+                    class="flex-1 bg-gradient-to-r from-orange-500 to-orange-600 hover:from-orange-600 hover:to-orange-700 text-white px-6 py-3 rounded-lg transition-all duration-200 transform hover:scale-105 shadow-lg flex items-center justify-center space-x-2 font-medium">
                     <i class="fas fa-check"></i>
-                    <span>Create Purchase Order</span>
+                    <span>Resubmit Purchase Order</span>
                 </button>
             </div>
         </form>
@@ -948,7 +984,7 @@ if ($material_results && mysqli_num_rows($material_results) > 0) {
             <!-- Modal Body -->
             <div class="p-6">
                 <!-- Availability Alert -->
-                <div class=" p-4 mb-6 flex items-start gap-3">
+                <div class="p-4 mb-6 flex items-start gap-3">
                     <i class="fas fa-check-circle text-green-600 mt-1 flex-shrink-0"></i>
                     <p class="text-sm text-green-800 font-medium">All sizes are available for this item</p>
                 </div>
@@ -1062,7 +1098,6 @@ if ($material_results && mysqli_num_rows($material_results) > 0) {
         }
 
         .size-option-btn.active {
-        
             border-color: #ea580c;
             color: white;
             font-weight: bold;
@@ -1118,159 +1153,158 @@ if ($material_results && mysqli_num_rows($material_results) > 0) {
             }
         });
 
-   // Update the showSizeModal() function to include prices
+        function showSizeModal() {
+            if (!selectedProduct || !selectedProduct.variants.length) {
+                addToCartDirect();
+                return;
+            }
 
-function showSizeModal() {
-    if (!selectedProduct || !selectedProduct.variants.length) {
-        addToCartDirect();
-        return;
-    }
-
-    const sizeOptions = document.getElementById('sizeOptions');
-    sizeOptions.innerHTML = '';
-    selectedSize = null;
-    
-    // Reset custom size inputs
-    document.getElementById('customSizeToggle').checked = false;
-    document.getElementById('customSizeInputs').classList.add('hidden');
-    document.getElementById('customSizeName').value = '';
-    document.getElementById('customSizePrice').value = '';
-    
-    // Display color price for custom size reference
-    document.getElementById('colorPriceDisplay').textContent = selectedProduct.colorPrice.toLocaleString('en-US', {minimumFractionDigits: 2});
-
-    selectedProduct.variants.forEach((variant, idx) => {
-        const totalPrice = parseFloat(variant.price) + parseFloat(selectedProduct.colorPrice);
-        
-        const btn = document.createElement('button');
-        btn.type = 'button';
-        btn.className = 'size-option-btn bg-white border-2 border-gray-300 rounded-lg py-3 px-2 transition-all duration-200 cursor-pointer text-center hover:border-orange-400 hover:bg-orange-50';
-        btn.innerHTML = `
-            <div class="font-semibold text-sm text-gray-800 mb-1">${variant.size}</div>
-            <div class="text-orange-600 font-bold text-sm">₱${totalPrice.toLocaleString('en-US', {minimumFractionDigits: 2})}</div>
-        `;
-        btn.dataset.variantIdx = idx;
-        
-        btn.addEventListener('click', (e) => {
-            e.preventDefault();
-            e.stopPropagation();
+            const sizeOptions = document.getElementById('sizeOptions');
+            sizeOptions.innerHTML = '';
+            selectedSize = null;
             
-            // Uncheck custom size toggle
+            // Reset custom size inputs
             document.getElementById('customSizeToggle').checked = false;
             document.getElementById('customSizeInputs').classList.add('hidden');
+            document.getElementById('customSizeName').value = '';
+            document.getElementById('customSizePrice').value = '';
             
-            document.querySelectorAll('.size-option-btn').forEach(b => {
-                b.classList.remove('active', 'border-orange-500', 'text-white');
+            // Display color price for custom size reference
+            document.getElementById('colorPriceDisplay').textContent = selectedProduct.colorPrice.toLocaleString('en-US', {minimumFractionDigits: 2});
+
+            selectedProduct.variants.forEach((variant, idx) => {
+                const totalPrice = parseFloat(variant.price) + parseFloat(selectedProduct.colorPrice);
+                
+                const btn = document.createElement('button');
+                btn.type = 'button';
+                btn.className = 'size-option-btn bg-white border-2 border-gray-300 rounded-lg py-3 px-2 transition-all duration-200 cursor-pointer text-center hover:border-orange-400 hover:bg-orange-50';
+                btn.innerHTML = `
+                    <div class="font-semibold text-sm text-gray-800 mb-1">${variant.size}</div>
+                    <div class="text-orange-600 font-bold text-sm">₱${totalPrice.toLocaleString('en-US', {minimumFractionDigits: 2})}</div>
+                `;
+                btn.dataset.variantIdx = idx;
+                
+                btn.addEventListener('click', (e) => {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    
+                    // Uncheck custom size toggle
+                    document.getElementById('customSizeToggle').checked = false;
+                    document.getElementById('customSizeInputs').classList.add('hidden');
+                    
+                    document.querySelectorAll('.size-option-btn').forEach(b => {
+                        b.classList.remove('active', 'border-orange-500', 'text-white');
+                    });
+                    btn.classList.add('active', 'border-orange-500','text-white');
+                    selectedSize = idx;
+                });
+                
+                sizeOptions.appendChild(btn);
             });
-            btn.classList.add('active', 'border-orange-500','text-white');
-            selectedSize = idx;
-        });
-        
-        sizeOptions.appendChild(btn);
-    });
 
-    document.getElementById('sizeModal').classList.remove('hidden');
-}
-
-function closeSizeModal() {
-    document.getElementById('sizeModal').classList.add('hidden');
-    selectedProduct = null;
-    selectedSize = null;
-}
-
-function confirmSize() {
-    const isCustomSize = document.getElementById('customSizeToggle').checked;
-    
-    if (isCustomSize) {
-        const customName = document.getElementById('customSizeName').value.trim();
-        const customPrice = parseFloat(document.getElementById('customSizePrice').value);
-        
-        if (!customName) {
-            alert('Please enter a custom size name');
-            return;
+            document.getElementById('sizeModal').classList.remove('hidden');
         }
-        
-        if (isNaN(customPrice) || customPrice < 0) {
-            alert('Please enter a valid price');
-            return;
+
+        function closeSizeModal() {
+            document.getElementById('sizeModal').classList.add('hidden');
+            selectedProduct = null;
+            selectedSize = null;
         }
-        
-        addToCartWithCustomSize(customName, customPrice);
-    } else {
-        if (selectedSize === null && selectedProduct.variants.length > 0) {
-            alert('Please select a size or use custom size');
-            return;
+
+        function confirmSize() {
+            const isCustomSize = document.getElementById('customSizeToggle').checked;
+            
+            if (isCustomSize) {
+                const customName = document.getElementById('customSizeName').value.trim();
+                const customPrice = parseFloat(document.getElementById('customSizePrice').value);
+                
+                if (!customName) {
+                    alert('Please enter a custom size name');
+                    return;
+                }
+                
+                if (isNaN(customPrice) || customPrice < 0) {
+                    alert('Please enter a valid price');
+                    return;
+                }
+                
+                addToCartWithCustomSize(customName, customPrice);
+            } else {
+                if (selectedSize === null && selectedProduct.variants.length > 0) {
+                    alert('Please select a size or use custom size');
+                    return;
+                }
+                addToCartDirect();
+            }
+            
+            closeSizeModal();
         }
-        addToCartDirect();
-    }
-    
-    closeSizeModal();
-}
 
-function addToCartWithCustomSize(customSizeName, customSizePrice) {
-    if (!selectedProduct) return;
+        function addToCartWithCustomSize(customSizeName, customSizePrice) {
+            if (!selectedProduct) return;
 
-    const totalPrice = parseFloat(customSizePrice) + parseFloat(selectedProduct.colorPrice);
+            const totalPrice = parseFloat(customSizePrice) + parseFloat(selectedProduct.colorPrice);
 
-    const product = {
-        id: selectedProduct.id,
-        colorId: selectedProduct.colorId,
-        name: selectedProduct.name,
-        colorName: selectedProduct.colorName,
-        size: customSizeName,
-        price: totalPrice,
-        quantity: 1
-    };
+            const product = {
+                id: selectedProduct.id,
+                colorId: selectedProduct.colorId,
+                name: selectedProduct.name,
+                colorName: selectedProduct.colorName,
+                size: customSizeName,
+                price: totalPrice,
+                quantity: 1
+            };
 
-    const key = `${product.id}-${product.colorId}-${customSizeName}`;
-    const existingItem = cartItems.find(item => item.key === key);
+            const key = `${product.id}-${product.colorId}-${customSizeName}`;
+            const existingItem = cartItems.find(item => item.key === key);
 
-    if (existingItem) {
-        existingItem.quantity++;
-    } else {
-        cartItems.push({
-            key: key,
-            ...product
-        });
-    }
+            if (existingItem) {
+                existingItem.quantity++;
+            } else {
+                cartItems.push({
+                    key: key,
+                    ...product
+                });
+            }
 
-    updateCart();
-}
+            updateCart();
+        }
 
-function addToCartDirect() {
-    if (!selectedProduct) return;
+        function addToCartDirect() {
+            if (!selectedProduct) return;
 
-    const variantIdx = selectedSize !== null ? selectedSize : 0;
-    const variant = selectedProduct.variants[variantIdx] || {
-        size: 'One Size',
-        price: 0
-    };
-    const totalPrice = parseFloat(variant.price) + parseFloat(selectedProduct.colorPrice);
+            const variantIdx = selectedSize !== null ? selectedSize : 0;
+            const variant = selectedProduct.variants[variantIdx] || {
+                size: 'One Size',
+                price: 0
+            };
+            const totalPrice = parseFloat(variant.price) + parseFloat(selectedProduct.colorPrice);
 
-    const product = {
-        id: selectedProduct.id,
-        colorId: selectedProduct.colorId,
-        name: selectedProduct.name,
-        colorName: selectedProduct.colorName,
-        size: variant.size,
-        price: totalPrice,
-        quantity: 1
-    };
+            const product = {
+                id: selectedProduct.id,
+                colorId: selectedProduct.colorId,
+                name: selectedProduct.name,
+                colorName: selectedProduct.colorName,
+                size: variant.size,
+                price: totalPrice,
+                quantity: 1
+            };
 
-    const key = `${product.id}-${product.colorId}-${product.size}`;
-    const existingItem = cartItems.find(item => item.key === key);
+            const key = `${product.id}-${product.colorId}-${product.size}`;
+            const existingItem = cartItems.find(item => item.key === key);
 
-    if (existingItem) {
-        existingItem.quantity++;
-    } else {
-        cartItems.push({
-            key: key,
-            ...product
-        });
-    }
+            if (existingItem) {
+                existingItem.quantity++;
+            } else {
+                cartItems.push({
+                    key: key,
+                    ...product
+                });
+            }
 
-    updateCart();
-}
+            updateCart();
+        }
+
         const cartDropZone = document.getElementById('cartDropZone');
 
         function updateCart() {
@@ -1303,7 +1337,7 @@ function addToCartDirect() {
                                            onchange="updateQuantity(${idx}, this.value)"
                                            class="w-10 border rounded px-1 py-1 text-center text-xs">
                                 </td>
-                                <td class="text-right p-2 font-bold text-green-600">₱${(item.price * item.quantity).toLocaleString('en-US', {minimumFractionDigits: 2})}</td>
+                                <td class="text-right p-2 font-bold text-orange-600">₱${(item.price * item.quantity).toLocaleString('en-US', {minimumFractionDigits: 2})}</td>
                                 <td class="text-right p-2">
                                     <button type="button" onclick="removeFromCart(${idx})" class="text-red-600 hover:text-red-800 font-bold text-lg">
                                         <i class="fas fa-trash text-xs"></i>

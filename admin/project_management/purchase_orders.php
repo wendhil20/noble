@@ -364,21 +364,35 @@ foreach ($purchase_orders as $po) {
     <span class="inline-flex items-center px-2 py-1 <?php echo $status_class; ?> rounded-full text-xs font-semibold">
         <?php echo ucfirst($po['status']); ?>
     </span>
+    
     <?php if ($po['status'] === 'rejected'): ?>
         <?php
-        // Fetch rejection reason from logs
-        $log_stmt = $conn->prepare("SELECT notes FROM po_status_logs WHERE po_id = ? AND new_status = 'rejected' ORDER BY created_at DESC LIMIT 1");
-        $log_stmt->bind_param("i", $po['id']);
-        $log_stmt->execute();
-        $log_stmt->bind_result($rejection_notes);
-        $log_stmt->fetch();
-        $log_stmt->close();
+        // Fetch operational rejection reason from logs
+        $ops_rejection_notes = '';
+        $ops_log_query = "SELECT notes FROM po_status_logs WHERE po_id = ? AND new_status = 'rejected' AND (old_status = 'pending' OR old_status = 'approved') ORDER BY created_at DESC LIMIT 1";
+        $ops_log_stmt = $conn->prepare($ops_log_query);
+        
+        if ($ops_log_stmt) {
+            $ops_log_stmt->bind_param("i", $po['id']);
+            $ops_log_stmt->execute();
+            $ops_log_result = $ops_log_stmt->get_result();
+            
+            if ($ops_log_row = $ops_log_result->fetch_assoc()) {
+                $ops_rejection_notes = $ops_log_row['notes'];
+            }
+            $ops_log_stmt->close();
+        }
         ?>
-        <?php if (!empty($rejection_notes)): ?>
-            <div class="mt-2 text-xs text-red-700 bg-red-50 p-2 rounded border border-red-200">
+        
+        <?php if (!empty($ops_rejection_notes)): ?>
+            <div class="mt-2 text-xs text-red-700 bg-red-50 p-2 rounded border border-red-200 text-left">
                 <i class="fas fa-info-circle mr-1"></i>
-                <strong>Reason:</strong> <?php echo htmlspecialchars(substr($rejection_notes, 0, 100)); ?>
-                <?php if (strlen($rejection_notes) > 100): ?>...<?php endif; ?>
+                <strong>Ops Rejection:</strong> <?php echo htmlspecialchars(substr($ops_rejection_notes, 0, 100)); ?>
+                <?php if (strlen($ops_rejection_notes) > 100): ?>...<?php endif; ?>
+            </div>
+        <?php else: ?>
+            <div class="mt-2 text-xs text-gray-500 italic">
+                No rejection reason provided
             </div>
         <?php endif; ?>
     <?php endif; ?>

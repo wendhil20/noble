@@ -172,9 +172,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['submit_po'])) {
                 }
 
                 // Update database - reset status to pending and clear approval data
-                $status = 'pending';
-                $stmt = $conn->prepare("UPDATE purchase_orders SET po_number = ?, po_date = ?, ship_to = ?, target_delivery_date = ?, payment_terms = ?, attachment_path = ?, client_po_path = ?, status = ?, approved_by = NULL, approved_at = NULL, accounting_status = 'pending', accounting_approved_by = NULL, accounting_approved_at = NULL, updated_at = NOW() WHERE id = ?");
-                $stmt->bind_param("ssssssssi", $po_number, $po_date, $ship_to, $target_delivery, $payment_terms, $attachment_path, $client_po_path, $status, $po_id);
+$status = 'pending';
+$stmt = $conn->prepare("UPDATE purchase_orders SET po_number = ?, po_date = ?, ship_to = ?, target_delivery_date = ?, payment_terms = ?, attachment_path = ?, client_po_path = ?, status = ?, approved_by = NULL, approved_at = NULL, accounting_status = 'pending', accounting_approved_by = NULL, accounting_approved_at = NULL, updated_at = NOW() WHERE id = ?");
+$stmt->bind_param("ssssssssi", $po_number, $po_date, $ship_to, $target_delivery, $payment_terms, $attachment_path, $client_po_path, $status, $po_id);
 
                 if ($stmt->execute()) {
                     $_SESSION['po_success'] = "Purchase Order updated and resubmitted for approval!";

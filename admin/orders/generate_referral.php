@@ -2,8 +2,15 @@
 // generate_referral.php - Complete Referral Code System with Remake Feature
 session_name("nobleadmin");
 session_start();
+
 error_reporting(E_ALL);
 ini_set('display_errors', 1);
+
+// ✅ ADD THIS NEW CODE - Check for success message from session
+if (isset($_SESSION['success_message'])) {
+    $message = $_SESSION['success_message'];
+    unset($_SESSION['success_message']); // Clear it after displaying
+}
 
 include '../../connection/connect.php';
 require_once '../role/roleaccount.php';
@@ -293,25 +300,17 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['generate_code'])) {
         $stmt->bind_param("iss", $user_id, $referral_code, $base_url);
         
         if ($stmt->execute()) {
-            $message = "Referral code generated successfully!";
-            
-            // Refresh data
-            $referral_data = [
-                'code' => $referral_code,
-                'qr_path' => null,
-                'base_url' => $base_url,
-                'scans' => 0,
-                'conversions' => 0,
-                'revenue' => 0.00,
-                'created' => date('Y-m-d H:i:s'),
-                'discount_enabled' => 0,
-                'discount_type' => 'percentage',
-                'discount_value' => 0.00
-            ];
-        } else {
-            $error = "Failed to generate referral code. Please try again.";
-        }
-        $stmt->close();
+    // Save success message to session
+    $_SESSION['success_message'] = "Referral code generated successfully!";
+    $stmt->close();
+    
+    // Redirect to reload the page with fresh data
+    header("Location: " . $_SERVER['PHP_SELF']);
+    exit();
+} else {
+    $error = "Failed to generate referral code. Please try again.";
+    $stmt->close();
+}
     }
 }
 // ✅ Handle REMAKE referral code
@@ -344,25 +343,17 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['remake_code'])) {
         $stmt->bind_param("iss", $user_id, $new_referral_code, $base_url);
         
         if ($stmt->execute()) {
-            $message = "New referral code generated successfully! Your old code has been deactivated.";
-            
-            // Refresh data
-            $referral_data = [
-                'code' => $new_referral_code,
-                'qr_path' => null,
-                'base_url' => $base_url,
-                'scans' => 0,
-                'conversions' => 0,
-                'revenue' => 0.00,
-                'created' => date('Y-m-d H:i:s'),
-                'discount_enabled' => 0,
-                'discount_type' => 'percentage',
-                'discount_value' => 0.00
-            ];
-        } else {
-            $error = "Failed to generate new referral code. Please try again.";
-        }
-        $stmt->close();
+    // Save success message to session
+    $_SESSION['success_message'] = "New referral code generated successfully! Your old code has been deactivated.";
+    $stmt->close();
+    
+    // Redirect to reload the page with fresh data
+    header("Location: " . $_SERVER['PHP_SELF']);
+    exit();
+} else {
+    $error = "Failed to generate new referral code. Please try again.";
+    $stmt->close();
+}
     }
 }
 
@@ -554,8 +545,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['remake_code'])) {
         <?php endif; ?>
     </div>
     
-    <!-- ALWAYS render the qr-display div, but hide it if no QR exists -->
-    <div id="qr-container" class="<?php echo empty($referral_data['qr_path']) ? 'hidden' : ''; ?>">
+    <!-- QR Container - Hidden by default if no QR exists -->
+<div id="qr-container" class="<?php echo (empty($referral_data['qr_path']) || $referral_data['qr_path'] === null) ? 'hidden' : ''; ?>">
         <div class="text-center mb-4">
             <div class="inline-block p-4 bg-white border-2 border-gray-300 rounded-lg shadow-sm">
                 <div id="qr-display" class="qr-code-display"></div>
@@ -576,7 +567,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['remake_code'])) {
     </div>
     
     <!-- Generate button (shown when no QR exists) -->
-    <div id="qr-generate-section" class="<?php echo !empty($referral_data['qr_path']) ? 'hidden' : ''; ?>">
+<div id="qr-generate-section" class="<?php echo (empty($referral_data['qr_path']) || $referral_data['qr_path'] === null) ? '' : 'hidden'; ?>">
         <div class="text-center py-8">
             <i class="fas fa-qrcode text-purple-300 text-6xl mb-4"></i>
             <p class="text-purple-700 mb-4">No QR code generated yet</p>
@@ -1043,16 +1034,16 @@ $month_conversion = $month_visits > 0 ? (($month_orders ?? 0) / $month_visits) *
                     </div>
                     
                     <!-- Quick Stats Footer -->
-                    <div class="mt-4 flex flex-col sm:flex-row items-center justify-between text-xs text-gray-500 gap-2">
-                        <span>
-                            <i class="fas fa-info-circle mr-1"></i>
-                            Visit tracking started on <?php echo date('M j, Y', strtotime($referral_data['created'])); ?>
-                        </span>
-                        <span>
-                            <i class="fas fa-users mr-1"></i>
-                            Total Unique Visits: <strong class="text-gray-700"><?php echo number_format($referral_data['scans']); ?></strong>
-                        </span>
-                    </div>
+<div class="mt-4 flex flex-col sm:flex-row items-center justify-between text-xs text-gray-500 gap-2">
+    <span>
+        <i class="fas fa-info-circle mr-1"></i>
+        Visit tracking started on <?php echo isset($referral_data['created']) ? date('M j, Y', strtotime($referral_data['created'])) : 'N/A'; ?>
+    </span>
+    <span>
+        <i class="fas fa-users mr-1"></i>
+        Total Unique Visits: <strong class="text-gray-700"><?php echo number_format($referral_data['scans'] ?? 0); ?></strong>
+    </span>
+</div>
                 </div>
             </div>
             <!-- ✅ ANALYTICS SECTION ENDS HERE -->
@@ -1070,21 +1061,21 @@ $month_conversion = $month_visits > 0 ? (($month_orders ?? 0) / $month_visits) *
         <?php
         // Fetch ALL referral codes (active and inactive) for this user
         $history_stmt = $conn->prepare("
-            SELECT 
-                referral_code, 
-                is_active, 
-                total_scans, 
-                total_conversions, 
-                total_revenue, 
-                discount_enabled,
-                discount_type,
-                discount_value,
-                created_at,
-                updated_at
-            FROM referral_codes 
-            WHERE user_id = ? 
-            ORDER BY is_active DESC, created_at DESC
-        ");
+    SELECT 
+        referral_code, 
+        is_active, 
+        total_scans, 
+        total_conversions, 
+        total_revenue, 
+        discount_enabled,
+        discount_type,
+        discount_value,
+        created_at,
+        updated_at
+    FROM referral_codes 
+    WHERE user_id = ? 
+    ORDER BY is_active DESC, created_at DESC
+");
         $history_stmt->bind_param("i", $user_id);
         $history_stmt->execute();
         $history_result = $history_stmt->get_result();

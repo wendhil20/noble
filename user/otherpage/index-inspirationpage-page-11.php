@@ -357,9 +357,9 @@ if (!$viewing_inspiration) {
                                 </div>
 
                                 <!-- Content -->
-                                <div class="p-8 border-t-2 border-black">
-                                    <span class="inline-block bg-black text-white px-6 py-2 text-xs font-bold uppercase tracking-wider mb-5"><?php echo htmlspecialchars($insp['type']); ?></span>
-                                    <h3 class="text-2xl font-black text-gray-900 tracking-tight group-hover:underline">
+                                <div class="p-3 border-t-2 border-black">
+                                   
+                                    <h3 class="text-2xl  text-gray-900 tracking-tight group-hover:underline">
                                         <?php echo htmlspecialchars($insp['name']); ?>
                                     </h3>
                                 </div>

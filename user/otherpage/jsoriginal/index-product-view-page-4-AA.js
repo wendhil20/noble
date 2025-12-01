@@ -518,7 +518,6 @@ class ProductSelector {
     `;
   }
 
-  // ✅ FIXED: Show stock indicator when size is hidden - WITH DISCOUNT AND FLASH SALE
   showStockIndicatorForHiddenVariant(size) {
     let container = document.getElementById("hidden-size-indicator");
     if (!container) {
@@ -534,7 +533,6 @@ class ProductSelector {
       }
     }
 
-    // Get stock from selected variant button
     const selectedVariantBtn = document.querySelector(".variant-btn.selected");
 
     if (!selectedVariantBtn) {
@@ -546,10 +544,17 @@ class ProductSelector {
     const discount = parseFloat(selectedVariantBtn.dataset.discount || 0);
     const variantId = selectedVariantBtn.dataset.variantId || "";
 
-    // ✅ CHECK IF TIMER BADGE EXISTS INSIDE THE BUTTON
-    const timerBadge = selectedVariantBtn.querySelector(".timer-badge");
+    // ✅ GET PRICE DATA
+    const originalPrice = parseFloat(selectedVariantBtn.dataset.price || 0);
+    const percent = parseFloat(selectedVariantBtn.dataset.percent || 0);
 
-    console.log("🔍 Timer Badge Found:", timerBadge);
+    // Calculate after markup
+    const afterMarkup = originalPrice + (originalPrice * percent) / 100;
+
+    // Calculate after regular discount
+    const afterRegularDiscount = afterMarkup - (afterMarkup * discount) / 100;
+
+    const timerBadge = selectedVariantBtn.querySelector(".timer-badge");
 
     let stockDisplay = "";
     if (stock <= 0) {
@@ -561,7 +566,6 @@ class ProductSelector {
       stockDisplay = `<span class="ml-2 inline-block px-2 py-1 bg-green-100 text-green-700 text-xs rounded font-semibold">${stock} in stock</span>`;
     }
 
-    // ✅ BUILD DISCOUNT DISPLAY (regular discount - only if no timer badge)
     let discountDisplay = "";
     if (discount > 0 && !timerBadge) {
       discountDisplay = `<span class="ml-2 inline-block px-2 py-1 bg-red-500 text-white text-xs rounded font-bold">-${Math.round(
@@ -569,7 +573,7 @@ class ProductSelector {
       )}% OFF</span>`;
     }
 
-    // ✅ BUILD FLASH SALE TIMER DISPLAY - CLONE FROM EXISTING TIMER BADGE
+    // ✅ BUILD FLASH SALE TIMER DISPLAY WITH PRICE BREAKDOWN
     let flashSaleDisplay = "";
     if (timerBadge) {
       const timerEndTime = parseInt(timerBadge.dataset.endTime || 0);
@@ -579,32 +583,86 @@ class ProductSelector {
         const now = Math.floor(Date.now() / 1000);
         const remaining = timerEndTime - now;
 
-        console.log("⏰ Timer Found:", { timerEndTime, remaining });
-
         if (remaining > 0) {
-          // Get current timer text from the badge
           const currentTimerText =
             timerBadge.querySelector(".timer-display")?.textContent ||
             "00:00:00";
 
+          // ✅ GET TIMER DISCOUNT FROM BADGE
+          const timerDiscount = parseFloat(
+            selectedVariantBtn.dataset.timerDiscount || 0
+          );
+          const afterTimerDiscount =
+            afterRegularDiscount - (afterRegularDiscount * timerDiscount) / 100;
+
           flashSaleDisplay = `
-          <div class="mt-2 bg-red-600 text-white text-[10px] font-bold px-2 py-1 rounded inline-block timer-badge"
-            data-variant-id="${timerVariantId}"
-            data-end-time="${timerEndTime}">
-            Ends in <span class="timer-display font-mono tracking-wider" id="timer-hidden-${timerVariantId}">
-              ${currentTimerText}
-            </span>
+          <div class="mt-3 bg-red-700 text-white p-3 rounded-lg shadow-lg">
+            <!-- Timer Header -->
+            <div class="flex items-center justify-between mb-2">
+              <div class="flex items-center gap-2">
+                <i class="fas fa-fire-alt text-yellow-300 animate-pulse"></i>
+                <span class="font-bold text-sm">FLASH SALE ACTIVE</span>
+              </div>
+              <span class="timer-display font-mono tracking-wider text-xs bg-black/30 px-2 py-1 rounded" 
+                    id="timer-hidden-${timerVariantId}">
+                ${currentTimerText}
+              </span>
+            </div>
+
+            <!-- Price Breakdown -->
+            <div class="space-y-1 text-xs bg-white/10 p-2 rounded">
+              <div class="flex justify-between items-center">
+                <span class="opacity-75">Price:</span>
+                <span class="font-semibold">₱${afterMarkup.toLocaleString(
+                  "en-PH",
+                  { minimumFractionDigits: 2 }
+                )}</span>
+              </div>
+              
+              ${
+                discount > 0
+                  ? `
+                <div class="flex justify-between items-center">
+                  <span class="opacity-75">Regular Discount (-${Math.round(
+                    discount
+                  )}%):</span>
+                  <span class="font-semibold line-through">₱${afterRegularDiscount.toLocaleString(
+                    "en-PH",
+                    { minimumFractionDigits: 2 }
+                  )}</span>
+                </div>
+              `
+                  : ""
+              }
+              
+              <div class="border-t border-white/20 pt-1 mt-1"></div>
+              
+              <div class="flex justify-between items-center">
+                <span class="text-yellow-300 font-bold">Flash Sale (-${Math.round(
+                  timerDiscount
+                )}%):</span>
+               
+              </div>
+            </div>
+
+            <!-- Savings Display -->
+            <div class="mt-2 text-center bg-yellow-400 text-red-700 font-black text-xs px-2 py-1 rounded">
+              YOU SAVE ₱${(
+                afterRegularDiscount - afterTimerDiscount
+              ).toLocaleString("en-PH", { minimumFractionDigits: 2 })}!
+            </div>
           </div>
         `;
 
-          // Start countdown timer for this specific element
+          // Start countdown timer
           setTimeout(() => {
             const timerElement = document.getElementById(
               `timer-hidden-${timerVariantId}`
             );
             if (timerElement) {
               const endTime = parseInt(
-                timerElement.closest(".timer-badge").dataset.endTime
+                timerElement.closest(".timer-badge")?.dataset?.endTime ||
+                  timerEndTime
               );
               const timerInterval = setInterval(() => {
                 const now = Math.floor(Date.now() / 1000);
@@ -612,9 +670,6 @@ class ProductSelector {
 
                 if (remaining <= 0) {
                   timerElement.textContent = "EXPIRED";
-                  const badge = timerElement.closest(".timer-badge");
-                  badge.classList.remove("bg-red-600");
-                  badge.classList.add("bg-gray-400");
                   clearInterval(timerInterval);
                   return;
                 }
@@ -635,10 +690,9 @@ class ProductSelector {
             }
           }, 100);
         } else {
-          // Timer expired
           flashSaleDisplay = `
-          <div class="mt-2 bg-gray-400 text-white text-[10px] font-bold px-2 py-1 rounded inline-block">
-            EXPIRED
+          <div class="mt-2 bg-gray-400 text-white text-xs font-bold px-3 py-2 rounded-lg text-center">
+            <i class="fas fa-clock mr-1"></i> FLASH SALE EXPIRED
           </div>
         `;
         }
@@ -647,7 +701,7 @@ class ProductSelector {
 
     container.innerHTML = `
     <div class="text-sm text-gray-700">
-      <div class="flex flex-wrap items-center gap-2">
+      <div class="flex flex-wrap items-center gap-2 mb-2">
         <strong>Size Selected:</strong> 
         <span class="text-orange-600 font-semibold">${size}</span>
         ${discountDisplay}
@@ -796,53 +850,53 @@ class ProductSelector {
     this.updateDisplay();
   }
 
-// ✅ FIXED: setColorFromGrid in ProductSelector class
-setColorFromGrid(colorId, colorName, price, image, colorCode) {
-  this.selectedColorData = {
-    id: colorId,
-    name: colorName,
-    price: parseFloat(price),
-  };
+  // ✅ FIXED: setColorFromGrid in ProductSelector class
+  setColorFromGrid(colorId, colorName, price, image, colorCode) {
+    this.selectedColorData = {
+      id: colorId,
+      name: colorName,
+      price: parseFloat(price),
+    };
 
-  if (this.elements.selectedColorId) {
-    this.elements.selectedColorId.value = colorId;
-  }
-  if (this.elements.selectedColor) {
-    this.elements.selectedColor.value = colorName;
-  }
-
-  if (image) {
-    let imagePath = image.startsWith("../../") ? image : `../../${image}`;
-    if (this.elements.mainImage) {
-      this.elements.mainImage.src = imagePath;
+    if (this.elements.selectedColorId) {
+      this.elements.selectedColorId.value = colorId;
     }
-    const sidebarImage = document.getElementById("sidebar-product-image");
-    if (sidebarImage) {
-      sidebarImage.src = imagePath;
+    if (this.elements.selectedColor) {
+      this.elements.selectedColor.value = colorName;
     }
-  }
 
-  // ✅ If variant is already selected, update the price display
-  if (this.selectedVariantData) {
-    this.updateProductHeaderPrice();
-    // ✅ Also update the total price in the purchase section
-    this.updateTotalPrice();
-    
-    // ✅ Trigger full price update
+    if (image) {
+      let imagePath = image.startsWith("../../") ? image : `../../${image}`;
+      if (this.elements.mainImage) {
+        this.elements.mainImage.src = imagePath;
+      }
+      const sidebarImage = document.getElementById("sidebar-product-image");
+      if (sidebarImage) {
+        sidebarImage.src = imagePath;
+      }
+    }
+
+    // ✅ If variant is already selected, update the price display
+    if (this.selectedVariantData) {
+      this.updateProductHeaderPrice();
+      // ✅ Also update the total price in the purchase section
+      this.updateTotalPrice();
+
+      // ✅ Trigger full price update
+      setTimeout(() => {
+        updateAllPriceDisplays();
+      }, 50);
+    }
+
+    // ✅ CHECK STOCK AFTER COLOR SELECTED
     setTimeout(() => {
-      updateAllPriceDisplays();
+      checkVariantStock();
+      checkAvailableVariants();
+      this.checkAndAutoSelectVariant();
     }, 50);
+
+    this.updateDisplay();
   }
-
-  // ✅ CHECK STOCK AFTER COLOR SELECTED
-  setTimeout(() => {
-    checkVariantStock();
-    checkAvailableVariants();
-    this.checkAndAutoSelectVariant();
-  }, 50);
-
-  this.updateDisplay();
-}
 
   clearColorSelection() {
     this.selectedColorData = null;
@@ -881,76 +935,76 @@ setColorFromGrid(colorId, colorName, price, image, colorCode) {
   }
 
   // ✅ FIXED: setVariantSelection in ProductSelector class
-setVariantSelection(button, size, color = null) {
-  // ✅ CHECK STOCK FIRST
-  const stock = parseInt(button.dataset.stock || 0);
-  if (stock <= 0) {
-    this.showNotification('This variant is out of stock', 'error');
-    disableAddToCartButton();
-    return;
-  }
-  
-  document.querySelectorAll(".variant-btn").forEach((btn) => {
-    btn.classList.remove(
+  setVariantSelection(button, size, color = null) {
+    // ✅ CHECK STOCK FIRST
+    const stock = parseInt(button.dataset.stock || 0);
+    if (stock <= 0) {
+      this.showNotification("This variant is out of stock", "error");
+      disableAddToCartButton();
+      return;
+    }
+
+    document.querySelectorAll(".variant-btn").forEach((btn) => {
+      btn.classList.remove(
+        "selected",
+        "border-orange-500",
+        "bg-orange-50",
+        "ring-1",
+        "ring-orange-500"
+      );
+      btn.classList.add("border-gray-200", "bg-white");
+    });
+
+    button.classList.add(
       "selected",
       "border-orange-500",
       "bg-orange-50",
       "ring-1",
       "ring-orange-500"
     );
-    btn.classList.add("border-gray-200", "bg-white");
-  });
+    button.classList.remove("border-gray-200", "bg-white");
 
-  button.classList.add(
-    "selected",
-    "border-orange-500",
-    "bg-orange-50",
-    "ring-1",
-    "ring-orange-500"
-  );
-  button.classList.remove("border-gray-200", "bg-white");
+    const finalPrice = parseFloat(button.dataset.price);
+    const originalPrice = parseFloat(button.dataset.originalPrice) || 0;
+    const percent = parseFloat(button.dataset.percent) || 0;
+    const discount = parseFloat(button.dataset.discount) || 0;
+    const variantId = button.dataset.variantId;
 
-  const finalPrice = parseFloat(button.dataset.price);
-  const originalPrice = parseFloat(button.dataset.originalPrice) || 0;
-  const percent = parseFloat(button.dataset.percent) || 0;
-  const discount = parseFloat(button.dataset.discount) || 0;
-  const variantId = button.dataset.variantId;
+    this.selectedVariantData = {
+      price: finalPrice,
+      originalPrice: originalPrice,
+      percent: percent,
+      discount: discount,
+      variantId: variantId,
+      size: size,
+      color: color || "",
+      stock: stock,
+    };
 
-  this.selectedVariantData = {
-    price: finalPrice,
-    originalPrice: originalPrice,
-    percent: percent,
-    discount: discount,
-    variantId: variantId,
-    size: size,
-    color: color || "",
-    stock: stock
-  };
-
-  if (this.elements.selectedVariant) {
-    this.elements.selectedVariant.value = size;
-  }
-  if (this.elements.variantId) {
-    this.elements.variantId.value = variantId;
-  }
-
-  // ✅ Update all displays
-  this.updateProductHeaderPrice();
-  this.updateTotalPrice();
-
-  setTimeout(() => {
-    if (typeof updateAllPriceDisplays === "function") {
-      updateAllPriceDisplays(); // ← This is key!
+    if (this.elements.selectedVariant) {
+      this.elements.selectedVariant.value = size;
     }
-    validateSelectedVariant();
-    
-    if (stock <= 0) {
-      disableAddToCartButton();
-    } else {
-      this.updatePurchaseButton();
+    if (this.elements.variantId) {
+      this.elements.variantId.value = variantId;
     }
-  }, 100);
-}
+
+    // ✅ Update all displays
+    this.updateProductHeaderPrice();
+    this.updateTotalPrice();
+
+    setTimeout(() => {
+      if (typeof updateAllPriceDisplays === "function") {
+        updateAllPriceDisplays(); // ← This is key!
+      }
+      validateSelectedVariant();
+
+      if (stock <= 0) {
+        disableAddToCartButton();
+      } else {
+        this.updatePurchaseButton();
+      }
+    }, 100);
+  }
 
   unselectVariant(button) {
     button.classList.remove(
@@ -1702,18 +1756,19 @@ function selectVariant(button, size, color = null) {
   // ✅ PREVENT SELECTION IF OUT OF STOCK
   if (button.disabled) {
     const stock = parseInt(button.dataset.stock || 0);
-    const msg = stock <= 0 
-      ? 'This size is out of stock for the selected color' 
-      : 'This size variant is currently unavailable';
-    
-    window.productSelector?.showNotification(msg, 'error');
+    const msg =
+      stock <= 0
+        ? "This size is out of stock for the selected color"
+        : "This size variant is currently unavailable";
+
+    window.productSelector?.showNotification(msg, "error");
     return false;
   }
-  
+
   if (window.productSelector) {
     window.productSelector.selectVariant(button, size, color);
   }
-  
+
   // ✅ Trigger price update after variant selection
   setTimeout(() => {
     validateSelectedVariant();
@@ -1770,18 +1825,20 @@ function updateAllPriceDisplays() {
   const quantity = quantityInput ? parseInt(quantityInput.value) || 1 : 1;
   const colorPrice = window.productSelector.selectedColorData?.price || 0;
 
-  console.log('📊 Price Calculation Debug:', {
+  console.log("📊 Price Calculation Debug:", {
     variantPrice: variant.price,
     colorPrice: colorPrice,
     quantity: quantity,
-    total: (variant.price + colorPrice) * quantity
+    total: (variant.price + colorPrice) * quantity,
   });
 
   // Calculate unit price (variant price + color price)
-  const unitPrice = Math.round((parseFloat(variant.price) + parseFloat(colorPrice)) * 100) / 100;
+  const unitPrice =
+    Math.round((parseFloat(variant.price) + parseFloat(colorPrice)) * 100) /
+    100;
   const totalPrice = Math.round(unitPrice * quantity * 100) / 100;
 
-  console.log('💰 Final Prices:', { unitPrice, totalPrice, quantity });
+  console.log("💰 Final Prices:", { unitPrice, totalPrice, quantity });
 
   // Update header (unit price)
   const finalPriceElement = document.getElementById("final-price");
@@ -2322,19 +2379,19 @@ document.addEventListener("keydown", function (e) {
 });
 
 // ✅ Ensure updateAllPriceDisplays is called on quantity change
-document.addEventListener("DOMContentLoaded", function() {
+document.addEventListener("DOMContentLoaded", function () {
   const quantityInput = document.getElementById("quantityInput");
-  
+
   if (quantityInput) {
-    quantityInput.addEventListener("input", function() {
-      console.log('📝 Quantity changed, updating prices...');
+    quantityInput.addEventListener("input", function () {
+      console.log("📝 Quantity changed, updating prices...");
       if (window.productSelector?.selectedVariantData) {
         updateAllPriceDisplays();
       }
     });
-    
-    quantityInput.addEventListener("change", function() {
-      console.log('✅ Quantity finalized');
+
+    quantityInput.addEventListener("change", function () {
+      console.log("✅ Quantity finalized");
       if (window.productSelector?.selectedVariantData) {
         updateAllPriceDisplays();
       }

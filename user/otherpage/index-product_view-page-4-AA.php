@@ -13,7 +13,8 @@ if (isset($_GET['id']) && is_numeric($_GET['id'])) {
   // Get view count for display
   $viewData = getProductViewCount($conn, $product_id);
 }
-
+date_default_timezone_set('Asia/Manila');
+$server_time = time(); // Current Unix timestamp
 // ✅ STEP 1: SESSION RESTORE
 if (!isset($_SESSION['user_id']) && isset($_COOKIE['remember_token'])) {
   $token = $_COOKIE['remember_token'];
@@ -392,6 +393,7 @@ $is_guest = !isset($_SESSION['user_id']);
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="server-time" content="<?= $server_time ?>">
   <link rel="icon" type="image/png" sizes="96x96" href="../img/favicon.ico">
   <title><?= htmlspecialchars($product['product_name']) ?> - Noble Home</title>
   <script src="https://cdn.jsdelivr.net/npm/swiper@11/swiper-bundle.min.js"></script>
@@ -947,22 +949,22 @@ $is_guest = !isset($_SESSION['user_id']);
 
 <body class="font-roboto">
   <?php include '../navbar/top.php'; ?>
-<!-- Breadcrumb -->
-<nav class="bg-white border-b border-gray-200 px-4 py-3">
-  <div class="container mx-auto">
-    <div class="flex items-center space-x-2 text-sm">
-      <a href="index-page-1-A-B-C-D-E" class="text-orange-500 hover:text-orange-700 transition duration-200 flex items-center">
-        <i class="fas fa-home mr-1"></i>Home
-      </a>
-      <i class="fas fa-chevron-right text-gray-400"></i>
-      <span class="text-gray-600 font-medium">Products</span>
-      <i class="fas fa-chevron-right text-gray-400"></i>
-      <span class="text-gray-800 font-semibold">
-        <?= htmlspecialchars($product['product_name'] ?? $display_name ?? 'Product') ?>
-      </span>
+  <!-- Breadcrumb -->
+  <nav class="bg-white border-b border-gray-200 px-4 py-3">
+    <div class="container mx-auto">
+      <div class="flex items-center space-x-2 text-sm">
+        <a href="index-page-1-A-B-C-D-E" class="text-orange-500 hover:text-orange-700 transition duration-200 flex items-center">
+          <i class="fas fa-home mr-1"></i>Home
+        </a>
+        <i class="fas fa-chevron-right text-gray-400"></i>
+        <span class="text-gray-600 font-medium">Products</span>
+        <i class="fas fa-chevron-right text-gray-400"></i>
+        <span class="text-gray-800 font-semibold">
+          <?= htmlspecialchars($product['product_name'] ?? $display_name ?? 'Product') ?>
+        </span>
+      </div>
     </div>
-  </div>
-</nav>
+  </nav>
 
   <!-- Main Content -->
   <div class="container mx-auto">
@@ -1230,7 +1232,6 @@ $is_guest = !isset($_SESSION['user_id']);
                 <i class="fas fa-arrow-up text-orange-500 mb-2 text-lg lg:text-xl"></i>
                 <p class="text-sm lg:text-base">Please select a color first</p>
               </div>
-
               <?php foreach ($types_data as $type): ?>
                 <div id="variants-<?= $type['id'] ?>" class="variant-group hidden">
                   <?php if (!empty($type['variants'])): ?>
@@ -1246,22 +1247,23 @@ $is_guest = !isset($_SESSION['user_id']);
                           $finalPrice = $priceWithMarkup - ($priceWithMarkup * $discount / 100);
                           $sku_info = !empty($variant['sku_info']) ? json_decode($variant['sku_info'], true) : null;
                           $is_out_of_stock = $stock <= 0;
-                          // ✅ ADD THESE LINES:
 
+                          // ✅ FIXED: Get timer dates
                           $timer_discount = floatval($variant['timer_discount'] ?? 0);
                           $has_active_timer = (bool)($variant['has_active_timer'] ?? false);
                           $timer_discount_start = !empty($variant['timer_discount_start']) ? strtotime($variant['timer_discount_start']) : 0;
                           $timer_discount_end = !empty($variant['timer_end']) ? strtotime($variant['timer_end']) : 0;
                           $timer_discount_active = (bool)($variant['timer_discount_active'] ?? false);
 
+                          // ✅ FIXED: Calculate DURATION from admin setting (not remaining time)
                           $now = time();
                           $is_timer_active = $timer_discount_active && $timer_discount_end && ($now <= $timer_discount_end);
-                          $remaining_seconds = $is_timer_active ? ($timer_discount_end - $now) : 0;
+                          $duration_seconds = ($timer_discount_end - $timer_discount_start); // Duration set in admin
+                          $remaining_seconds = ($timer_discount_end - $now); // Remaining time (for stopping timer)
                           ?>
                           <button type="button"
                             onclick="selectVariant(this, '<?= addslashes($variant['size']) ?>'); showSkuInfo(this); updateCalculatorFromVariant(this); updateColorStockDisplay();"
-                            class="variant-btn border-2 <?= $is_out_of_stock ? 'border-red-300 opacity-50' : 'border-gray-300 hover:border-orange-500' ?> bg-white rounded
- px-2 py-2 text-center transition-all duration-200 min-h-[50px] flex flex-col items-center justify-center relative"
+                            class="variant-btn border-2 <?= $is_out_of_stock ? 'border-red-300 opacity-50' : 'border-gray-300 hover:border-orange-500' ?> bg-white rounded px-2 py-2 text-center transition-all duration-200 min-h-[50px] flex flex-col items-center justify-center relative"
                             data-price="<?= $price ?>"
                             data-percent="<?= $percent ?>"
                             data-discount="<?= $discount ?>"
@@ -1298,23 +1300,44 @@ $is_guest = !isset($_SESSION['user_id']);
                                 <span class="text-green-600"><?= $stock ?> in stock</span>
                               <?php endif; ?>
                             </div>
-                            <!-- ✅ TIMER BADGE -->
-                            <?php if ($is_timer_active && $remaining_seconds > 0): ?>
-                              <div class="mt-2 bg-red-600 text-white text-[10px] font-bold px-2 py-1 rounded inline-block timer-badge"
+
+                            <?php if ($is_timer_active && $timer_discount_end): ?>
+                              <?php
+                              // ✅ CALCULATE PRICES TO SHOW
+                              $priceAfterMarkup = $price + ($price * $percent / 100);
+                              $priceAfterRegularDiscount = $priceAfterMarkup - ($priceAfterMarkup * $discount / 100);
+                              $priceAfterTimerDiscount = $priceAfterRegularDiscount - ($priceAfterRegularDiscount * $timer_discount / 100);
+                              ?>
+
+                              <div class="mt-2 bg-red-700 text-white text-[10px] font-bold px-2 py-1 rounded inline-block timer-badge shadow-lg"
                                 data-variant-id="<?= $variant['variant_id'] ?>"
-                                data-end-time="<?= $timer_discount_end ?>">
-                                Ends in <span class="timer-display font-mono tracking-wider" id="timer-<?= $variant['variant_id'] ?>">
-                                  <?php
-                                  $days = floor($remaining_seconds / 86400);
-                                  $hours = floor(($remaining_seconds % 86400) / 3600);
-                                  $minutes = floor(($remaining_seconds % 3600) / 60);
-                                  $seconds = $remaining_seconds % 60;
-                                  $total_hours = ($days * 24) + $hours;
-                                  echo sprintf('%02d:%02d:%02d', $total_hours, $minutes, $seconds);
-                                  ?>
-                                </span>
+                                data-end-time="<?= $timer_discount_end ?>"
+                                data-duration="<?= $duration_seconds ?>"
+                                data-remaining="<?= max(0, $remaining_seconds) ?>">
+
+                                <!-- Timer Countdown -->
+                                <div class="flex items-center gap-1 mb-1">
+                                  <i class="fas fa-fire-alt"></i>
+                                  <span>Flash Sale</span>
+                                  <span class="timer-display font-mono tracking-wider" id="timer-<?= $variant['variant_id'] ?>">
+                                    00:00:00
+                                  </span>
+                                </div>
+
+                                <!-- Price Breakdown -->
+                                <div class="text-[9px] bg-white/20 px-1 py-0.5 rounded flex items-center justify-between gap-2">
+                                  <span class="line-through opacity-75">₱<?= number_format($priceAfterRegularDiscount, 2) ?></span>
+                                  <span class="text-yellow-300 font-bold">→</span>
+                                  <span class="text-yellow-300 font-bold">₱<?= number_format($priceAfterTimerDiscount, 2) ?></span>
+                                </div>
+
+                                <!-- Timer Discount Percentage -->
+                                <div class="text-center mt-1 bg-yellow-400 text-red-700 font-black text-[8px] px-1 rounded">
+                                  EXTRA -<?= round($timer_discount) ?>% OFF
+                                </div>
                               </div>
                             <?php endif; ?>
+
                             <span class="hidden" data-original-price="<?= $priceWithMarkup ?>" data-final-price="<?= $finalPrice ?>" data-discount-percent="<?= $discount ?>"></span>
                           </button>
                         <?php endforeach; ?>
@@ -3044,63 +3067,107 @@ $is_guest = !isset($_SESSION['user_id']);
 
   <?php include '../navbar/footer.php'; ?>
   <script>
+    // ✅ REAL-TIME TIMER - Accurate countdown
     function initFlashSaleTimers() {
-      console.log('🔥 Initializing timers from database...');
+      console.log('🔥 Initializing flash sale timers...');
 
       const timerBadges = document.querySelectorAll('.timer-badge');
       console.log(`Found ${timerBadges.length} timer badges`);
 
       if (timerBadges.length === 0) return;
 
+      // Get server time (synced once at page load)
+      const serverTimeElement = document.querySelector('meta[name="server-time"]');
+      const serverTime = serverTimeElement ? parseInt(serverTimeElement.getAttribute('content')) : Math.floor(Date.now() / 1000);
+
+      // Calculate offset
+      const clientTime = Math.floor(Date.now() / 1000);
+      const timeOffset = serverTime - clientTime;
+
+      console.log(`📅 Server time: ${new Date(serverTime * 1000).toLocaleString('en-US', {
+      year: 'numeric', month: '2-digit', day: '2-digit',
+      hour: '2-digit', minute: '2-digit', second: '2-digit', hour12: true
+    })}`);
+      console.log(`⏱️ Time offset: ${timeOffset}s`);
+
       timerBadges.forEach((badge) => {
-        const endTime = parseInt(badge.dataset.endTime);
+        const endTime = parseInt(badge.dataset.endTime); // Unix timestamp from database
         const variantId = badge.dataset.variantId;
         const timerDisplay = badge.querySelector('.timer-display');
 
         if (!endTime || !timerDisplay) {
-          console.warn(`⚠️ Invalid timer data for variant ${variantId}`);
+          console.warn(`⚠️ Invalid timer for variant ${variantId}`);
           return;
         }
 
-        console.log(`✅ Timer started for variant ${variantId}`);
+        console.log(`\n✅ Timer for variant ${variantId}:`);
+        console.log(`   End time (unix): ${endTime}`);
+        console.log(`   End time (readable): ${new Date(endTime * 1000).toLocaleString('en-US', {
+        year: 'numeric', month: '2-digit', day: '2-digit',
+        hour: '2-digit', minute: '2-digit', second: '2-digit', hour12: true
+      })}`);
+
+        let timerInterval;
 
         function updateTimer() {
-          const now = Math.floor(Date.now() / 1000);
+          // Calculate current time with server offset
+          const now = Math.floor(Date.now() / 1000) + timeOffset;
           const remaining = endTime - now;
 
-          // EXPIRED
+          // Timer expired
           if (remaining <= 0) {
             timerDisplay.textContent = 'EXPIRED';
-            badge.classList.remove('bg-red-600');
+            badge.classList.remove('bg-red-700', 'bg-red-700', 'bg-red-800', 'animate-bounce');
             badge.classList.add('bg-gray-400');
+            badge.style.pointerEvents = 'none';
+            badge.style.opacity = '0.5';
+            clearInterval(timerInterval);
+            console.log(`❌ Timer EXPIRED for variant ${variantId}`);
             return;
           }
 
-          // Calculate time components
-          const days = Math.floor(remaining / 86400);
-          const hours = Math.floor((remaining % 86400) / 3600);
+          // Calculate hours:minutes:seconds
+          const hours = Math.floor(remaining / 3600);
           const minutes = Math.floor((remaining % 3600) / 60);
           const seconds = remaining % 60;
 
-          // Format: HH:MM:SS
-          const totalHours = (days * 24) + hours;
-          const timeText = `${String(totalHours).padStart(2, '0')}:${String(minutes).padStart(2, '0')}:${String(seconds).padStart(2, '0')}`;
-
+          // Format as HH:MM:SS
+          const timeText = `${String(hours).padStart(2, '0')}:${String(minutes).padStart(2, '0')}:${String(seconds).padStart(2, '0')}`;
           timerDisplay.textContent = timeText;
+
+          // Visual feedback based on remaining time
+          if (remaining > 3600) {
+            // Normal - more than 1 hour
+            badge.classList.remove('bg-red-700', 'bg-red-800');
+            badge.classList.add('bg-red-600');
+          } else if (remaining > 300) {
+            // Warning - between 5 min and 1 hour
+            badge.classList.remove('bg-red-800');
+            badge.classList.add('bg-red-600');
+          } else if (remaining > 60) {
+            // Urgent - between 1 min and 5 min
+            badge.classList.remove('bg-red-600');
+            badge.classList.add('bg-red-700');
+          } else {
+            // Critical - less than 1 minute
+            badge.classList.remove('bg-red-600', 'bg-red-700');
+            badge.classList.add('bg-red-800');
+            timerDisplay.style.fontWeight = 'bold';
+          }
         }
 
-        // Initial update
+        // Initial update immediately
         updateTimer();
 
         // Update every second
-        setInterval(updateTimer, 1000);
+        timerInterval = setInterval(updateTimer, 1000);
       });
     }
 
-    // Run on page load
+    // Initialize on page load
     document.addEventListener('DOMContentLoaded', initFlashSaleTimers);
 
-    // Run immediately if already loaded
+    // Or if already loaded
     if (document.readyState !== 'loading') {
       initFlashSaleTimers();
     }

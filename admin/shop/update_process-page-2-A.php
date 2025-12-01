@@ -1,11 +1,17 @@
 <?php
-//update_process-page-2-A.php - FIXED VERSION WITH AUTO-DELETE & NOTIFICATIONS
+// update_process-page-2-A.php - UPDATED WITH PROPER TIMER CONVERSION & PRICE CALCULATION
 session_name("nobleadmin");
 session_start();
 include '../../connection/connect.php';
 require_once '../notification/main-handler-notif-page-2.php';
 error_reporting(E_ALL);
 ini_set('display_errors', 1);
+
+// ✅ SET TIMEZONE AT THE START
+date_default_timezone_set('Asia/Manila');
+
+error_log("🕐 Timezone: " . date_default_timezone_get());
+error_log("🕐 Server time: " . date('Y-m-d H:i:s'));
 
 if (!isset($_SESSION['noble_user'])) {
   header("Location: ../../loginpage/index.php");
@@ -16,6 +22,89 @@ $product_id = $_POST['product_id'] ?? null;
 
 if (!$product_id) {
   die("Invalid product ID");
+}
+
+// ✅ HELPER FUNCTIONS - PROPER DATETIME CONVERSION
+function convertDatetimeLocalToMySql($datetimeLocal) {
+  if (empty($datetimeLocal)) {
+    return null;
+  }
+  
+  try {
+    // datetime-local format: "2024-01-15T14:30" (NO timezone info)
+    // We treat it as Asia/Manila timezone
+    $dt = DateTime::createFromFormat('Y-m-d\TH:i', $datetimeLocal, new DateTimeZone('Asia/Manila'));
+    
+    if (!$dt) {
+      error_log("❌ Failed to parse datetime-local: $datetimeLocal");
+      return null;
+    }
+    
+    // Return as MySQL format: "2024-01-15 14:30:00"
+    $result = $dt->format('Y-m-d H:i:s');
+    error_log("✅ Converted: $datetimeLocal → $result");
+    return $result;
+    
+  } catch (Exception $e) {
+    error_log("❌ DateTime conversion error: " . $e->getMessage());
+    return null;
+  }
+}
+
+// ✅ CALCULATE DURATION BETWEEN TWO DATETIME STRINGS
+function calculateDurationSeconds($startDatetime, $endDatetime) {
+  if (empty($startDatetime) || empty($endDatetime)) {
+    return 0;
+  }
+  
+  try {
+    $start = new DateTime($startDatetime, new DateTimeZone('Asia/Manila'));
+    $end = new DateTime($endDatetime, new DateTimeZone('Asia/Manila'));
+    
+    $interval = $end->diff($start);
+    
+    // Convert interval to total seconds
+    $seconds = ($interval->d * 86400) + ($interval->h * 3600) + ($interval->i * 60) + $interval->s;
+    
+    if ($seconds < 0) {
+      error_log("⚠️ Duration is negative (end before start): $seconds seconds");
+      return 0;
+    }
+    
+    error_log("✅ Duration: $startDatetime to $endDatetime = $seconds seconds");
+    return (int)$seconds;
+    
+  } catch (Exception $e) {
+    error_log("❌ Duration calculation error: " . $e->getMessage());
+    return 0;
+  }
+}
+
+// ✅ FORMAT DURATION INTO READABLE TEXT
+function formatDuration($seconds) {
+  if ($seconds <= 0) {
+    return "No duration";
+  }
+  
+  $days = intdiv($seconds, 86400);
+  $remaining = $seconds % 86400;
+  
+  $hours = intdiv($remaining, 3600);
+  $remaining = $remaining % 3600;
+  
+  $minutes = intdiv($remaining, 60);
+  $secs = $remaining % 60;
+  
+  $parts = [];
+  
+  if ($days > 0) $parts[] = "$days day" . ($days > 1 ? 's' : '');
+  if ($hours > 0) $parts[] = "$hours hour" . ($hours > 1 ? 's' : '');
+  if ($minutes > 0) $parts[] = "$minutes minute" . ($minutes > 1 ? 's' : '');
+  if ($secs > 0 && $days === 0 && $hours === 0) $parts[] = "$secs second" . ($secs > 1 ? 's' : '');
+  
+  $result = !empty($parts) ? implode(', ', $parts) : "Less than a second";
+  error_log("📊 Formatted duration: $result");
+  return $result;
 }
 
 try {
@@ -43,20 +132,17 @@ try {
     throw new Exception("Failed to update product: " . $conn->error);
   }
 
-  // Update product_name for notification if it changed
   if ($product_name_new !== $product_name) {
     $product_name = $product_name_new;
   }
 
   // ✅ UPDATE MAIN PRODUCT IMAGE WITH AUTO-DELETE
   if (!empty($_FILES['main_image']['name'])) {
-    // Get old main image
     $oldMainImageResult = $conn->query("SELECT main_image FROM products WHERE id = $product_id");
     if ($oldMainImageResult) {
       $oldMainRow = $oldMainImageResult->fetch_assoc();
       $oldMainImagePath = $oldMainRow['main_image'] ?? null;
       
-      // Delete old file if exists
       if (!empty($oldMainImagePath)) {
         $fullOldPath = '../../' . $oldMainImagePath;
         if (file_exists($fullOldPath)) {
@@ -65,7 +151,6 @@ try {
       }
     }
     
-    // Upload new main image
     $mainImageName = time() . '_main_' . basename($_FILES['main_image']['name']);
     $uploadDir = '../../uploads/';
     
@@ -99,14 +184,11 @@ try {
       $colorPrice = (float)$colorPrices[$index];
       $colorStock = (int)($colorStocks[$index] ?? 0);
 
-      // Delete color
       if (isset($_POST['delete_color']) && in_array($colorId, $_POST['delete_color'])) {
-        // Get images first
         $getColorImagesResult = $conn->query("SELECT image, image2 FROM product_colors WHERE id = $colorId");
         if ($getColorImagesResult) {
           $colorRow = $getColorImagesResult->fetch_assoc();
           
-          // Delete image1
           if (!empty($colorRow['image'])) {
             $fullPath = '../../' . $colorRow['image'];
             if (file_exists($fullPath)) {
@@ -114,7 +196,6 @@ try {
             }
           }
           
-          // Delete image2
           if (!empty($colorRow['image2'])) {
             $fullPath = '../../' . $colorRow['image2'];
             if (file_exists($fullPath)) {
@@ -133,9 +214,6 @@ try {
       $colorImage2Path = '';
 
       if ($colorId === 'new') {
-        // Insert new color
-
-        // Handle main image
         if (!empty($_FILES['color_image']['name'][$fileIndex])) {
           $colorImageName = time() . '_' . basename($_FILES['color_image']['name'][$fileIndex]);
           $uploadDir = '../../uploads/';
@@ -153,7 +231,6 @@ try {
           }
         }
 
-        // Handle secondary image
         if (!empty($_FILES['color_image2']['name'][$fileIndex])) {
           $colorImage2Name = time() . '_secondary_' . basename($_FILES['color_image2']['name'][$fileIndex]);
           $uploadDir = '../../uploads/';
@@ -178,18 +255,14 @@ try {
           throw new Exception("Failed to insert color: " . $conn->error);
         }
       } else {
-        // Update existing color
         $updateSQL = "UPDATE product_colors SET color_name = '$colorName', color_code = '$colorCode', price = $colorPrice, stock = $colorStock";
 
-        // ✅ Handle main image update WITH AUTO-DELETE
         if (!empty($_FILES['color_image']['name'][$fileIndex])) {
-          // Get old image
           $getOldColorImageResult = $conn->query("SELECT image FROM product_colors WHERE id = $colorId");
           if ($getOldColorImageResult) {
             $oldColorRow = $getOldColorImageResult->fetch_assoc();
             $oldImagePath = $oldColorRow['image'] ?? null;
             
-            // Delete old file if exists
             if (!empty($oldImagePath)) {
               $fullOldPath = '../../' . $oldImagePath;
               if (file_exists($fullOldPath)) {
@@ -198,7 +271,6 @@ try {
             }
           }
           
-          // Upload new main image
           $colorImageName = time() . '_' . basename($_FILES['color_image']['name'][$fileIndex]);
           $uploadDir = '../../uploads/';
 
@@ -214,15 +286,12 @@ try {
           }
         }
 
-        // ✅ Handle secondary image update WITH AUTO-DELETE
         if (!empty($_FILES['color_image2']['name'][$fileIndex])) {
-          // Get old image2
           $getOldColorImage2Result = $conn->query("SELECT image2 FROM product_colors WHERE id = $colorId");
           if ($getOldColorImage2Result) {
             $oldColorRow2 = $getOldColorImage2Result->fetch_assoc();
             $oldImage2Path = $oldColorRow2['image2'] ?? null;
             
-            // Delete old file if exists
             if (!empty($oldImage2Path)) {
               $fullOldPath2 = '../../' . $oldImage2Path;
               if (file_exists($fullOldPath2)) {
@@ -231,7 +300,6 @@ try {
             }
           }
           
-          // Upload new secondary image
           $colorImage2Name = time() . '_secondary_' . basename($_FILES['color_image2']['name'][$fileIndex]);
           $uploadDir = '../../uploads/';
 
@@ -265,9 +333,7 @@ try {
     foreach ($typeIds as $typeIndex => $typeId) {
       $typeName = $conn->real_escape_string($_POST['type_name'][$typeIndex] ?? '');
 
-      // Delete type
       if (isset($_POST['delete_type']) && in_array($typeId, $_POST['delete_type'])) {
-        // Get type image first
         $getTypeImageResult = $conn->query("SELECT type_image FROM product_types WHERE id = $typeId");
         if ($getTypeImageResult) {
           $typeRow = $getTypeImageResult->fetch_assoc();
@@ -290,7 +356,6 @@ try {
         continue;
       }
 
-      // ✅ Handle type image WITH AUTO-DELETE
       $typeImagePath = null;
       if ($typeId === 'new') {
         if (!empty($_FILES['type_image']['name'][$typeIndex])) {
@@ -315,13 +380,11 @@ try {
         $typeId = $conn->insert_id;
       } else {
         if (!empty($_FILES['type_image']['name'][$typeIndex])) {
-          // Get old type image
           $getOldTypeImageResult = $conn->query("SELECT type_image FROM product_types WHERE id = $typeId");
           if ($getOldTypeImageResult) {
             $oldTypeRow = $getOldTypeImageResult->fetch_assoc();
             $oldTypeImagePath = $oldTypeRow['type_image'] ?? null;
             
-            // Delete old file if exists
             if (!empty($oldTypeImagePath)) {
               $fullOldPath = '../../' . $oldTypeImagePath;
               if (file_exists($fullOldPath)) {
@@ -330,7 +393,6 @@ try {
             }
           }
           
-          // Upload new type image
           $typeImageName = time() . '_' . basename($_FILES['type_image']['name'][$typeIndex]);
           $uploadDir = '../../uploads/type_images/';
           
@@ -364,7 +426,7 @@ try {
         $variantWeights = $_POST['variant_weight'][$typeIndex] ?? [];
         $variantWeightUnits = $_POST['variant_weight_unit'][$typeIndex] ?? [];
 
-        // Timer discount data
+        // ✅ TIMER DISCOUNT DATA
         $variantTimerDiscounts = $_POST['variant_timer_discount'][$typeIndex] ?? [];
         $variantTimerActives = $_POST['variant_timer_active'][$typeIndex] ?? [];
         $variantTimerStarts = $_POST['variant_timer_start'][$typeIndex] ?? [];
@@ -376,7 +438,6 @@ try {
           $variantOriginalPrice = (float)($variantOriginalPrices[$variantIndex] ?? 0);
           $variantPercent = (float)($variantPercents[$variantIndex] ?? 0);
           $variantDiscount = (float)($variantDiscounts[$variantIndex] ?? 0);
-          $variantPrice = (float)($variantPrices[$variantIndex] ?? 0);
           $variantWidth = !empty($variantWidths[$variantIndex]) ? (float)$variantWidths[$variantIndex] : null;
           $variantHeight = !empty($variantHeights[$variantIndex]) ? (float)$variantHeights[$variantIndex] : null;
           $variantLength = !empty($variantLengths[$variantIndex]) ? (float)$variantLengths[$variantIndex] : null;
@@ -384,15 +445,91 @@ try {
           $variantWeight = !empty($variantWeights[$variantIndex]) ? (float)$variantWeights[$variantIndex] : null;
           $variantWeightUnit = $conn->real_escape_string($variantWeightUnits[$variantIndex] ?? 'kg');
 
-          // Process timer discount data
+          // ✅ CALCULATE FINAL PRICE WITH ALL DISCOUNTS
+          $priceAfterMarkup = $variantOriginalPrice + ($variantOriginalPrice * $variantPercent / 100);
+          $priceAfterRegularDiscount = $priceAfterMarkup - ($priceAfterMarkup * $variantDiscount / 100);
+          
+          // ✅ TIMER DISCOUNT HANDLING - PROPER CONVERSION
           $timerDiscount = (float)($variantTimerDiscounts[$variantIndex] ?? 0);
           $timerActive = isset($variantTimerActives[$variantIndex]) ? 1 : 0;
-          $timerStart = !empty($variantTimerStarts[$variantIndex])
-            ? "'" . $conn->real_escape_string($variantTimerStarts[$variantIndex]) . "'"
-            : "NULL";
-          $timerEnd = !empty($variantTimerEnds[$variantIndex])
-            ? "'" . $conn->real_escape_string($variantTimerEnds[$variantIndex]) . "'"
-            : "NULL";
+          
+          error_log("\n🔥 Processing Timer for Variant $variantIndex:");
+          error_log("   Original Price: ₱$variantOriginalPrice");
+          error_log("   After Markup ($variantPercent%): ₱$priceAfterMarkup");
+          error_log("   After Regular Discount ($variantDiscount%): ₱$priceAfterRegularDiscount");
+          error_log("   Timer Discount %: $timerDiscount");
+          error_log("   Timer Active from form: " . ($timerActive ? 'YES' : 'NO'));
+          error_log("   Input - Start: " . ($variantTimerStarts[$variantIndex] ?? 'empty'));
+          error_log("   Input - End: " . ($variantTimerEnds[$variantIndex] ?? 'empty'));
+
+          // ✅ CONVERT datetime-local to MySQL datetime
+          $timerStartFormatted = null;
+          $timerStart = "NULL";
+          
+          if (!empty($variantTimerStarts[$variantIndex])) {
+            $timerStartFormatted = convertDatetimeLocalToMySql($variantTimerStarts[$variantIndex]);
+            if ($timerStartFormatted) {
+              $timerStart = "'" . $conn->real_escape_string($timerStartFormatted) . "'";
+            }
+          }
+          
+          // ✅ CONVERT datetime-local to MySQL datetime
+          $timerEndFormatted = null;
+          $timerEnd = "NULL";
+          
+          if (!empty($variantTimerEnds[$variantIndex])) {
+            $timerEndFormatted = convertDatetimeLocalToMySql($variantTimerEnds[$variantIndex]);
+            if ($timerEndFormatted) {
+              $timerEnd = "'" . $conn->real_escape_string($timerEndFormatted) . "'";
+            }
+          }
+
+          // ✅ CALCULATE DURATION BETWEEN START AND END
+          $timerDurationSeconds = 0;
+          $timerDurationFormatted = "No duration";
+
+          if ($timerStartFormatted && $timerEndFormatted) {
+            $timerDurationSeconds = calculateDurationSeconds($timerStartFormatted, $timerEndFormatted);
+            $timerDurationFormatted = formatDuration($timerDurationSeconds);
+            error_log("   Duration: $timerDurationSeconds seconds ($timerDurationFormatted)");
+          }
+
+          // ✅ GET CURRENT TIME
+          $now = new DateTime('now', new DateTimeZone('Asia/Manila'));
+          $nowTimestamp = $now->getTimestamp();
+          
+          // ✅ CALCULATE FINAL PRICE WITH TIMER DISCOUNT
+          $finalPrice = $priceAfterRegularDiscount;
+          $finalTimerActive = $timerActive;
+          
+          if ($timerEndFormatted && $timerStartFormatted) {
+            $startDateTime = new DateTime($timerStartFormatted, new DateTimeZone('Asia/Manila'));
+            $startTimestamp = $startDateTime->getTimestamp();
+            
+            $endDateTime = new DateTime($timerEndFormatted, new DateTimeZone('Asia/Manila'));
+            $endTimestamp = $endDateTime->getTimestamp();
+            
+            if ($endTimestamp < $nowTimestamp) {
+              // ❌ EXPIRED - DON'T APPLY TIMER DISCOUNT
+              $finalTimerActive = 0;
+              error_log("   ❌ TIMER EXPIRED - No discount applied");
+              error_log("   Final Price: ₱" . number_format($finalPrice, 2));
+            } elseif ($nowTimestamp >= $startTimestamp && $nowTimestamp < $endTimestamp && $finalTimerActive) {
+              // ✅ ACTIVE & WITHIN TIME RANGE - APPLY TIMER DISCOUNT
+              $finalPrice = $priceAfterRegularDiscount - ($priceAfterRegularDiscount * $timerDiscount / 100);
+              error_log("   ✅ TIMER ACTIVE & WITHIN RANGE - Discount applied");
+              error_log("   Calculation: ₱$priceAfterRegularDiscount - (₱$priceAfterRegularDiscount × $timerDiscount%) = ₱$finalPrice");
+            } elseif ($nowTimestamp < $startTimestamp && $finalTimerActive) {
+              // ⏳ WAITING FOR START TIME
+              error_log("   ⏳ TIMER WAITING TO START - No discount applied yet");
+              error_log("   Final Price: ₱" . number_format($finalPrice, 2));
+            } else {
+              error_log("   Final Price: ₱" . number_format($finalPrice, 2));
+            }
+          }
+
+          error_log("   ==> FINAL SAVED PRICE: ₱" . number_format($finalPrice, 2));
+          error_log("   ==> SAVING: timerActive=$finalTimerActive, timerDiscount=$timerDiscount%");
 
           // Delete variant
           if (isset($_POST['delete_variant'][$typeIndex]) && in_array($variantId, $_POST['delete_variant'][$typeIndex])) {
@@ -403,21 +540,23 @@ try {
 
           $oldVariantId = $variantId;
 
-          // Insert or update variant
+          // Insert or update variant with FINAL CALCULATED PRICE
           if ($variantId === 'new') {
             $insertVariantSQL = "INSERT INTO product_variants 
                                 (product_id, type_id, size, namevariant, original_price, percent, discount, price, 
                                  width, height, length, dimension_unit, weight, weight_unit,
-                                 timer_discount_percent, timer_discount_active, timer_discount_start, timer_discount_end)
+                                 timer_discount_percent, timer_discount_active, timer_discount_start, timer_discount_end,
+                                 timer_discount_duration_seconds, timer_discount_duration_formatted)
                                 VALUES ($product_id, $typeId, '$variantSize', '$variantNamevariant', $variantOriginalPrice, 
-                                        $variantPercent, $variantDiscount, $variantPrice, 
+                                        $variantPercent, $variantDiscount, $finalPrice, 
                                         " . ($variantWidth !== null ? $variantWidth : "NULL") . ", " .
-              ($variantHeight !== null ? $variantHeight : "NULL") . ", " .
-              ($variantLength !== null ? $variantLength : "NULL") . ", " .
-              "'$variantDimensionUnit', " .
-              ($variantWeight !== null ? $variantWeight : "NULL") . ", " .
-              "'$variantWeightUnit',
-                                        $timerDiscount, $timerActive, $timerStart, $timerEnd)";
+                                        ($variantHeight !== null ? $variantHeight : "NULL") . ", " .
+                                        ($variantLength !== null ? $variantLength : "NULL") . ", " .
+                                        "'$variantDimensionUnit', " .
+                                        ($variantWeight !== null ? $variantWeight : "NULL") . ", " .
+                                        "'$variantWeightUnit',
+                                        $timerDiscount, $finalTimerActive, $timerStart, $timerEnd,
+                                        $timerDurationSeconds, '$timerDurationFormatted')";
             if (!$conn->query($insertVariantSQL)) {
               throw new Exception("Failed to insert variant: " . $conn->error);
             }
@@ -429,17 +568,19 @@ try {
                                     original_price = $variantOriginalPrice,
                                     percent = $variantPercent, 
                                     discount = $variantDiscount, 
-                                    price = $variantPrice,
+                                    price = $finalPrice,
                                     width = " . ($variantWidth !== null ? $variantWidth : "NULL") . ", " .
-              "height = " . ($variantHeight !== null ? $variantHeight : "NULL") . ", " .
-              "length = " . ($variantLength !== null ? $variantLength : "NULL") . ", " .
-              "dimension_unit = '$variantDimensionUnit',
+                                    "height = " . ($variantHeight !== null ? $variantHeight : "NULL") . ", " .
+                                    "length = " . ($variantLength !== null ? $variantLength : "NULL") . ", " .
+                                    "dimension_unit = '$variantDimensionUnit',
                                     weight = " . ($variantWeight !== null ? $variantWeight : "NULL") . ", " .
-              "weight_unit = '$variantWeightUnit',
+                                    "weight_unit = '$variantWeightUnit',
                                     timer_discount_percent = $timerDiscount,
-                                    timer_discount_active = $timerActive,
+                                    timer_discount_active = $finalTimerActive,
                                     timer_discount_start = $timerStart,
-                                    timer_discount_end = $timerEnd
+                                    timer_discount_end = $timerEnd,
+                                    timer_discount_duration_seconds = $timerDurationSeconds,
+                                    timer_discount_duration_formatted = '$timerDurationFormatted'
                                 WHERE id = $variantId";
             if (!$conn->query($updateVariantSQL)) {
               throw new Exception("Failed to update variant: " . $conn->error);
@@ -447,15 +588,12 @@ try {
           }
 
           // 4. HANDLE VARIANT-COLOR JUNCTION
-
-          // Delete variant-color relationships
           if (isset($_POST['delete_variant_color'][$typeIndex][$oldVariantId])) {
             foreach ($_POST['delete_variant_color'][$typeIndex][$oldVariantId] as $vcId) {
               $conn->query("DELETE FROM product_variant_colors WHERE id = $vcId");
             }
           }
 
-          // Update existing variant-color stock
           if (isset($_POST['variant_color_id'][$typeIndex][$oldVariantId])) {
             $variantColorIds = $_POST['variant_color_id'][$typeIndex][$oldVariantId] ?? [];
             $variantColorStocks = $_POST['variant_color_stock'][$typeIndex][$oldVariantId] ?? [];
@@ -466,7 +604,6 @@ try {
             }
           }
 
-          // Add new variant-color combinations
           $colorKeysToCheck = [$oldVariantId];
 
           if ($oldVariantId === 'new') {
@@ -508,7 +645,7 @@ try {
 
   $conn->commit();
 
-  // ✅ NEW: CREATE NOTIFICATION FOR PRODUCT UPDATE
+  // ✅ CREATE NOTIFICATION FOR PRODUCT UPDATE
   $notification_title = "Product Updated";
   $notification_message = "'" . htmlspecialchars($product_name) . "' (ID: #$product_id) has been updated";
   
@@ -523,21 +660,21 @@ try {
     $style['color']
   );
 
-  // Log notification creation
   if ($notif_created) {
-    error_log("Notification created for product update: $product_id");
+    error_log("✅ Notification created for product update: $product_id");
   } else {
-    error_log("Failed to create notification for product update: $product_id");
+    error_log("⚠️ Failed to create notification");
   }
 
-  $_SESSION['success_message'] = "Product updated successfully with timer discount!";
+  $_SESSION['success_message'] = "Product updated successfully!";
   header("Location: update_product-page-2-A.php?id=$product_id&success=1");
   exit();
 } catch (Exception $e) {
   $conn->rollback();
-  error_log("Update Product Error: " . $e->getMessage());
+  error_log("❌ Update Product Error: " . $e->getMessage());
 
   $_SESSION['error_message'] = "Error: " . $e->getMessage();
   header("Location: update_product-page-2-A.php?id=$product_id&error=1");
   exit();
 }
+?>

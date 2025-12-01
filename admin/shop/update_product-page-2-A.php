@@ -397,67 +397,109 @@ if (!empty($product['sub_images'])) {
                     class="computed-price-input" />
 
 
-                  <!-- Timer Discount Section -->
-                  <div class="bg-yellow-50 p-3 rounded mb-2 border-2 border-yellow-300">
-                    <label class="text-xs font-semibold text-gray-700 block mb-2">⏰ Timer Discount (Flash Sale)</label>
+                  <!-- Timer Discount Section WITH DURATION DISPLAY -->
+<div class="bg-yellow-50 p-3 rounded mb-2 border-2 border-yellow-300">
+  <label class="text-xs font-semibold text-gray-700 block mb-2">⏰ Timer Discount (Flash Sale)</label>
 
-                    <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
-                      <!-- Timer Discount Percentage -->
-                      <div>
-                        <label class="text-xs font-medium text-gray-600">Timer Discount %</label>
-                        <input type="number"
-                          step="0.01"
-                          name="variant_timer_discount[<?php echo $typeIndex; ?>][]"
-                          value="<?php echo htmlspecialchars($variant['timer_discount_percent'] ?? '0'); ?>"
-                          placeholder="e.g., 20"
-                          class="border p-2 w-full rounded text-sm timer-discount-input"
-                          data-variant-index="<?php echo $typeIndex; ?>"
-                          min="0"
-                          max="100" />
-                        <p class="text-xs text-gray-500 mt-1">Extra discount during flash sale</p>
-                      </div>
+  <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
+    <!-- Timer Discount Percentage -->
+    <div>
+      <label class="text-xs font-medium text-gray-600">Timer Discount %</label>
+      <input type="number"
+        step="0.01"
+        name="variant_timer_discount[<?php echo $typeIndex; ?>][]"
+        value="<?php echo htmlspecialchars($variant['timer_discount_percent'] ?? '0'); ?>"
+        placeholder="e.g., 20"
+        class="border p-2 w-full rounded text-sm timer-discount-input"
+        data-variant-index="<?php echo $typeIndex; ?>"
+        min="0"
+        max="100" />
+      <p class="text-xs text-gray-500 mt-1">Extra discount during flash sale</p>
+    </div>
 
-                      <!-- Timer Discount Active -->
-                      <div class="flex items-center">
-                        <input type="checkbox"
-                          name="variant_timer_active[<?php echo $typeIndex; ?>][]"
-                          value="1"
-                          <?php echo (!empty($variant['timer_discount_active']) ? 'checked' : ''); ?>
-                          class="mr-2"
-                          id="timer_active_<?php echo $typeIndex; ?>_<?php echo $variant['id'] ?? 'new'; ?>" />
-                        <label for="timer_active_<?php echo $typeIndex; ?>_<?php echo $variant['id'] ?? 'new'; ?>"
-                          class="text-sm font-medium text-gray-700">
-                          Enable Timer Discount
-                        </label>
-                      </div>
+    <!-- Timer Discount Active -->
+    <div class="flex items-center">
+      <input type="checkbox"
+        name="variant_timer_active[<?php echo $typeIndex; ?>][]"
+        value="1"
+        <?php echo (!empty($variant['timer_discount_active']) ? 'checked' : ''); ?>
+        class="mr-2"
+        id="timer_active_<?php echo $typeIndex; ?>_<?php echo $variant['id'] ?? 'new'; ?>" />
+      <label for="timer_active_<?php echo $typeIndex; ?>_<?php echo $variant['id'] ?? 'new'; ?>"
+        class="text-sm font-medium text-gray-700">
+        Enable Timer Discount
+      </label>
+    </div>
 
-                      <!-- Start Date/Time -->
-                      <div>
-                        <label class="text-xs font-medium text-gray-600">Start Date & Time</label>
-                        <input type="datetime-local"
-                          name="variant_timer_start[<?php echo $typeIndex; ?>][]"
-                          value="<?php echo !empty($variant['timer_discount_start']) ? date('Y-m-d\TH:i', strtotime($variant['timer_discount_start'])) : ''; ?>"
-                          class="border p-2 w-full rounded text-sm" />
-                      </div>
+    <!-- Start Date/Time -->
+    <div>
+      <label class="text-xs font-medium text-gray-600">Start Date & Time</label>
+      <input type="datetime-local"
+        name="variant_timer_start[<?php echo $typeIndex; ?>][]"
+        value="<?php echo !empty($variant['timer_discount_start']) ? date('Y-m-d\TH:i', strtotime($variant['timer_discount_start'])) : ''; ?>"
+        class="border p-2 w-full rounded text-sm timer-start-input"
+        data-variant-index="<?php echo $typeIndex; ?>"
+        onchange="calculateDuration(this)" />
+    </div>
 
-                      <!-- End Date/Time -->
-                      <div>
-                        <label class="text-xs font-medium text-gray-600">End Date & Time</label>
-                        <input type="datetime-local"
-                          name="variant_timer_end[<?php echo $typeIndex; ?>][]"
-                          value="<?php echo !empty($variant['timer_discount_end']) ? date('Y-m-d\TH:i', strtotime($variant['timer_discount_end'])) : ''; ?>"
-                          class="border p-2 w-full rounded text-sm" />
-                      </div>
-                    </div>
+    <!-- End Date/Time -->
+    <div>
+      <label class="text-xs font-medium text-gray-600">End Date & Time</label>
+      <input type="datetime-local"
+        name="variant_timer_end[<?php echo $typeIndex; ?>][]"
+        value="<?php echo !empty($variant['timer_discount_end']) ? date('Y-m-d\TH:i', strtotime($variant['timer_discount_end'])) : ''; ?>"
+        class="border p-2 w-full rounded text-sm timer-end-input"
+        data-variant-index="<?php echo $typeIndex; ?>"
+        onchange="calculateDuration(this)" />
+    </div>
+  </div>
 
-                    <!-- Timer Discount Preview -->
-                    <div class="mt-2 p-2 bg-white rounded border">
-                      <div class="flex justify-between items-center">
-                        <span class="text-xs text-gray-600">Price after timer discount:</span>
-                        <span class="timer-final-preview text-sm font-bold text-orange-600">₱0.00</span>
-                      </div>
-                    </div>
-                  </div>
+  <!-- Duration Display Section -->
+  <div class="mt-3 p-3 bg-white rounded border-2 border-orange-300">
+    <div class="text-xs font-semibold text-gray-700 mb-2">📊 Sale Duration:</div>
+    
+    <div class="grid grid-cols-4 gap-2 mb-3">
+      <!-- Days -->
+      <div class="bg-gradient-to-br from-blue-50 to-blue-100 p-2 rounded border border-blue-300">
+        <div class="text-xl font-bold text-blue-600 duration-days">0</div>
+        <div class="text-xs text-gray-600 font-semibold">Days</div>
+      </div>
+
+      <!-- Hours -->
+      <div class="bg-gradient-to-br from-green-50 to-green-100 p-2 rounded border border-green-300">
+        <div class="text-xl font-bold text-green-600 duration-hours">0</div>
+        <div class="text-xs text-gray-600 font-semibold">Hours</div>
+      </div>
+
+      <!-- Minutes -->
+      <div class="bg-gradient-to-br from-purple-50 to-purple-100 p-2 rounded border border-purple-300">
+        <div class="text-xl font-bold text-purple-600 duration-minutes">0</div>
+        <div class="text-xs text-gray-600 font-semibold">Minutes</div>
+      </div>
+
+      <!-- Seconds -->
+      <div class="bg-gradient-to-br from-pink-50 to-pink-100 p-2 rounded border border-pink-300">
+        <div class="text-xl font-bold text-pink-600 duration-seconds">0</div>
+        <div class="text-xs text-gray-600 font-semibold">Seconds</div>
+      </div>
+    </div>
+
+    <!-- Total Duration Summary -->
+    <div class="p-2 bg-gradient-to-r from-orange-50 to-yellow-50 rounded border border-orange-300">
+      <div class="text-xs font-semibold text-gray-700">📅 Total Duration:</div>
+      <div class="text-sm font-bold text-orange-600 mt-1 duration-total">Set start and end dates</div>
+      <div class="text-xs text-red-500 mt-1 duration-warning" style="display:none;"></div>
+    </div>
+  </div>
+
+  <!-- Timer Discount Preview -->
+  <div class="mt-2 p-2 bg-white rounded border">
+    <div class="flex justify-between items-center">
+      <span class="text-xs text-gray-600">Price after timer discount:</span>
+      <span class="timer-final-preview text-sm font-bold text-orange-600">₱0.00</span>
+    </div>
+  </div>
+</div>
 
                   <!-- Row 3: Dimensions -->
                   <div class="bg-white p-3 rounded mb-2">
@@ -1074,6 +1116,275 @@ if (!empty($product['sub_images'])) {
         hook();
       }
     }
+
+     // Duration Calculator Function
+  function calculateDuration(input) {
+    const container = input.closest('.bg-yellow-50');
+    const startInput = container.querySelector('.timer-start-input');
+    const endInput = container.querySelector('.timer-end-input');
+    
+    const startValue = startInput.value;
+    const endValue = endInput.value;
+
+    // Get duration display elements
+    const durationDays = container.querySelector('.duration-days');
+    const durationHours = container.querySelector('.duration-hours');
+    const durationMinutes = container.querySelector('.duration-minutes');
+    const durationSeconds = container.querySelector('.duration-seconds');
+    const durationTotal = container.querySelector('.duration-total');
+    const durationWarning = container.querySelector('.duration-warning');
+
+    // Reset if either field is empty
+    if (!startValue || !endValue) {
+      durationDays.textContent = '0';
+      durationHours.textContent = '0';
+      durationMinutes.textContent = '0';
+      durationSeconds.textContent = '0';
+      durationTotal.textContent = 'Set start and end dates';
+      durationWarning.style.display = 'none';
+      return;
+    }
+
+    // Parse datetime-local values
+    const startDate = new Date(startValue);
+    const endDate = new Date(endValue);
+
+    // Validation
+    if (isNaN(startDate.getTime()) || isNaN(endDate.getTime())) {
+      durationTotal.textContent = '❌ Invalid date format';
+      durationWarning.style.display = 'block';
+      durationWarning.textContent = 'Please check your date/time inputs';
+      return;
+    }
+
+    if (endDate <= startDate) {
+      durationDays.textContent = '0';
+      durationHours.textContent = '0';
+      durationMinutes.textContent = '0';
+      durationSeconds.textContent = '0';
+      durationTotal.textContent = '❌ End time must be after start time';
+      durationWarning.style.display = 'block';
+      durationWarning.textContent = 'Adjust your end date/time';
+      return;
+    }
+
+    // Calculate duration
+    const diffMs = endDate - startDate;
+    const diffSecs = Math.floor(diffMs / 1000);
+    
+    const days = Math.floor(diffSecs / (24 * 3600));
+    const hours = Math.floor((diffSecs % (24 * 3600)) / 3600);
+    const minutes = Math.floor((diffSecs % 3600) / 60);
+    const seconds = diffSecs % 60;
+
+    // Update display
+    durationDays.textContent = days;
+    durationHours.textContent = hours;
+    durationMinutes.textContent = minutes;
+    durationSeconds.textContent = seconds;
+
+    // Format total duration text
+    let durationText = [];
+    if (days > 0) durationText.push(`${days} day${days > 1 ? 's' : ''}`);
+    if (hours > 0) durationText.push(`${hours} hour${hours > 1 ? 's' : ''}`);
+    if (minutes > 0) durationText.push(`${minutes} minute${minutes > 1 ? 's' : ''}`);
+    if (seconds > 0 && days === 0 && hours === 0) durationText.push(`${seconds} second${seconds > 1 ? 's' : ''}`);
+
+    const totalText = durationText.length > 0 ? durationText.join(', ') : 'Less than a second';
+    durationTotal.textContent = '✅ ' + totalText;
+
+    // Clear warning if valid
+    durationWarning.style.display = 'none';
+  }
+
+  // Initialize on page load
+  document.addEventListener('DOMContentLoaded', () => {
+    document.querySelectorAll('.timer-start-input').forEach(input => {
+      calculateDuration(input);
+    });
+  });
+// ✅ TIMER MONITORING - NO AUTO ACTIVATION
+function monitorAllTimerDiscounts() {
+  console.log('🚀 Starting timer discount monitoring...');
+  
+  const timerContainers = document.querySelectorAll('.bg-yellow-50');
+  const monitoredVariants = new Map();
+  
+  console.log(`📊 Found ${timerContainers.length} timer sections`);
+  
+  timerContainers.forEach((container, index) => {
+    const startInput = container.querySelector('.timer-start-input');
+    const endInput = container.querySelector('.timer-end-input');
+    const timerCheckbox = container.querySelector('input[name*="timer_active"]');
+    const variantContainer = container.closest('.bg-blue-50');
+    const variantIdInput = variantContainer.querySelector('input[name*="variant_id"]');
+    
+    if (!startInput || !endInput || !timerCheckbox || !variantContainer) {
+      console.warn(`⚠️ Timer section ${index} missing required elements`);
+      return;
+    }
+    
+    const variantId = variantIdInput ? variantIdInput.value : null;
+    
+    // Skip new variants (not yet saved in database)
+    if (!variantId || variantId === 'new') {
+      console.log(`⏭️ Skipping new/unsaved variant`);
+      return;
+    }
+    
+    console.log(`✅ Monitoring variant ${variantId}`);
+    
+    monitoredVariants.set(variantId, {
+      container: container,
+      variantContainer: variantContainer,
+      startInput: startInput,
+      endInput: endInput,
+      timerCheckbox: timerCheckbox,
+      lastCheckTime: Date.now(),
+      isExpired: false
+    });
+  });
+  
+  // ✅ CHECK EVERY 5 SECONDS
+  setInterval(() => {
+    monitoredVariants.forEach((data, variantId) => {
+      const { container, timerCheckbox, startInput, endInput, variantContainer } = data;
+      
+      const startValue = startInput.value;
+      const endValue = endInput.value;
+      
+      if (!startValue || !endValue) return;
+      
+      try {
+        const startDate = new Date(startValue + ':00');
+        const endDate = new Date(endValue + ':00');
+        const now = new Date();
+        
+        const isCurrentlyActive = timerCheckbox.checked;
+        
+        // 🔴 TIMER EXPIRED - AUTO DEACTIVATE & RECALCULATE PRICE (ONLY if manually enabled)
+        if (now >= endDate && isCurrentlyActive && !data.isExpired) {
+          console.log(`⏰ VARIANT ${variantId}: Timer EXPIRED! Auto-deactivating...`);
+          
+          data.isExpired = true;
+          timerCheckbox.checked = false;
+          
+          // 🔥 SAVE TO DATABASE & RECALCULATE PRICE
+          saveTimerStatusToDatabase(variantId, 'deactivate', container, () => {
+            console.log(`✅ Variant ${variantId} deactivated and saved to DB`);
+            
+            // ✨ RECALCULATE PRICES IMMEDIATELY
+            recalculatePricesForVariant(variantContainer);
+            
+            // Visual feedback
+            showTimerExpiredNotice(container);
+          });
+          
+          return;
+        }
+        
+        // Reset expired flag if timer is manually re-enabled
+        if (isCurrentlyActive && now < endDate) {
+          data.isExpired = false;
+        }
+        
+        // 🟡 SHOW COUNTDOWN IF MANUALLY ENABLED
+        if (isCurrentlyActive && now >= startDate && now < endDate) {
+          const remainingMs = endDate - now;
+          const remainingSeconds = Math.floor(remainingMs / 1000);
+          
+          const hours = Math.floor(remainingSeconds / 3600);
+          const minutes = Math.floor((remainingSeconds % 3600) / 60);
+          const secs = remainingSeconds % 60;
+          
+          const durationWarning = container.querySelector('.duration-warning');
+          
+          // Show countdown only last 5 minutes
+          if (remainingSeconds < 300 && durationWarning) {
+            durationWarning.style.display = 'block';
+            durationWarning.innerHTML = `
+              ⏰ <span style="color:#f97316; font-weight:bold;">
+                EXPIRES IN: ${hours}h ${minutes}m ${secs}s
+              </span>
+            `;
+          }
+        }
+        
+      } catch (e) {
+        console.error(`Error monitoring variant ${variantId}:`, e);
+      }
+    });
+  }, 5000); // Check every 5 seconds
+}
+
+// ✅ FUNCTION: Save Timer Status sa Database WITH PRICE UPDATE
+function saveTimerStatusToDatabase(variantId, action, container, callback) {
+  const formData = new FormData();
+  formData.append('variant_id', variantId);
+  formData.append('action', action); // 'deactivate' or 'activate'
+  
+  fetch('main-update-auto_deactivate_timer-page-2-A.php', {
+    method: 'POST',
+    body: formData
+  })
+  .then(response => response.json())
+  .then(data => {
+    if (data.success) {
+      console.log(`✅ ${action.toUpperCase()} saved to database:`, data);
+      
+      if (callback) {
+        callback();
+      }
+    } else {
+      console.error('❌ Failed to save timer status:', data);
+    }
+  })
+  .catch(error => {
+    console.error('❌ AJAX Error:', error);
+  });
+}
+
+// ✅ HELPER: Recalculate prices for a variant
+function recalculatePricesForVariant(variantContainer) {
+  console.log('🔄 Recalculating prices for variant...');
+  
+  const originalPriceInput = variantContainer.querySelector('.original-price-input');
+  const percentInput = variantContainer.querySelector('.percent-input');
+  const discountInput = variantContainer.querySelector('.discount-input');
+  const markupDisplay = variantContainer.querySelector('.markup-preview');
+  const finalDisplay = variantContainer.querySelector('.final-preview');
+  const computedPriceInput = variantContainer.querySelector('.computed-price-input');
+  
+  if (originalPriceInput && percentInput && markupDisplay && finalDisplay) {
+    console.log('✨ Running applyMarkup function...');
+    applyMarkup(originalPriceInput, percentInput, discountInput, markupDisplay, finalDisplay, computedPriceInput);
+    console.log('✅ Prices recalculated');
+  }
+}
+
+// ✅ Visual feedback - Timer Expired
+function showTimerExpiredNotice(container) {
+  container.style.opacity = '0.7';
+  container.style.borderColor = '#f87171';
+  container.style.backgroundColor = '#fef2f2';
+  
+  const durationWarning = container.querySelector('.duration-warning');
+  if (durationWarning) {
+    durationWarning.style.display = 'block';
+    durationWarning.innerHTML = `
+      ⏰ <span style="color:#ef4444; font-weight:bold;">
+        ✅ EXPIRED - Timer discount has been auto-deactivated. Price updated.
+      </span>
+    `;
+  }
+}
+
+// Initialize on page load
+document.addEventListener('DOMContentLoaded', () => {
+  setTimeout(() => {
+    monitorAllTimerDiscounts();
+  }, 500);
+});
   </script>
 
 </body>

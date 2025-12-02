@@ -167,7 +167,7 @@ $products_result = mysqli_query($conn, $products_query);
                     </div>
                     <div>
                         <h1 class="text-xl font-bold text-gray-900">Tiered Pricing Management</h1>
-                        <p class="text-xs text-gray-500">Volume-based discount configuration with calculator guide</p>
+                        <p class="text-xs text-gray-500">Quantity-based discount configuration</p>
                     </div>
                 </div>
                 <div class="text-right">
@@ -208,19 +208,7 @@ $products_result = mysqli_query($conn, $products_query);
                             <div>
                                 <p class="text-xs font-semibold text-gray-900 mb-1">How It Works</p>
                                 <p class="text-xs text-gray-600 leading-relaxed">
-                                    Set minimum purchase thresholds and corresponding discount percentages. Discounts apply automatically when customers meet the criteria.
-                                </p>
-                            </div>
-                        </div>
-
-                        <div class="flex items-start gap-3">
-                            <div class="w-8 h-8 bg-gray-100 rounded-lg flex items-center justify-center flex-shrink-0">
-                                <i class='bx bx-calculator text-gray-600 text-lg'></i>
-                            </div>
-                            <div>
-                                <p class="text-xs font-semibold text-gray-900 mb-1">Calculator Guide</p>
-                                <p class="text-xs text-gray-600 leading-relaxed">
-                                    Enable guide feature to show area calculator for AAC blocks with auto-calculation of adhesive and brackets needed.
+                                    Set minimum quantity thresholds and corresponding discount percentages. Discounts apply automatically when customers order the required quantity.
                                 </p>
                             </div>
                         </div>
@@ -235,117 +223,12 @@ $products_result = mysqli_query($conn, $products_query);
                         <div class="flex items-center justify-between mb-4">
                             <div>
                                 <h2 class="text-lg font-bold text-gray-900">Pricing Tiers</h2>
-                                <p class="text-xs text-gray-500 mt-1">Configure discount thresholds and benefits</p>
+                                <p class="text-xs text-gray-500 mt-1">Configure quantity thresholds and discount benefits</p>
                             </div>
                             <button onclick="addTierRow()" class="btn-primary px-4 py-2.5 rounded-lg flex items-center gap-2 font-semibold text-sm">
                                 <i class='bx bx-plus text-lg'></i>
                                 Add Tier
                             </button>
-                        </div>
-
-                        <div class="flex items-center justify-between pt-4 border-t border-gray-200">
-                            <div>
-                                <p class="text-sm font-semibold text-gray-900">Calculator Guide</p>
-                                <p class="text-xs text-gray-500">Show area calculator for this product</p>
-                            </div>
-                            <label class="toggle-switch">
-                                <input type="checkbox" id="guideToggle" onchange="toggleGuide()">
-                                <span class="toggle-slider"></span>
-                            </label>
-                        </div>
-                    </div>
-
-                    <div id="calculatorGuide" class="hidden bg-gradient-to-br from-blue-50 to-indigo-50 rounded-lg card-shadow p-6 mb-6">
-                        <div class="flex items-center gap-3 mb-4">
-                            <div class="w-10 h-10 bg-blue-600 rounded-lg flex items-center justify-center">
-                                <i class='bx bx-calculator text-white text-xl'></i>
-                            </div>
-                            <div>
-                                <h3 class="text-lg font-bold text-gray-900">Area Calculator</h3>
-                                <p class="text-xs text-gray-600">Calculate required pieces based on area</p>
-                            </div>
-                        </div>
-
-                        <div class="bg-white rounded-lg p-4 mb-4">
-                            <!-- Size/Variant Selection -->
-                            <div class="mb-4">
-                                <label class="block text-xs font-semibold text-gray-700 mb-2">Select Size/Variant</label>
-                                <select id="variantSelect" class="w-full px-4 py-3 bg-white border border-gray-300 rounded-lg input-focus text-sm font-medium text-gray-900">
-                                    <option value="">Choose a size...</option>
-                                </select>
-                            </div>
-
-                            <!-- Dimensions Display (shown after variant selection) -->
-                            <div id="dimensionsDisplay" class="hidden grid grid-cols-1 md:grid-cols-3 gap-4 mb-4 p-3 bg-gray-50 rounded-lg">
-                                <div>
-                                    <label class="block text-xs font-semibold text-gray-700 mb-1">Width (mm)</label>
-                                    <div class="text-center text-lg font-bold text-gray-900" id="blockWidth">-</div>
-                                </div>
-                                <div>
-                                    <label class="block text-xs font-semibold text-gray-700 mb-1">Height (mm)</label>
-                                    <div class="text-center text-lg font-bold text-gray-900" id="blockHeight">-</div>
-                                </div>
-                                <div>
-                                    <label class="block text-xs font-semibold text-gray-700 mb-1">Length (mm)</label>
-                                    <div class="text-center text-lg font-bold text-gray-900" id="blockLength">-</div>
-                                </div>
-                            </div>
-
-                            <div class="mb-4">
-                                <label class="block text-xs font-semibold text-gray-700 mb-2">Area to Cover (sqm)</label>
-                                <input type="number" id="areaInput" step="0.01" placeholder="Enter area in square meters" 
-                                       class="w-full px-4 py-3 border border-gray-300 rounded-lg input-focus" oninput="calculatePieces()">
-                            </div>
-
-                            <button onclick="calculatePieces()" class="w-full bg-blue-600 hover:bg-blue-700 text-white font-semibold py-3 rounded-lg transition-all">
-                                Calculate Required Pieces
-                            </button>
-                        </div>
-
-                        <div id="calculationResults" class="hidden space-y-3">
-                            <div class="bg-white rounded-lg p-4">
-                                <div class="flex items-center justify-between">
-                                    <div class="flex items-center gap-3">
-                                        <div class="w-10 h-10 bg-gray-900 rounded-lg flex items-center justify-center">
-                                            <i class='bx bx-cube text-white text-xl'></i>
-                                        </div>
-                                        <div>
-                                            <p class="text-xs text-gray-500">AAC Blocks Needed</p>
-                                            <p class="text-2xl font-bold text-gray-900" id="blocksNeeded">0</p>
-                                        </div>
-                                    </div>
-                                    <div class="text-right">
-                                        <p class="text-xs text-gray-500">With 5% wastage</p>
-                                        <p class="text-lg font-bold text-gray-900" id="blocksWithWastage">0</p>
-                                    </div>
-                                </div>
-                            </div>
-
-                            <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
-                                <div class="bg-white rounded-lg p-4">
-                                    <div class="flex items-center gap-3">
-                                        <div class="w-10 h-10 bg-orange-500 rounded-lg flex items-center justify-center">
-                                            <i class='bx bx-droplet text-white text-xl'></i>
-                                        </div>
-                                        <div>
-                                            <p class="text-xs text-gray-500">Adhesive (30%)</p>
-                                            <p class="text-xl font-bold text-gray-900"><span id="adhesiveNeeded">0</span> pcs</p>
-                                        </div>
-                                    </div>
-                                </div>
-
-                                <div class="bg-white rounded-lg p-4">
-                                    <div class="flex items-center gap-3">
-                                        <div class="w-10 h-10 bg-green-500 rounded-lg flex items-center justify-center">
-                                            <i class='bx bx-bracket text-white text-xl'></i>
-                                        </div>
-                                        <div>
-                                            <p class="text-xs text-gray-500">Brackets (25%)</p>
-                                            <p class="text-xl font-bold text-gray-900"><span id="bracketsNeeded">0</span> pcs</p>
-                                        </div>
-                                    </div>
-                                </div>
-                            </div>
                         </div>
                     </div>
 
@@ -379,7 +262,7 @@ $products_result = mysqli_query($conn, $products_query);
                     </div>
                     <h3 class="text-2xl font-bold text-gray-900 mb-3">Ready to Configure Pricing</h3>
                     <p class="text-gray-500 max-w-md mx-auto leading-relaxed">
-                        Select a product from the sidebar to start configuring volume-based discounts and pricing tiers.
+                        Select a product from the sidebar to start configuring quantity-based discounts and pricing tiers.
                     </p>
                 </div>
             </div>
@@ -391,11 +274,6 @@ $products_result = mysqli_query($conn, $products_query);
     <script>
         let tierCounter = 0;
         let currentProductId = null;
-        let currentProductDimensions = {
-            width: 0,
-            height: 0,
-            length: 0
-        };
 
         const swalConfig = {
             customClass: {
@@ -407,31 +285,9 @@ $products_result = mysqli_query($conn, $products_query);
 
         $('#productSelect').change(function() {
             const productId = $(this).val();
-            const selectedOption = $(this).find('option:selected');
             
             if (productId) {
                 currentProductId = productId;
-                
-                // Reset dimensions
-                currentProductDimensions = {
-                    width: 0,
-                    height: 0,
-                    length: 0
-                };
-                
-                // Load variants for this product
-                loadVariantsForCalculator(productId);
-                
-                // Get guide status
-                const guideEnabled = selectedOption.data('guide') == 1;
-                $('#guideToggle').prop('checked', guideEnabled);
-                
-                if (guideEnabled) {
-                    $('#calculatorGuide').removeClass('hidden');
-                } else {
-                    $('#calculatorGuide').addClass('hidden');
-                }
-                
                 loadTiers(productId);
                 $('#tiersContainer').removeClass('hidden');
                 $('#initialState').addClass('hidden');
@@ -440,167 +296,6 @@ $products_result = mysqli_query($conn, $products_query);
                 $('#initialState').removeClass('hidden');
             }
         });
-
-        function loadVariantsForCalculator(productId) {
-            $.ajax({
-                url: 'target-price-management-get-product-variants.php',
-                method: 'GET',
-                data: { product_id: productId },
-                dataType: 'json',
-                success: function(response) {
-                    const variantSelect = $('#variantSelect');
-                    variantSelect.empty().append('<option value="">Choose a size...</option>');
-                    
-                    if (response.success && response.variants.length > 0) {
-                        response.variants.forEach(variant => {
-                            const option = $('<option></option>')
-                                .val(variant.id)
-                                .text(variant.size)
-                                .data('width', variant.width)
-                                .data('height', variant.height)
-                                .data('length', variant.length);
-                            variantSelect.append(option);
-                        });
-                    } else {
-                        variantSelect.append('<option value="">No variants available</option>');
-                    }
-                },
-                error: function() {
-                    Swal.fire({
-                        icon: 'error',
-                        title: 'Error',
-                        text: 'Failed to load variants.',
-                        ...swalConfig
-                    });
-                }
-            });
-        }
-
-        // When variant is selected, show dimensions
-        $(document).on('change', '#variantSelect', function() {
-            const selectedOption = $(this).find('option:selected');
-            const width = parseFloat(selectedOption.data('width')) || 0;
-            const height = parseFloat(selectedOption.data('height')) || 0;
-            const length = parseFloat(selectedOption.data('length')) || 0;
-            
-            if (width && height && length) {
-                currentProductDimensions = { width, height, length };
-                
-                $('#blockWidth').text(width);
-                $('#blockHeight').text(height);
-                $('#blockLength').text(length);
-                
-                $('#dimensionsDisplay').removeClass('hidden').addClass('fade-in');
-            } else {
-                $('#dimensionsDisplay').addClass('hidden');
-                currentProductDimensions = { width: 0, height: 0, length: 0 };
-            }
-            
-            // Clear previous calculations
-            $('#calculationResults').addClass('hidden');
-            $('#areaInput').val('');
-        });
-
-        function toggleGuide() {
-            const isEnabled = $('#guideToggle').is(':checked');
-            
-            if (!currentProductId) {
-                Swal.fire({
-                    icon: 'warning',
-                    title: 'No Product Selected',
-                    text: 'Please select a product first.',
-                    ...swalConfig
-                });
-                $('#guideToggle').prop('checked', false);
-                return;
-            }
-            
-            $.ajax({
-                url: 'target-price-management-on-and-off.php',
-                method: 'POST',
-                data: {
-                    product_id: currentProductId,
-                    guide_enabled: isEnabled ? 1 : 0
-                },
-                dataType: 'json',
-                success: function(response) {
-                    if (response.success) {
-                        if (isEnabled) {
-                            $('#calculatorGuide').removeClass('hidden').addClass('fade-in');
-                        } else {
-                            $('#calculatorGuide').addClass('hidden');
-                            $('#calculationResults').addClass('hidden');
-                            $('#areaInput').val('');
-                        }
-                        
-                        Swal.fire({
-                            icon: 'success',
-                            title: 'Guide Status Updated',
-                            text: `Calculator guide ${isEnabled ? 'enabled' : 'disabled'} successfully.`,
-                            timer: 2000,
-                            showConfirmButton: false
-                        });
-                    } else {
-                        Swal.fire({
-                            icon: 'error',
-                            title: 'Update Failed',
-                            text: response.message || 'Unable to update guide status.',
-                            ...swalConfig
-                        });
-                        $('#guideToggle').prop('checked', !isEnabled);
-                    }
-                },
-                error: function() {
-                    Swal.fire({
-                        icon: 'error',
-                        title: 'Error',
-                        text: 'Failed to update guide status. Please try again.',
-                        ...swalConfig
-                    });
-                    $('#guideToggle').prop('checked', !isEnabled);
-                }
-            });
-        }
-
-        function calculatePieces() {
-            const area = parseFloat($('#areaInput').val());
-            
-            if (!area || area <= 0) {
-                Swal.fire({
-                    icon: 'warning',
-                    title: 'Invalid Input',
-                    text: 'Please enter a valid area value.',
-                    ...swalConfig
-                });
-                return;
-            }
-            
-            const width = currentProductDimensions.width / 1000;
-            const height = currentProductDimensions.height / 1000;
-            
-            if (!width || !height) {
-                Swal.fire({
-                    icon: 'error',
-                    title: 'Missing Dimensions',
-                    text: 'Product dimensions are not set properly.',
-                    ...swalConfig
-                });
-                return;
-            }
-            
-            const areaPerBlock = width * height;
-            const blocksNeeded = Math.ceil(area / areaPerBlock);
-            const blocksWithWastage = Math.ceil(blocksNeeded * 1.05);
-            const adhesiveNeeded = Math.ceil(blocksWithWastage * 0.30);
-            const bracketsNeeded = Math.ceil(blocksWithWastage * 0.25);
-            
-            $('#blocksNeeded').text(blocksNeeded);
-            $('#blocksWithWastage').text(blocksWithWastage);
-            $('#adhesiveNeeded').text(adhesiveNeeded);
-            $('#bracketsNeeded').text(bracketsNeeded);
-            
-            $('#calculationResults').removeClass('hidden').addClass('fade-in');
-        }
 
         function loadTiers(productId) {
             $.ajax({
@@ -634,7 +329,7 @@ $products_result = mysqli_query($conn, $products_query);
 
         function addTierRow(data = null) {
             const id = data ? data.id : '';
-            const minAmount = data ? data.min_amount : '';
+            const minQuantity = data ? data.min_quantity : '';
             const discount = data ? data.discount_percent : '';
             const freeShipping = data ? data.free_shipping : 0;
             
@@ -655,13 +350,13 @@ $products_result = mysqli_query($conn, $products_query);
                     <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
                         <div>
                             <label class="block text-xs font-semibold text-gray-700 uppercase tracking-wider mb-2">
-                                Minimum Purchase
+                                Minimum Quantity (pcs)
                             </label>
                             <div class="relative">
-                                <span class="absolute left-3 top-1/2 -translate-y-1/2 text-gray-500 font-medium text-sm">₱</span>
-                                <input type="number" name="min_amount[]" value="${minAmount}" 
-                                       placeholder="500000" step="0.01" required
-                                       class="w-full pl-8 pr-4 py-3 bg-white border border-gray-300 rounded-lg input-focus font-semibold text-gray-900">
+                                <input type="number" name="min_quantity[]" value="${minQuantity}" 
+                                       placeholder="50" step="1" min="1" required
+                                       class="w-full px-4 py-3 bg-white border border-gray-300 rounded-lg input-focus font-semibold text-gray-900">
+                                <span class="absolute right-3 top-1/2 -translate-y-1/2 text-gray-500 font-medium text-sm">pcs</span>
                             </div>
                         </div>
 
@@ -671,7 +366,7 @@ $products_result = mysqli_query($conn, $products_query);
                             </label>
                             <div class="relative">
                                 <input type="number" name="discount[]" value="${discount}" 
-                                       placeholder="4.00" step="0.01" min="0" max="100"
+                                       placeholder="5.00" step="0.01" min="0" max="100"
                                        class="w-full px-4 py-3 bg-white border border-gray-300 rounded-lg input-focus font-semibold text-gray-900">
                                 <span class="absolute right-3 top-1/2 -translate-y-1/2 text-gray-500 font-medium text-sm">%</span>
                             </div>
@@ -776,12 +471,12 @@ $products_result = mysqli_query($conn, $products_query);
             $('#tiersList > div').each(function() {
                 const tier = {
                     id: $(this).find('input[name="tier_id[]"]').val(),
-                    min_amount: $(this).find('input[name="min_amount[]"]').val(),
+                    min_quantity: $(this).find('input[name="min_quantity[]"]').val(),
                     discount: $(this).find('input[name="discount[]"]').val(),
                     free_shipping: $(this).find('select[name="free_shipping[]"]').val()
                 };
                 
-                if (tier.min_amount) {
+                if (tier.min_quantity) {
                     tiers.push(tier);
                 }
             });

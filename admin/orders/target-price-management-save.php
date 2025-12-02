@@ -26,20 +26,20 @@ mysqli_begin_transaction($conn);
 try {
     // Process each tier
     foreach ($tiers as $tier) {
-        $min_amount = mysqli_real_escape_string($conn, $tier['min_amount']);
-        $discount = mysqli_real_escape_string($conn, $tier['discount']);
-        $free_shipping = mysqli_real_escape_string($conn, $tier['free_shipping']);
+        $min_quantity = intval($tier['min_quantity']);
+        $discount = floatval($tier['discount']);
+        $free_shipping = intval($tier['free_shipping']);
         
         if (empty($tier['id'])) {
             // Insert new tier
             $query = "INSERT INTO product_tiers 
-                      (product_id, min_amount, discount_percent, free_shipping, created_at) 
-                      VALUES ('$product_id', '$min_amount', '$discount', '$free_shipping', NOW())";
+                      (product_id, min_quantity, discount_percent, free_shipping, created_at) 
+                      VALUES ('$product_id', '$min_quantity', '$discount', '$free_shipping', NOW())";
         } else {
             // Update existing tier
             $tier_id = mysqli_real_escape_string($conn, $tier['id']);
             $query = "UPDATE product_tiers 
-                      SET min_amount = '$min_amount', 
+                      SET min_quantity = '$min_quantity', 
                           discount_percent = '$discount', 
                           free_shipping = '$free_shipping',
                           updated_at = NOW()

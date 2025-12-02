@@ -12,7 +12,7 @@ if (!isset($_POST['tier_id'])) {
     exit();
 }
 
-$tier_id = mysqli_real_escape_string($conn, $_POST['tier_id']);
+$tier_id = intval($_POST['tier_id']);
 
 $query = "DELETE FROM product_tiers WHERE id = '$tier_id'";
 
@@ -25,4 +25,4 @@ if (mysqli_query($conn, $query)) {
 } else {
     echo json_encode(['success' => false, 'message' => 'Database error: ' . mysqli_error($conn)]);
 }
-?>  
+?>

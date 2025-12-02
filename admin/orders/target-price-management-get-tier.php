@@ -7,17 +7,12 @@ require_role(['sales', 'superadmin']);
 
 header('Content-Type: application/json');
 
-// Add error logging
-error_reporting(E_ALL);
-ini_set('display_errors', 0);
-ini_set('log_errors', 1);
-
 if (!isset($_GET['product_id'])) {
     echo json_encode(['success' => false, 'message' => 'Product ID is required']);
     exit();
 }
 
-$product_id = mysqli_real_escape_string($conn, $_GET['product_id']);
+$product_id = intval($_GET['product_id']);
 
 // Check if table exists
 $check_table = "SHOW TABLES LIKE 'product_tiers'";
@@ -31,18 +26,17 @@ if (mysqli_num_rows($table_result) == 0) {
     exit();
 }
 
-// Get tiers for this product
-$query = "SELECT * FROM product_tiers 
+// Get tiers for this product - UPDATED TO USE min_quantity
+$query = "SELECT id, min_quantity, discount_percent, free_shipping FROM product_tiers 
           WHERE product_id = '$product_id' 
-          ORDER BY min_amount ASC";
+          ORDER BY min_quantity ASC";
 
 $result = mysqli_query($conn, $query);
 
 if (!$result) {
     echo json_encode([
         'success' => false, 
-        'message' => 'Database error: ' . mysqli_error($conn),
-        'query' => $query
+        'message' => 'Database error: ' . mysqli_error($conn)
     ]);
     exit();
 }
@@ -51,7 +45,7 @@ $tiers = [];
 while ($row = mysqli_fetch_assoc($result)) {
     $tiers[] = [
         'id' => $row['id'],
-        'min_amount' => $row['min_amount'],
+        'min_quantity' => $row['min_quantity'],
         'discount_percent' => $row['discount_percent'],
         'free_shipping' => $row['free_shipping']
     ];

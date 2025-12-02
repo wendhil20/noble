@@ -111,7 +111,7 @@ while ($row = $result->fetch_assoc()) {
 }
 $stmt->close();
 
-// Calculate tiered discount
+// ✅ NEW CODE (min_quantity - CORRECT):
 function getCartTieredDiscount($conn, $cart_items)
 {
     $result = [
@@ -122,31 +122,34 @@ function getCartTieredDiscount($conn, $cart_items)
         'tier_details' => []
     ];
 
-    $product_totals = [];
+    $product_quantities = [];
     foreach ($cart_items as $item) {
         $product_id = $item['product_id'];
-        $item_total = $item['price'] * $item['quantity'];
+        $item_quantity = $item['quantity'];
 
-        if (!isset($product_totals[$product_id])) {
-            $product_totals[$product_id] = [
-                'total' => 0,
+        if (!isset($product_quantities[$product_id])) {
+            $product_quantities[$product_id] = [
+                'total_quantity' => 0,
+                'total_amount' => 0,
                 'name' => $item['product_name']
             ];
         }
-        $product_totals[$product_id]['total'] += $item_total;
+        $product_quantities[$product_id]['total_quantity'] += $item_quantity;
+        $product_quantities[$product_id]['total_amount'] += $item['price'] * $item['quantity'];
     }
 
-    foreach ($product_totals as $product_id => $data) {
-        $product_total = $data['total'];
+    foreach ($product_quantities as $product_id => $data) {
+        $product_quantity = $data['total_quantity'];
+        $product_amount = $data['total_amount'];
 
         $stmt = $conn->prepare("
             SELECT * FROM product_tiers 
-            WHERE product_id = ? AND min_amount <= ?
-            ORDER BY min_amount DESC 
+            WHERE product_id = ? AND min_quantity <= ?
+            ORDER BY min_quantity DESC 
             LIMIT 1
         ");
 
-        $stmt->bind_param("id", $product_id, $product_total);
+        $stmt->bind_param("ii", $product_id, $product_quantity);
         $stmt->execute();
         $tier_result = $stmt->get_result();
 
@@ -155,7 +158,7 @@ function getCartTieredDiscount($conn, $cart_items)
             $discount_percent = floatval($tier['discount_percent']);
 
             if ($discount_percent > 0) {
-                $discount_amt = $product_total * ($discount_percent / 100);
+                $discount_amt = $product_amount * ($discount_percent / 100);
 
                 $result['has_discount'] = true;
                 $result['discount_amount'] += $discount_amt;
@@ -170,10 +173,10 @@ function getCartTieredDiscount($conn, $cart_items)
 
                 $result['tier_details'][] = [
                     'product_name' => $data['name'],
-                    'product_total' => $product_total,
+                    'product_total' => $product_amount,
                     'discount_percent' => $discount_percent,
                     'discount_amount' => $discount_amt,
-                    'min_amount' => $tier['min_amount'],
+                    'min_quantity' => $tier['min_quantity'],
                     'free_shipping' => $tier['free_shipping']
                 ];
             }
@@ -183,6 +186,7 @@ function getCartTieredDiscount($conn, $cart_items)
 
     return $result;
 }
+
 
 $tiered_discount = getCartTieredDiscount($conn, $cart_items);
 $items_subtotal = $total_price;

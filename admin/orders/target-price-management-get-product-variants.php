@@ -13,7 +13,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'GET') {
     
     if ($product_id <= 0) {
         echo json_encode(['success' => false, 'message' => 'Invalid product ID']);
-        exit;
+        exit();
     }
     
     // Get all variants for this product with their dimensions

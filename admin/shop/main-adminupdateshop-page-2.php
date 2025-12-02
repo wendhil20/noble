@@ -348,12 +348,7 @@ $products = $conn->query("
                         <i class="fas fa-edit"></i>
                         Edit
                       </a>
-                      <a href="main-modify-stock-product-page-7.php?id=<?= $product['id'] ?>"
-                        class="bg-green-600 hover:bg-green-700 text-white px-3 py-1.5 rounded text-xs font-medium transition flex items-center gap-1 whitespace-nowrap"
-                        title="Manage Stock">
-                        <i class="fas fa-boxes"></i>
-                        Stock
-                      </a>
+                
                       <form method="POST" class="inline" onsubmit="return confirm('⚠️ Delete this product permanently?');">
                         <input type="hidden" name="delete_id" value="<?= $product['id'] ?>">
                         <button type="submit"

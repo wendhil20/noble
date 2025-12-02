@@ -1,4 +1,5 @@
 <?php
+// index-countdowntimer-page-17.php
 session_name("nobleuser");
 session_start();
 include '../../connection/connect.php';
@@ -69,6 +70,7 @@ $now = time();
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Limited Time Offers - Noble Home</title>
+    <meta name="server-time" content="<?php echo time(); ?>">
     <link rel="icon" type="image/png" sizes="96x96" href="../img/favicon.ico">
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
     <script src="https://cdn.tailwindcss.com"></script>
@@ -503,11 +505,9 @@ $now = time();
                                     </div>
                                 </div>
                             </a>
-
                         <?php endforeach; ?>
                     </div>
                 </div>
-
             </div>
 
         <?php else: ?>
@@ -536,39 +536,118 @@ $now = time();
             filterDiv.classList.toggle('hidden');
         }
 
-        // Initialize countdowns
-        function initCountdowns() {
-            const timers = document.querySelectorAll('[data-end-time]');
+ // Enhanced Countdown Timer - Synced with Server Time
+// Replace the existing initCountdowns() function with this improved version
 
-            function updateTimers() {
-                timers.forEach(timer => {
-                    const endTime = parseInt(timer.dataset.endTime);
-                    const now = Math.floor(Date.now() / 1000);
-                    const remaining = endTime - now;
-
-                    const display = timer.querySelector('.timer-display');
-                    if (!display) return;
-
-                    if (remaining <= 0) {
-                        display.textContent = 'EXPIRED';
-                        timer.classList.add('expired');
-                        timer.classList.remove('timer-pulse');
-                        return;
-                    }
-
-                    const days = Math.floor(remaining / 86400);
-                    const hours = Math.floor((remaining % 86400) / 3600);
-                    const minutes = Math.floor((remaining % 3600) / 60);
-                    const seconds = remaining % 60;
-
-                    const totalHours = (days * 24) + hours;
-                    display.textContent = `${String(totalHours).padStart(2, '0')}:${String(minutes).padStart(2, '0')}:${String(seconds).padStart(2, '0')}`;
-                });
+function initCountdowns() {
+    console.log('🔥 Initializing countdown timers with server sync...');
+    
+    // Get server time (synced once at page load)
+    const serverTimeElement = document.querySelector('meta[name="server-time"]');
+    const serverTime = serverTimeElement 
+        ? parseInt(serverTimeElement.getAttribute('content')) 
+        : Math.floor(Date.now() / 1000);
+    
+    // Calculate time offset between server and client
+    const clientTime = Math.floor(Date.now() / 1000);
+    const timeOffset = serverTime - clientTime;
+    
+    console.log(`📅 Server time: ${new Date(serverTime * 1000).toLocaleString('en-US', {
+        year: 'numeric', month: '2-digit', day: '2-digit',
+        hour: '2-digit', minute: '2-digit', second: '2-digit', hour12: true
+    })}`);
+    console.log(`⏱️ Time offset: ${timeOffset}s`);
+    
+    const timers = document.querySelectorAll('[data-end-time]');
+    console.log(`Found ${timers.length} countdown timers`);
+    
+    if (timers.length === 0) {
+        console.warn('⚠️ No timers found on page');
+        return;
+    }
+    
+    let timerIntervals = [];
+    
+    function updateTimers() {
+        // Calculate current time with server offset
+        const now = Math.floor(Date.now() / 1000) + timeOffset;
+        
+        timers.forEach((timer, index) => {
+            const endTime = parseInt(timer.dataset.endTime);
+            const remaining = endTime - now;
+            const display = timer.querySelector('.timer-display');
+            
+            if (!display) {
+                console.warn(`⚠️ Timer display element not found for timer ${index}`);
+                return;
             }
+            
+            // Timer expired
+            if (remaining <= 0) {
+                display.textContent = 'EXPIRED';
+                timer.classList.add('expired');
+                timer.classList.remove('timer-pulse');
+                
+                // Disable the card interaction
+                const card = timer.closest('a.product-card');
+                if (card) {
+                    card.style.pointerEvents = 'none';
+                    card.style.opacity = '0.6';
+                }
+                
+                console.log(`❌ Timer EXPIRED for end time ${endTime}`);
+                return;
+            }
+            
+            // Calculate time units
+            const totalDays = Math.floor(remaining / 86400);
+            const totalHours = Math.floor(remaining / 3600);
+            const minutes = Math.floor((remaining % 3600) / 60);
+            const seconds = remaining % 60;
+            
+            // Format display - use total hours (not daily hours)
+            const displayHours = totalHours;
+            const timeText = `${String(displayHours).padStart(2, '0')}:${String(minutes).padStart(2, '0')}:${String(seconds).padStart(2, '0')}`;
+            display.textContent = timeText;
+            
+            // Add pulse animation based on remaining time
+            if (remaining <= 300) {
+                // Less than 5 minutes - critical
+                timer.classList.add('timer-pulse');
+                timer.style.backgroundColor = '#dc2626';
+            } else if (remaining <= 3600) {
+                // Less than 1 hour - urgent
+                timer.classList.add('timer-pulse');
+                timer.style.backgroundColor = '#ea580c';
+            } else {
+                // More than 1 hour - normal
+                timer.classList.remove('timer-pulse');
+                timer.style.backgroundColor = '#f01313ff';
+            }
+        });
+    }
+    
+    // Initial update
+    updateTimers();
+    
+    // Update every second
+    const mainInterval = setInterval(updateTimers, 1000);
+    timerIntervals.push(mainInterval);
+    
+    // Cleanup on page unload
+    window.addEventListener('beforeunload', () => {
+        timerIntervals.forEach(interval => clearInterval(interval));
+    });
+    
+    console.log('✅ Countdown timers initialized successfully');
+}
 
-            updateTimers();
-            setInterval(updateTimers, 1000);
-        }
+
+
+// Also initialize if DOM is already ready
+if (document.readyState !== 'loading') {
+    initCountdowns();
+}
 
         // Sorting function
         function sortBy(type) {

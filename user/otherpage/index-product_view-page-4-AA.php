@@ -2756,7 +2756,12 @@ $is_guest = !isset($_SESSION['user_id']);
                               </div>
                             </div>
                           </div>
-
+   <!-- Review Title/Comment -->
+            <?php if (!empty($review['comment'])): ?>
+              <h5 class="font-semibold text-gray-700 text-sm mb-2">
+                <?= htmlspecialchars($review['comment']) ?>
+              </h5>
+            <?php endif; ?>
                           <?php if (!empty($review['review'])): ?>
                             <p class="text-gray-700 text-sm leading-relaxed">
                               <?= nl2br(htmlspecialchars($review['review'])) ?>

@@ -106,9 +106,9 @@ if ($referral_data !== null) {
     $referral_data['conversion_rate'] = $conversion_rate;
 }
 
-// ✅ CALCULATE TOTAL COMMISSION EARNED
+// ✅ CALCULATE TOTAL COMMISSION EARNED (UNCLAIMED ONLY)
 if ($referral_data !== null) {
-    // Get total commission from all orders using this sales person's referral code
+    // Get total commission from UNCLAIMED orders only
     $commission_stmt = $conn->prepare("
         SELECT 
             COUNT(*) as total_orders,
@@ -119,6 +119,7 @@ if ($referral_data !== null) {
         WHERE sales_referral_code = ? 
         AND sales_user_id = ?
         AND payment_status IN ('verified', 'paid', 'completed')
+        AND commission_claimed = 0
     ");
     $commission_stmt->bind_param("si", $referral_data['code'], $user_id);
     $commission_stmt->execute();
@@ -138,7 +139,7 @@ if ($referral_data !== null) {
     }
     $commission_stmt->close();
     
-    // Get detailed commission breakdown by order
+    // Get detailed commission breakdown (UNCLAIMED ONLY)
     $commission_details_stmt = $conn->prepare("
         SELECT 
             o.id,
@@ -152,6 +153,7 @@ if ($referral_data !== null) {
         FROM orders o
         WHERE o.sales_referral_code = ? 
         AND o.sales_user_id = ?
+        AND o.commission_claimed = 0
         ORDER BY o.created_at DESC
     ");
     $commission_details_stmt->bind_param("si", $referral_data['code'], $user_id);
@@ -164,6 +166,30 @@ if ($referral_data !== null) {
     }
     $commission_details_stmt->close();
     $referral_data['commission_breakdown'] = $commission_breakdown;
+    
+    // ✅ ALSO GET ALREADY CLAIMED COMMISSIONS (for history display)
+    $claimed_history_stmt = $conn->prepare("
+        SELECT 
+            cc.id,
+            cc.commission_amount,
+            cc.claim_date,
+            cc.status,
+            cc.released_at,
+            cc.order_count
+        FROM commission_claims cc
+        WHERE cc.sales_user_id = ?
+        ORDER BY cc.claim_date DESC
+    ");
+    $claimed_history_stmt->bind_param("i", $user_id);
+    $claimed_history_stmt->execute();
+    $claimed_history_result = $claimed_history_stmt->get_result();
+    
+    $claimed_history = [];
+    while ($row = $claimed_history_result->fetch_assoc()) {
+        $claimed_history[] = $row;
+    }
+    $claimed_history_stmt->close();
+    $referral_data['claimed_history'] = $claimed_history;
 }
 
 // ✅ NEW: Count unique users who used this referral code
@@ -580,6 +606,70 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['remake_code'])) {
     </div>
 </div>
 
+<?php
+// Check if there's a pending claim
+$pending_claim_stmt = $conn->prepare("
+    SELECT id, commission_amount, claim_date, status 
+    FROM commission_claims 
+    WHERE sales_user_id = ? 
+    AND status IN ('pending', 'approved')
+    ORDER BY claim_date DESC 
+    LIMIT 1
+");
+$pending_claim_stmt->bind_param("i", $user_id);
+$pending_claim_stmt->execute();
+$pending_claim_result = $pending_claim_stmt->get_result();
+$has_pending_claim = $pending_claim_result->num_rows > 0;
+$pending_claim_data = $has_pending_claim ? $pending_claim_result->fetch_assoc() : null;
+$pending_claim_stmt->close();
+
+// Handle claim submission
+if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['claim_commission'])) {
+    if ($has_pending_claim) {
+        $error = "You already have a pending commission claim!";
+    } elseif (($referral_data['total_commission'] ?? 0) <= 0) {
+        $error = "No commission available to claim!";
+    } else {
+        // Get all unclaimed order IDs
+        $order_ids_stmt = $conn->prepare("
+            SELECT id FROM orders 
+            WHERE sales_referral_code = ? 
+            AND sales_user_id = ?
+            AND payment_status IN ('verified', 'paid', 'completed')
+            AND commission_claimed = 0
+        ");
+        $order_ids_stmt->bind_param("si", $referral_data['code'], $user_id);
+        $order_ids_stmt->execute();
+        $order_ids_result = $order_ids_stmt->get_result();
+        
+        $order_ids = [];
+        while ($row = $order_ids_result->fetch_assoc()) {
+            $order_ids[] = $row['id'];
+        }
+        $order_ids_stmt->close();
+        
+        $order_ids_string = implode(',', $order_ids);
+        $order_count = count($order_ids);
+        
+        $claim_stmt = $conn->prepare("
+            INSERT INTO commission_claims (sales_user_id, referral_code, commission_amount, order_ids, order_count) 
+            VALUES (?, ?, ?, ?, ?)
+        ");
+        $claim_stmt->bind_param("isdsi", $user_id, $referral_data['code'], $referral_data['total_commission'], $order_ids_string, $order_count);
+        
+        if ($claim_stmt->execute()) {
+            $_SESSION['success_message'] = "Commission claim submitted successfully! Waiting for approval.";
+            $claim_stmt->close();
+            header("Location: " . $_SERVER['PHP_SELF']);
+            exit();
+        } else {
+            $error = "Failed to submit claim. Please try again.";
+            $claim_stmt->close();
+        }
+    }
+}
+?>
+
 <!-- ✅ COMMISSION EARNINGS SECTION -->
 <div class="bg-gradient-to-r from-green-50 to-emerald-50 rounded-lg border-2 border-green-300 overflow-hidden mb-6">
     <div class="bg-gradient-to-r from-green-500 to-emerald-600 px-4 py-3 flex items-center justify-between">
@@ -594,46 +684,88 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['remake_code'])) {
     </div>
     
     <div class="p-6">
+        <!-- Claim Status Banner -->
+        <?php if ($has_pending_claim): ?>
+            <div class="mb-6 bg-yellow-50 border-2 border-yellow-300 rounded-lg p-4">
+                <div class="flex items-start justify-between">
+                    <div class="flex items-start space-x-3">
+                        <?php if ($pending_claim_data['status'] === 'pending'): ?>
+                            <i class="fas fa-clock text-yellow-600 text-2xl mt-1"></i>
+                            <div>
+                                <h4 class="font-bold text-yellow-900">Claim Pending Approval</h4>
+                                <p class="text-sm text-yellow-700 mt-1">
+                                    Your commission claim of <strong>₱<?php echo number_format($pending_claim_data['commission_amount'], 2); ?></strong> 
+                                    is waiting for superadmin approval.
+                                </p>
+                                <p class="text-xs text-yellow-600 mt-1">
+                                    Submitted on <?php echo date('M j, Y g:i A', strtotime($pending_claim_data['claim_date'])); ?>
+                                </p>
+                            </div>
+                        <?php elseif ($pending_claim_data['status'] === 'approved'): ?>
+                            <i class="fas fa-check-circle text-green-600 text-2xl mt-1"></i>
+                            <div>
+                                <h4 class="font-bold text-green-900">Claim Approved - Pending Release</h4>
+                                <p class="text-sm text-green-700 mt-1">
+                                    Your claim of <strong>₱<?php echo number_format($pending_claim_data['commission_amount'], 2); ?></strong> 
+                                    has been approved! Waiting for accountant to release payment.
+                                </p>
+                            </div>
+                        <?php endif; ?>
+                    </div>
+                </div>
+            </div>
+        <?php endif; ?>
         <!-- Commission Summary Cards -->
-        <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
-            <!-- Total Commission -->
-            <div class="bg-white rounded-xl shadow-md p-6 text-center border-2 border-green-200">
-                <div class="text-sm text-gray-600 mb-2 font-medium">Total Commission Earned</div>
-                <div class="text-4xl font-bold text-green-600 mb-1">
-                    ₱<?php echo number_format($referral_data['total_commission'] ?? 0, 2); ?>
-                </div>
-                <div class="text-xs text-gray-500">
-                    From <?php echo number_format($referral_data['commission_orders'] ?? 0); ?> order<?php echo ($referral_data['commission_orders'] ?? 0) != 1 ? 's' : ''; ?>
-                </div>
-            </div>
-            
-            <!-- Total Sales Value -->
-            <div class="bg-white rounded-xl shadow-md p-6 text-center border-2 border-blue-200">
-                <div class="text-sm text-gray-600 mb-2 font-medium">Total Sales Value</div>
-                <div class="text-4xl font-bold text-blue-600 mb-1">
-                    ₱<?php echo number_format($referral_data['total_sales_value'] ?? 0, 2); ?>
-                </div>
-                <div class="text-xs text-gray-500">
-                    Generated from your referrals
-                </div>
-            </div>
-            
-            <!-- Average Commission Per Order -->
-            <div class="bg-white rounded-xl shadow-md p-6 text-center border-2 border-purple-200">
-                <div class="text-sm text-gray-600 mb-2 font-medium">Avg Commission/Order</div>
-                <div class="text-4xl font-bold text-purple-600 mb-1">
-                    ₱<?php 
-                    $avg_per_order = ($referral_data['commission_orders'] ?? 0) > 0 
-                        ? ($referral_data['total_commission'] ?? 0) / ($referral_data['commission_orders'] ?? 1)
-                        : 0;
-                    echo number_format($avg_per_order, 2); 
-                    ?>
-                </div>
-                <div class="text-xs text-gray-500">
-                    Per successful order
-                </div>
-            </div>
+<div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
+    <!-- Total Commission -->
+    <div class="bg-white rounded-xl shadow-md p-6 text-center border-2 border-green-200">
+        <div class="text-sm text-gray-600 mb-2 font-medium">Total Commission Earned</div>
+        <div class="text-4xl font-bold text-green-600 mb-1">
+            ₱<?php echo number_format($referral_data['total_commission'] ?? 0, 2); ?>
         </div>
+        <div class="text-xs text-gray-500">
+            From <?php echo number_format($referral_data['commission_orders'] ?? 0); ?> order<?php echo ($referral_data['commission_orders'] ?? 0) != 1 ? 's' : ''; ?>
+        </div>
+        
+        <!-- Claim Button -->
+        <?php if (!$has_pending_claim && ($referral_data['total_commission'] ?? 0) > 0): ?>
+            <form method="POST" class="mt-3">
+                <button type="submit" name="claim_commission" 
+                    class="bg-gradient-to-r from-green-500 to-green-600 hover:from-green-600 hover:to-green-700 text-white px-4 py-2 rounded-lg transition-all duration-200 text-sm font-medium w-full flex items-center justify-center space-x-2">
+                    <i class="fas fa-hand-holding-usd"></i>
+                    <span>Claim Commission</span>
+                </button>
+            </form>
+        <?php endif; ?>
+    </div>
+    
+    <!-- Total Sales Value -->
+    <div class="bg-white rounded-xl shadow-md p-6 text-center border-2 border-blue-200">
+        <div class="text-sm text-gray-600 mb-2 font-medium">Total Sales Value</div>
+        <div class="text-4xl font-bold text-blue-600 mb-1">
+            ₱<?php echo number_format($referral_data['total_sales_value'] ?? 0, 2); ?>
+        </div>
+        <div class="text-xs text-gray-500">
+            Generated from your referrals
+        </div>
+    </div>
+    
+    <!-- Average Commission Per Order -->
+    <div class="bg-white rounded-xl shadow-md p-6 text-center border-2 border-purple-200">
+        <div class="text-sm text-gray-600 mb-2 font-medium">Avg Commission/Order</div>
+        <div class="text-4xl font-bold text-purple-600 mb-1">
+            ₱<?php 
+            $avg_per_order = ($referral_data['commission_orders'] ?? 0) > 0 
+                ? ($referral_data['total_commission'] ?? 0) / ($referral_data['commission_orders'] ?? 1)
+                : 0;
+            echo number_format($avg_per_order, 2); 
+            ?>
+        </div>
+        <div class="text-xs text-gray-500">
+            Per successful order
+        </div>
+    </div>
+</div>
         
         <!-- Commission Breakdown Table -->
         <?php if (!empty($referral_data['commission_breakdown'])): ?>
@@ -705,6 +837,73 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['remake_code'])) {
                     </table>
                 </div>
             </div>
+            <!-- ✅ CLAIMED COMMISSION HISTORY -->
+<?php if (!empty($referral_data['claimed_history'])): ?>
+<div class="bg-gradient-to-r from-gray-50 to-gray-100 rounded-lg border-2 border-gray-300 overflow-hidden mt-6">
+    <div class="bg-gradient-to-r from-gray-600 to-gray-700 px-4 py-3 flex items-center justify-between">
+        <h3 class="text-white font-bold flex items-center text-lg">
+            <i class="fas fa-history mr-2"></i>
+            Claimed Commission History
+        </h3>
+    </div>
+    
+    <div class="p-6">
+        <div class="overflow-x-auto">
+            <table class="w-full text-sm">
+                <thead class="bg-gray-200 border-b-2 border-gray-300">
+                    <tr>
+                        <th class="px-4 py-3 text-left text-xs font-bold text-gray-700 uppercase">Claim Date</th>
+                        <th class="px-4 py-3 text-center text-xs font-bold text-gray-700 uppercase">Orders</th>
+                        <th class="px-4 py-3 text-right text-xs font-bold text-gray-700 uppercase">Amount</th>
+                        <th class="px-4 py-3 text-center text-xs font-bold text-gray-700 uppercase">Status</th>
+                        <th class="px-4 py-3 text-center text-xs font-bold text-gray-700 uppercase">Released Date</th>
+                    </tr>
+                </thead>
+                <tbody class="divide-y divide-gray-200">
+                    <?php foreach ($referral_data['claimed_history'] as $history): ?>
+                        <tr class="hover:bg-gray-50">
+                            <td class="px-4 py-3 text-sm text-gray-700">
+                                <?php echo date('M j, Y g:i A', strtotime($history['claim_date'])); ?>
+                            </td>
+                            <td class="px-4 py-3 text-center">
+                                <span class="bg-blue-100 text-blue-700 px-3 py-1 rounded-full text-xs font-semibold">
+                                    <?php echo number_format($history['order_count']); ?> orders
+                                </span>
+                            </td>
+                            <td class="px-4 py-3 text-right font-bold text-green-700">
+                                ₱<?php echo number_format($history['commission_amount'], 2); ?>
+                            </td>
+                            <td class="px-4 py-3 text-center">
+                                <?php
+                                $status_colors = [
+                                    'pending' => 'bg-yellow-100 text-yellow-700',
+                                    'approved' => 'bg-blue-100 text-blue-700',
+                                    'released' => 'bg-green-100 text-green-700',
+                                    'rejected' => 'bg-red-100 text-red-700'
+                                ];
+                                $status_class = $status_colors[$history['status']] ?? 'bg-gray-100 text-gray-700';
+                                ?>
+                                <span class="inline-flex items-center px-3 py-1 <?php echo $status_class; ?> rounded-full text-xs font-bold">
+                                    <?php echo ucfirst($history['status']); ?>
+                                </span>
+                            </td>
+                            <td class="px-4 py-3 text-center text-sm text-gray-600">
+                                <?php 
+                                if ($history['released_at']) {
+                                    echo date('M j, Y', strtotime($history['released_at']));
+                                } else {
+                                    echo '-';
+                                }
+                                ?>
+                            </td>
+                        </tr>
+                    <?php endforeach; ?>
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+<?php endif; ?>
         <?php else: ?>
             <div class="bg-white rounded-xl shadow-md p-12 text-center">
                 <i class="fas fa-inbox text-5xl text-gray-300 mb-4"></i>

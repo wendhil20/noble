@@ -184,6 +184,11 @@ $stmt->close();
 
 // Safe access
 $is_verified = $user['is_verified'] ?? null;
+
+
+// Get recently viewed products for this user
+$recent_products = getRecentlyViewedByUser($conn, $user_id, 10);
+$recent_count = $recent_products->num_rows;
 ?>
 
 <!DOCTYPE html>
@@ -230,9 +235,9 @@ $is_verified = $user['is_verified'] ?? null;
     </style>
 </head>
 
-<body class="bg-gray-50 min-h-screen">
+<body class="bg-gray-50 min-h-screen font-roboto">
     <?php include '../navbar/top.php'; ?>
-    
+
     <div class="max-w-7xl mx-auto px-4 py-6">
         <div class="professional-card rounded-xl p-4 sm:p-6 lg:p-8 mb-4 sm:mb-6 lg:mb-8 animate-fade-in">
             <div class="flex flex-col lg:flex-row gap-4 sm:gap-6 lg:gap-8">
@@ -502,6 +507,222 @@ $is_verified = $user['is_verified'] ?? null;
             </div>
         </div>
     </div>
+
+
+<?php
+// ====================================
+// GET RECENTLY VIEWED BY USER (for order_history.php)
+// ====================================
+function getRecentlyViewedByUser($conn, $user_id, $limit = 10)
+{
+    $sql = "SELECT 
+                p.*,
+                p.descrip6,
+                p.descrip7,
+                p.view_count,
+                p.unique_view_count,
+                v.origin,
+                v.discount,
+                v.percent,
+                v.status,
+                
+                -- 🔥 SIZE PRICES (variant prices only)
+                COALESCE(MIN(pv.price), 0) as min_size_price,  
+                COALESCE(MAX(pv.price), 0) as max_size_price,  
+                
+                -- 🔥 COLOR PRICES (color prices only - kept separate)
+                COALESCE(MIN(pc.price), 0) as min_color_price,
+                COALESCE(MAX(pc.price), 0) as max_color_price,
+                
+                COUNT(DISTINCT pc.id) as color_count,
+                AVG(r.rating) AS avg_rating,
+                COUNT(DISTINCT r.id) AS rating_count,
+                COALESCE((
+                    SELECT SUM(quantity) FROM sold_items WHERE product_id = p.id
+                ), 0) AS total_sold,
+                
+                MAX(rv.viewed_at) as last_viewed
+            FROM recent_views rv
+            INNER JOIN products p ON rv.product_id = p.id
+            LEFT JOIN product_variants v ON v.product_id = p.id
+            LEFT JOIN product_variants pv ON p.id = pv.product_id
+            LEFT JOIN product_colors pc ON p.id = pc.product_id
+            LEFT JOIN product_ratings r ON r.product_id = p.id
+            LEFT JOIN sold_items si ON si.product_id = p.id
+            WHERE rv.user_id = ?
+            GROUP BY p.id
+            ORDER BY MAX(rv.viewed_at) DESC
+            LIMIT ?";
+
+    $stmt = $conn->prepare($sql);
+    $stmt->bind_param("ii", $user_id, $limit);
+    $stmt->execute();
+
+    return $stmt->get_result();
+}
+
+// ====================================
+// RENDER PRODUCT CARD FOR ORDER HISTORY
+// ====================================
+function renderProductCardOrderHistory($row, $conn)
+{
+    $product_id = (int)$row['id'];
+
+    // 🔥 Calculate smart price using your existing formula
+    $priceData = [
+        'min_size_price' => $row['min_size_price'],
+        'max_size_price' => $row['max_size_price'],
+        'min_color_price' => $row['min_color_price'],
+        'max_color_price' => $row['max_color_price'],
+        'price' => $row['price'],
+        'discount' => $row['discount'],
+        'percent' => $row['percent']
+    ];
+
+    $min_size = floatval($row['min_size_price'] ?? 0);
+    $max_size = floatval($row['max_size_price'] ?? 0);
+    $min_color = floatval($row['min_color_price'] ?? 0);
+    $max_color = floatval($row['max_color_price'] ?? 0);
+
+    // 🔥 SIMPLE FORMULA: size_price + color_price (no extraction needed)
+    // min_size_price & max_size_price are ALREADY just variant prices
+    // min_color_price & max_color_price are ALREADY just color prices
+    $min_final = $min_size + $min_color;
+    $max_final = $max_size + $max_color;
+
+    // Ensure no negative values
+    if ($min_final < 0) $min_final = 0;
+    if ($max_final < 0) $max_final = 0;
+
+    if ($min_final != $max_final) {
+        $displayPrice = '₱' . number_format($min_final, 2) . ' - ₱' . number_format($max_final, 2);
+    } else {
+        $displayPrice = '₱' . number_format($min_final, 2);
+    }
+
+    // Get rating
+    $avg_rating = floatval($row['avg_rating'] ?? 0);
+    $total_raters = (int)($row['rating_count'] ?? 0);
+    $total_sold = (int)($row['total_sold'] ?? 0);
+
+    $full = floor($avg_rating);
+    $half = ($avg_rating - $full >= 0.5) ? 1 : 0;
+    $empty = 5 - $full - $half;
+
+    $view_count = formatViewCount($row['view_count'] ?? 0);
+?>
+    <a href="index-product_view-page-4-AA?id=<?= $product_id ?>" class="group">
+        <div class="bg-white rounded-lg border border-gray-200 overflow-hidden hover:shadow-lg transition-all duration-300 flex flex-col h-full">
+            
+            <!-- Image Container -->
+            <div class="relative bg-gray-50 overflow-hidden" style="aspect-ratio: 1/1;">
+                <?php if (!empty($row['main_image'])): ?>
+                    <img src="../../<?= htmlspecialchars($row['main_image']) ?>" loading="lazy" alt="<?= htmlspecialchars($row['product_name']) ?>" class="w-full h-full object-contain p-2 group-hover:scale-110 transition-transform duration-300" />
+                <?php else: ?>
+                    <div class="w-full h-full flex items-center justify-center bg-gray-100">
+                        <i class="fas fa-image text-gray-300 text-3xl"></i>
+                    </div>
+                <?php endif; ?>
+
+                <!-- Recently Viewed Badge -->
+                <div class="absolute top-2 right-2 bg-white/95 backdrop-blur-sm px-2 py-1 rounded-full text-xs font-semibold text-red-700 shadow-sm border border-blue-100 flex items-center gap-1">
+                    <i class="fas fa-clock text-xs"></i>Viewed
+                </div>
+            </div>
+
+            <!-- Content -->
+            <div class="p-3 flex flex-col flex-grow">
+                <!-- Product Name -->
+                <h3 class="text-sm font-semibold text-black line-clamp-2 mb-2 group-hover:text-blue-600 transition-colors">
+                    <?= htmlspecialchars($row['product_name']) ?>
+                </h3>
+
+                <!-- Rating -->
+                <div class="flex items-center gap-1.5 mb-2">
+                    <?php if ($total_raters > 0): ?>
+                        <div class="flex text-yellow-400 text-xs">
+                            <?php for ($i = 0; $i < $full; $i++) echo '<i class="fas fa-star"></i>'; ?>
+                            <?php if ($half) echo '<i class="fas fa-star-half-alt"></i>'; ?>
+                            <?php for ($i = 0; $i < $empty; $i++) echo '<i class="far fa-star text-gray-300"></i>'; ?>
+                        </div>
+                        <span class="text-xs text-gray-500 font-medium">(<?= $total_raters ?>)</span>
+                    <?php else: ?>
+                        <span class="text-xs text-gray-400">No ratings yet</span>
+                    <?php endif; ?>
+                </div>
+
+                <!-- Price -->
+                <div class="flex items-baseline gap-2 mb-2 flex-wrap">
+                    <p class="text-sm font-bold text-gray-900"><?= $displayPrice ?></p>
+            
+                </div>
+
+                <!-- View & Sold Stats -->
+                <div class="text-xs text-gray-500 font-medium border-t border-gray-100 pt-2 mt-auto">
+                    <?php if ($view_count): ?>
+                        <span><?= $view_count ?> viewing</span>
+                    <?php endif; ?>
+                    
+                    <?php if ($total_sold > 0): ?>
+                        <?php if ($view_count): ?> | <?php endif; ?>
+                        <span><?= number_format($total_sold) ?> sold</span>
+                    <?php endif; ?>
+                </div>
+
+                <!-- View Button -->
+                <button class="mt-3 text-start underline text-black text-xs font-bold  ">
+                   Quick view
+                </button>
+            </div>
+        </div>
+    </a>
+<?php
+}
+
+// Helper function
+function formatViewCount($count)
+{
+    if ($count >= 1000000) {
+        return round($count / 1000000, 1) . 'M';
+    } elseif ($count >= 1000) {
+        return round($count / 1000, 1) . 'K';
+    }
+    return number_format($count);
+}
+?>
+
+
+   <?php if ($recent_count > 0): ?>
+    <div class="mt-10 sm:mt-12 mb-8">
+        <div class="max-w-7xl mx-auto px-4">
+            <!-- Section Header -->
+            <div class="flex items-center justify-between mb-6 sm:mb-8 pb-4 border-b border-gray-200">
+                <div class="flex items-center gap-3">
+                    <div class="w-1.5 h-8 bg-black rounded-full"></div>
+                    <div>
+                        <h2 class="text-2xl sm:text-3xl font-bold text-gray-900">Your Recently Viewed</h2>
+                        <p class="text-sm text-gray-500 mt-1">Products you've looked at recently</p>
+                    </div>
+                </div>
+                <a href="index-shop-page-2.php" class="text-sm text-black hover:text-blue-700 font-semibold whitespace-nowrap">
+                    See more <i class="fas fa-arrow-right ml-1"></i>
+                </a>
+            </div>
+
+            <!-- Products Grid -->
+            <div class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-3 sm:gap-4">
+                <?php 
+                $recent_products->data_seek(0);
+                while ($row = $recent_products->fetch_assoc()): 
+                ?>
+                    <div>
+                        <?php renderProductCardOrderHistory($row, $conn); ?>
+                    </div>
+                <?php endwhile; ?>
+            </div>
+        </div>
+    </div>
+<?php endif; ?>
 
 
     <?php include '../navbar/footer.php'; ?>

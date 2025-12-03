@@ -56,38 +56,82 @@ $user_id = $_SESSION['user_id'];
 $product_id = (int)($input['product_id'] ?? $_POST['product_id'] ?? 0);
 $rating = (int)($input['rating'] ?? $_POST['rating'] ?? 0);
 
+// ============================================================================
+// GET COMMENT FROM JSON INPUT - Optional feedback from user
+// ============================================================================
+// Sanitize comment: trim whitespace and limit to 500 characters
+$comment = isset($input['comment']) ? trim($input['comment']) : '';
+$comment = strlen($comment) > 500 ? substr($comment, 0, 500) : $comment;
+
 // 🔍 Debug output (remove in production)
-error_log("Debug - Product ID: $product_id, Rating: $rating, User ID: $user_id");
+error_log("Debug - Product ID: $product_id, Rating: $rating, User ID: $user_id, Comment Length: " . strlen($comment));
 
 if ($product_id && $rating >= 1 && $rating <= 5) {
-    // 🔄 Insert or update (1 user = 1 rating per product)
-    $stmt = $conn->prepare("INSERT INTO product_ratings (product_id, user_id, rating)
-                            VALUES (?, ?, ?)
-                            ON DUPLICATE KEY UPDATE rating = ?");
-    $stmt->bind_param("iiii", $product_id, $user_id, $rating, $rating);
+    // ============================================================================
+    // INSERT OR UPDATE RATING WITH COMMENT
+    // ============================================================================
+    // Use ON DUPLICATE KEY UPDATE to handle existing ratings
+    // This updates both rating and comment if user re-rates the same product
+    $stmt = $conn->prepare("
+        INSERT INTO product_ratings (product_id, user_id, rating, comment, created_at, updated_at)
+        VALUES (?, ?, ?, ?, NOW(), NOW())
+        ON DUPLICATE KEY UPDATE 
+            rating = VALUES(rating),
+            comment = VALUES(comment),
+            updated_at = NOW()
+    ");
+    
+    // ============================================================================
+    // BIND PARAMETERS: i=integer, s=string
+    // ============================================================================
+    // product_id (int), user_id (int), rating (int), comment (string)
+    $stmt->bind_param("iiis", $product_id, $user_id, $rating, $comment);
     
     if ($stmt->execute()) {
-        // 📊 Calculate new average rating
-        $avg_stmt = $conn->prepare("SELECT AVG(rating) AS avg_rating FROM product_ratings WHERE product_id = ?");
+        // ============================================================================
+        // CALCULATE NEW AVERAGE RATING - Get updated average for the product
+        // ============================================================================
+        $avg_stmt = $conn->prepare("
+            SELECT 
+                AVG(rating) AS avg_rating,
+                COUNT(*) AS total_ratings
+            FROM product_ratings 
+            WHERE product_id = ?
+        ");
         $avg_stmt->bind_param("i", $product_id);
         $avg_stmt->execute();
         $avg_result = $avg_stmt->get_result()->fetch_assoc();
         $new_average = round($avg_result['avg_rating'] ?? 0, 1);
+        $total_ratings = $avg_result['total_ratings'] ?? 0;
         $avg_stmt->close();
         
+        // ============================================================================
+        // RETURN SUCCESS RESPONSE WITH UPDATED DATA
+        // ============================================================================
         echo json_encode([
             'success' => true, 
             'new_average' => $new_average,
-            'message' => 'Rating submitted successfully'
+            'total_ratings' => $total_ratings,
+            'message' => 'Rating and comment submitted successfully',
+            'rating' => $rating,
+            'comment_length' => strlen($comment)
         ]);
     } else {
         echo json_encode(['success' => false, 'message' => 'Database error: ' . $conn->error]);
     }
     $stmt->close();
 } else {
+    // ============================================================================
+    // VALIDATION ERROR - Invalid product_id or rating
+    // ============================================================================
     echo json_encode([
         'success' => false, 
-        'message' => "Invalid input - Product ID: $product_id, Rating: $rating"
+        'message' => "Invalid input - Product ID: $product_id, Rating: $rating (must be 1-5)"
     ]);
 }
+
+// ============================================================================
+// CLOSE DATABASE CONNECTION
+// ============================================================================
+$conn->close();
 ?>

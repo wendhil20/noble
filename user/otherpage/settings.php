@@ -101,6 +101,25 @@ if ($res->num_rows > 0) {
 }
 $stmt->close();
 
+// Get mobile from users table
+$mobile_value = '';
+$stmt_user = $conn->prepare("SELECT mobile FROM users WHERE id = ?");
+$stmt_user->bind_param("i", $_SESSION['user_id']);
+$stmt_user->execute();
+$user_result = $stmt_user->get_result();
+if ($user_result->num_rows > 0) {
+    $user_data = $user_result->fetch_assoc();
+    $mobile_value = $user_data['mobile'] ?? '';
+}
+$stmt_user->close();
+
+// ✅ DYNAMIC: Determine if mobile field should be required
+$mobile_is_required = empty($mobile_value) ? 'required' : ''; // Required only if empty
+$mobile_readonly = !empty($mobile_value) ? 'readonly' : ''; // Readonly if has value
+$mobile_input_class = !empty($mobile_value) ? 'bg-gray-100 cursor-not-allowed' : '';
+$mobile_info_text = !empty($mobile_value) ? 'This number was retrieved from your account.' : 'Enter your mobile number (09XXXXXXXXX or 9XXXXXXXXX)';
+$mobile_has_existing_value = !empty($mobile_value);
+
 // ✅ Handle file upload and form submission
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $form_submitted = true; // Mark that form was submitted
@@ -121,9 +140,28 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $mobile     = $_POST['mobile'];
         $id_type    = $_POST['id_type'];
 
+        // ✅ DYNAMIC MOBILE VALIDATION
+        // If mobile already exists (readonly), use existing value
+        // If mobile is new, validate it
+        $upload_error = false;
+        
+        if ($mobile_has_existing_value) {
+            // Keep the existing mobile value
+            $mobile = $mobile_value;
+        } else {
+            // Validate new mobile input
+            $mobile = trim($mobile);
+            
+            if (empty($mobile)) {
+                $notification = "<div class='mb-4 p-3 bg-red-100 border-l-4 border-red-500 text-red-700 rounded'>
+                                     Please enter your mobile number.
+                                 </div>";
+                $upload_error = true;
+            }
+        }
+
         // Handle file upload
         $government_id_path = null;
-        $upload_error = false;
         $file_uploaded_now = false;
 
         // Check if user is uploading a new file
@@ -299,26 +337,6 @@ if (isset($_SESSION['verification_bypass_message'])) {
     unset($_SESSION['verification_bypass_message']);
 }
 
-// Rest of your existing code for fetching details...
-$detail = [
-    'sex' => '',
-    'birthplace' => '',
-    'birthdate' => '',
-    'occupation' => '',
-    'id_type' => '',
-    'government_id_path' => '',
-    'is_verified' => 0
-];
-
-$stmt = $conn->prepare("SELECT * FROM user_details WHERE user_id = ?");
-$stmt->bind_param("i", $_SESSION['user_id']);
-$stmt->execute();
-$res = $stmt->get_result();
-if ($res->num_rows > 0) {
-    $detail = $res->fetch_assoc();
-}
-$stmt->close();
-
 // ✅ CRITICAL: Redirect verified users away from this page
 if ($detail['is_verified'] == 1) {
     $_SESSION['verification_bypass_message'] = "<div class='mb-4 p-3 bg-green-100 border-l-4 border-green-500 text-green-700 rounded'>
@@ -329,21 +347,9 @@ if ($detail['is_verified'] == 1) {
                                                          <strong>Account Already Verified:</strong> Your profile has been approved and you have full access to all features.
                                                      </div>
                                                  </div>";
-    header('Location: index-page-1-A-B-C-D-E.php'); // Redirect to dashboard or main profile page
+    header('Location: index-page-1-A-B-C-D-E.php');
     exit;
 }
-
-// Get mobile from users table
-$mobile_value = '';
-$stmt_user = $conn->prepare("SELECT mobile FROM users WHERE id = ?");
-$stmt_user->bind_param("i", $_SESSION['user_id']);
-$stmt_user->execute();
-$user_result = $stmt_user->get_result();
-if ($user_result->num_rows > 0) {
-    $user_data = $user_result->fetch_assoc();
-    $mobile_value = $user_data['mobile'] ?? '';
-}
-$stmt_user->close();
 
 // Check completion status (now including ID type and government ID)
 $fields_completed = 0;
@@ -421,29 +427,6 @@ $is_verified = $detail['is_verified'] == 1;
 
 // If profile is complete but not verified, show waiting message instead of form
 $show_waiting_message = $is_profile_complete && !$is_verified;
-
-// Calculate completion percentage (keep your existing logic)
-$fields_completed = 0;
-$total_fields = 7;
-$required_fields = ['sex', 'birthplace', 'birthdate', 'occupation', 'id_type'];
-$missing_fields = [];
-
-foreach ($required_fields as $field) {
-    if (!empty($detail[$field] ?? '')) {
-        $fields_completed++;
-    } else {
-        $missing_fields[] = ucfirst(str_replace('_', ' ', $field));
-    }
-}
-
-// Check mobile and government ID
-if (!empty($mobile_value)) $fields_completed++;
-else $missing_fields[] = 'Mobile';
-
-if (!empty($detail['government_id_path'])) $fields_completed++;
-else $missing_fields[] = 'Government ID';
-
-$completion_percentage = ($fields_completed / $total_fields) * 100;
 ?>
 
 <!DOCTYPE html>
@@ -550,7 +533,7 @@ $completion_percentage = ($fields_completed / $total_fields) * 100;
     </style>
 </head>
 
-<body class="bg-gradient-to-br from-gray-50 to-gray-100 min-h-screen">
+<body class="bg-gradient-to-br from-gray-50 to-gray-100 min-h-screen font-roboto">
     <?php include '../navbar/top.php'; ?>
 
     <div class="container mx-auto px-4 max-w-5xl py-8">
@@ -724,7 +707,9 @@ $completion_percentage = ($fields_completed / $total_fields) * 100;
                 <!-- Header Section -->
 
                 <div class="text-center mb-8">
-                    <div class="inline-flex items-center justify-center w-16 h-16 bg-gradient-to-br from-orange-400 to-orange-600 rounded-full mb-4">
+              
+
+                    <div class="mt-5 inline-flex items-center justify-center w-16 h-16 bg-gradient-to-br from-orange-400 to-orange-600 rounded-full mb-4">
                         <svg class="w-8 h-8 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
                         </svg>
@@ -732,6 +717,8 @@ $completion_percentage = ($fields_completed / $total_fields) * 100;
                     <h1 class="text-3xl font-bold text-gray-800 mb-2">Complete Your Profile</h1>
                     <p class="text-gray-600 text-lg">Follow these simple steps to verify your account</p>
 
+
+                    
                     <!-- Progress indicator -->
                     <?php if ($completion_percentage < 100): ?>
                         <div class="mt-4 max-w-md mx-auto">
@@ -747,18 +734,10 @@ $completion_percentage = ($fields_completed / $total_fields) * 100;
                             <?php endif; ?>
                         </div>
                     <?php endif; ?>
-
-                    <div class="inline-flex items-center justify-center w-16 h-16 bg-gradient-to-br from-orange-400 to-orange-600 rounded-full mb-4">
-                        <svg class="w-8 h-8 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
-                        </svg>
-                    </div>
-                    <h1 class="text-3xl font-bold text-gray-800 mb-2">Complete Your Profile</h1>
-                    <p class="text-gray-600 text-lg">Follow these simple steps to verify your account</p>
                 </div>
 
                 <!-- Step Indicator -->
-                <div class="bg-white rounded-xl shadow-lg p-6 mb-8">
+                <div class="p-6 mb-8">
                     <!-- Progress Line with Steps -->
                     <div class="relative mb-8">
                         <!-- Background Progress Line -->
@@ -814,17 +793,13 @@ $completion_percentage = ($fields_completed / $total_fields) * 100;
                 </div>
 
                 <!-- Multi-Step Form -->
-                <div class="bg-white rounded-xl shadow-lg p-8">
+                <div class=" p-8">
                     <form method="POST" enctype="multipart/form-data" id="profileForm">
 
                         <!-- Step 1: Personal Information -->
                         <div class="form-step active" id="step-1">
                             <div class="text-center mb-8">
-                                <div class="inline-flex items-center justify-center w-16 h-16 bg-gradient-to-br from-blue-400 to-blue-600 rounded-full mb-4">
-                                    <svg class="w-8 h-8 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
-                                    </svg>
-                                </div>
+                           
                                 <h2 class="text-2xl font-bold text-gray-800 mb-2">Personal Information</h2>
                                 <p class="text-gray-600">Let's start with your basic details</p>
                             </div>
@@ -896,11 +871,7 @@ $completion_percentage = ($fields_completed / $total_fields) * 100;
                         <!-- Step 2: Contact Information -->
                         <div class="form-step" id="step-2">
                             <div class="text-center mb-8">
-                                <div class="inline-flex items-center justify-center w-16 h-16 bg-gradient-to-br from-green-400 to-green-600 rounded-full mb-4">
-                                    <svg class="w-8 h-8 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.257 1.13a11.042 11.042 0 005.516 5.516l1.13-2.257a1 1 0 011.21-.502l4.493 1.498a1 1 0 01.684.949V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z" />
-                                    </svg>
-                                </div>
+                      
                                 <h2 class="text-2xl font-bold text-gray-800 mb-2">Contact Information</h2>
                                 <p class="text-gray-600">Add your mobile number for account security</p>
                             </div>
@@ -914,21 +885,55 @@ $completion_percentage = ($fields_completed / $total_fields) * 100;
                                     </div>
                                 </div>
 
-                                <div>
-                                    <label class="block text-sm font-semibold text-gray-700 mb-2">Mobile Number *</label>
-                                    <div class="relative">
-                                        <span class="absolute left-4 top-1/2 transform -translate-y-1/2 text-gray-500 font-medium">+63</span>
-                                        <input type="tel" name="mobile" value="<?= htmlspecialchars($mobile_value) ?>"
-                                            placeholder="9123456789"
-                                            pattern="[0-9]{10,11}" maxlength="11" required
-                                            oninput="formatMobileNumber(this)"
-                                            class="w-full pl-12 pr-4 py-4 border-2 border-gray-200 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-orange-500 transition duration-200 text-lg">
-                                    </div>
-                                    <p class="text-xs text-gray-500 mt-2">Enter your mobile number (09XXXXXXXXX or 9XXXXXXXXX)</p>
-                                    <div class="text-xs text-gray-500 mt-1">
-                                        <span class="text-green-600">✓ Valid formats: 09123456789 or 9123456789</span>
-                                    </div>
-                                </div>
+                  <div>
+    <label class="block text-sm font-semibold text-gray-700 mb-2">
+        Mobile Number 
+        <?php if (empty($mobile_value)): ?>
+            <span class="text-red-500">*</span>
+        <?php else: ?>
+            <span class="text-green-500 text-xs font-normal">(Retrieved)</span>
+        <?php endif; ?>
+    </label>
+    <div class="relative">
+        <span class="absolute left-4 top-1/2 transform -translate-y-1/2 text-gray-500 font-medium">+63</span>
+        <input 
+            type="tel" 
+            name="mobile" 
+            value="<?= htmlspecialchars($mobile_value) ?>"
+            placeholder="<?= !empty($mobile_value) ? '' : '9123456789' ?>"
+            pattern="[0-9]{10,11}" 
+            maxlength="11" 
+            <?= $mobile_is_required ?>
+            <?= $mobile_readonly ?>
+            oninput="formatMobileNumber(this)"
+            class="w-full pl-12 pr-4 py-4 border-2 border-gray-200 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-orange-500 transition duration-200 text-lg <?= $mobile_input_class ?>">
+    </div>
+    
+    <!-- Dynamic info text -->
+    <p class="text-xs mt-2 <?= !empty($mobile_value) ? 'text-green-600' : 'text-gray-500' ?>">
+        <?php if (!empty($mobile_value)): ?>
+            ✓ <?= $mobile_info_text ?>
+        <?php else: ?>
+            <?= $mobile_info_text ?>
+        <?php endif; ?>
+    </p>
+
+    <!-- Show confirmation if number exists -->
+    <?php if (!empty($mobile_value)): ?>
+        <div class="mt-3 p-3 bg-green-50 border border-green-200 rounded-lg">
+            <div class="flex items-center gap-2">
+                <svg class="w-4 h-4 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                </svg>
+                <span class="text-sm text-green-700 font-medium">Number confirmed: +63<?= htmlspecialchars($mobile_value) ?></span>
+            </div>
+        </div>
+    <?php endif; ?>
+
+    <div class="text-xs text-gray-500 mt-2">
+        <span class="text-green-600">✓ Valid formats: 09123456789 or 9123456789</span>
+    </div>
+</div>
 
                                 <div class="mt-6 p-4 bg-blue-50 border border-blue-200 rounded-lg">
                                     <div class="flex items-start gap-3">
@@ -1178,7 +1183,6 @@ $completion_percentage = ($fields_completed / $total_fields) * 100;
                     </div>
                 </div>
             </div>
-
         </div>
 
         <script>

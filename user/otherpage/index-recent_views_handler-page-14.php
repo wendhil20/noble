@@ -1,5 +1,5 @@
 <?php
-
+//  index-recent_views_handler-page-14.php
 /**
  * 🔥 COMPLETE SMART PRICE SYSTEM - LAZADA STYLE
  * Shows: Overall Lowest to Highest Price

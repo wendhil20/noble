@@ -721,7 +721,7 @@ while ($row = $banners_result->fetch_assoc()) {
     <div class="w-full grid grid-cols-1 lg:grid-cols-12 gap-1">
 
         <!-- Main Slider - Takes 8 columns -->
-        <div class="lg:col-span-8 relative overflow-hidden bg-gray-900">
+        <div class="lg:col-span-8 relative overflow-hidden ">
             <div class="mySwiper h-[250px] sm:h-[350px] lg:h-[400px]">
                 <div class="swiper-wrapper">
                     <?php if (!empty($banners)): ?>

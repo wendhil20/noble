@@ -98,9 +98,9 @@ $show_replacements = isset($_GET['replacements']) ? (bool) $_GET['replacements']
 $show_ready_for_schedule = isset($_GET['ready_schedule']) ? (bool) $_GET['ready_schedule'] : false;
 $show_unassigned = isset($_GET['unassigned']) ? (bool) $_GET['unassigned'] : false;
 
-// Get all warehouse employees
+// Get only warehouse staff by subrole
 $warehouseEmployees = [];
-$empSql = "SELECT id, fullname, is_head FROM nobleaccount WHERE lvl = 'warehouse' ORDER BY fullname ASC";
+$empSql = "SELECT id, fullname, is_head FROM nobleaccount WHERE lvl = 'warehouse' AND subrole = 'warehouse_staff' ORDER BY fullname ASC";
 $empResult = $conn->query($empSql);
 if ($empResult) {
     $warehouseEmployees = $empResult->fetch_all(MYSQLI_ASSOC);
@@ -291,7 +291,7 @@ if ($readyForScheduleResult) {
     $readyForScheduleCount = (int) $readyData['count'];
 }
 
-// Employee workload statistics
+// Employee workload statistics (only warehouse_staff subrole)
 $employeeStats = [];
 $empStatsSql = "
     SELECT 
@@ -302,7 +302,7 @@ $empStatsSql = "
         SUM(CASE WHEN o.status = 'processing' THEN 1 ELSE 0 END) as processing_count
     FROM nobleaccount na
     LEFT JOIN orders o ON na.id = o.warehouse_employee_id
-    WHERE na.lvl = 'warehouse'
+    WHERE na.lvl = 'warehouse' AND na.subrole = 'warehouse_staff'
     GROUP BY na.id, na.fullname
     ORDER BY na.fullname ASC
 ";
@@ -601,15 +601,14 @@ foreach ($statusOrder as $status):
                     <div>
                         <label class="block text-sm font-medium text-gray-700 mb-1">Filter by Employee</label>
                         <select name="employee"
-                            class="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-primary-500 focus:border-transparent">
-                            <option value="0">All Employees</option>
-                            <?php foreach ($warehouseEmployees as $emp): ?>
-                                <option value="<?php echo $emp['id']; ?>" <?php echo ($employee_filter == $emp['id']) ? 'selected' : ''; ?>>
-                                    <?php echo htmlspecialchars($emp['fullname']); ?>
-                                    <?php echo ((int) $emp['is_head'] === 1) ? ' (Head)' : ''; ?>
-                                </option>
-                            <?php endforeach; ?>
-                        </select>
+    class="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-primary-500 focus:border-transparent">
+    <option value="0">All Staff Members</option>
+    <?php foreach ($warehouseEmployees as $emp): ?>
+        <option value="<?php echo $emp['id']; ?>" <?php echo ($employee_filter == $emp['id']) ? 'selected' : ''; ?>>
+            <?php echo htmlspecialchars($emp['fullname']); ?>
+        </option>
+    <?php endforeach; ?>
+</select>
                     </div>
 
                     <div class="flex items-end">
@@ -716,15 +715,15 @@ foreach ($statusOrder as $status):
                                 </div>
 
                                 <!-- Actions Dropdown -->
-                                <div class="flex-shrink-0 relative">
-                                    <button onclick="toggleActionsMenu(<?php echo $order['id']; ?>)"
-                                        class="bg-gray-100 hover:bg-gray-200 p-2 rounded-lg transition-colors duration-200">
-                                        <i class="fas fa-ellipsis-v text-gray-600"></i>
-                                    </button>
+<div class="flex-shrink-0 relative">
+    <button onclick="toggleActionsMenu(<?php echo $order['id']; ?>)"
+        class="bg-gray-100 hover:bg-gray-200 p-2 rounded-lg transition-colors duration-200">
+        <i class="fas fa-ellipsis-v text-gray-600"></i>
+    </button>
 
-                                    <!-- Dropdown Menu -->
-                                    <div id="actions-<?php echo $order['id']; ?>"
-                                        class="hidden absolute right-0 mt-2 w-56 bg-white rounded-lg shadow-lg border border-gray-200 z-10">
+    <!-- Dropdown Menu - Now appears at TOP -->
+    <div id="actions-<?php echo $order['id']; ?>"
+        class="hidden absolute right-0 bottom-full mb-2 w-56 bg-white rounded-lg shadow-lg border border-gray-200 z-10">
                                         <div class="py-2">
                                             <?php if ($isUnassigned): ?>
                                                 <a href="warehouse_head_assignment_A.php?order_id=<?php echo urlencode($order['id']); ?>"

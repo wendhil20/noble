@@ -733,7 +733,12 @@ if (!isset($_SESSION['noble_name']) || !isset($_SESSION['noble_lvl']) || !isset(
                                             <i class="ri-money-dollar-circle-line text-lg"></i>
                                             <span>Dashboard</span>
                                         </a>
-
+                                        <a href="../accountant/document_controller_view_orders"
+    class="quick-action-item flex items-center space-x-3 px-3 py-2.5 text-sm text-gray-700 
+           hover:bg-orange-50 hover:text-orange-600 rounded-lg transition-all duration-150">
+    <i class="ri-file-text-line text-lg"></i>
+    <span>Project Document</span>
+</a>
                                         <?php if (hasAnyRole(['superadmin']) || !hasSubrole(['document_controller'])): ?>
                                             <a href="../accountant/accountantdashboard.php"
                                                 class="quick-action-item flex items-center space-x-3 px-3 py-2.5 text-sm text-gray-700 

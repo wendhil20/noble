@@ -7,7 +7,7 @@ require_once '../role/roleaccount.php';
 require_role(['superadmin','hr']); // only superadmin can manage heads
 
 // departments to manage (supplier removed)
-$departments = ['sales','accountant','hr','warehouse', 'logistic'];
+$departments = ['superadmin','sales','accountant','hr','warehouse', 'logistic'];
 
 // Define subroles for each department (you can edit these)
 $department_subroles = [
@@ -27,7 +27,8 @@ $department_subroles = [
 ];
 
 // Fetch all accounts
-$q = "SELECT id, fullname, email, lvl, IFNULL(is_head,0) AS is_head, subrole, IFNULL(commission_rate, 0.00) AS commission_rate
+$q = "SELECT id, fullname, email, lvl, IFNULL(is_head,0) AS is_head, subrole, IFNULL(commission_rate, 0.00) AS commission_rate, 
+      CASE WHEN e_signature IS NOT NULL THEN 1 ELSE 0 END as has_signature
       FROM nobleaccount
       ORDER BY lvl, fullname";
 $res = mysqli_query($conn, $q);
@@ -108,24 +109,37 @@ while ($r = mysqli_fetch_assoc($res)) {
               ?>
                 <li data-id="<?= $id ?>" data-dept="<?= htmlspecialchars($dept) ?>" data-is-head="<?= $is_head ?>"
     class="flex items-center justify-between bg-orange-50 rounded-lg p-3">
-  <div class="flex-1">
-    <div class="font-medium text-gray-900"><?= htmlspecialchars($m['fullname']) ?></div>
-    <div class="text-xs text-gray-500"><?= htmlspecialchars($m['email']) ?></div>
-    <?php if (!empty($m['subrole'])): ?>
-      <div class="text-xs text-blue-600 mt-1">Role: <?= htmlspecialchars($m['subrole']) ?></div>
+  <div class="flex items-center gap-3 flex-1">
+    <?php if ((int)$m['has_signature'] === 1): ?>
+      <img src="view_signature.php?id=<?= $id ?>" alt="Signature" class="w-16 h-16 object-contain border border-gray-300 rounded bg-white" />
+    <?php else: ?>
+      <div class="w-16 h-16 flex items-center justify-center border-2 border-dashed border-gray-300 rounded bg-white">
+        <span class="text-xs text-gray-400">No sig</span>
+      </div>
     <?php endif; ?>
-    <?php if ($dept === 'sales' && isset($m['commission_rate'])): ?>
-      <div class="text-xs text-green-600 mt-1 font-semibold">Commission: <?= number_format($m['commission_rate'], 2) ?>%</div>
-    <?php endif; ?>
+    
+    <div class="flex-1">
+      <div class="font-medium text-gray-900"><?= htmlspecialchars($m['fullname']) ?></div>
+      <div class="text-xs text-gray-500"><?= htmlspecialchars($m['email']) ?></div>
+      <?php if (!empty($m['subrole'])): ?>
+        <div class="text-xs text-blue-600 mt-1">Role: <?= htmlspecialchars($m['subrole']) ?></div>
+      <?php endif; ?>
+      <?php if ($dept === 'sales' && isset($m['commission_rate'])): ?>
+        <div class="text-xs text-green-600 mt-1 font-semibold">Commission: <?= number_format($m['commission_rate'], 2) ?>%</div>
+      <?php endif; ?>
+    </div>
   </div>
 
-  <div class="flex items-center gap-2">
+  <div class="flex flex-wrap items-center gap-2">
     <?php if ($is_head === 1): ?>
       <span class="head-badge inline-flex items-center gap-2 bg-orange-200 text-orange-800 px-3 py-1 rounded-full text-xs font-semibold">Head</span>
-      <button type="button" class="remove-head ml-2 inline-flex items-center gap-2 px-3 py-1 rounded-md bg-red-500 text-white text-sm" data-id="<?= $id ?>">Remove</button>
+      <button type="button" class="remove-head inline-flex items-center gap-2 px-3 py-1 rounded-md bg-red-500 text-white text-sm" data-id="<?= $id ?>">Remove</button>
     <?php else: ?>
       <button type="button" class="set-head inline-flex items-center gap-2 px-3 py-1 rounded-md bg-orange-600 text-white text-sm" data-id="<?= $id ?>">Set as Head</button>
     <?php endif; ?>
+    <button type="button" class="upload-signature inline-flex items-center gap-2 px-3 py-1 rounded-md bg-purple-600 text-white text-sm" data-id="<?= $id ?>">
+      <i class="fas fa-upload"></i>Signature
+    </button>
     <?php if ($dept !== 'sales'): ?>
       <button type="button" class="edit-subrole inline-flex items-center gap-2 px-3 py-1 rounded-md bg-blue-600 text-white text-sm" data-id="<?= $id ?>" data-subrole="<?= htmlspecialchars($m['subrole'] ?? '') ?>">Edit Role</button>
     <?php else: ?>
@@ -147,10 +161,11 @@ while ($r = mysqli_fetch_assoc($res)) {
 
           <ul id="headsList" class="space-y-2">
             <?php
-            // show heads for departments (skip superadmin)
-            $visible_heads = array_filter($heads, function($h){ return strtolower($h['lvl']) !== 'superadmin'; });
-            // additionally skip any heads that belong to the removed 'supplier' dept (in case data exists)
-            $visible_heads = array_filter($visible_heads, function($h){ $lvl = strtolower($h['lvl']); return !in_array($lvl, ['supplier']); });
+// show heads for departments (include superadmin now, only skip supplier)
+$visible_heads = array_filter($heads, function($h){ 
+    $lvl = strtolower($h['lvl']); 
+    return !in_array($lvl, ['supplier']); 
+});
             if (count($visible_heads) === 0): ?>
               <li class="text-sm text-gray-400">No heads assigned yet.</li>
             <?php else:
@@ -245,6 +260,33 @@ while ($r = mysqli_fetch_assoc($res)) {
     </div>
   </div>
 
+  <!-- Signature Upload Modal -->
+<div id="signatureModal" class="fixed inset-0 z-50 hidden bg-black/40 flex items-center justify-center p-4">
+  <div class="bg-white rounded-lg shadow-lg w-full max-w-md mx-auto p-5">
+    <h4 class="text-lg font-semibold text-gray-900">Upload E-Signature</h4>
+    <p class="mt-2 text-sm text-gray-600">Upload an image of the signature (PNG, JPG, or GIF)</p>
+    
+    <div class="mt-4">
+      <label class="block text-sm font-medium text-gray-700 mb-2">Signature Image</label>
+      <input type="file" id="signatureFile" accept="image/png,image/jpeg,image/jpg,image/gif" 
+             class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-purple-500" />
+      <p class="mt-1 text-xs text-gray-500">Maximum file size: 2MB</p>
+    </div>
+    
+    <div id="signaturePreview" class="mt-4 hidden">
+      <label class="block text-sm font-medium text-gray-700 mb-2">Preview</label>
+      <div class="border border-gray-300 rounded-md p-4 bg-gray-50">
+        <img id="signaturePreviewImg" src="" alt="Preview" class="max-h-32 mx-auto" />
+      </div>
+    </div>
+    
+    <div class="mt-5 flex justify-end gap-3">
+      <button id="signatureCancel" type="button" class="px-4 py-2 rounded-md border bg-white">Cancel</button>
+      <button id="signatureSave" type="button" class="px-4 py-2 rounded-md bg-purple-600 text-white" disabled>Upload</button>
+    </div>
+  </div>
+</div>
+
   <!-- toast -->
   <div id="toast" class="fixed top-6 right-6 z-50 hidden">
     <div id="toastContent" class="px-4 py-2 rounded-lg shadow bg-green-600 text-white"></div>
@@ -278,6 +320,13 @@ const commissionModal = $('#commissionModal');
   const commissionInput = $('#commissionInput');
   const commissionSave = $('#commissionSave');
   const commissionCancel = $('#commissionCancel');
+  const signatureModal = $('#signatureModal');
+  const signatureFile = $('#signatureFile');
+  const signaturePreview = $('#signaturePreview');
+  const signaturePreviewImg = $('#signaturePreviewImg');
+  const signatureSave = $('#signatureSave');
+  const signatureCancel = $('#signatureCancel');
+  let currentSignatureId = null;
   const toast = $('#toast');
   const toastContent = $('#toastContent');
 
@@ -317,7 +366,7 @@ const commissionModal = $('#commissionModal');
   // Build heads list from current DOM department lists (excluding superadmin and supplier)
   function refreshHeadsList() {
     const memberRows = Array.from(document.querySelectorAll('li[data-id]'));
-    const headRows = memberRows.filter(r => r.dataset.isHead === '1' && (r.dataset.dept || '').toLowerCase() !== 'superadmin' && (r.dataset.dept || '').toLowerCase() !== 'supplier');
+    const headRows = memberRows.filter(r => r.dataset.isHead === '1' && (r.dataset.dept || '').toLowerCase() !== 'supplier');
     if (headRows.length === 0) {
       headsListEl.innerHTML = '<li class="text-sm text-gray-400">No heads assigned yet.</li>';
       return;
@@ -377,6 +426,42 @@ async function sendAction(accountId, action, extraData = {}) {
     });
   }
 
+  // Signature file change handler
+  signatureFile.addEventListener('change', function() {
+    const file = this.files[0];
+    if (file) {
+      // Check file size (2MB max)
+      if (file.size > 2 * 1024 * 1024) {
+        showToast('File size must be less than 2MB', 'error');
+        this.value = '';
+        signatureSave.disabled = true;
+        signaturePreview.classList.add('hidden');
+        return;
+      }
+      
+      // Check file type
+      if (!file.type.match('image.*')) {
+        showToast('Please select an image file', 'error');
+        this.value = '';
+        signatureSave.disabled = true;
+        signaturePreview.classList.add('hidden');
+        return;
+      }
+      
+      // Show preview
+      const reader = new FileReader();
+      reader.onload = function(e) {
+        signaturePreviewImg.src = e.target.result;
+        signaturePreview.classList.remove('hidden');
+        signatureSave.disabled = false;
+      };
+      reader.readAsDataURL(file);
+    } else {
+      signaturePreview.classList.add('hidden');
+      signatureSave.disabled = true;
+    }
+  });
+
   // Click handlers (delegate)
   document.addEventListener('click', async (e) => {
     const setBtn = e.target.closest('.set-head');
@@ -389,6 +474,82 @@ async function sendAction(accountId, action, extraData = {}) {
       applyFilter(filter);
       return;
     }
+
+    // Handle upload signature button
+const uploadSignatureBtn = e.target.closest('.upload-signature');
+if (uploadSignatureBtn) {
+  const id = uploadSignatureBtn.dataset.id;
+  currentSignatureId = id;
+  
+  signatureFile.value = '';
+  signaturePreview.classList.add('hidden');
+  signatureSave.disabled = true;
+  signatureModal.classList.remove('hidden');
+  
+  const saveHandler = async () => {
+    const file = signatureFile.files[0];
+    if (!file) {
+      showToast('Please select a file', 'error');
+      return;
+    }
+    
+    signatureSave.disabled = true;
+    signatureSave.textContent = 'Uploading...';
+    
+    const formData = new FormData();
+    formData.append('account_id', currentSignatureId);
+    formData.append('action', 'upload_signature');
+    formData.append('signature', file);
+    
+    try {
+      const resp = await fetch('manage_head_account.php', {
+        method: 'POST',
+        body: formData
+      });
+      const json = await resp.json();
+      
+      if (json && json.success) {
+        showToast(json.message || 'Signature uploaded successfully');
+        
+        // Update the signature display
+        const row = uploadSignatureBtn.closest('li[data-id]');
+        if (row) {
+          const signatureContainer = row.querySelector('.w-16.h-16');
+          if (signatureContainer) {
+            signatureContainer.outerHTML = `<img src="view_signature.php?id=${currentSignatureId}&t=${Date.now()}" alt="Signature" class="w-16 h-16 object-contain border border-gray-300 rounded bg-white" />`;
+          }
+        }
+        
+        cleanup();
+      } else {
+        showToast((json && json.message) || 'Failed to upload signature', 'error');
+      }
+    } catch (err) {
+      console.error(err);
+      showToast('Network error', 'error');
+    } finally {
+      signatureSave.disabled = false;
+      signatureSave.textContent = 'Upload';
+    }
+  };
+  
+  const cancelHandler = () => {
+    cleanup();
+  };
+  
+  const cleanup = () => {
+    signatureModal.classList.add('hidden');
+    signatureFile.value = '';
+    signaturePreview.classList.add('hidden');
+    currentSignatureId = null;
+    signatureSave.removeEventListener('click', saveHandler);
+    signatureCancel.removeEventListener('click', cancelHandler);
+  };
+  
+  signatureSave.addEventListener('click', saveHandler);
+  signatureCancel.addEventListener('click', cancelHandler);
+  return;
+}
 
     // Handle edit commission button (sales only)
     const editCommissionBtn = e.target.closest('.edit-commission');

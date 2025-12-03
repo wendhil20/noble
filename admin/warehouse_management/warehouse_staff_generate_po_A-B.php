@@ -170,29 +170,44 @@ foreach ($allItems as $item) {
         }
     </script>
     <style>
-        .supplier-reassign-modal {
-            display: none;
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            background-color: rgba(0, 0, 0, 0.5);
-            z-index: 1000;
-        }
-        
-        .supplier-reassign-modal.active {
-            display: flex;
-            align-items: center;
-            justify-content: center;
-        }
-        
-        .item-reassign-highlight {
-            background: linear-gradient(45deg, #fef3c7, #fde68a);
-            border-color: #f59e0b;
-            box-shadow: 0 0 0 3px rgba(245, 158, 11, 0.1);
-        }
-    </style>
+    .dropdown-content {
+        max-height: 0;
+        overflow: hidden;
+        transition: max-height 0.3s ease-out;
+    }
+
+    .dropdown-content.open {
+        max-height: 2000px;
+        transition: max-height 0.5s ease-in;
+    }
+
+    .rotate-180 {
+        transform: rotate(180deg);
+        transition: transform 0.3s ease;
+    }
+
+    .supplier-group {
+        transition: all 0.3s ease;
+    }
+
+    .supplier-group:hover {
+        box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+    }
+
+    /* Smooth transitions for icons */
+    .transition-transform {
+        transition: transform 0.3s ease;
+    }
+
+    /* Item card hover effect */
+    .item-card {
+        transition: all 0.2s ease;
+    }
+
+    .item-card:hover {
+        background-color: #f9fafb;
+    }
+</style>
 </head>
 
 <body class="bg-gradient-to-br from-gray-50 to-gray-100 min-h-screen">
@@ -267,95 +282,296 @@ foreach ($allItems as $item) {
         </div>
 
         <!-- Supplier Selection with Enhanced Features -->
-        <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-6 mb-6">
-            <div class="flex justify-between items-center mb-4">
-                <h2 class="text-xl font-bold text-gray-900">
-                    <i class="fas fa-building text-primary-600 mr-2"></i>
-                    Select Supplier for P.O Generation
-                </h2>
-                <div class="flex space-x-2">
-                    <button onclick="toggleSupplierChangeMode()" 
-                            id="toggleModeBtn"
-                            class="bg-amber-500 hover:bg-amber-600 text-white px-4 py-2 rounded-lg transition-colors duration-200 flex items-center space-x-2">
-                        <i class="fas fa-exchange-alt"></i>
-                        <span>Enable Supplier Changes</span>
-                    </button>
-                </div>
-            </div>
-            
-            <!-- Mode indicator -->
-            <div id="modeIndicator" class="mb-4 p-3 bg-gray-50 border border-gray-200 rounded-lg">
-                <div class="flex items-center">
-                    <i class="fas fa-info-circle text-gray-600 mr-2"></i>
-                    <span class="text-sm text-gray-700">Normal Mode: Select a supplier to generate P.O.</span>
-                </div>
-            </div>
-            
-            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4" id="suppliersGrid">
-                <?php foreach ($supplierGroups as $supplierKey => $supplierData): ?>
-<div class="border border-gray-200 rounded-lg p-4 hover:shadow-md transition-shadow duration-200 cursor-pointer supplier-card <?php echo !empty($supplierData['supplier_info']['existing_po']) ? 'border-green-400 bg-green-50' : ''; ?>" 
-     data-supplier="<?php echo htmlspecialchars($supplierKey); ?>"
-     data-has-po="<?php echo !empty($supplierData['supplier_info']['existing_po']) ? 'true' : 'false'; ?>"
-     data-po-number="<?php echo htmlspecialchars($supplierData['supplier_info']['existing_po'] ?? ''); ?>"
-     onclick="selectSupplier('<?php echo htmlspecialchars($supplierKey); ?>')">
-    
-    <div class="flex items-center justify-between mb-2">
-        <div class="flex items-center space-x-2">
-            <span class="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium <?php echo $supplierData['supplier_info']['is_manual'] ? 'bg-blue-100 text-blue-800' : 'bg-green-100 text-green-800'; ?>">
-                <?php echo $supplierData['supplier_info']['is_manual'] ? 'Manual' : 'Linked'; ?>
-            </span>
-            <?php if (!empty($supplierData['supplier_info']['existing_po'])): ?>
-                <span class="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-green-500 text-white">
-                    <i class="fas fa-check-circle mr-1"></i>P.O. Generated
-                </span>
-            <?php endif; ?>
-        </div>
-        <div class="supplier-radio">
-            <input type="radio" name="selected_supplier" value="<?php echo htmlspecialchars($supplierKey); ?>" class="text-primary-600">
-        </div>
+<div class="bg-white rounded-xl shadow-sm border border-gray-200 p-6 mb-6">
+    <div class="mb-6">
+        <h2 class="text-xl font-bold text-gray-900 mb-2">
+            <i class="fas fa-building text-primary-600 mr-2"></i>
+            Suppliers & Items Management
+        </h2>
+        <p class="text-sm text-gray-600">
+            Expand each supplier to view items, change suppliers, or generate purchase orders.
+        </p>
     </div>
-                    
-                    <h4 class="font-semibold text-gray-900 mb-2"><?php echo htmlspecialchars($supplierData['supplier_info']['name']); ?></h4>
-                    
-                    <?php if (!$supplierData['supplier_info']['is_manual']): ?>
-                    <div class="text-xs text-gray-600 space-y-1 mb-3">
-                        <?php if ($supplierData['supplier_info']['contact']): ?>
-                        <div><i class="fas fa-user mr-1"></i><?php echo htmlspecialchars($supplierData['supplier_info']['contact']); ?></div>
-                        <?php endif; ?>
-                        <?php if ($supplierData['supplier_info']['email']): ?>
-                        <div><i class="fas fa-envelope mr-1"></i><?php echo htmlspecialchars($supplierData['supplier_info']['email']); ?></div>
-                        <?php endif; ?>
-                        <?php if ($supplierData['supplier_info']['phone']): ?>
-                        <div><i class="fas fa-phone mr-1"></i><?php echo htmlspecialchars($supplierData['supplier_info']['phone']); ?></div>
+    
+    <div class="space-y-4" id="suppliersGrid">
+        <?php foreach ($supplierGroups as $supplierKey => $supplierData): ?>
+        <div class="supplier-group rounded-lg border-2 border-gray-200 overflow-hidden" 
+             data-supplier="<?php echo htmlspecialchars($supplierKey); ?>">
+            
+            <!-- Supplier Header Card -->
+            <div class="bg-gradient-to-r from-gray-50 to-white p-5">
+                <div class="flex justify-between items-center">
+                    <!-- Left: Supplier Info -->
+                    <div class="flex-1">
+                        <div class="flex items-center gap-3 mb-2">
+                            <div class="bg-primary-100 p-2 rounded-lg">
+                                <i class="fas fa-building text-primary-600"></i>
+                            </div>
+                            <div>
+                                <h4 class="text-lg font-bold text-gray-900">
+                                    <?php echo htmlspecialchars($supplierData['supplier_info']['name']); ?>
+                                </h4>
+                                <div class="flex items-center gap-2 mt-1">
+                                    <span class="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium <?php echo $supplierData['supplier_info']['is_manual'] ? 'bg-blue-100 text-blue-800' : 'bg-green-100 text-green-800'; ?>">
+                                        <i class="fas <?php echo $supplierData['supplier_info']['is_manual'] ? 'fa-pen' : 'fa-link'; ?> mr-1"></i>
+                                        <?php echo $supplierData['supplier_info']['is_manual'] ? 'Manual' : 'Linked'; ?>
+                                    </span>
+                                    <?php if (!empty($supplierData['supplier_info']['existing_po'])): ?>
+                                        <span class="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-green-500 text-white">
+                                            <i class="fas fa-check-circle mr-1"></i>P.O. Generated
+                                        </span>
+                                    <?php endif; ?>
+                                    <span class="text-xs text-gray-500">
+                                        <i class="fas fa-box mr-1"></i><?php echo count($supplierData['items']); ?> item(s)
+                                    </span>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <?php if (!$supplierData['supplier_info']['is_manual']): ?>
+                        <div class="ml-12 text-xs text-gray-600 space-y-1">
+                            <?php if ($supplierData['supplier_info']['contact']): ?>
+                            <div><i class="fas fa-user w-4 text-gray-400"></i><?php echo htmlspecialchars($supplierData['supplier_info']['contact']); ?></div>
+                            <?php endif; ?>
+                            <?php if ($supplierData['supplier_info']['email']): ?>
+                            <div><i class="fas fa-envelope w-4 text-gray-400"></i><?php echo htmlspecialchars($supplierData['supplier_info']['email']); ?></div>
+                            <?php endif; ?>
+                        </div>
                         <?php endif; ?>
                     </div>
-                    <?php endif; ?>
                     
-                    <div class="text-sm text-primary-600 font-medium">
-        <?php echo count($supplierData['items']); ?> item(s)
-    </div>
-    
-    <?php if (!empty($supplierData['supplier_info']['existing_po'])): ?>
-        <div class="mt-3 p-2 bg-white border border-green-300 rounded text-xs">
-            <div class="font-medium text-gray-700 mb-1">Existing P.O.:</div>
-            <div class="text-green-600 font-mono"><?php echo htmlspecialchars($supplierData['supplier_info']['existing_po']); ?></div>
-            <button onclick="event.stopPropagation(); resetPONumber('<?php echo htmlspecialchars($supplierKey); ?>')"
-                    class="mt-2 w-full bg-red-500 hover:bg-red-600 text-white px-2 py-1 rounded text-xs transition-colors duration-200">
-                <i class="fas fa-times-circle mr-1"></i>Reset P.O.
-            </button>
-        </div>
-    <?php endif; ?>
-    
-    <!-- Change supplier button (hidden by default) -->
-    <button onclick="event.stopPropagation(); openSupplierChangeModal('<?php echo htmlspecialchars($supplierKey); ?>')"
-            class="supplier-change-btn mt-2 w-full bg-amber-500 hover:bg-amber-600 text-white px-3 py-1 rounded text-sm transition-colors duration-200"
-            style="display: none;">
-        <i class="fas fa-exchange-alt mr-1"></i>Change Items Supplier
-    </button>
-</div>
-<?php endforeach; ?>
+                    <!-- Right: Action Buttons -->
+                    <div class="flex items-center gap-3">
+                        <!-- View/Hide Items Button -->
+                        <button onclick="toggleItemsList('<?php echo $supplierKey; ?>')" 
+                                class="bg-gray-100 hover:bg-gray-200 text-gray-700 px-4 py-2 rounded-lg transition-colors duration-200 flex items-center gap-2">
+                            <i class="fas fa-eye"></i>
+                            <span class="text-sm font-medium">View Items</span>
+                            <i id="itemsIcon-<?php echo $supplierKey; ?>" class="fas fa-chevron-down transition-transform duration-200"></i>
+                        </button>
+                        
+                        <!-- Generate P.O. Button -->
+                        <button onclick="selectSupplier('<?php echo htmlspecialchars($supplierKey); ?>')"
+                                class="bg-gradient-to-r from-green-500 to-green-600 hover:from-green-600 hover:to-green-700 text-white px-5 py-2 rounded-lg shadow-md transition-all duration-200 flex items-center gap-2 transform hover:scale-105">
+                            <i class="fas fa-file-invoice"></i>
+                            <span class="font-medium">Generate P.O.</span>
+                        </button>
+                        
+                        <!-- Reset P.O. Button (if exists) -->
+                        <?php if (!empty($supplierData['supplier_info']['existing_po'])): ?>
+                        <button onclick="resetPONumber('<?php echo htmlspecialchars($supplierKey); ?>')"
+                                class="bg-red-500 hover:bg-red-600 text-white px-4 py-2 rounded-lg transition-colors duration-200 flex items-center gap-2"
+                                title="Reset P.O. Number">
+                            <i class="fas fa-redo-alt"></i>
+                            <span class="text-sm font-medium">Reset</span>
+                        </button>
+                        <?php endif; ?>
+                    </div>
+                </div>
+                
+                <!-- P.O. Number Display (if exists) -->
+                <?php if (!empty($supplierData['supplier_info']['existing_po'])): ?>
+                <div class="ml-12 mt-3 inline-flex items-center gap-2 bg-green-50 border border-green-200 px-3 py-1 rounded-lg">
+                    <i class="fas fa-file-alt text-green-600 text-sm"></i>
+                    <span class="text-xs font-medium text-green-700">P.O. Number:</span>
+                    <span class="text-xs font-mono text-green-800"><?php echo htmlspecialchars($supplierData['supplier_info']['existing_po']); ?></span>
+                </div>
+                <?php endif; ?>
+            </div>
+            
+            <!-- Collapsible Items List -->
+            <div id="itemsList-<?php echo $supplierKey; ?>" class="dropdown-content">
+                <div class="bg-white border-t-2 border-gray-100 p-5">
+                    <div class="space-y-3">
+                        <?php foreach ($supplierData['items'] as $itemIndex => $item): ?>
+                        <div class="item-card border border-gray-200 rounded-lg p-4 hover:border-primary-300" 
+                             data-item-id="<?php echo $item['item_id']; ?>">
+                            
+                            <!-- Item Header -->
+                            <div class="flex justify-between items-start mb-3">
+                                <div class="flex-1">
+                                    <div class="flex items-start gap-3">
+                                        <div class="bg-primary-50 p-2 rounded">
+                                            <i class="fas fa-cube text-primary-600 text-sm"></i>
+                                        </div>
+                                        <div class="flex-1">
+                                            <h5 class="font-semibold text-gray-900 mb-1">
+                                                <?php echo htmlspecialchars($item['product_name']); ?>
+                                                <?php if ($item['namevariant']): ?>
+                                                    <span class="text-sm text-gray-500 font-normal">- <?php echo htmlspecialchars($item['namevariant']); ?></span>
+                                                <?php endif; ?>
+                                            </h5>
+                                            
+                                            <!-- Item Details Grid -->
+                                            <div class="grid grid-cols-2 md:grid-cols-4 gap-x-4 gap-y-2 text-xs text-gray-600 mt-2">
+                                                <div>
+                                                    <span class="font-medium text-gray-500">Variant ID:</span>
+                                                    <span class="ml-1"><?php echo $item['variant_id']; ?></span>
+                                                </div>
+                                                <div>
+                                                    <span class="font-medium text-gray-500">Code:</span>
+                                                    <span class="ml-1"><?php echo htmlspecialchars($item['codename']); ?></span>
+                                                </div>
+                                                <div>
+                                                    <span class="font-medium text-gray-500">Size:</span>
+                                                    <span class="ml-1"><?php echo htmlspecialchars($item['variant_size_db'] ?? $item['size']); ?></span>
+                                                </div>
+                                                <div>
+                                                    <span class="font-medium text-gray-500">Color:</span>
+                                                    <span class="ml-1"><?php echo htmlspecialchars($item['variant_color_db'] ?? $item['variant_color']); ?></span>
+                                                </div>
+                                                <div>
+                                                    <span class="font-medium text-gray-500">Quantity:</span>
+                                                    <span class="ml-1 font-semibold text-primary-600"><?php echo $item['quantity']; ?></span>
+                                                </div>
+                                                <div>
+                                                    <span class="font-medium text-gray-500">Unit Price:</span>
+                                                    <span class="ml-1 font-semibold text-gray-900">₱<?php echo number_format($item['current_price'], 2); ?></span>
+                                                </div>
+                                                <div>
+                                                    <span class="font-medium text-gray-500">Subtotal:</span>
+                                                    <span class="ml-1 font-semibold text-gray-900">₱<?php echo number_format($item['calculated_subtotal'], 2); ?></span>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <!-- Change Supplier Section -->
+                            <div class="border-t border-gray-100 pt-3 mt-3">
+                                <button onclick="toggleSupplierOptions(<?php echo $item['item_id']; ?>)"
+                                        class="w-full flex items-center justify-between p-3 bg-amber-50 hover:bg-amber-100 border border-amber-200 rounded-lg transition-all duration-200">
+                                    <span class="text-sm font-medium text-amber-800 flex items-center gap-2">
+                                        <i class="fas fa-exchange-alt"></i>
+                                        <span>Change Supplier for this Item</span>
+                                    </span>
+                                    <i id="supplierIcon-<?php echo $item['item_id']; ?>" class="fas fa-chevron-down text-amber-600 transition-transform duration-200"></i>
+                                </button>
+                                
+                                <!-- Supplier Options Dropdown -->
+                                <div id="supplierOptions-<?php echo $item['item_id']; ?>" class="dropdown-content">
+                                    <div class="border-l-2 border-r-2 border-b-2 border-amber-200 rounded-b-lg p-4 bg-gradient-to-b from-amber-50 to-white mt-0">
+                                        <?php
+                                        // Get available suppliers for this item's variant
+                                        $linkedSuppStmt = $conn->prepare("
+                                            SELECT 
+                                                slp.supplier_id,
+                                                slp.supplier_type,
+                                                slp.supplier_price,
+                                                sl.business_name,
+                                                sl.primary_contact_name,
+                                                sl.email_address
+                                            FROM supp_link_products slp
+                                            INNER JOIN supplier_list sl ON slp.supplier_id = sl.id
+                                            WHERE slp.variant_id = ? 
+                                                AND slp.status = 'active' 
+                                                AND sl.status = 'active'
+                                            ORDER BY 
+                                                CASE slp.supplier_type 
+                                                    WHEN 'primary' THEN 1 
+                                                    WHEN 'secondary' THEN 2 
+                                                    ELSE 3 
+                                                END ASC
+                                        ");
+                                        $linkedSuppStmt->bind_param("i", $item['variant_id']);
+                                        $linkedSuppStmt->execute();
+                                        $availSuppliers = $linkedSuppStmt->get_result()->fetch_all(MYSQLI_ASSOC);
+                                        $linkedSuppStmt->close();
+                                        ?>
+                                        
+                                        <?php if (!empty($availSuppliers)): ?>
+                                            <!-- Linked Suppliers Section -->
+                                            <div class="mb-4">
+                                                <div class="flex items-center gap-2 mb-3">
+                                                    <i class="fas fa-link text-primary-600"></i>
+                                                    <h6 class="text-sm font-semibold text-gray-900">Linked Suppliers</h6>
+                                                    <span class="text-xs text-gray-500">(<?php echo count($availSuppliers); ?> available)</span>
+                                                </div>
+                                                <div class="space-y-2">
+                                                    <?php foreach ($availSuppliers as $supplier): ?>
+                                                    <div class="flex items-center justify-between p-3 bg-white border border-gray-200 rounded-lg hover:border-primary-300 hover:shadow-sm transition-all duration-200">
+                                                        <div class="flex-1">
+                                                            <div class="flex items-center gap-2 mb-1">
+                                                                <span class="text-sm font-semibold text-gray-900"><?php echo htmlspecialchars($supplier['business_name']); ?></span>
+                                                                <span class="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium <?php echo $supplier['supplier_type'] === 'primary' ? 'bg-green-100 text-green-800' : 'bg-blue-100 text-blue-800'; ?>">
+                                                                    <?php echo $supplier['supplier_type'] === 'primary' ? '⭐ Primary' : 'Secondary'; ?>
+                                                                </span>
+                                                            </div>
+                                                            <div class="flex items-center gap-3 text-xs text-gray-600">
+                                                                <?php if ($supplier['supplier_price']): ?>
+                                                                <div class="flex items-center gap-1">
+                                                                    <i class="fas fa-tag text-green-600"></i>
+                                                                    <span class="font-semibold text-green-700">₱<?php echo number_format($supplier['supplier_price'], 2); ?></span>
+                                                                </div>
+                                                                <?php endif; ?>
+                                                                <?php if ($supplier['primary_contact_name']): ?>
+                                                                <div class="flex items-center gap-1">
+                                                                    <i class="fas fa-user text-gray-400"></i>
+                                                                    <span><?php echo htmlspecialchars($supplier['primary_contact_name']); ?></span>
+                                                                </div>
+                                                                <?php endif; ?>
+                                                            </div>
+                                                        </div>
+                                                        <button onclick="reassignItemSupplier(<?php echo $item['item_id']; ?>, <?php echo $supplier['supplier_id']; ?>, 'linked')"
+                                                                class="bg-primary-600 hover:bg-primary-700 text-white px-4 py-2 rounded-lg text-xs font-medium transition-colors duration-200 flex items-center gap-1 ml-3">
+                                                            <i class="fas fa-check"></i>
+                                                            <span>Assign</span>
+                                                        </button>
+                                                    </div>
+                                                    <?php endforeach; ?>
+                                                </div>
+                                            </div>
+                                        <?php else: ?>
+                                            <div class="mb-4 bg-yellow-50 border border-yellow-200 rounded-lg p-3">
+                                                <div class="flex items-center gap-2">
+                                                    <i class="fas fa-exclamation-triangle text-yellow-600"></i>
+                                                    <p class="text-xs text-yellow-700 font-medium">No linked suppliers available for this item</p>
+                                                </div>
+                                            </div>
+                                        <?php endif; ?>
+                                        
+                                        <!-- Divider -->
+                                        <div class="flex items-center gap-3 my-4">
+                                            <div class="flex-1 border-t border-gray-300"></div>
+                                            <span class="text-xs text-gray-500 font-medium">OR</span>
+                                            <div class="flex-1 border-t border-gray-300"></div>
+                                        </div>
+                                        
+                                        <!-- Manual Supplier Section -->
+                                        <div>
+                                            <div class="flex items-center gap-2 mb-3">
+                                                <i class="fas fa-pen text-gray-600"></i>
+                                                <h6 class="text-sm font-semibold text-gray-900">Manual Supplier Entry</h6>
+                                            </div>
+                                            <div class="flex gap-2">
+                                                <input type="text" 
+                                                       id="manualSupplier-<?php echo $item['item_id']; ?>"
+                                                       placeholder="Enter supplier name manually..."
+                                                       class="flex-1 px-3 py-2 text-sm border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-gray-500 focus:border-transparent">
+                                                <button onclick="reassignItemSupplierManual(<?php echo $item['item_id']; ?>)"
+                                                        class="bg-gray-600 hover:bg-gray-700 text-white px-4 py-2 rounded-lg text-sm font-medium transition-colors duration-200 flex items-center gap-2 whitespace-nowrap">
+                                                    <i class="fas fa-plus"></i>
+                                                    <span>Assign Manual</span>
+                                                </button>
+                                            </div>
+                                            <p class="text-xs text-gray-500 mt-2">
+                                                <i class="fas fa-info-circle mr-1"></i>
+                                                Use this when the supplier is not in your system
+                                            </p>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <?php endforeach; ?>
+                    </div>
+                </div>
             </div>
         </div>
+        <?php endforeach; ?>
+    </div>
+</div>
 
         <!-- P.O Details Form -->
         <div id="poDetailsForm" class="bg-white rounded-xl shadow-sm border border-gray-200 p-6 mb-6" style="display: none;">
@@ -421,488 +637,255 @@ foreach ($allItems as $item) {
         <?php endif; ?>
     </div>
 
-    <!-- Supplier Change Modal -->
-    <div id="supplierChangeModal" class="supplier-reassign-modal">
-        <div class="bg-white rounded-xl shadow-2xl max-w-4xl w-full mx-4 max-h-[90vh] overflow-y-auto">
-            <div class="sticky top-0 bg-white border-b border-gray-200 px-6 py-4 rounded-t-xl">
-                <div class="flex justify-between items-center">
-                    <h3 class="text-xl font-bold text-gray-900">
-                        <i class="fas fa-exchange-alt text-amber-500 mr-2"></i>
-                        Change Supplier Assignment
-                    </h3>
-                    <button onclick="closeSupplierChangeModal()" class="text-gray-400 hover:text-gray-600">
-                        <i class="fas fa-times text-xl"></i>
-                    </button>
-                </div>
-            </div>
-            
-            <div class="p-6">
-                <div id="modalContent">
-                    <!-- Content will be loaded here -->
-                </div>
-            </div>
-        </div>
-    </div>
-
     <script>
-        let selectedSupplier = null;
-        let supplierChangeMode = false;
-        const supplierData = <?php echo json_encode($supplierGroups); ?>;
-        const availableSuppliers = <?php echo json_encode($availableSuppliers); ?>;
+    let selectedSupplier = null;
+    const supplierData = <?php echo json_encode($supplierGroups); ?>;
 
-        function showAlert(message, type = 'info') {
-            const alertContainer = document.getElementById('alertContainer');
-            const colors = {
-                success: 'bg-green-50 border-green-200 text-green-800',
-                error: 'bg-red-50 border-red-200 text-red-800',
-                info: 'bg-blue-50 border-blue-200 text-blue-800'
-            };
-            
-            alertContainer.innerHTML = `
-                <div class="border-l-4 ${colors[type]} p-4 rounded-lg shadow-sm">
-                    <p class="font-medium">${message}</p>
-                </div>`;
-            
-            setTimeout(() => alertContainer.innerHTML = '', 5000);
-        }
-
-        function toggleSupplierChangeMode() {
-            supplierChangeMode = !supplierChangeMode;
-            const toggleBtn = document.getElementById('toggleModeBtn');
-            const modeIndicator = document.getElementById('modeIndicator');
-            const changeButtons = document.querySelectorAll('.supplier-change-btn');
-            
-            if (supplierChangeMode) {
-                toggleBtn.innerHTML = '<i class="fas fa-eye"></i><span>Normal Mode</span>';
-                toggleBtn.className = 'bg-green-500 hover:bg-green-600 text-white px-4 py-2 rounded-lg transition-colors duration-200 flex items-center space-x-2';
-                
-                modeIndicator.innerHTML = `
-                    <div class="flex items-center">
-                        <i class="fas fa-exchange-alt text-amber-600 mr-2"></i>
-                        <span class="text-sm text-amber-700 font-medium">Change Mode: Click "Change Items Supplier" on any supplier to reassign items</span>
-                    </div>`;
-                modeIndicator.className = 'mb-4 p-3 bg-amber-50 border border-amber-200 rounded-lg';
-                
-                changeButtons.forEach(btn => btn.style.display = 'block');
-            } else {
-                toggleBtn.innerHTML = '<i class="fas fa-exchange-alt"></i><span>Enable Supplier Changes</span>';
-                toggleBtn.className = 'bg-amber-500 hover:bg-amber-600 text-white px-4 py-2 rounded-lg transition-colors duration-200 flex items-center space-x-2';
-                
-                modeIndicator.innerHTML = `
-                    <div class="flex items-center">
-                        <i class="fas fa-info-circle text-gray-600 mr-2"></i>
-                        <span class="text-sm text-gray-700">Normal Mode: Select a supplier to generate P.O.</span>
-                    </div>`;
-                modeIndicator.className = 'mb-4 p-3 bg-gray-50 border border-gray-200 rounded-lg';
-                
-                changeButtons.forEach(btn => btn.style.display = 'none');
-            }
-        }
-
-        function selectSupplier(supplierKey) {
-            if (supplierChangeMode) return; // Disable normal selection in change mode
-            
-            console.log('Selecting supplier:', supplierKey);
-            
-            // Update radio button
-            document.querySelector(`input[value="${supplierKey}"]`).checked = true;
-            
-            // Remove previous selection styling
-            document.querySelectorAll('.supplier-card').forEach(card => {
-                card.classList.remove('ring-2', 'ring-primary-500', 'bg-primary-50');
-            });
-            
-            // Add selection styling
-            document.querySelector(`[data-supplier="${supplierKey}"]`).classList.add('ring-2', 'ring-primary-500', 'bg-primary-50');
-            
-            selectedSupplier = supplierKey;
-            
-            // Show P.O details form
-            document.getElementById('poDetailsForm').style.display = 'block';
-            document.getElementById('itemsPreview').style.display = 'block';
-            
-            // Update preview
-            updateItemsPreview(supplierKey);
-        }
-
-        function resetPONumber(supplierKey) {
-    if (!confirm('Are you sure you want to reset the P.O. number for this supplier? This will allow you to generate a new P.O.')) {
-        return;
+    function showAlert(message, type = 'info') {
+        const alertContainer = document.getElementById('alertContainer');
+        const colors = {
+            success: 'bg-green-50 border-green-200 text-green-800',
+            error: 'bg-red-50 border-red-200 text-red-800',
+            info: 'bg-blue-50 border-blue-200 text-blue-800'
+        };
+        
+        alertContainer.innerHTML = `
+            <div class="border-l-4 ${colors[type]} p-4 rounded-lg shadow-sm">
+                <p class="font-medium">${message}</p>
+            </div>`;
+        
+        setTimeout(() => alertContainer.innerHTML = '', 5000);
     }
-    
-    const supplier = supplierData[supplierKey];
-    if (!supplier) return;
-    
-    // Get all item IDs for this supplier
-    const itemIds = supplier.items.map(item => item.item_id);
-    
-    // Send request to reset P.O. number
-    fetch('warehouse_staff_reset_po_number_A-B2.php', {
-        method: 'POST',
-        headers: {
-            'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-            item_ids: itemIds
-        })
-    })
-    .then(response => response.json())
-    .then(data => {
-        if (data.success) {
-            showAlert('P.O. number reset successfully!', 'success');
-            setTimeout(() => location.reload(), 1500);
-        } else {
-            showAlert('Failed to reset P.O. number: ' + (data.error || 'Unknown error'), 'error');
-        }
-    })
-    .catch(error => {
-        console.error('Error:', error);
-        showAlert('Failed to reset P.O. number', 'error');
-    });
-}
 
-        function openSupplierChangeModal(supplierKey) {
-            const supplier = supplierData[supplierKey];
-            if (!supplier) return;
-            
-            const modal = document.getElementById('supplierChangeModal');
-            const modalContent = document.getElementById('modalContent');
-            
-            // Get current supplier ID to exclude from dropdown
-            let currentSupplierId = null;
-            if (!supplier.supplier_info.is_manual && supplier.items.length > 0) {
-                currentSupplierId = supplier.items[0].supplier_id;
-            }
-            
-            let html = `
-                <div class="mb-6">
-                    <h4 class="text-lg font-semibold text-gray-900 mb-2">
-                        Current Supplier: ${supplier.supplier_info.name}
-                    </h4>
-                    <p class="text-sm text-gray-600">Select items to reassign to a different supplier:</p>
-                </div>
-                
-                <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
-                    <!-- Items List -->
-                    <div class="bg-gray-50 rounded-lg p-4">
-                        <h5 class="font-medium text-gray-900 mb-4">Items to Reassign:</h5>
-                        <div class="space-y-3 max-h-96 overflow-y-auto">
-            `;
-            
-            supplier.items.forEach((item, index) => {
-    html += `
-        <div class="bg-white p-3 rounded border">
-            <label class="flex items-start space-x-3 cursor-pointer">
-                <input type="checkbox" value="${item.item_id}" name="itemsToReassign" class="mt-1 text-amber-600">
-                <div class="flex-1">
-                    <div class="font-medium text-sm text-gray-900">${item.product_name}</div>
-                    ${item.namevariant ? `<div class="text-xs text-gray-500 italic">${item.namevariant}</div>` : ''}
-                    <div class="text-xs text-gray-600">
-                        Variant ID: ${item.variant_id} | ${item.codename} | ${item.variant_size_db || item.size} | ${item.variant_color_db || item.variant_color} | Qty: ${item.quantity}
-                    </div>
-                    <div class="text-xs text-gray-600">₱${parseFloat(item.current_price || item.price).toLocaleString()}</div>
-                </div>
-            </label>
-        </div>
-    `;
-});
-            
-            html += `
-                        </div>
-                        <div class="mt-4 pt-3 border-t">
-                            <label class="flex items-center space-x-2 cursor-pointer">
-                                <input type="checkbox" id="selectAllItems" onchange="toggleSelectAll()" class="text-amber-600">
-                                <span class="text-sm font-medium text-gray-700">Select All Items</span>
-                            </label>
-                        </div>
-                    </div>
-                    
-                    <!-- New Supplier Selection -->
-                    <div>
-                        <h5 class="font-medium text-gray-900 mb-4">Assign to New Supplier:</h5>
-                        
-                        <!-- Linked Supplier Option -->
-                        <div class="mb-6">
-                            <label class="block text-sm font-medium text-gray-700 mb-2">Choose Linked Supplier:</label>
-                            <select id="newLinkedSupplier" class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-amber-500 focus:border-amber-500">
-                                <option value="">Select a supplier...</option>
-            `;
-            
-            // Filter out the current supplier from available options
-            availableSuppliers.forEach(supplierOption => {
-                if (currentSupplierId === null || supplierOption.id != currentSupplierId) {
-                    html += `<option value="${supplierOption.id}">${supplierOption.business_name}</option>`;
-                }
-            });
-            
-            html += `
-                            </select>
-                        </div>
-                        
-                        <div class="text-center text-gray-400 text-sm mb-4">OR</div>
-                        
-                        <!-- Manual Supplier Option -->
-                        <div class="mb-6">
-                            <label class="block text-sm font-medium text-gray-700 mb-2">Enter Manual Supplier:</label>
-                            <input type="text" id="newManualSupplier" placeholder="Enter supplier name manually..." 
-                                   class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-amber-500 focus:border-amber-500">
-                        </div>
-                        
-                        <!-- Action Buttons -->
-                        <div class="flex space-x-3">
-                            <button onclick="processSupplierReassignment()" 
-                                    class="flex-1 bg-amber-500 hover:bg-amber-600 text-white px-4 py-2 rounded-lg transition-colors duration-200">
-                                <i class="fas fa-exchange-alt mr-2"></i>Reassign Items
-                            </button>
-                            <button onclick="closeSupplierChangeModal()" 
-                                    class="flex-1 bg-gray-300 hover:bg-gray-400 text-gray-700 px-4 py-2 rounded-lg transition-colors duration-200">
-                                Cancel
-                            </button>
-                        </div>
-                    </div>
-                </div>
-            `;
-            
-            modalContent.innerHTML = html;
-            modal.classList.add('active');
-        }
-
-        function closeSupplierChangeModal() {
-            document.getElementById('supplierChangeModal').classList.remove('active');
-        }
-
-        function toggleSelectAll() {
-            const selectAllCheckbox = document.getElementById('selectAllItems');
-            const             itemCheckboxes = document.querySelectorAll('input[name="itemsToReassign"]');
-            
-            itemCheckboxes.forEach(checkbox => {
-                checkbox.checked = selectAllCheckbox.checked;
-            });
-        }
-
-        function processSupplierReassignment() {
-            const selectedItems = Array.from(document.querySelectorAll('input[name="itemsToReassign"]:checked'))
-                .map(checkbox => parseInt(checkbox.value));
-            
-            if (selectedItems.length === 0) {
-                showAlert('Please select at least one item to reassign', 'error');
-                return;
-            }
-            
-            const linkedSupplierId = document.getElementById('newLinkedSupplier').value;
-            const manualSupplierName = document.getElementById('newManualSupplier').value.trim();
-            
-            if (!linkedSupplierId && !manualSupplierName) {
-                showAlert('Please select a linked supplier or enter a manual supplier name', 'error');
-                return;
-            }
-            
-            if (linkedSupplierId && manualSupplierName) {
-                showAlert('Please choose either a linked supplier OR a manual supplier, not both', 'error');
-                return;
-            }
-            
-            if (!confirm(`Are you sure you want to reassign ${selectedItems.length} item(s) to ${linkedSupplierId ? 'the selected supplier' : manualSupplierName}?`)) {
-                return;
-            }
-            
-            // Process each item
-            let completedRequests = 0;
-            let successCount = 0;
-            let errorCount = 0;
-            
-            selectedItems.forEach(itemId => {
-                const requestData = {
-                    item_id: itemId,
-                    type: linkedSupplierId ? 'linked' : 'manual'
-                };
-                
-                if (linkedSupplierId) {
-                    requestData.supplier_id = parseInt(linkedSupplierId);
-                } else {
-                    requestData.manual_supplier_name = manualSupplierName;
-                }
-                
-                fetch('warehouse_staff_assign_supplier_A1&B1.php', {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json',
-                    },
-                    body: JSON.stringify(requestData)
-                })
-                .then(response => response.json())
-                .then(data => {
-                    completedRequests++;
-                    if (data.success) {
-                        successCount++;
-                    } else {
-                        errorCount++;
-                        console.error('Failed to reassign item:', itemId, data.error);
-                    }
-                    
-                    // Check if all requests completed
-                    if (completedRequests === selectedItems.length) {
-                        if (successCount > 0) {
-                            showAlert(`Successfully reassigned ${successCount} item(s)${errorCount > 0 ? ` (${errorCount} failed)` : ''}`, successCount > errorCount ? 'success' : 'error');
-                            closeSupplierChangeModal();
-                            setTimeout(() => location.reload(), 1500);
-                        } else {
-                            showAlert('Failed to reassign any items', 'error');
-                        }
-                    }
-                })
-                .catch(error => {
-                    completedRequests++;
-                    errorCount++;
-                    console.error('Request failed for item:', itemId, error);
-                    
-                    if (completedRequests === selectedItems.length) {
-                        showAlert(`Failed to reassign items: ${error.message}`, 'error');
-                    }
-                });
-            });
-        }
-
-        function updateItemsPreview(supplierKey) {
-    const supplier = supplierData[supplierKey];
-    console.log('Updating preview for supplier:', supplierKey, supplier);
-    
-    // DEBUG: Check first item's pricing data
-    if (supplier.items.length > 0) {
-        console.log('First item pricing:', {
-            current_price: supplier.items[0].current_price,
-            calculated_subtotal: supplier.items[0].calculated_subtotal,
-            supplier_price: supplier.items[0].supplier_price,
-            order_price: supplier.items[0].order_price,
-            price: supplier.items[0].price
-        });
+    function toggleItemsList(supplierKey) {
+        const dropdown = document.getElementById(`itemsList-${supplierKey}`);
+        const icon = document.getElementById(`itemsIcon-${supplierKey}`);
+        
+        dropdown.classList.toggle('open');
+        icon.classList.toggle('rotate-180');
     }
-    
-    const previewContent = document.getElementById('previewContent');
-    
-    let html = `
-        <div class="mb-4 p-4 bg-gray-50 rounded-lg">
-            <h3 class="font-semibold text-gray-900">${supplier.supplier_info.name}</h3>
-            <p class="text-sm text-gray-600">${supplier.items.length} item(s) will be included in this P.O.</p>
-        </div>
-        <div class="overflow-x-auto">
-            <table class="min-w-full divide-y divide-gray-200">
-                <thead class="bg-gray-50">
-                    <tr>
-                        <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Product</th>
-                        <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Specification</th>
-                        <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Unit</th>
-                        <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Qty</th>
-                        <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Unit Price</th>
-                        <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Total</th>
-                    </tr>
-                </thead>
-                <tbody class="bg-white divide-y divide-gray-200">
-    `;
-    
-    supplier.items.forEach(item => {
-    // Match po_management.php exactly: use current_price and calculated_subtotal
-    const unitPrice = parseFloat(item.current_price || item.price || 0);
-    const totalPrice = parseFloat(item.calculated_subtotal || item.subtotal || 0);
-    
-    html += `
-        <tr>
-            <td class="px-4 py-4">
-                <div class="font-medium text-gray-900">${item.product_name}</div>
-                ${item.namevariant ? `<div class="text-sm text-gray-500 italic">${item.namevariant}</div>` : ''}
-                <div class="text-sm text-gray-500">${item.codename}</div>
-            </td>
-            <td class="px-4 py-4 text-sm text-gray-900">
-                <div>Variant ID: ${item.variant_id}</div>
-                <div>${item.variant_size_db || item.size} | ${item.variant_color_db || item.variant_color}</div>
-            </td>
-            <td class="px-4 py-4 text-sm text-gray-900">${item.descrip6 || 'pcs'}</td>
-            <td class="px-4 py-4 text-sm text-gray-900">${item.quantity}</td>
-            <td class="px-4 py-4 text-sm text-gray-900">₱${unitPrice.toLocaleString('en-US', {minimumFractionDigits: 2, maximumFractionDigits: 2})}</td>
-            <td class="px-4 py-4 text-sm text-gray-900">₱${totalPrice.toLocaleString('en-US', {minimumFractionDigits: 2, maximumFractionDigits: 2})}</td>
-        </tr>
-    `;
-});
-    
-    html += `</tbody></table></div>`;
-    previewContent.innerHTML = html;
-}
 
-        function generatePO() {
-    if (!selectedSupplier) {
-        showAlert('Please select a supplier first', 'error');
-        return;
+    function toggleSupplierOptions(itemId) {
+        const dropdown = document.getElementById(`supplierOptions-${itemId}`);
+        const icon = document.getElementById(`supplierIcon-${itemId}`);
+        
+        dropdown.classList.toggle('open');
+        icon.classList.toggle('rotate-180');
     }
-    
-    // Check if supplier already has P.O.
-    const supplierCard = document.querySelector(`[data-supplier="${selectedSupplier}"]`);
-    const hasPO = supplierCard.dataset.hasPo === 'true';
-    const existingPO = supplierCard.dataset.poNumber;
-    
-    if (hasPO && existingPO) {
-        if (!confirm(`This supplier already has a P.O. number: ${existingPO}\n\nGenerating a new P.O. will overwrite the existing one. Continue?`)) {
+
+    function selectSupplier(supplierKey) {
+        console.log('Selecting supplier:', supplierKey);
+        selectedSupplier = supplierKey;
+        
+        // Show P.O details form
+        document.getElementById('poDetailsForm').style.display = 'block';
+        document.getElementById('itemsPreview').style.display = 'block';
+        
+        // Update preview
+        updateItemsPreview(supplierKey);
+        
+        // Scroll to form
+        document.getElementById('poDetailsForm').scrollIntoView({ behavior: 'smooth', block: 'start' });
+    }
+
+    function reassignItemSupplier(itemId, supplierId, type) {
+        if (!confirm('Are you sure you want to reassign this item to the selected supplier?')) {
             return;
         }
+        
+        fetch('warehouse_staff_assign_supplier_A1&B1.php', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({
+                item_id: itemId,
+                supplier_id: supplierId,
+                type: type
+            })
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                showAlert('Supplier reassigned successfully! Page will reload...', 'success');
+                setTimeout(() => location.reload(), 1500);
+            } else {
+                showAlert(data.error || 'Failed to reassign supplier', 'error');
+            }
+        })
+        .catch(error => {
+            showAlert('An error occurred: ' + error.message, 'error');
+        });
     }
 
-    const paymentTerms = document.getElementById('paymentTerms').value;
-    const deliveryDetails = document.getElementById('deliveryDetails').value;
-    const conditions = document.getElementById('conditions').value;
-    const additionalNotes = document.getElementById('additionalNotes').value;
-
-    // Debug: Log the selected supplier
-    console.log('Selected supplier key:', selectedSupplier);
-    console.log('Supplier data:', supplierData[selectedSupplier]);
-
-    // Create form and submit to Excel P.O. generator
-    const form = document.createElement('form');
-    form.method = 'POST';
-    form.action = 'warehouse_staff_generate_po_excel_A-B1.php';
-    form.target = '_blank';
-
-    const fields = [
-        ['order_id', <?php echo $order['id']; ?>],
-        ['supplier_key', selectedSupplier],
-        ['payment_terms', paymentTerms],
-        ['delivery_details', deliveryDetails],
-        ['conditions', conditions],
-        ['additional_notes', additionalNotes],
-        ['prepared_by', '<?php echo htmlspecialchars($prepared_by); ?>']
-    ];
-
-    fields.forEach(([name, value]) => {
-        const input = document.createElement('input');
-        input.type = 'hidden';
-        input.name = name;
-        input.value = value;
-        form.appendChild(input);
-    });
-
-    document.body.appendChild(form);
-    form.submit();
-    document.body.removeChild(form);
-
-    showAlert('Generating Purchase Order Excel file... Page will reload shortly.', 'success');
-    
-    // Reload the page after 2 seconds to show the updated P.O. status
-    setTimeout(() => {
-        location.reload();
-    }, 2000);
-}
-
-        // Close modal when clicking outside
-        document.getElementById('supplierChangeModal').addEventListener('click', function(e) {
-            if (e.target === this) {
-                closeSupplierChangeModal();
+    function reassignItemSupplierManual(itemId) {
+        const input = document.getElementById(`manualSupplier-${itemId}`);
+        const supplierName = input.value.trim();
+        
+        if (!supplierName) {
+            showAlert('Please enter a supplier name', 'error');
+            return;
+        }
+        
+        if (!confirm('Are you sure you want to assign this manual supplier?')) {
+            return;
+        }
+        
+        fetch('warehouse_staff_assign_supplier_A1&B1.php', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({
+                item_id: itemId,
+                supplier_id: 0,
+                manual_supplier_name: supplierName,
+                type: 'manual'
+            })
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                showAlert('Manual supplier assigned successfully! Page will reload...', 'success');
+                setTimeout(() => location.reload(), 1500);
+            } else {
+                showAlert(data.error || 'Failed to assign manual supplier', 'error');
             }
+        })
+        .catch(error => {
+            showAlert('An error occurred: ' + error.message, 'error');
+        });
+    }
+
+    function resetPONumber(supplierKey) {
+        if (!confirm('Are you sure you want to reset the P.O. number for this supplier? This will allow you to generate a new P.O.')) {
+            return;
+        }
+        
+        const supplier = supplierData[supplierKey];
+        if (!supplier) return;
+        
+        const itemIds = supplier.items.map(item => item.item_id);
+        
+        fetch('warehouse_staff_reset_po_number_A-B2.php', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({
+                item_ids: itemIds
+            })
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                showAlert('P.O. number reset successfully!', 'success');
+                setTimeout(() => location.reload(), 1500);
+            } else {
+                showAlert('Failed to reset P.O. number: ' + (data.error || 'Unknown error'), 'error');
+            }
+        })
+        .catch(error => {
+            console.error('Error:', error);
+            showAlert('Failed to reset P.O. number', 'error');
+        });
+    }
+
+    function updateItemsPreview(supplierKey) {
+        const supplier = supplierData[supplierKey];
+        const previewContent = document.getElementById('previewContent');
+        
+        let html = `
+            <div class="mb-4 p-4 bg-gray-50 rounded-lg">
+                <h3 class="font-semibold text-gray-900">${supplier.supplier_info.name}</h3>
+                <p class="text-sm text-gray-600">${supplier.items.length} item(s) will be included in this P.O.</p>
+            </div>
+            <div class="overflow-x-auto">
+                <table class="min-w-full divide-y divide-gray-200">
+                    <thead class="bg-gray-50">
+                        <tr>
+                            <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Product</th>
+                            <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Specification</th>
+                            <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Unit</th>
+                            <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Qty</th>
+                            <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Unit Price</th>
+                            <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Total</th>
+                        </tr>
+                    </thead>
+                    <tbody class="bg-white divide-y divide-gray-200">
+        `;
+        
+        supplier.items.forEach(item => {
+            const unitPrice = parseFloat(item.current_price || item.price || 0);
+            const totalPrice = parseFloat(item.calculated_subtotal || item.subtotal || 0);
+            
+            html += `
+                <tr>
+                    <td class="px-4 py-4">
+                        <div class="font-medium text-gray-900">${item.product_name}</div>
+                        ${item.namevariant ? `<div class="text-sm text-gray-500 italic">${item.namevariant}</div>` : ''}
+                        <div class="text-sm text-gray-500">${item.codename}</div>
+                    </td>
+                    <td class="px-4 py-4 text-sm text-gray-900">
+                        <div>Variant ID: ${item.variant_id}</div>
+                        <div>${item.variant_size_db || item.size} | ${item.variant_color_db || item.variant_color}</div>
+                    </td>
+                    <td class="px-4 py-4 text-sm text-gray-900">${item.descrip6 || 'pcs'}</td>
+                    <td class="px-4 py-4 text-sm text-gray-900">${item.quantity}</td>
+                    <td class="px-4 py-4 text-sm text-gray-900">₱${unitPrice.toLocaleString('en-US', {minimumFractionDigits: 2, maximumFractionDigits: 2})}</td>
+                    <td class="px-4 py-4 text-sm text-gray-900">₱${totalPrice.toLocaleString('en-US', {minimumFractionDigits: 2, maximumFractionDigits: 2})}</td>
+                </tr>
+            `;
+        });
+        
+        html += `</tbody></table></div>`;
+        previewContent.innerHTML = html;
+    }
+
+    function generatePO() {
+        if (!selectedSupplier) {
+            showAlert('Please select a supplier first', 'error');
+            return;
+        }
+        
+        const paymentTerms = document.getElementById('paymentTerms').value;
+        const deliveryDetails = document.getElementById('deliveryDetails').value;
+        const conditions = document.getElementById('conditions').value;
+        const additionalNotes = document.getElementById('additionalNotes').value;
+
+        const form = document.createElement('form');
+        form.method = 'POST';
+        form.action = 'warehouse_staff_generate_po_excel_A-B1.php';
+        form.target = '_blank';
+
+        const fields = [
+            ['order_id', <?php echo $order['id']; ?>],
+            ['supplier_key', selectedSupplier],
+            ['payment_terms', paymentTerms],
+            ['delivery_details', deliveryDetails],
+            ['conditions', conditions],
+            ['additional_notes', additionalNotes],
+            ['prepared_by', '<?php echo htmlspecialchars($prepared_by); ?>']
+        ];
+
+        fields.forEach(([name, value]) => {
+            const input = document.createElement('input');
+            input.type = 'hidden';
+            input.name = name;
+            input.value = value;
+            form.appendChild(input);
         });
 
-        // Handle escape key
-        document.addEventListener('keydown', function(e) {
-            if (e.key === 'Escape') {
-                closeSupplierChangeModal();
-            }
-        });
-    </script>
+        document.body.appendChild(form);
+        form.submit();
+        document.body.removeChild(form);
+
+        showAlert('Generating Purchase Order Excel file... Page will reload shortly.', 'success');
+        
+        setTimeout(() => {
+            location.reload();
+        }, 2000);
+    }
+</script>
 </body>
 </html>

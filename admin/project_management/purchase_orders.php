@@ -482,15 +482,20 @@ foreach ($purchase_orders as $po) {
     <?php echo htmlspecialchars($po['created_by'] ?? 'Unknown'); ?>
 </td>
 <td class="px-4 py-3 text-center">
-    <?php if ($po['status'] === 'rejected' || $po['accounting_status'] === 'rejected'): ?>
-        <a href="edit_purchase_order.php?po_id=<?php echo $po['id']; ?>" 
-           class="inline-flex items-center px-3 py-1 bg-orange-100 text-orange-700 rounded-lg hover:bg-orange-200 transition-colors text-xs font-bold">
-            <i class="fas fa-edit mr-1"></i>
-            Edit & Resubmit
+    <div class="flex gap-2 justify-center">
+        <a href="view_purchase_order.php?po_id=<?php echo $po['id']; ?>" 
+           class="inline-flex items-center px-3 py-1 bg-blue-100 text-blue-700 rounded-lg hover:bg-blue-200 transition-colors text-xs font-bold">
+            <i class="fas fa-eye mr-1"></i>
+            View
         </a>
-    <?php else: ?>
-        <span class="text-gray-400 text-xs">-</span>
-    <?php endif; ?>
+        <?php if ($po['status'] === 'rejected' || $po['accounting_status'] === 'rejected' || ($po['document_controller_status'] ?? '') === 'rejected'): ?>
+            <a href="edit_purchase_order.php?po_id=<?php echo $po['id']; ?>" 
+               class="inline-flex items-center px-3 py-1 bg-orange-100 text-orange-700 rounded-lg hover:bg-orange-200 transition-colors text-xs font-bold">
+                <i class="fas fa-edit mr-1"></i>
+                Edit
+            </a>
+        <?php endif; ?>
+    </div>
 </td>
                                     </tr>
                                 <?php endforeach; ?>

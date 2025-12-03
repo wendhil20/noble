@@ -15,7 +15,7 @@ if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
 $account_id = isset($_POST['account_id']) ? intval($_POST['account_id']) : 0;
 $action = isset($_POST['action']) ? $_POST['action'] : '';
 
-if (!$account_id || !in_array($action, ['set_head','remove_head','update_subrole','update_commission'])) {
+if (!$account_id || !in_array($action, ['set_head','remove_head','update_subrole','update_commission','upload_signature'])) {
     echo json_encode(['success' => false, 'message' => 'Invalid parameters.']);
     exit;
 }
@@ -38,14 +38,6 @@ if (!$stmt->fetch()) {
     exit;
 }
 $stmt->close();
-
-$lvl = strtolower($lvl);
-
-// Prevent superadmin assignment
-if ($lvl === 'superadmin') {
-    echo json_encode(['success' => false, 'message' => 'Cannot assign/remove head for superadmin.']);
-    exit;
-}
 
 if ($action === 'set_head') {
     // Clear existing head(s) for this department
@@ -122,6 +114,54 @@ if ($action === 'update_commission') {
         echo json_encode(['success' => true, 'message' => 'Commission updated successfully.']);
     } else {
         echo json_encode(['success' => false, 'message' => 'Failed to update commission.']);
+    }
+    exit;
+}
+
+if ($action === 'upload_signature') {
+    if (!isset($_FILES['signature']) || $_FILES['signature']['error'] !== UPLOAD_ERR_OK) {
+        echo json_encode(['success' => false, 'message' => 'No file uploaded or upload error.']);
+        exit;
+    }
+    
+    $file = $_FILES['signature'];
+    
+    // Validate file size (2MB max)
+    if ($file['size'] > 2 * 1024 * 1024) {
+        echo json_encode(['success' => false, 'message' => 'File size must be less than 2MB.']);
+        exit;
+    }
+    
+    // Validate file type
+    $allowed_types = ['image/png', 'image/jpeg', 'image/jpg', 'image/gif'];
+    $finfo = finfo_open(FILEINFO_MIME_TYPE);
+    $mime_type = finfo_file($finfo, $file['tmp_name']);
+    finfo_close($finfo);
+    
+    if (!in_array($mime_type, $allowed_types)) {
+        echo json_encode(['success' => false, 'message' => 'Invalid file type. Only PNG, JPG, and GIF allowed.']);
+        exit;
+    }
+    
+    // Read file as binary
+    $signature_data = file_get_contents($file['tmp_name']);
+    
+    if ($signature_data === false) {
+        echo json_encode(['success' => false, 'message' => 'Failed to read file.']);
+        exit;
+    }
+    
+    // Save to database as BLOB
+    $stmt = $conn->prepare("UPDATE nobleaccount SET e_signature = ? WHERE id = ?");
+    $stmt->bind_param("bi", $signature_data, $account_id);
+    $stmt->send_long_data(0, $signature_data);
+    $ok = $stmt->execute();
+    $stmt->close();
+    
+    if ($ok) {
+        echo json_encode(['success' => true, 'message' => 'Signature uploaded successfully.']);
+    } else {
+        echo json_encode(['success' => false, 'message' => 'Failed to save signature.']);
     }
     exit;
 }

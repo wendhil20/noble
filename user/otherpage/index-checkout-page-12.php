@@ -45,6 +45,10 @@ if ($user_id) {
         $user_data = $result->fetch_assoc();
         $userEmail = $user_data['email'];
         $userMobile = $user_data['mobile'];
+// Remove leading 0 if present (for display purposes)
+if (!empty($userMobile) && substr($userMobile, 0, 1) === '0') {
+    $userMobile = substr($userMobile, 1);
+}
     }
     $stmt->close();
 }
@@ -179,12 +183,17 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
                 <div>
                     <label class="block font-medium mb-2 text-gray-700">Mobile Number *</label>
-                    <input type="tel" name="mobile" required pattern="09[0-9]{9}"
-                        class="w-full border border-gray-300 px-4 py-3 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-orange-500"
-                        value="<?= htmlspecialchars($userMobile ?? '') ?>"
-                        placeholder="09171234567"
-                        maxlength="11" />
-                    <p class="text-xs text-gray-500 mt-1">Format: 09XXXXXXXXX (11 digits)</p>
+                    <div class="flex">
+    <span class="inline-flex items-center px-3 text-gray-700 bg-gray-200 border border-r-0 border-gray-300 rounded-l-lg">
+        +63
+    </span>
+    <input type="tel" name="mobile" required pattern="9[0-9]{9}"
+        class="flex-1 border border-gray-300 px-4 py-3 rounded-r-lg focus:ring-2 focus:ring-orange-500 focus:border-orange-500"
+        value="<?= htmlspecialchars($userMobile ?? '') ?>"
+        placeholder="9171234567"
+        maxlength="10" />
+</div>
+<p class="text-xs text-gray-500 mt-1">Format: 9XXXXXXXXX (10 digits, without the leading 0)</p>
                 </div>
             </div>
 
@@ -221,11 +230,18 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
     <script>
         // Mobile number validation
-        document.querySelector('input[name="mobile"]').addEventListener('input', function(e) {
-            let value = e.target.value.replace(/\D/g, '');
-            if (value.length > 11) value = value.slice(0, 11);
-            e.target.value = value;
-        });
+document.querySelector('input[name="mobile"]').addEventListener('input', function(e) {
+    let value = e.target.value.replace(/\D/g, '');
+    if (value.length > 10) value = value.slice(0, 10);
+    e.target.value = value;
+    
+    // Ensure it starts with 9
+    if (value.length > 0 && value[0] !== '9') {
+        e.target.setCustomValidity('Mobile number must start with 9 (after +63)');
+    } else {
+        e.target.setCustomValidity('');
+    }
+});
     </script>
 </body>
 

@@ -75,7 +75,7 @@
                       <div class="absolute -bottom-2 left-0 w-12 h-1 bg-gradient-to-r from-orange-500 to-transparent rounded-full"></div>
                   </h3>
                   <ul class="space-y-3 text-gray-300">
-                      <li class="hover:text-orange-300 transition-colors cursor-pointer">Appointment</li>
+                      <li class="hover:text-orange-300 transition-colors cursor-pointer"></li>
                       <li class="hover:text-orange-300 transition-colors cursor-pointer"></li>
                       <li class="hover:text-orange-300 transition-colors cursor-pointer"></li>
                       <li class="hover:text-orange-300 transition-colors cursor-pointer"></li>

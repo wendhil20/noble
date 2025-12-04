@@ -143,7 +143,7 @@ function getLatestOrderStatus($conn, $order_id)
     <title>User Profile</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
-   <link rel="preconnect" href="https://fonts.googleapis.com/css2?family=Great+Vibes&family=Merriweather:wght@300;400;700&family=Montserrat:wght@300;400;600;700&family=Playfair+Display:wght@400;700;900&family=Poppins:wght@300;400;600;700&family=Roboto:wght@300;400;500;700&family=Inter:wght@300;400;500;600;700&family=Lato:wght@300;400;700&family=Open+Sans:wght@300;400;600;700&family=Source+Sans+Pro:wght@300;400;600;700&family=Raleway:wght@300;400;500;600;700&family=Nunito:wght@300;400;600;700&family=Dancing+Script:wght@400;700&family=Pacifico&family=Lobster&family=Quicksand:wght@300;400;500;600;700&family=Work+Sans:wght@300;400;500;600;700&family=Libre+Baskerville:wght@400;700&family=Crimson+Text:wght@400;600;700&family=EB+Garamond:wght@400;500;600;700&family=Lora:wght@400;500;600;700&family=Oswald:wght@300;400;500;600;700&family=Bebas+Neue&family=Anton&family=Rubik:wght@300;400;500;600;700&family=Fira+Sans:wght@300;400;500;600;700&family=Ubuntu:wght@300;400;500;700&family=Barlow:wght@300;400;500;600;700&family=Manrope:wght@300;400;500;600;700&family=DM+Sans:wght@400;500;700&family=Space+Grotesk:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="preconnect" href="https://fonts.googleapis.com/css2?family=Great+Vibes&family=Merriweather:wght@300;400;700&family=Montserrat:wght@300;400;600;700&family=Playfair+Display:wght@400;700;900&family=Poppins:wght@300;400;600;700&family=Roboto:wght@300;400;500;700&family=Inter:wght@300;400;500;600;700&family=Lato:wght@300;400;700&family=Open+Sans:wght@300;400;600;700&family=Source+Sans+Pro:wght@300;400;600;700&family=Raleway:wght@300;400;500;600;700&family=Nunito:wght@300;400;600;700&family=Dancing+Script:wght@400;700&family=Pacifico&family=Lobster&family=Quicksand:wght@300;400;500;600;700&family=Work+Sans:wght@300;400;500;600;700&family=Libre+Baskerville:wght@400;700&family=Crimson+Text:wght@400;600;700&family=EB+Garamond:wght@400;500;600;700&family=Lora:wght@400;500;600;700&family=Oswald:wght@300;400;500;600;700&family=Bebas+Neue&family=Anton&family=Rubik:wght@300;400;500;600;700&family=Fira+Sans:wght@300;400;500;600;700&family=Ubuntu:wght@300;400;500;700&family=Barlow:wght@300;400;500;600;700&family=Manrope:wght@300;400;500;600;700&family=DM+Sans:wght@400;500;700&family=Space+Grotesk:wght@300;400;500;600;700&display=swap" rel="stylesheet">
 
     <script>
         tailwind.config = {
@@ -194,7 +194,7 @@ function getLatestOrderStatus($conn, $order_id)
             }
         }
 
-        body{
+        body {
             background: #f8fafc;
         }
 
@@ -247,174 +247,281 @@ function getLatestOrderStatus($conn, $order_id)
     <div class="bg-black text-white shadow-lg">
         <div class="container mx-auto px-6 py-12">
             <div class="text-center">
-                <h1 class="text-4xl  tracking-tight mb-4"> Order History</h1>
+                <h1 class="text-4xl  tracking-tight mb-4"> Recent Order</h1>
             </div>
+
         </div>
     </div>
 
     <div class="container mx-auto px-6 py-8 max-w-full">
         <!-- Professional Profile Section -->
-    
+
         <!-- Main Content Grid -->
         <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
-            <!-- Orders History - LEFT (2 columns) -->
-            <div class="lg:col-span-2">
-                <div class="professional-card rounded-xl p-6 animate-fade-in">
-                    <div class="flex items-center justify-between mb-6">
-                        <div class="flex items-center gap-3">
-                            <div class="w-10 h-10 bg-blue-100 rounded-lg flex items-center justify-center">
-                                <i class="fas fa-clipboard-list text-blue-600"></i>
-                            </div>
-                            <div>
-                                <h3 class="text-xl  text-gray-900 ">Recent Orders</h3>
-                                <p class="text-sm text-gray-500">Order history and tracking information</p>
-                            </div>
-                        </div>
-                        <?php if (!empty($all_orders)): ?>
-                            <span class="px-3 py-1 bg-gray-100 text-gray-600 text-sm rounded-full">
-                                <?php echo count($all_orders); ?> orders
-                            </span>
-                        <?php endif; ?>
-                    </div>
-
-                    <!-- Search and Filters -->
-                    <?php if (!empty($all_orders)): ?>
-                        <div class="mb-6 space-y-4">
-                            <input type="text" id="orderSearch"
-                                placeholder="Search by order ID, date, or status..."
-                                class="w-full border border-gray-300 rounded-lg px-4 py-3 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent text-sm"
-                                oninput="filterOrders()">
-
-                            <div class="flex flex-wrap gap-2">
-                                <button onclick="filterByPaymentStatus('all')"
-                                    class="px-4 py-2 text-sm rounded-lg bg-gray-100 hover:bg-gray-200 transition-colors payment-filter active ">
-                                    All Orders
-                                </button>
-                                <button onclick="filterByPaymentStatus('pending')"
-                                    class="px-4 py-2 text-sm rounded-lg bg-yellow-50 text-yellow-700 hover:bg-yellow-100 transition-colors payment-filter">
-                                    Pending Payment
-                                </button>
-                                <button onclick="filterByPaymentStatus('verified')"
-                                    class="px-4 py-2 text-sm rounded-lg bg-green-50 text-green-700 hover:bg-green-100 transition-colors payment-filter">
-                                    Verified
-                                </button>
-                                <button onclick="filterByPaymentStatus('rejected')"
-                                    class="px-4 py-2 text-sm rounded-lg bg-red-50 text-red-700 hover:bg-red-100 transition-colors payment-filter ">
-                                    Rejected
-                                </button>
-                            </div>
-                        </div>
-                    <?php endif; ?>
-
-                    <?php if (empty($all_orders)): ?>
-                        <!-- NO ORDERS UI -->
-                        <div class="text-center py-12">
-                            <div class="w-20 h-20 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-4">
-                                <i class="fas fa-shopping-bag text-2xl text-gray-400"></i>
-                            </div>
-                            <h4 class="text-lg  text-gray-900 mb-2">No Orders Found</h4>
-                            <p class="text-gray-600 mb-6">You haven't placed any orders yet. Start exploring our products!</p>
-                            <a href="index-page-1-A-B-C-D-E.php" class="inline-flex items-center gap-2 bg-primary text-white px-6 py-3 rounded-lg hover:bg-blue-700 transition-colors ">
-                                <i class="fas fa-shopping-cart"></i>
-                                Browse Products
-                            </a>
-                        </div>
-                    <?php else: ?>
-                        <div class="space-y-4 max-h-[600px] overflow-y-auto pr-2" id="orderList">
-                            <?php foreach ($all_orders as $order): ?>
-                                <div class="border border-gray-200 rounded-lg p-4 hover:border-gray-300 hover:shadow-md transition-all cursor-pointer order-item bg-white"
-                                    data-id="<?php echo $order['id']; ?>"
-                                    data-date="<?php echo strtolower(date('M j, Y g:i A', strtotime($order['created_at']))); ?>"
-                                    data-payment-status="<?php echo strtolower($order['payment_status'] ?? 'pending'); ?>"
-                                    onclick="window.location.href='order_tracking.php?order_id=<?php echo $order['id']; ?>'">
-
-                                    <div class="flex items-center justify-between">
-                                        <div class="flex items-center gap-4">
-                                            <div class="w-12 h-12 bg-gray-100 rounded-lg flex items-center justify-center border border-gray-200">
-                                                <span class="text-sm text-gray-600">#<?php echo $order['id']; ?></span>
-                                            </div>
-                                            <div>
-                                                <p class="text-gray-900 mb-1">Order #<?php echo $order['id']; ?></p>
-                                                <p class="text-sm text-gray-500">
-                                                    <i class="far fa-calendar mr-1"></i>
-                                                    <?php echo date('M j, Y g:i A', strtotime($order['created_at'])); ?>
-                                                </p>
-                                            </div>
-                                        </div>
-
-                                        <div class="text-right">
-                                            <p class=" text-lg text-gray-900 mb-2">₱<?php echo number_format($order['total'], 2); ?></p>
-
-                                            <div class="flex flex-col gap-2 items-end">
-                                                <!-- Order Status -->
-                                                <span class="inline-flex items-center gap-2 px-3 py-1 text-xs rounded-full
-                                                    <?php
-                                                    switch ($order['status']) {
-                                                        case 'Pending':
-                                                            echo 'bg-orange-100 text-orange-800 border border-orange-200';
-                                                            break;
-                                                        case 'Ongoing':
-                                                            echo 'bg-blue-100 text-blue-800 border border-blue-200';
-                                                            break;
-                                                        case 'Arrival':
-                                                            echo 'bg-purple-100 text-purple-800 border border-purple-200';
-                                                            break;
-                                                        case 'Departure':
-                                                            echo 'bg-yellow-100 text-yellow-800 border border-yellow-200';
-                                                            break;
-                                                        case 'Complete':
-                                                            echo 'bg-green-100 text-green-800 border border-green-200';
-                                                            break;
-                                                        default:
-                                                            echo 'bg-gray-100 text-gray-800 border border-gray-200';
-                                                            break;
-                                                    }
-                                                    ?>">
-                                                    <?php if ($order['status'] === 'Complete'): ?>
-                                                        <i class="fas fa-check-circle"></i>
-                                                    <?php else: ?>
-                                                        <i class="fas fa-circle text-xs"></i>
-                                                    <?php endif; ?>
-                                                    <?php echo $order['status']; ?>
-                                                </span>
-
-                                                <!-- Payment Status -->
-                                                <span class="inline-flex items-center gap-2 px-3 py-1 text-xs rounded-full 
-                                                    <?php
-                                                    $payment_status = $order['payment_status'] ?? 'pending';
-                                                    switch (strtolower($payment_status)) {
-                                                        case 'verified':
-                                                        case 'approved':
-                                                            echo 'bg-green-100 text-green-800 border border-green-200';
-                                                            break;
-                                                        case 'rejected':
-                                                        case 'declined':
-                                                            echo 'bg-red-100 text-red-800 border border-red-200';
-                                                            break;
-                                                        case 'pending':
-                                                        default:
-                                                            echo 'bg-yellow-100 text-yellow-800 border border-yellow-200';
-                                                            break;
-                                                    }
-                                                    ?>">
-                                                    <?php if (strtolower($payment_status) === 'verified' || strtolower($payment_status) === 'approved'): ?>
-                                                        <i class="fas fa-check-circle"></i>
-                                                    <?php elseif (strtolower($payment_status) === 'rejected' || strtolower($payment_status) === 'declined'): ?>
-                                                        <i class="fas fa-times-circle"></i>
-                                                    <?php else: ?>
-                                                        <i class="fas fa-clock"></i>
-                                                    <?php endif; ?>
-                                                    Payment: <?php echo ucfirst($payment_status); ?>
-                                                </span>
-                                            </div>
-                                        </div>
-                                    </div>
-                                </div>
-                            <?php endforeach; ?>
-                        </div>
-                    <?php endif; ?>
+<div class="lg:col-span-2">
+    <div class="professional-card rounded-xl p-6 animate-fade-in">
+        <!-- Header with icon and title -->
+        <div class="flex items-center justify-between mb-6">
+            <div class="flex items-center gap-3">
+                <div class="w-10 h-10 bg-blue-100 rounded-lg flex items-center justify-center">
+                    <i class="fas fa-clipboard-list text-blue-600"></i>
+                </div>
+                <div>
+                    <h3 class="text-xl text-gray-900">Recent Orders</h3>
+                    <p class="text-sm text-gray-500">Order history and tracking information</p>
                 </div>
             </div>
+
+            <div class="flex items-center gap-3">
+                <?php if (!empty($all_orders)): ?>
+                    <span class="px-3 py-1 bg-gray-100 text-gray-600 text-sm rounded-full">
+                        <?php echo count($all_orders); ?> orders
+                    </span>
+                <?php endif; ?>
+
+                <a href="index-order_history-page-13.php" class="flex items-center gap-2 px-4 py-2 bg-black text-white rounded-lg hover:bg-gray-900 transition-colors text-sm font-medium">
+                    <i class="fas fa-history"></i>
+                    View All
+                </a>
+            </div>
+        </div>
+
+        <!-- Search and Filters -->
+        <?php if (!empty($all_orders)): ?>
+            <div class="mb-6 space-y-4">
+                <input type="text" id="orderSearch"
+                    placeholder="Search by order ID, date, or status..."
+                    class="w-full border border-gray-300 rounded-lg px-4 py-3 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent text-sm"
+                    oninput="filterOrders()">
+
+                <div class="flex flex-wrap gap-2">
+                    <button onclick="filterByPaymentStatus('all')"
+                        class="px-4 py-2 text-sm rounded-lg bg-blue-600 text-white hover:bg-blue-700 transition-colors payment-filter active">
+                        All Orders
+                    </button>
+                    <button onclick="filterByPaymentStatus('pending')"
+                        class="px-4 py-2 text-sm rounded-lg bg-yellow-50 text-yellow-700 hover:bg-yellow-100 transition-colors payment-filter">
+                        Pending Payment
+                    </button>
+                    <button onclick="filterByPaymentStatus('verified')"
+                        class="px-4 py-2 text-sm rounded-lg bg-green-50 text-green-700 hover:bg-green-100 transition-colors payment-filter">
+                        Verified
+                    </button>
+                    <button onclick="filterByPaymentStatus('rejected')"
+                        class="px-4 py-2 text-sm rounded-lg bg-red-50 text-red-700 hover:bg-red-100 transition-colors payment-filter">
+                        Replacement
+                    </button>
+                </div>
+            </div>
+
+            <!-- Table Headers - Hidden on Mobile -->
+            <div class="hidden md:grid grid-cols-6 gap-6 px-4 py-3 bg-white border-b-2 border-gray-300 mb-3 sticky top-0">
+                <div class="text-sm font-semibold text-gray-700 w-20">Order ID</div>
+                <div class="text-sm font-semibold text-gray-700 w-32">Date</div>
+                <div class="text-sm font-semibold text-gray-700 w-32">Total Amount</div>
+                <div class="text-sm font-semibold text-gray-700 w-32">Order Status</div>
+                <div class="text-sm font-semibold text-gray-700 w-32">Payment Status</div>
+                <div class="text-sm font-semibold text-gray-700 w-20">Action</div>
+            </div>
+
+            <!-- Orders List -->
+            <div id="orderList" class="space-y-3 max-h-[600px] overflow-y-auto">
+                <?php foreach ($all_orders as $order): ?>
+                    <!-- Desktop View -->
+                    <div class="hidden md:grid grid-cols-6 gap-6 px-4 py-4 bg-white border border-gray-200 rounded-lg hover:shadow-md transition-all order-item cursor-pointer"
+                        data-id="<?php echo $order['id']; ?>"
+                        data-date="<?php echo strtolower(date('M j, Y g:i A', strtotime($order['created_at']))); ?>"
+                        data-payment-status="<?php echo strtolower($order['payment_status'] ?? 'pending'); ?>"
+                        onclick="window.location.href='order_tracking.php?order_id=<?php echo $order['id']; ?>'">
+
+                        <div class="flex items-center w-20"><span class="font-bold text-gray-900">#<?php echo $order['id']; ?></span></div>
+                        <div class="flex items-center w-32">
+                            <div class="flex flex-col">
+                                <p class="text-sm text-gray-600 flex items-center gap-1"><i class="far fa-calendar"></i><?php echo date('M j, Y', strtotime($order['created_at'])); ?></p>
+                                <p class="text-xs text-gray-500"><?php echo date('g:i A', strtotime($order['created_at'])); ?></p>
+                            </div>
+                        </div>
+                        <div class="flex items-center w-32"><span class="font-bold text-lg text-gray-900">₱<?php echo number_format($order['total'], 2); ?></span></div>
+                        <div class="flex items-center w-32">
+                            <span class="inline-flex items-center gap-2 px-3 py-1 text-xs rounded-full
+                                <?php
+                                switch ($order['status']) {
+                                    case 'pending':
+                                        echo 'bg-orange-100 text-orange-800 border border-orange-200';
+                                        break;
+                                    case 'Ongoing':
+                                        echo 'bg-blue-100 text-blue-800 border border-blue-200';
+                                        break;
+                                    case 'Arrival':
+                                        echo 'bg-purple-100 text-purple-800 border border-purple-200';
+                                        break;
+                                    case 'Departure':
+                                        echo 'bg-yellow-100 text-yellow-800 border border-yellow-200';
+                                        break;
+                                    case 'Complete':
+                                        echo 'bg-green-100 text-green-800 border border-green-200';
+                                        break;
+                                    default:
+                                        echo 'bg-gray-100 text-gray-800 border border-gray-200';
+                                        break;
+                                }
+                                ?>">
+                                <?php if ($order['status'] === 'Complete'): ?>
+                                    <i class="fas fa-check-circle"></i>
+                                <?php else: ?>
+                                    <i class="fas fa-circle text-xs"></i>
+                                <?php endif; ?>
+                                <?php echo $order['status']; ?>
+                            </span>
+                        </div>
+                        <div class="flex items-center w-32">
+                            <span class="inline-flex items-center gap-2 px-3 py-1 text-xs rounded-full 
+                                <?php
+                                $payment_status = $order['payment_status'] ?? 'pending';
+                                switch (strtolower($payment_status)) {
+                                    case 'verified':
+                                    case 'approved':
+                                        echo 'bg-green-100 text-green-800 border border-green-200';
+                                        break;
+                                    case 'rejected':
+                                    case 'declined':
+                                        echo 'bg-red-100 text-red-800 border border-red-200';
+                                        break;
+                                    case 'pending':
+                                    default:
+                                        echo 'bg-yellow-100 text-yellow-800 border border-yellow-200';
+                                        break;
+                                }
+                                ?>">
+                                <?php if (strtolower($payment_status) === 'verified' || strtolower($payment_status) === 'approved'): ?>
+                                    <i class="fas fa-check-circle"></i>
+                                <?php elseif (strtolower($payment_status) === 'rejected' || strtolower($payment_status) === 'declined'): ?>
+                                    <i class="fas fa-times-circle"></i>
+                                <?php else: ?>
+                                    <i class="fas fa-clock"></i>
+                                <?php endif; ?>
+                                <?php echo ucfirst($payment_status); ?>
+                            </span>
+                        </div>
+                        <div class="flex items-center w-full">
+                            <a href="order_tracking.php?order_id=<?php echo $order['id']; ?>" 
+                                class=" text-center gap-1 px-2 py-1 bg-red-600 text-white rounded-lg hover:bg-red-500 transition-colors text-sm font-semibold"
+                                onclick="event.stopPropagation()">
+                      Quick View 
+                            </a>
+                        </div>
+                    </div>
+
+                    <!-- Mobile View - Card Layout -->
+                    <div class="md:hidden bg-white border border-gray-200 rounded-lg p-4 hover:shadow-md transition-all order-item"
+                        data-id="<?php echo $order['id']; ?>"
+                        data-date="<?php echo strtolower(date('M j, Y g:i A', strtotime($order['created_at']))); ?>"
+                        data-payment-status="<?php echo strtolower($order['payment_status'] ?? 'pending'); ?>">
+
+                        <div class="flex items-start justify-between mb-3">
+                            <div>
+                                <p class="font-bold text-lg text-gray-900">Order #<?php echo $order['id']; ?></p>
+                                <p class="text-xs text-gray-500 flex items-center gap-1 mt-1">
+                                    <i class="far fa-calendar"></i>
+                                    <?php echo date('M j, Y g:i A', strtotime($order['created_at'])); ?>
+                                </p>
+                            </div>
+                            <span class="font-bold text-lg text-gray-900">₱<?php echo number_format($order['total'], 2); ?></span>
+                        </div>
+
+                        <div class="flex flex-col gap-2 mb-3">
+                            <!-- Order Status -->
+                            <div class="flex items-center justify-between">
+                                <span class="text-xs text-gray-600">Status:</span>
+                                <span class="inline-flex items-center gap-1 px-3 py-1 text-xs rounded-full
+                                    <?php
+                                    switch ($order['status']) {
+                                        case 'Pending':
+                                            echo 'bg-orange-100 text-orange-800 border border-orange-200';
+                                            break;
+                                        case 'Ongoing':
+                                            echo 'bg-blue-100 text-blue-800 border border-blue-200';
+                                            break;
+                                        case 'Arrival':
+                                            echo 'bg-purple-100 text-purple-800 border border-purple-200';
+                                            break;
+                                        case 'Departure':
+                                            echo 'bg-yellow-100 text-yellow-800 border border-yellow-200';
+                                            break;
+                                        case 'Complete':
+                                            echo 'bg-green-100 text-green-800 border border-green-200';
+                                            break;
+                                        default:
+                                            echo 'bg-gray-100 text-gray-800 border border-gray-200';
+                                            break;
+                                    }
+                                    ?>">
+                                    <?php if ($order['status'] === 'Complete'): ?>
+                                        <i class="fas fa-check-circle"></i>
+                                    <?php else: ?>
+                                        <i class="fas fa-circle text-xs"></i>
+                                    <?php endif; ?>
+                                    <?php echo $order['status']; ?>
+                                </span>
+                            </div>
+
+                            <!-- Payment Status -->
+                            <div class="flex items-center justify-between">
+                                <span class="text-xs text-gray-600">Payment:</span>
+                                <span class="inline-flex items-center gap-1 px-3 py-1 text-xs rounded-full 
+                                    <?php
+                                    $payment_status = $order['payment_status'] ?? 'pending';
+                                    switch (strtolower($payment_status)) {
+                                        case 'verified':
+                                        case 'approved':
+                                            echo 'bg-green-100 text-green-800 border border-green-200';
+                                            break;
+                                        case 'rejected':
+                                        case 'declined':
+                                            echo 'bg-red-100 text-red-800 border border-red-200';
+                                            break;
+                                        case 'pending':
+                                        default:
+                                            echo 'bg-yellow-100 text-yellow-800 border border-yellow-200';
+                                            break;
+                                    }
+                                    ?>">
+                                    <?php if (strtolower($payment_status) === 'verified' || strtolower($payment_status) === 'approved'): ?>
+                                        <i class="fas fa-check-circle"></i>
+                                    <?php elseif (strtolower($payment_status) === 'rejected' || strtolower($payment_status) === 'declined'): ?>
+                                        <i class="fas fa-times-circle"></i>
+                                    <?php else: ?>
+                                        <i class="fas fa-clock"></i>
+                                    <?php endif; ?>
+                                    <?php echo ucfirst($payment_status); ?>
+                                </span>
+                            </div>
+                        </div>
+
+                        <a href="order_tracking.php?order_id=<?php echo $order['id']; ?>" 
+                            class="w-full inline-flex items-center justify-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors text-sm font-semibold">
+                         
+                            View Details
+                        </a>
+                    </div>
+                <?php endforeach; ?>
+            </div>
+        <?php else: ?>
+            <!-- NO ORDERS UI -->
+            <div class="text-center py-12">
+                <div class="w-20 h-20 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                    <i class="fas fa-shopping-bag text-2xl text-gray-400"></i>
+                </div>
+                <h4 class="text-lg text-gray-900 mb-2">No Orders Found</h4>
+                <p class="text-gray-600 mb-6">You haven't placed any orders yet. Start exploring our products!</p>
+                <a href="index-page-1-A-B-C-D-E.php" class="inline-flex items-center gap-2 bg-blue-600 text-white px-6 py-3 rounded-lg hover:bg-blue-700 transition-colors">
+                    <i class="fas fa-shopping-cart"></i>
+                    Browse Products
+                </a>
+            </div>
+        <?php endif; ?>
+    </div>
+</div>
 
             <!-- Pending Orders Sidebar - RIGHT (1 column) -->
             <div class="lg:col-span-1">
@@ -523,7 +630,7 @@ function getLatestOrderStatus($conn, $order_id)
         </div>
     </div>
 
-   
+
 
     <?php include '../navbar/footer.php'; ?>
 
@@ -639,17 +746,23 @@ function getLatestOrderStatus($conn, $order_id)
             document.body.style.overflow = 'auto'; // Restore scrolling
         }
 
-        // Close modal when clicking outside
-        document.getElementById('billingModal').addEventListener('click', function(e) {
-            if (e.target === this) {
-                closeBillingModal();
-            }
-        });
+        // Close modal when clicking outside (FIXED - with null check)
+        const billingModal = document.getElementById('billingModal');
+        if (billingModal) {
+            billingModal.addEventListener('click', function(e) {
+                if (e.target === this) {
+                    closeBillingModal();
+                }
+            });
+        }
 
-        // Close modal with Escape key
+        // Close modal with Escape key (FIXED - with null check)
         document.addEventListener('keydown', function(e) {
             if (e.key === 'Escape') {
-                closeBillingModal();
+                const modal = document.getElementById('billingModal');
+                if (modal && !modal.classList.contains('hidden')) {
+                    closeBillingModal();
+                }
             }
         });
 

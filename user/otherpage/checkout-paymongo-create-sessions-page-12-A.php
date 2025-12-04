@@ -215,7 +215,7 @@ if (!empty($user_id)) {
     $reference_no = 'NH' . mt_rand(9800000, 9899999);
     $payment_method = 'PayMongo';
     $payment_status = 'pending';
-    $order_status = 'pending';
+    $order_status = 'Pending';
     $discount_amount = 0.00;
 
     // ✅ INSERT ORDER WITHOUT STOCK DEDUCTION

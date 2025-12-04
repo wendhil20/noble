@@ -836,7 +836,7 @@ $show_delivery_info = $has_actual_delivery || $has_estimated_delivery || $has_sc
             Booking Details
         </h4>
         
-        <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 text-sm">
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 text-sm break-all">
             <?php if ($booking_info['tracking_number']): ?>
             <div>
                 <p class="text-purple-600 text-xs mb-1">Tracking Number</p>

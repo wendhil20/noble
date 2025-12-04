@@ -68,8 +68,8 @@ FROM delivery_schedules ds
 INNER JOIN orders o ON ds.order_id = o.id
 LEFT JOIN delivery_bookings db ON ds.id = db.delivery_schedule_id
 LEFT JOIN replacement_requests rr ON ds.id = rr.delivery_schedule_id AND ds.item_type = 'replacement'
-WHERE ds.delivery_date >= DATE_SUB(CURDATE(), INTERVAL 30 DAY)
-    AND ds.delivery_date <= DATE_ADD(CURDATE(), INTERVAL 60 DAY)
+WHERE ds.delivery_date >= DATE_SUB(CURDATE(), INTERVAL 60 DAY)
+    AND ds.delivery_date <= DATE_ADD(CURDATE(), INTERVAL 3650 DAY)
 ORDER BY ds.delivery_date DESC, ds.delivery_time ASC";
 
 $scheduleStmt = $conn->prepare($scheduleSql);
@@ -88,7 +88,7 @@ $countSql = "SELECT
 FROM delivery_schedules ds
 LEFT JOIN delivery_bookings db ON ds.id = db.delivery_schedule_id
 WHERE ds.delivery_date >= DATE_SUB(CURDATE(), INTERVAL 30 DAY)
-    AND ds.delivery_date <= DATE_ADD(CURDATE(), INTERVAL 60 DAY)
+    AND ds.delivery_date <= DATE_ADD(CURDATE(), INTERVAL 3650 DAY)
 GROUP BY DATE(ds.delivery_date)";
 
 $countStmt = $conn->prepare($countSql);
@@ -800,7 +800,7 @@ const hasOverdueItems = Object.values(dateSchedules).some(timeSchedules =>
     
     html += `
         <div class="item-card ${statusBg} border-2 rounded-lg p-4 hover:shadow-md">
-            <div class="flex items-start justify-between mb-3">
+            <div class="flex items-start justify-between mb-3 ">
                 <div class="flex-1">
                     <h6 class="font-semibold text-gray-900 text-xl mb-2 flex items-center">
                         <i class="fas fa-shopping-cart mr-2 text-blue-600"></i>
@@ -839,7 +839,7 @@ const hasOverdueItems = Object.values(dateSchedules).some(timeSchedules =>
                 </div>
             </div>
             
-            <div class="bg-white bg-opacity-50 rounded-lg p-3 space-y-2">
+            <div class="bg-white bg-opacity-50 rounded-lg p-3 space-y-2 break-all">
                 <div class="flex items-center">
                     <i class="fas fa-user mr-3 text-gray-500 w-4"></i>
                     <span class="font-medium text-gray-800">${escapeHtml(schedule.customer_name)}</span>
@@ -869,7 +869,7 @@ ${schedule.tracking_number ? `
 ${schedule.booking_reference ? `
 <div class="flex items-center">
     <i class="fas fa-receipt mr-3 text-gray-500 w-4"></i>
-    <span class="text-gray-700 text-sm">Booking Ref: ${escapeHtml(schedule.booking_reference)}</span>
+    <span class="text-gray-700 text-sm ">Booking Ref: ${escapeHtml(schedule.booking_reference)}</span>
 </div>
 ` : ''}
 ${schedule.booking_type && schedule.booking_type !== 'delivery' ? `

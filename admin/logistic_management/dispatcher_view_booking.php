@@ -661,7 +661,7 @@ if ($booking['item_type'] === 'replacement') {
                     <!-- Tab Content -->
                     <div class="p-4">
                         <!-- Status Tab -->
-                        <div id="content-status" class="tab-content">
+                        <div id="content-status" class="tab-content break-words">
                             <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-3">
                                 <div class="p-3 bg-purple-50 rounded-lg border border-purple-200">
                                     <span class="text-xs text-gray-600 block mb-1">Booking Status</span>

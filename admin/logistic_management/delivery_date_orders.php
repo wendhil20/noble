@@ -632,7 +632,7 @@ $overdueOrders = count(array_filter($orders, fn($o) => $o['delivery_status'] ===
                 <h4 class="font-bold text-purple-900 mb-3 flex items-center">
                     <i class="fas fa-shipping-fast mr-2"></i>Booking Information
                 </h4>
-                <div class="grid grid-cols-2 gap-4">
+                <div class="grid grid-cols-2 gap-4 break-all">
                     ${order.tracking_number ? `<div><span class="text-sm text-purple-700">Tracking:</span><p class="font-bold text-purple-900">${order.tracking_number}</p></div>` : ''}
                     ${order.booking_courier_name ? `<div><span class="text-sm text-purple-700">Courier:</span><p class="font-bold text-purple-900">${order.booking_courier_name}</p></div>` : ''}
                     ${order.booking_reference ? `<div><span class="text-sm text-purple-700">Reference:</span><p class="font-bold text-purple-900">${order.booking_reference}</p></div>` : ''}

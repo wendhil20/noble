@@ -467,10 +467,10 @@ $allLoaded = $booking['loaded_items'] === $booking['total_items'] && $booking['t
     <?php echo $isReplacement ? 'Replacement' : 'Booking'; ?> Information
 </h3>
                     
-                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4 break-all">
                         <div class="bg-blue-50 rounded-lg p-4">
                             <span class="text-sm text-blue-700">Tracking Number</span>
-                            <p class="font-mono font-bold text-lg text-blue-900"><?php echo htmlspecialchars($booking['tracking_number']); ?></p>
+                            <p class="font-mono font-bold text-lg text-blue-900 "><?php echo htmlspecialchars($booking['tracking_number']); ?></p>
                         </div>
                         <div class="bg-purple-50 rounded-lg p-4">
                             <span class="text-sm text-purple-700">Courier</span>
@@ -1068,12 +1068,12 @@ document.addEventListener('keydown', function(event) {
                 
                 <?php if ($booking['booking_notes']): ?>
                 <!-- Notes -->
-                <div class="bg-yellow-50 rounded-xl border border-yellow-200 p-6">
-                    <h3 class="text-lg font-bold text-yellow-900 mb-3 flex items-center">
+                <div class="bg-yellow-50 rounded-xl border border-yellow-200 p-6 ">
+                    <h3 class="text-lg font-bold text-yellow-900 mb-3 flex items-center ">
                         <i class="fas fa-sticky-note text-yellow-600 mr-2"></i>
                         Booking Notes
                     </h3>
-                    <p class="text-sm text-yellow-800"><?php echo nl2br(htmlspecialchars($booking['booking_notes'])); ?></p>
+                    <p class="text-sm text-yellow-800 break-words"><?php echo nl2br(htmlspecialchars($booking['booking_notes'])); ?></p>
                 </div>
                 <?php endif; ?>
                 

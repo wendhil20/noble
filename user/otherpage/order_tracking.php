@@ -20,15 +20,19 @@
     $user_id = $_SESSION['user_id'];
     $user_email = $_SESSION['user_email'] ?? null;
 
-    // Get order details with billing address
-    $stmt = $conn->prepare("
-        SELECT o.*, ba.latitude as delivery_lat, ba.longitude as delivery_lng,
-            ba.full_name as delivery_name, ba.address as delivery_address,
-            ba.city as delivery_city, ba.state as delivery_state
-        FROM orders o
-        LEFT JOIN billing_addresses ba ON o.billing_address_id = ba.id
-        WHERE o.id = ? AND o.email = ?
-    ");
+    // Get order details with billing address, lead time, and delivery schedule
+$stmt = $conn->prepare("
+    SELECT o.*, ba.latitude as delivery_lat, ba.longitude as delivery_lng,
+        ba.full_name as delivery_name, ba.address as delivery_address,
+        ba.city as delivery_city, ba.state as delivery_state,
+        (SELECT MIN(lt_from) FROM order_items WHERE order_id = o.id AND lt_from IS NOT NULL) as earliest_delivery,
+        (SELECT MAX(lt_to) FROM order_items WHERE order_id = o.id AND lt_to IS NOT NULL) as latest_delivery,
+        (SELECT MIN(ds.delivery_date) FROM delivery_schedules ds WHERE ds.order_id = o.id) as scheduled_delivery_date,
+        (SELECT MIN(ds.delivery_time) FROM delivery_schedules ds WHERE ds.order_id = o.id AND ds.delivery_date = (SELECT MIN(delivery_date) FROM delivery_schedules WHERE order_id = o.id)) as scheduled_delivery_time
+    FROM orders o
+    LEFT JOIN billing_addresses ba ON o.billing_address_id = ba.id
+    WHERE o.id = ? AND o.email = ?
+");
     $stmt->bind_param("is", $order_id, $user_email);
     $stmt->execute();
     $order_result = $stmt->get_result();
@@ -73,6 +77,25 @@
         $order_items[] = $row;
     }
     $stmt->close();
+
+    // Get delivery booking information
+$booking_info = null;
+$stmt = $conn->prepare("
+    SELECT db.*, ds.delivery_date, ds.delivery_time, ds.delivery_type
+    FROM delivery_bookings db
+    INNER JOIN delivery_schedules ds ON db.delivery_schedule_id = ds.id
+    WHERE db.order_id = ?
+    ORDER BY db.created_at DESC
+    LIMIT 1
+");
+$stmt->bind_param("i", $order_id);
+$stmt->execute();
+$booking_result = $stmt->get_result();
+if ($booking_result->num_rows > 0) {
+    $booking_info = $booking_result->fetch_assoc();
+}
+$stmt->close();
+
 
     // Function to get order level status steps
     function getOrderStatusSteps($delivery_type = 'delivery') {
@@ -601,6 +624,300 @@
     </div>
 </div>
 
+<!-- Expected Delivery Date - Dynamic based on available information -->
+<?php
+// Priority logic for showing delivery date:
+// 1. Actual delivery time (if delivered)
+// 2. Estimated delivery time from booking
+// 3. Scheduled delivery date/time
+// 4. Lead time range (lt_from to lt_to)
+
+$has_actual_delivery = $booking_info && $booking_info['actual_delivery_time'];
+$has_estimated_delivery = $booking_info && $booking_info['estimated_delivery_time'];
+$has_scheduled_delivery = $order['scheduled_delivery_date'];
+$has_lead_time = $order['earliest_delivery'] && $order['latest_delivery'];
+
+$show_delivery_info = $has_actual_delivery || $has_estimated_delivery || $has_scheduled_delivery || $has_lead_time;
+?>
+
+<?php if ($show_delivery_info): ?>
+<div class="bg-gradient-to-r from-blue-50 to-indigo-50 rounded-xl sm:rounded-2xl shadow-lg p-4 sm:p-6 mb-6 sm:mb-8 border-l-4 border-blue-500 animate-slide-in">
+    <div class="flex items-center gap-3 mb-4">
+        <div class="w-10 h-10 sm:w-12 sm:h-12 bg-blue-500 rounded-xl flex items-center justify-center">
+            <svg class="w-5 h-5 sm:w-6 sm:h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/>
+            </svg>
+        </div>
+        <div>
+            <h3 class="text-lg sm:text-xl font-bold text-gray-900">
+                <?php
+                if ($has_actual_delivery) {
+                    echo "Delivered On";
+                } elseif ($has_estimated_delivery || $has_scheduled_delivery) {
+                    echo "Scheduled Delivery";
+                } else {
+                    echo "Expected Delivery Range";
+                }
+                ?>
+            </h3>
+            <p class="text-xs sm:text-sm text-gray-600">
+                <?php
+                if ($has_actual_delivery) {
+                    echo "Order completed";
+                } elseif ($has_estimated_delivery) {
+                    echo "Estimated by courier";
+                } elseif ($has_scheduled_delivery) {
+                    echo "Confirmed delivery schedule";
+                } else {
+                    echo "Based on item lead times";
+                }
+                ?>
+            </p>
+        </div>
+    </div>
+    
+    <!-- Priority 1: Actual Delivery Time -->
+    <?php if ($has_actual_delivery): ?>
+    <div class="bg-white rounded-lg p-4 sm:p-5">
+        <div class="flex items-center justify-center gap-3">
+            <div class="flex items-center gap-2">
+                <svg class="w-6 h-6 text-green-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                </svg>
+                <div class="text-center">
+                    <p class="text-2xl sm:text-3xl font-bold text-green-600">
+                        <?php echo date('M d, Y', strtotime($booking_info['actual_delivery_time'])); ?>
+                    </p>
+                    <p class="text-sm text-gray-600">
+                        at <?php echo date('g:i A', strtotime($booking_info['actual_delivery_time'])); ?>
+                    </p>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Priority 2: Estimated Delivery Time from Booking -->
+    <?php elseif ($has_estimated_delivery): ?>
+    <div class="bg-white rounded-lg p-4 sm:p-5">
+        <div class="text-center">
+            <p class="text-2xl sm:text-3xl font-bold text-blue-700">
+                <?php echo date('M d, Y', strtotime($booking_info['estimated_delivery_time'])); ?>
+            </p>
+            <p class="text-sm text-gray-600 mt-1">
+                at <?php echo date('g:i A', strtotime($booking_info['estimated_delivery_time'])); ?>
+            </p>
+            
+            <?php if ($booking_info['courier_name']): ?>
+            <div class="mt-3 inline-flex items-center gap-2 px-3 py-1 bg-purple-100 text-purple-800 rounded-full text-sm font-semibold">
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 8h14M5 8a2 2 0 110-4h14a2 2 0 110 4M5 8v10a2 2 0 002 2h10a2 2 0 002-2V8m-9 4h4"/>
+                </svg>
+                <?php echo htmlspecialchars($booking_info['courier_name']); ?>
+            </div>
+            <?php endif; ?>
+        </div>
+        
+        <?php
+        $estimated_date = new DateTime($booking_info['estimated_delivery_time']);
+        $today = new DateTime();
+        $days_until = $today->diff($estimated_date)->days;
+        $is_future = $estimated_date > $today;
+        
+        if ($is_future && $days_until > 0):
+        ?>
+        <div class="mt-4 text-center">
+            <div class="inline-flex items-center gap-2 px-4 py-2 bg-blue-100 text-blue-800 rounded-full text-sm font-semibold">
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                </svg>
+                <?php echo $days_until; ?> day<?php echo $days_until > 1 ? 's' : ''; ?> until delivery
+            </div>
+        </div>
+        <?php endif; ?>
+    </div>
+    
+    <!-- Priority 3: Scheduled Delivery Date -->
+    <?php elseif ($has_scheduled_delivery): ?>
+    <div class="bg-white rounded-lg p-4 sm:p-5">
+        <div class="text-center">
+            <p class="text-2xl sm:text-3xl font-bold text-indigo-700">
+                <?php echo date('M d, Y', strtotime($order['scheduled_delivery_date'])); ?>
+            </p>
+            <?php if ($order['scheduled_delivery_time']): ?>
+            <p class="text-sm text-gray-600 mt-1">
+                at <?php echo date('g:i A', strtotime($order['scheduled_delivery_time'])); ?>
+            </p>
+            <?php endif; ?>
+            
+            <div class="mt-3 inline-flex items-center gap-2 px-3 py-1 bg-indigo-100 text-indigo-800 rounded-full text-sm font-semibold">
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"/>
+                </svg>
+                Delivery Scheduled
+            </div>
+        </div>
+        
+        <?php
+        $scheduled_date = new DateTime($order['scheduled_delivery_date']);
+        $today = new DateTime();
+        $days_until = $today->diff($scheduled_date)->days;
+        $is_future = $scheduled_date > $today;
+        
+        if ($is_future && $days_until > 0):
+        ?>
+        <div class="mt-4 text-center">
+            <div class="inline-flex items-center gap-2 px-4 py-2 bg-indigo-100 text-indigo-800 rounded-full text-sm font-semibold">
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                </svg>
+                <?php echo $days_until; ?> day<?php echo $days_until > 1 ? 's' : ''; ?> until scheduled delivery
+            </div>
+        </div>
+        <?php endif; ?>
+    </div>
+    
+    <!-- Priority 4: Lead Time Range (fallback) -->
+    <?php else: ?>
+    <div class="bg-white rounded-lg p-4 sm:p-5">
+        <div class="flex flex-col sm:flex-row items-center justify-center gap-2 sm:gap-3">
+            <div class="text-center">
+                <p class="text-xs sm:text-sm text-gray-600 mb-1">From</p>
+                <p class="text-lg sm:text-2xl font-bold text-gray-900">
+                    <?php echo date('M d, Y', strtotime($order['earliest_delivery'])); ?>
+                </p>
+            </div>
+            
+            <div class="hidden sm:block">
+                <svg class="w-6 h-6 text-blue-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14 5l7 7m0 0l-7 7m7-7H3"/>
+                </svg>
+            </div>
+            <div class="block sm:hidden">
+                <svg class="w-4 h-4 text-blue-500 rotate-90" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/>
+                </svg>
+            </div>
+            
+            <div class="text-center">
+                <p class="text-xs sm:text-sm text-gray-600 mb-1">To</p>
+                <p class="text-lg sm:text-2xl font-bold text-blue-700">
+                    <?php echo date('M d, Y', strtotime($order['latest_delivery'])); ?>
+                </p>
+            </div>
+        </div>
+        
+        <?php
+        $latest_date = new DateTime($order['latest_delivery']);
+        $today = new DateTime();
+        $days_until = $today->diff($latest_date)->days;
+        $is_future = $latest_date > $today;
+        
+        if ($is_future && $days_until > 0):
+        ?>
+        <div class="mt-4 text-center">
+            <div class="inline-flex items-center gap-2 px-4 py-2 bg-blue-100 text-blue-800 rounded-full text-sm font-semibold">
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                </svg>
+                <?php echo $days_until; ?> day<?php echo $days_until > 1 ? 's' : ''; ?> until expected delivery
+            </div>
+        </div>
+        <?php endif; ?>
+    </div>
+    <?php endif; ?>
+    
+    <!-- Booking Information (if available) -->
+    <?php if ($booking_info): ?>
+    <div class="mt-4 bg-purple-50 border border-purple-200 rounded-lg p-4">
+        <h4 class="text-sm font-bold text-purple-900 mb-3 flex items-center gap-2">
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"/>
+            </svg>
+            Booking Details
+        </h4>
+        
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 text-sm">
+            <?php if ($booking_info['tracking_number']): ?>
+            <div>
+                <p class="text-purple-600 text-xs mb-1">Tracking Number</p>
+                <p class="font-mono font-semibold text-purple-900 bg-white px-2 py-1 rounded">
+                    <?php echo htmlspecialchars($booking_info['tracking_number']); ?>
+                </p>
+            </div>
+            <?php endif; ?>
+            
+            <?php if ($booking_info['courier_name']): ?>
+            <div>
+                <p class="text-purple-600 text-xs mb-1">Courier Service</p>
+                <p class="font-semibold text-purple-900"><?php echo htmlspecialchars($booking_info['courier_name']); ?></p>
+            </div>
+            <?php endif; ?>
+            
+            <?php if ($booking_info['booking_reference']): ?>
+            <div>
+                <p class="text-purple-600 text-xs mb-1">Booking Reference</p>
+                <p class="font-semibold text-purple-900"><?php echo htmlspecialchars($booking_info['booking_reference']); ?></p>
+            </div>
+            <?php endif; ?>
+            
+            <?php if ($booking_info['driver_name']): ?>
+            <div>
+                <p class="text-purple-600 text-xs mb-1">Driver</p>
+                <p class="font-semibold text-purple-900"><?php echo htmlspecialchars($booking_info['driver_name']); ?></p>
+            </div>
+            <?php endif; ?>
+            
+            <?php if ($booking_info['vehicle_plate_number']): ?>
+            <div>
+                <p class="text-purple-600 text-xs mb-1">Vehicle</p>
+                <p class="font-semibold text-purple-900"><?php echo htmlspecialchars($booking_info['vehicle_plate_number']); ?></p>
+            </div>
+            <?php endif; ?>
+            
+            <div>
+                <p class="text-purple-600 text-xs mb-1">Status</p>
+                <span class="inline-flex items-center px-2 py-1 rounded-full text-xs font-semibold
+                    <?php
+                    switch($booking_info['booking_status']) {
+                        case 'delivered':
+                        case 'picked_up':
+                            echo 'bg-green-100 text-green-800';
+                            break;
+                        case 'in_transit':
+                            echo 'bg-blue-100 text-blue-800';
+                            break;
+                        case 'confirmed':
+                            echo 'bg-purple-100 text-purple-800';
+                            break;
+                        default:
+                            echo 'bg-gray-100 text-gray-800';
+                    }
+                    ?>">
+                    <?php echo ucfirst(str_replace('_', ' ', $booking_info['booking_status'])); ?>
+                </span>
+            </div>
+        </div>
+    </div>
+    <?php endif; ?>
+    
+    <!-- Additional Info Note -->
+    <div class="mt-3 flex items-start gap-2 text-xs sm:text-sm text-gray-600">
+        <svg class="w-4 h-4 text-blue-500 mt-0.5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
+        </svg>
+        <p>
+            <?php if ($has_actual_delivery): ?>
+                Your order has been successfully delivered. Thank you for your purchase!
+            <?php elseif ($has_estimated_delivery || $has_scheduled_delivery): ?>
+                This is the confirmed delivery schedule. You'll be notified of any changes.
+            <?php else: ?>
+                This is an estimated timeframe based on supplier lead times. We'll update you once delivery is scheduled.
+            <?php endif; ?>
+        </p>
+    </div>
+</div>
+<?php endif; ?>
+
             <!-- Delivery Route Map -->
             <?php if ($show_map): ?>
             <div class="bg-white rounded-xl sm:rounded-2xl shadow-lg p-4 sm:p-6 mb-6 sm:mb-8 animate-slide-in">
@@ -961,14 +1278,24 @@
                 <?php if (!$show_item_tracking): ?>
                     <div class="bg-yellow-50 border border-yellow-200 rounded-xl p-3 sm:p-4 mb-4 sm:mb-6">
                         <div class="flex items-center gap-3">
-                            <svg class="w-5 h-5 sm:w-6 sm:h-6 text-yellow-600 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
-                            </svg>
-                            <div>
-                                <h4 class="text-sm font-semibold text-yellow-800">Tracking Pending</h4>
-                                <p class="text-xs text-yellow-700">Item tracking will be available once your order is confirmed.</p>
-                            </div>
-                        </div>
+    <div class="w-8 h-8 sm:w-10 sm:h-10 bg-gray-100 rounded-lg flex items-center justify-center flex-shrink-0">
+        <span class="text-xs sm:text-sm font-bold text-gray-700"><?= $index + 1 ?></span>
+    </div>
+    <div class="flex-1 min-w-0">
+        <h4 class="font-semibold text-gray-900 text-sm sm:text-base truncate"><?= htmlspecialchars($item['product_name']) ?></h4>
+        <p class="text-xs sm:text-sm text-gray-600 truncate"><?= htmlspecialchars($item['variant_color']) ?> - <?= htmlspecialchars($item['size']) ?></p>
+        <p class="text-xs text-gray-500">Qty: <?= $item['quantity'] ?></p>
+        
+        <?php if ($item['lt_from'] && $item['lt_to']): ?>
+        <div class="mt-1 flex items-center gap-1 text-xs text-blue-600">
+            <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/>
+            </svg>
+            <span><?= date('M d', strtotime($item['lt_from'])) ?> - <?= date('M d, Y', strtotime($item['lt_to'])) ?></span>
+        </div>
+        <?php endif; ?>
+    </div>
+</div>
                     </div>
                 <?php endif; ?>
                 

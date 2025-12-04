@@ -37,13 +37,33 @@ if (!$order) {
     die("Order not found");
 }
 
+if (!$order) {
+    die("Order not found");
+}
+
+// Calculate the delivery date range from all order items
+$delivery_range_query = "
+    SELECT MIN(lt_from) as earliest_delivery_date,
+           MAX(lt_to) as latest_delivery_date
+    FROM order_items
+    WHERE order_id = ? AND lt_from IS NOT NULL AND lt_to IS NOT NULL
+";
+$stmt_lt = $conn->prepare($delivery_range_query);
+$stmt_lt->bind_param("i", $order_id);
+$stmt_lt->execute();
+$lt_result = $stmt_lt->get_result()->fetch_assoc();
+$earliest_delivery_date = $lt_result['earliest_delivery_date'];
+$latest_delivery_date = $lt_result['latest_delivery_date'];
+
 // Get order items with tracking status and original pricing
 $items_query = "
     SELECT oi.*, 
            pv.original_price,
            pv.price as current_variant_price,
            pv.discount as variant_discount,
-           pv.percent as markup_percent
+           pv.percent as markup_percent,
+           oi.lt_from,
+           oi.lt_to
     FROM order_items oi
     LEFT JOIN product_variants pv ON oi.variant_id = pv.id
     WHERE oi.order_id = ? 
@@ -176,12 +196,24 @@ $tracking_status_colors = [
                         <p class="text-gray-900"><?php echo date('M d, Y h:i A', strtotime($order['confirmed_at'])); ?></p>
                     </div>
                     <?php endif; ?>
-                    <?php if ($order['estimated_arrival_date']): ?>
-                    <div>
-                        <label class="text-sm font-medium text-gray-500">Estimated Arrival</label>
-                        <p class="text-gray-900"><?php echo date('M d, Y h:i A', strtotime($order['estimated_arrival_date'])); ?></p>
-                    </div>
-                    <?php endif; ?>
+                    <?php if ($earliest_delivery_date && $latest_delivery_date): ?>
+<div>
+    <label class="text-sm font-medium text-gray-500">Expected Delivery Range</label>
+    <div class="mt-1 bg-gradient-to-r from-blue-50 to-indigo-50 border-l-4 border-blue-500 rounded-lg p-3">
+        <p class="text-gray-900 font-semibold">
+            <?php echo date('M d, Y', strtotime($earliest_delivery_date)); ?>
+            <span class="text-gray-500 mx-2">to</span>
+            <span class="text-blue-700 font-bold"><?php echo date('M d, Y', strtotime($latest_delivery_date)); ?></span>
+        </p>
+    </div>
+    <p class="text-xs text-gray-500 mt-1">Based on item lead times</p>
+</div>
+<?php elseif ($order['estimated_arrival_date']): ?>
+<div>
+    <label class="text-sm font-medium text-gray-500">Estimated Arrival</label>
+    <p class="text-gray-900"><?php echo date('M d, Y h:i A', strtotime($order['estimated_arrival_date'])); ?></p>
+</div>
+<?php endif; ?>
                 </div>
             </div>
         </div>
@@ -430,16 +462,17 @@ $profit_margin = $total_selling_price > 0 ? (($gross_profit / $total_selling_pri
             <div class="overflow-x-auto">
                 <table class="min-w-full divide-y divide-gray-200">
     <thead class="bg-gray-50">
-        <tr>
-            <th class="px-2 py-3 text-left text-xs font-medium text-gray-500 uppercase">Product</th>
-            <th class="px-2 py-3 text-left text-xs font-medium text-gray-500 uppercase">Details</th>
-            <th class="px-2 py-3 text-left text-xs font-medium text-gray-500 uppercase">Pricing</th>
-            <th class="px-2 py-3 text-left text-xs font-medium text-gray-500 uppercase">Qty</th>
-            <th class="px-2 py-3 text-left text-xs font-medium text-gray-500 uppercase">Subtotal</th>
-            <th class="px-2 py-3 text-left text-xs font-medium text-gray-500 uppercase">Profit</th>
-            <th class="px-2 py-3 text-left text-xs font-medium text-gray-500 uppercase">Status</th>
-        </tr>
-    </thead>
+    <tr>
+        <th class="px-2 py-3 text-left text-xs font-medium text-gray-500 uppercase">Product</th>
+        <th class="px-2 py-3 text-left text-xs font-medium text-gray-500 uppercase">Details</th>
+        <th class="px-2 py-3 text-left text-xs font-medium text-gray-500 uppercase">Pricing</th>
+        <th class="px-2 py-3 text-left text-xs font-medium text-gray-500 uppercase">Qty</th>
+        <th class="px-2 py-3 text-left text-xs font-medium text-gray-500 uppercase">Lead Time</th>
+        <th class="px-2 py-3 text-left text-xs font-medium text-gray-500 uppercase">Subtotal</th>
+        <th class="px-2 py-3 text-left text-xs font-medium text-gray-500 uppercase">Profit</th>
+        <th class="px-2 py-3 text-left text-xs font-medium text-gray-500 uppercase">Status</th>
+    </tr>
+</thead>
                     <tbody class="bg-white divide-y divide-gray-200">
     <?php if (count($items_for_analysis) > 0): ?>
         <?php foreach ($items_for_analysis as $item): 
@@ -523,8 +556,23 @@ $item_profit = $actual_subtotal - ($original_price * $quantity);
     </div>
 </td>
                                     <td class="px-4 py-4 text-sm text-gray-900 text-center">
-                                        <?php echo $item['quantity']; ?>
-                                    </td>
+    <?php echo $item['quantity']; ?>
+</td>
+<td class="px-2 py-4">
+    <?php if ($item['lt_from'] && $item['lt_to']): ?>
+    <div class="text-xs">
+        <div class="font-medium text-gray-700">
+            <?php echo date('M d, Y', strtotime($item['lt_from'])); ?>
+        </div>
+        <div class="text-gray-500">to</div>
+        <div class="font-semibold text-blue-600">
+            <?php echo date('M d, Y', strtotime($item['lt_to'])); ?>
+        </div>
+    </div>
+    <?php else: ?>
+    <span class="text-gray-400 text-xs">Not set</span>
+    <?php endif; ?>
+</td>
                                     <td class="px-4 py-4 text-sm font-medium text-gray-900">
     ₱<?php echo number_format($item['subtotal'], 2); ?>
 </td>
@@ -559,8 +607,8 @@ $item_profit = $actual_subtotal - ($original_price * $quantity);
                             <?php endforeach; ?>
                         <?php else: ?>
     <tr>
-        <td colspan="7" class="px-2 py-8 text-center text-gray-500">No items found</td>
-    </tr>
+    <td colspan="8" class="px-2 py-8 text-center text-gray-500">No items found</td>
+</tr>
 <?php endif; ?>
                     </tbody>
                 </table>

@@ -34,10 +34,10 @@ $ordersSql = "SELECT
     ds.delivery_date,
     ds.delivery_time,
     ds.delivery_notes,
-    ds.delivery_type,
     ds.delivery_status,
     ds.item_type,
     o.customer_name,
+    o.delivery_type,
     o.email,
     o.mobile,
     o.address,
@@ -59,7 +59,9 @@ $ordersSql = "SELECT
         WHEN db.id IS NOT NULL THEN 'booked'
         WHEN ds.delivery_status = 'scheduled' THEN 'ready_for_booking'
         ELSE ds.delivery_status
-    END as computed_status
+    END as computed_status,
+    (SELECT MIN(lt_from) FROM order_items WHERE order_id = o.id AND lt_from IS NOT NULL) as earliest_delivery,
+    (SELECT MAX(lt_to) FROM order_items WHERE order_id = o.id AND lt_to IS NOT NULL) as latest_delivery
 FROM delivery_schedules ds
 INNER JOIN orders o ON ds.order_id = o.id
 LEFT JOIN transportify_vehicle_list tv ON o.assigned_vehicle_id = tv.id
@@ -299,19 +301,20 @@ $overdueOrders = count(array_filter($orders, fn($o) => $o['delivery_status'] ===
                 <div class="overflow-x-auto">
                     <table class="w-full">
                         <thead class="bg-gray-50 border-b border-gray-200">
-                            <tr>
-                                <th class="px-6 py-4 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">Order</th>
-                                <th class="px-6 py-4 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">Tracking</th>
-                                <th class="px-6 py-4 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">Customer</th>
-                                <th class="px-6 py-4 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">Type</th>
-                                <th class="px-6 py-4 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">Time</th>
-                                <th class="px-6 py-4 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">Items</th>
-                                <th class="px-6 py-4 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">Weight/Volume</th>
-                                <th class="px-6 py-4 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">Total</th>
-                                <th class="px-6 py-4 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">Status</th>
-                                <th class="px-6 py-4 text-right text-xs font-semibold text-gray-600 uppercase tracking-wider">Actions</th>
-                            </tr>
-                        </thead>
+    <tr>
+        <th class="px-6 py-4 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">Order</th>
+        <th class="px-6 py-4 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">Tracking</th>
+        <th class="px-6 py-4 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">Customer</th>
+        <th class="px-6 py-4 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">Type</th>
+        <th class="px-6 py-4 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">Time</th>
+        <th class="px-6 py-4 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">Expected Delivery</th>
+        <th class="px-6 py-4 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">Items</th>
+        <th class="px-6 py-4 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">Weight/Volume</th>
+        <th class="px-6 py-4 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">Total</th>
+        <th class="px-6 py-4 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">Status</th>
+        <th class="px-6 py-4 text-right text-xs font-semibold text-gray-600 uppercase tracking-wider">Actions</th>
+    </tr>
+</thead>
                         <tbody class="divide-y divide-gray-200">
                             <?php foreach ($orders as $order): ?>
                                 <?php
@@ -368,8 +371,21 @@ $overdueOrders = count(array_filter($orders, fn($o) => $o['delivery_status'] ===
                                         <?php echo $deliveryTypeBadge; ?>
                                     </td>
                                     <td class="px-6 py-4 whitespace-nowrap">
-                                        <div class="text-sm font-semibold text-gray-900"><?php echo date('g:i A', strtotime($order['delivery_time'])); ?></div>
-                                    </td>
+    <div class="text-sm font-semibold text-gray-900"><?php echo date('g:i A', strtotime($order['delivery_time'])); ?></div>
+</td>
+<td class="px-4 py-4 whitespace-nowrap">
+    <?php if ($order['earliest_delivery'] && $order['latest_delivery']): ?>
+    <div class="bg-gradient-to-r from-blue-50 to-indigo-50 border-l-4 border-blue-500 rounded px-3 py-2">
+        <div class="text-xs">
+            <span class="text-gray-700 font-medium"><?php echo date('M d, Y', strtotime($order['earliest_delivery'])); ?></span>
+            <span class="text-gray-500 mx-1">to</span>
+            <span class="text-blue-700 font-bold"><?php echo date('M d, Y', strtotime($order['latest_delivery'])); ?></span>
+        </div>
+    </div>
+    <?php else: ?>
+    <span class="text-xs text-gray-400 italic">Not set</span>
+    <?php endif; ?>
+</td>
                                     <td class="px-6 py-4 whitespace-nowrap">
                                         <div class="text-sm text-gray-900">
                                             <span class="font-semibold"><?php echo $order['total_items']; ?></span> items
@@ -628,16 +644,32 @@ $overdueOrders = count(array_filter($orders, fn($o) => $o['delivery_status'] ===
             content.innerHTML = `
             <div class="space-y-4">
                 <div class="bg-blue-50 border border-blue-200 rounded-lg p-5">
-                    <h4 class="font-bold text-gray-900 mb-3 flex items-center">
-                        <i class="fas fa-user-circle text-blue-600 mr-2"></i>Customer Information
-                    </h4>
-                    <div class="grid grid-cols-3 gap-4 text-sm">
-                        <div><span class="text-gray-600">Name:</span><p class="font-semibold text-gray-900">${order.customer_name}</p></div>
-                        <div><span class="text-gray-600">Mobile:</span><p class="font-semibold text-gray-900">${order.mobile || 'N/A'}</p></div>
-                        <div><span class="text-gray-600">Type:</span><p class="mt-1">${deliveryTypeLabel}</p></div>
-                        <div class="col-span-3"><span class="text-gray-600">Address:</span><p class="font-semibold text-gray-900">${order.address}</p></div>
-                    </div>
-                </div>
+    <h4 class="font-bold text-gray-900 mb-3 flex items-center">
+        <i class="fas fa-user-circle text-blue-600 mr-2"></i>Customer Information
+    </h4>
+    <div class="grid grid-cols-3 gap-4 text-sm">
+        <div><span class="text-gray-600">Name:</span><p class="font-semibold text-gray-900">${order.customer_name}</p></div>
+        <div><span class="text-gray-600">Mobile:</span><p class="font-semibold text-gray-900">${order.mobile || 'N/A'}</p></div>
+        <div><span class="text-gray-600">Type:</span><p class="mt-1">${deliveryTypeLabel}</p></div>
+        <div class="col-span-3"><span class="text-gray-600">Address:</span><p class="font-semibold text-gray-900">${order.address}</p></div>
+    </div>
+</div>
+
+${order.earliest_delivery && order.latest_delivery ? `
+<div class="bg-gradient-to-r from-blue-50 to-indigo-50 border-l-4 border-blue-500 rounded-lg p-5">
+    <h4 class="font-bold text-gray-900 mb-3 flex items-center">
+        <i class="fas fa-calendar-check text-blue-600 mr-2"></i>Expected Delivery Range
+    </h4>
+    <div class="text-center py-2">
+        <p class="text-gray-900 font-semibold text-lg">
+            ${new Date(order.earliest_delivery).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}
+            <span class="text-gray-500 mx-2">to</span>
+            <span class="text-blue-700 font-bold">${new Date(order.latest_delivery).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}</span>
+        </p>
+        <p class="text-xs text-gray-500 mt-1">Based on item lead times</p>
+    </div>
+</div>
+` : ''}
                 
                 ${bookingSection}
                 

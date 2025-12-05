@@ -76,9 +76,9 @@ $whereParts = ["1=1"];
 $params = [];
 $types = '';
 
-// NEW: Filter for orders with pending approvals
+// NEW: Filter for orders with pending approvals (Document Controller level)
 if ($approval_pending) {
-    $whereParts[] = "EXISTS (SELECT 1 FROM po_attachments WHERE order_id = o.id AND approval_status = 'pending')";
+    $whereParts[] = "EXISTS (SELECT 1 FROM po_attachments WHERE order_id = o.id AND approval_status = 'pending' AND superadmin_approval_status = 'approved')";
 }
 
 if ($status_filter !== '') {
@@ -175,12 +175,13 @@ foreach ($statusCounts as $row) {
     $statusCountsArray[$row['status']] = (int)$row['count'];
 }
 
-// Get count of orders with pending P.O. approvals
+// Get count of orders with pending P.O. approvals (Document Controller pending only)
 $pendingApprovalsSql = "
     SELECT COUNT(DISTINCT o.id) as pending_count
     FROM orders o
     INNER JOIN po_attachments poa ON o.id = poa.order_id
     WHERE poa.approval_status = 'pending'
+    AND poa.superadmin_approval_status = 'approved'
 ";
 $pendingApprovalsResult = $conn->query($pendingApprovalsSql);
 $pendingApprovalsCount = 0;

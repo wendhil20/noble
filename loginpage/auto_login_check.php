@@ -45,7 +45,7 @@ if (!isset($_SESSION['noble_user']) && isset($_COOKIE['noble_remember_token']) &
             
             // Determine redirect based on user level
             $redirect = match (strtolower($user['lvl'])) {
-                'superadmin', 'admin' => "admin/client/dashboard",
+                'superadmin', 'admin' => "admin/client/owner_dashboard",
                 'sales' => "admin/orders/generate_referral",
                 'accountant' => match (strtolower($user['subrole'] ?? '')) {
         'document_controller' => "admin/accountant/accountant_view_orders",

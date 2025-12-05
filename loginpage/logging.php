@@ -229,7 +229,7 @@ try {
 
     // Determine redirect
     $redirect = match (strtolower($user['lvl'])) {
-        'superadmin', 'admin' => "../admin/client/dashboard",
+        'superadmin', 'admin' => "../admin/client/owner_dashboard",
         'sales' => "../admin/orders/generate_referral",
         'accountant' => match (strtolower($user['subrole'] ?? '')) {
         'document_controller' => "../admin/accountant/accountant_view_orders",

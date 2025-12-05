@@ -36,14 +36,17 @@ if (!$order) {
     exit();
 }
 
-// Get P.O. attachments grouped by supplier
+// Get P.O. attachments grouped by supplier (only superadmin-approved files)
 $attachmentsSql = "SELECT pa.*, 
                    requester.fullname as requested_by_name,
-                   approver.fullname as approved_by_name
+                   approver.fullname as approved_by_name,
+                   superadmin.fullname as superadmin_name
                    FROM po_attachments pa
                    LEFT JOIN nobleaccount requester ON pa.approval_requested_by = requester.id
                    LEFT JOIN nobleaccount approver ON pa.approved_by = approver.id
+                   LEFT JOIN nobleaccount superadmin ON pa.superadmin_approved_by = superadmin.id
                    WHERE pa.order_id = ? 
+                   AND pa.superadmin_approval_status = 'approved'
                    ORDER BY pa.supplier_name, pa.uploaded_at DESC";
 $attachmentsStmt = $conn->prepare($attachmentsSql);
 $attachmentsStmt->bind_param("i", $order_id);
@@ -402,14 +405,23 @@ if (isset($_POST['reject_file'])) {
                     </p>
                 <?php endif; ?>
                 <?php if ($file['approval_status'] == 'pending' && $file['requested_by_name']): ?>
-                    <p class="text-xs text-orange-600 mt-1">
-                        <i class="fas fa-user mr-1"></i>
-                        Requested by: <?php echo htmlspecialchars($file['requested_by_name']); ?>
-                        <?php if ($file['approval_requested_at']): ?>
-                            on <?php echo date('M j, Y g:i A', strtotime($file['approval_requested_at'])); ?>
-                        <?php endif; ?>
-                    </p>
-                <?php endif; ?>
+    <p class="text-xs text-orange-600 mt-1">
+        <i class="fas fa-user mr-1"></i>
+        Requested by: <?php echo htmlspecialchars($file['requested_by_name']); ?>
+        <?php if ($file['approval_requested_at']): ?>
+            on <?php echo date('M j, Y g:i A', strtotime($file['approval_requested_at'])); ?>
+        <?php endif; ?>
+    </p>
+<?php endif; ?>
+<?php if ($file['superadmin_name']): ?>
+    <p class="text-xs text-green-600 mt-1">
+        <i class="fas fa-shield-alt mr-1"></i>
+        Approved by Superadmin: <?php echo htmlspecialchars($file['superadmin_name']); ?>
+        <?php if ($file['superadmin_approved_at']): ?>
+            on <?php echo date('M j, Y g:i A', strtotime($file['superadmin_approved_at'])); ?>
+        <?php endif; ?>
+    </p>
+<?php endif; ?>
             </div>
         </div>
                                         <div class="flex items-center space-x-2">
@@ -534,9 +546,9 @@ if (isset($_POST['reject_file'])) {
             </div>
         <?php else: ?>
             <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-12 text-center">
-                <i class="fas fa-file-excel text-6xl text-gray-300 mb-4"></i>
-                <h3 class="text-lg font-medium text-gray-900 mb-2">No P.O. Files Found</h3>
-                <p class="text-sm text-gray-500 mb-4">No purchase order files have been uploaded for this order yet.</p>
+    <i class="fas fa-file-excel text-6xl text-gray-300 mb-4"></i>
+    <h3 class="text-lg font-medium text-gray-900 mb-2">No P.O. Files Found</h3>
+    <p class="text-sm text-gray-500 mb-4">No purchase order files have been approved by Superadmin yet.</p>
                 <a href="accountant_view_orders.php" 
                    class="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md text-white bg-noble-orange hover:bg-noble-orange-dark focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-noble-orange transition-colors">
                     <i class="fas fa-arrow-left mr-2"></i>

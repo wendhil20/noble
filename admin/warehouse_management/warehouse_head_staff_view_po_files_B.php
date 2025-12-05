@@ -35,10 +35,12 @@ if (!$order) {
 // Get P.O. attachments
 $attachmentsSql = "SELECT pa.*, 
                    requester.fullname as requested_by_name,
-                   approver.fullname as approved_by_name
+                   approver.fullname as approved_by_name,
+                   superadmin.fullname as superadmin_name
                    FROM po_attachments pa
                    LEFT JOIN nobleaccount requester ON pa.approval_requested_by = requester.id
                    LEFT JOIN nobleaccount approver ON pa.approved_by = approver.id
+                   LEFT JOIN nobleaccount superadmin ON pa.superadmin_approved_by = superadmin.id
                    WHERE pa.order_id = ? 
                    ORDER BY pa.supplier_name, pa.uploaded_at DESC";
 $attachmentsStmt = $conn->prepare($attachmentsSql);
@@ -202,13 +204,13 @@ if (isset($_POST['update_po_status'])) {
     }
 }
 
-// Handle approval request
+// Handle approval request (now goes to superadmin first)
 if (isset($_POST['request_approval'])) {
     $file_id = (int)$_POST['file_id'];
     $current_user_id = $_SESSION['noble_id'] ?? 0;
     
     $requestSql = "UPDATE po_attachments 
-                   SET approval_status = 'pending', 
+                   SET superadmin_approval_status = 'pending', 
                        approval_requested_at = NOW(),
                        approval_requested_by = ?
                    WHERE id = ? AND order_id = ?";
@@ -216,7 +218,7 @@ if (isset($_POST['request_approval'])) {
     $requestStmt->bind_param("iii", $current_user_id, $file_id, $order_id);
     
     if ($requestStmt->execute()) {
-        $success_message = "Approval request submitted successfully.";
+        $success_message = "Approval request sent to Superadmin successfully.";
         header("Location: warehouse_head_staff_view_po_files_B.php?order_id=" . $order_id);
         exit();
     } else {
@@ -224,7 +226,6 @@ if (isset($_POST['request_approval'])) {
     }
     $requestStmt->close();
 }
-
 // Handle file deletion
 if (isset($_POST['delete_file'])) {
     $file_id = (int)$_POST['file_id'];
@@ -510,21 +511,31 @@ if (isset($_POST['delete_file'])) {
     <?php endif; ?>
 <?php endif; ?>
 
-<!-- Approval Status Badge -->
-<?php if ($file['approval_status'] == 'pending'): ?>
+<!-- Approval Status Badges (Two-Step) -->
+<?php if ($file['superadmin_approval_status'] == 'pending'): ?>
+    <span class="inline-flex items-center px-2 py-1 text-xs font-medium bg-orange-100 text-orange-800 rounded-full">
+        <i class="fas fa-hourglass-half mr-1"></i>
+        Pending Superadmin
+    </span>
+<?php elseif ($file['superadmin_approval_status'] == 'rejected'): ?>
+    <span class="inline-flex items-center px-2 py-1 text-xs font-medium bg-red-100 text-red-800 rounded-full">
+        <i class="fas fa-ban mr-1"></i>
+        Rejected by Superadmin
+    </span>
+<?php elseif ($file['superadmin_approval_status'] == 'approved' && $file['approval_status'] == 'pending'): ?>
     <span class="inline-flex items-center px-2 py-1 text-xs font-medium bg-yellow-100 text-yellow-800 rounded-full">
         <i class="fas fa-clock mr-1"></i>
-        Pending Approval
+        Pending Document Controller
     </span>
 <?php elseif ($file['approval_status'] == 'approved'): ?>
     <span class="inline-flex items-center px-2 py-1 text-xs font-medium bg-green-100 text-green-800 rounded-full">
-        <i class="fas fa-check-circle mr-1"></i>
-        Approved
+        <i class="fas fa-check-double mr-1"></i>
+        Fully Approved
     </span>
 <?php elseif ($file['approval_status'] == 'rejected'): ?>
     <span class="inline-flex items-center px-2 py-1 text-xs font-medium bg-red-100 text-red-800 rounded-full">
         <i class="fas fa-times-circle mr-1"></i>
-        Rejected
+        Rejected by Document Controller
     </span>
 <?php endif; ?>
 
@@ -548,14 +559,14 @@ if (isset($_POST['delete_file'])) {
                 </a>
                 
                 <?php if ($file['marked_as_ordered'] == 0): ?>
-                    <!-- Request Approval -->
-                    <?php if ($file['approval_status'] != 'pending' && $file['approval_requested_at'] == null): ?>
-                        <button onclick="submitAction('request_approval', <?php echo $file['id']; ?>)"
-                                class="w-full text-left flex items-center px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">
-                            <i class="fas fa-check w-5 mr-2"></i>
-                            Request Approval
-                        </button>
-                    <?php endif; ?>
+    <!-- Request Approval -->
+    <?php if ($file['superadmin_approval_status'] != 'pending' && $file['superadmin_approval_status'] != 'approved' && $file['approval_requested_at'] == null): ?>
+        <button onclick="submitAction('request_approval', <?php echo $file['id']; ?>)"
+                class="w-full text-left flex items-center px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">
+            <i class="fas fa-paper-plane w-5 mr-2"></i>
+            Request Approval
+        </button>
+    <?php endif; ?>
                     
                     <!-- Mark as Ordered -->
                     <?php if ($file['approval_status'] == 'approved'): ?>

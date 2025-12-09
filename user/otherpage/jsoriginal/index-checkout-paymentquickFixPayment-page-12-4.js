@@ -69,12 +69,10 @@ class PaymentSystem {
     
     // Hide all payment fields
     const bankFields = document.getElementById('bankTransferFields');
-    const paypalFields = document.getElementById('paypalFields'); 
     const paymongoFields = document.getElementById('paymongoFields');
     const qrFields = document.getElementById('qrPaymentFields');
     
     if (bankFields) bankFields.classList.add('hidden');
-    if (paypalFields) paypalFields.classList.add('hidden');
     if (paymongoFields) paymongoFields.classList.add('hidden');
     if (qrFields) qrFields.classList.add('hidden');
 
@@ -96,18 +94,6 @@ class PaymentSystem {
             placeOrderBtn.classList.add('bg-gray-400', 'cursor-not-allowed');
             placeOrderBtn.classList.remove('bg-green-600', 'hover:bg-green-700');
             placeOrderBtn.textContent = 'Place Order';
-        }
-        
-    } else if (method === 'PayPal') {
-        if (paypalFields) {
-            paypalFields.classList.remove('hidden');
-            this.renderPayPalInterface();
-        }
-        if (placeOrderBtn) {
-            placeOrderBtn.disabled = false;
-            placeOrderBtn.classList.remove('bg-gray-400', 'cursor-not-allowed');
-            placeOrderBtn.classList.add('bg-green-600', 'hover:bg-green-700');
-            placeOrderBtn.textContent = 'Continue to PayPal';
         }
         
     } else if (method === 'PayMongo') {
@@ -237,33 +223,6 @@ setRequiredForQRPayment() {
     renderQRPaymentInterface() {
         if (window.bankQRModule) {
             window.bankQRModule.renderQRPaymentInterface();
-        }
-    }
-
-    renderPayPalInterface() {
-        const paypalFields = document.getElementById('paypalFields');
-        if (!paypalFields) return;
-
-        const grandTotalElement = document.getElementById('grandTotalDisplay');
-        const totalAmount = grandTotalElement ? grandTotalElement.textContent : '₱0.00';
-
-        if (!paypalFields.innerHTML.includes('PayPal Payment')) {
-            paypalFields.innerHTML = `
-                <div class="bg-blue-50 border border-blue-200 rounded-lg p-4">
-                    <div class="flex items-center gap-3 mb-3">
-                        <div>
-                            <h5 class="font-bold text-blue-800">PayPal Payment</h5>
-                            <p class="text-sm text-blue-600">Secure payment with PayPal</p>
-                        </div>
-                    </div>
-                    <div class="bg-blue-100 border border-blue-200 rounded-lg p-4">
-                        <div class="flex justify-between mb-2">
-                            <span class="text-gray-600">Total Amount:</span>
-                            <span class="font-bold text-blue-800">${totalAmount}</span>
-                        </div>
-                    </div>
-                </div>
-            `;
         }
     }
 

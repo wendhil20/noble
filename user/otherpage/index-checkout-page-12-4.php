@@ -47,21 +47,9 @@ if ($isLocalhost) {
     $basePath = '/user/otherpage';
 }
 
-// Dynamic PayPal URLs
-$paypal_return_url = $protocol . $host . $basePath . '/paypal-success.php';
-$paypal_cancel_url = $protocol . $host . $basePath . '/index-checkout-page-12-3.php';
-
 // Dynamic PayMongo URLs
 $paymongo_success_url = $protocol . $host . $basePath . '/checkout-paymongo-succes-page-12-A.php';
 $paymongo_cancel_url = $protocol . $host . $basePath . '/index-checkout-page-12-3.php';
-
-// PayPal configuration
-$paypal_config = [
-    'mode' => 'sandbox',
-    'client_id' => 'AT1LmhSbRH3yOGHNRFYZb_WhRkFIUlsdUEIQcNNr_0BXnb6LapA61CTycE7xq0c5W6XrHMpetIfpP-Kd',
-    'client_secret' => 'EHkB3XnpMB-mjaw8VeOmWR9dmDoDoIZwLwBoEvWdabiGfgd2kTb6VYfOq4WvuJVEUfVaOmm3rBMfS-QT',
-    'currency' => 'PHP'
-];
 
 // Then update the PayMongo config:
 $paymongo_config = [
@@ -845,7 +833,6 @@ foreach ($cart_items as $item) {
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Montserrat:wght@300;400;600;700&display=swap">
-    <script src="https://www.paypal.com/sdk/js?client-id=<?= $paypal_config['client_id'] ?>&currency=<?= $paypal_config['currency'] ?>&intent=capture"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
 </head>
 
@@ -984,23 +971,6 @@ foreach ($cart_items as $item) {
                             </div>
                         </label>
 
-                        <!-- PayPal -->
-                        <label class="flex items-center p-4 border-2 rounded-lg cursor-pointer hover:bg-gray-50 hover:border-blue-300 transition">
-                            <input type="radio" name="payment_method" value="PayPal" required class="mr-4" />
-                            <div class="flex items-center">
-                                <div class="mr-3">
-                                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32" class="w-8 h-8">
-                                        <path fill="#003087" d="M15.7 4.2h6.5c2.2 0 3.9.5 5.1 1.5 1.1.9 1.6 2.3 1.3 4.2-.7 4.8-3.6 6.8-8.5 6.8h-2.2c-.5 0-.9.3-1 .8l-1 6.6c0 .3-.3.5-.6.5H11c-.5 0-.9-.4-.8-.9L13.5 5c.1-.4.4-.8.9-.8h1.3z" />
-                                        <path fill="#009cde" d="M26.8 10.6c-.3 2-1.2 3.6-2.6 4.6-1.4 1-3.3 1.5-5.7 1.5h-2.4c-.5 0-.9.3-1 .8l-1.1 7.1c0 .3-.3.5-.6.5h-3.4c-.5 0-.9-.4-.8-.9l2.4-15.6c.1-.4.4-.8.9-.8h7.2c1.4 0 2.6.2 3.6.6 1.5.6 2.1 2 1.9 3.2z" />
-                                    </svg>
-                                </div>
-                                <div>
-                                    <div class="font-medium">PayPal</div>
-                                    <div class="text-sm text-gray-600">Pay securely with PayPal</div>
-                                </div>
-                            </div>
-                        </label>
-
                         <!-- PayMongo -->
                         <label class="flex items-center p-4 border-2 rounded-lg cursor-pointer hover:bg-gray-50 hover:border-green-300 transition">
                             <input type="radio" name="payment_method" value="PayMongo" required class="mr-4" />
@@ -1068,28 +1038,6 @@ foreach ($cart_items as $item) {
                         </div>
                     </div>
 
-                    <!-- PayPal Fields -->
-                    <div id="paypalFields" class="hidden mt-6 p-4 bg-blue-50 rounded-lg">
-                        <div class="flex items-center gap-3 mb-4">
-                            <div class="text-blue-600">
-                                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32" class="w-8 h-8">
-                                    <path fill="#003087" d="M15.7 4.2h6.5c2.2 0 3.9.5 5.1 1.5 1.1.9 1.6 2.3 1.3 4.2-.7 4.8-3.6 6.8-8.5 6.8h-2.2c-.5 0-.9.3-1 .8l-1 6.6c0 .3-.3.5-.6.5H11c-.5 0-.9-.4-.8-.9L13.5 5c.1-.4.4-.8.9-.8h1.3z" />
-                                    <path fill="#009cde" d="M26.8 10.6c-.3 2-1.2 3.6-2.6 4.6-1.4 1-3.3 1.5-5.7 1.5h-2.4c-.5 0-.9.3-1 .8l-1.1 7.1c0 .3-.3.5-.6.5h-3.4c-.5 0-.9-.4-.8-.9l2.4-15.6c.1-.4.4-.8.9-.8h7.2c1.4 0 2.6.2 3.6.6 1.5.6 2.1 2 1.9 3.2z" />
-                                </svg>
-                            </div>
-                            <div>
-                                <h5 class="font-bold text-blue-800">PayPal Payment</h5>
-                                <p class="text-sm text-blue-600">You will be redirected to PayPal to complete payment</p>
-                            </div>
-                        </div>
-                        <div class="bg-blue-100 border border-blue-200 rounded-lg p-4">
-                            <div class="flex justify-between mb-2">
-                                <span class="text-gray-600">Total Amount:</span>
-                                <span class="font-bold text-blue-800">₱<?= number_format($grand_total, 2) ?></span>
-                            </div>
-                        </div>
-                    </div>
-
                     <!-- PayMongo Fields -->
                     <div id="paymongoFields" class="hidden mt-6 p-4 bg-green-50 rounded-lg">
                         <div class="flex items-center gap-3 mb-4">
@@ -1137,16 +1085,13 @@ foreach ($cart_items as $item) {
                                             <?php endif; ?>
                                         </div>
                                         <?php
-                                        $leadTimeRange = calculateLeadTimeRange(
-                                            $item['lead_count'] ?? null,
-                                            $item['lead_interval'] ?? null,
-                                            $item['lead_gap'] ?? null
-                                        );
-                                        if ($leadTimeRange): ?>
-                                            <div class="bg-green-50 border border-green-200 rounded p-2 mt-2 text-xs text-green-700">
-                                                📅 Receive by: <?= $leadTimeRange['display'] ?>
-                                            </div>
-                                        <?php endif; ?>
+$leadTimeRange = calculateLeadTimeRange(
+    $item['lead_count'] ?? null,
+    $item['lead_interval'] ?? null,
+    $item['lead_gap'] ?? null
+);
+// Hidden to avoid confusion - customer can see expected delivery at bottom
+?>
                                     </div>
                                     <div class="text-right ml-4">
                                         <div class="font-bold text-green-600">₱<?= number_format($item['price'] * $item['quantity'], 2) ?></div>

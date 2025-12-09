@@ -467,16 +467,13 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                                         <?php endif; ?>
                                     </div>
                                     <?php
-                                    $leadTimeRange = calculateLeadTimeRange(
-                                        $item['lead_count'] ?? null,
-                                        $item['lead_interval'] ?? null,
-                                        $item['lead_gap'] ?? null
-                                    );
-                                    if ($leadTimeRange): ?>
-                                        <div class="text-xs text-green-600 mt-1">
-                                            Receive by: <?= $leadTimeRange['display'] ?>
-                                        </div>
-                                    <?php endif; ?>
+$leadTimeRange = calculateLeadTimeRange(
+    $item['lead_count'] ?? null,
+    $item['lead_interval'] ?? null,
+    $item['lead_gap'] ?? null
+);
+// Hidden to avoid confusion - customer can see expected delivery in next step
+?>
                                 </div>
                                 <div class="text-right ml-4">
                                     <div class="font-bold text-green-600">₱<?= number_format($item['price'] * $item['quantity'], 2) ?></div>

@@ -550,14 +550,52 @@ document.getElementById('totalLength').value = totalLength.toFixed(2);
 
 // ✅ HELPER FUNCTIONS
 function calculateCubicMetersJS(width, height, length, unit, quantity = 1) {
-    const meters = { 'cm': 0.01, 'm': 1, 'mm': 0.001, 'in': 0.0254, 'ft': 0.3048 };
-    const multiplier = meters[unit.toLowerCase()] || 0.01;
+    // Return 0 if no dimensions provided
+    if (!width || !height || !length) {
+        return 0;
+    }
+    
+    // Conversion factors to meters (matching database ENUM)
+    const meters = {
+        'mm': 0.001,      // millimeters to meters
+        'cm': 0.01,       // centimeters to meters
+        'inches': 0.0254, // inches to meters
+        'm': 1            // meters (no conversion)
+    };
+    
+    // Get multiplier, default to 0 if unit not found
+    const multiplier = meters[unit.toLowerCase()] || 0;
+    
+    // If multiplier is 0 (invalid unit or no data), return 0
+    if (multiplier === 0) {
+        return 0;
+    }
+    
     return (width * multiplier) * (height * multiplier) * (length * multiplier) * quantity;
 }
 
 function convertToKilogramsJS(weight, unit, quantity = 1) {
-    const kgConversion = { 'kg': 1, 'g': 0.001, 'lb': 0.453592, 'oz': 0.0283495 };
-    const multiplier = kgConversion[unit.toLowerCase()] || 1;
+    // Return 0 if no weight provided
+    if (!weight) {
+        return 0;
+    }
+    
+    // Conversion factors to kilograms (matching database ENUM)
+    const kgConversion = {
+        'g': 0.001,      // grams to kg
+        'kg': 1,         // kg (no conversion)
+        'lbs': 0.453592, // pounds to kg
+        'oz': 0.0283495  // ounces to kg
+    };
+    
+    // Get multiplier, default to 0 if unit not found
+    const multiplier = kgConversion[unit.toLowerCase()] || 0;
+    
+    // If multiplier is 0 (invalid unit or no data), return 0
+    if (multiplier === 0) {
+        return 0;
+    }
+    
     return (weight * multiplier) * quantity;
 }
 
@@ -568,17 +606,28 @@ function assignTransportifyVehicleJS(cartItems, selectedCourier = null) {
     let totalWeightKg = 0;
     
     cartItems.forEach((item, index) => {
-        let width = parseFloat(item.width) || 30;
-        let height = parseFloat(item.height) || 30;
-        let length = parseFloat(item.length) || 30;
-        let weight = parseFloat(item.weight) || 1;
+        // Get dimensions - use 0 if not provided (no fallback sizes)
+        let width = parseFloat(item.width) || 0;
+        let height = parseFloat(item.height) || 0;
+        let length = parseFloat(item.length) || 0;
+        let weight = parseFloat(item.weight) || 0;
         
+        // Get units - use database defaults if not provided
         const dimensionUnit = item.dimension_unit || 'cm';
         const weightUnit = item.weight_unit || 'kg';
         const quantity = parseInt(item.quantity) || 1;
         
-        totalCubicMeters += calculateCubicMetersJS(width, height, length, dimensionUnit, quantity);
-        totalWeightKg += convertToKilogramsJS(weight, weightUnit, quantity);
+        // Calculate and add to totals (will be 0 if no data)
+        const itemCubicM = calculateCubicMetersJS(width, height, length, dimensionUnit, quantity);
+        const itemWeightKg = convertToKilogramsJS(weight, weightUnit, quantity);
+        
+        totalCubicMeters += itemCubicM;
+        totalWeightKg += itemWeightKg;
+        
+        // Debug log for items with no dimensions
+        if (itemCubicM === 0 && itemWeightKg === 0) {
+            console.log(`⚠️ Item ${index + 1} has no dimensions/weight:`, item.variant_name || item.product_name);
+        }
     });
     
     
@@ -753,9 +802,10 @@ function showAssignedVehicleDetails(vehicle, vehicleAssignment) {
                 <div class="${getBarColor(volumePercentage, volumeExceeded)} h-3 rounded-full" style="width: ${Math.min(volumePercentage, 100)}%"></div>
             </div>
             <div class="flex justify-between mt-1 text-xs ${volumeExceeded ? 'text-red-700 font-semibold' : 'text-gray-600'}">
-                <span>${orderCubicM.toFixed(3)} m³</span>
-                <span>of ${maxCubicM.toFixed(2)} m³</span>
-            </div>
+    <span>${orderCubicM.toFixed(3)} m³</span>
+    <span>of ${maxCubicM.toFixed(3)} m³</span>
+</div>
+${orderCubicM === 0 ? '<div class="text-xs text-orange-600 mt-1">⚠️ No dimension data provided</div>' : ''}
         </div>
         
         <div class="bg-white rounded-lg p-3 border ${weightExceeded ? 'border-red-300' : ''}">
@@ -767,9 +817,10 @@ function showAssignedVehicleDetails(vehicle, vehicleAssignment) {
                 <div class="${getBarColor(weightPercentage, weightExceeded)} h-3 rounded-full" style="width: ${Math.min(weightPercentage, 100)}%"></div>
             </div>
             <div class="flex justify-between mt-1 text-xs ${weightExceeded ? 'text-red-700 font-semibold' : 'text-gray-600'}">
-                <span>${orderWeightKg.toFixed(2)} kg</span>
-                <span>of ${maxWeightKg.toFixed(2)} kg</span>
-            </div>
+    <span>${orderWeightKg.toFixed(2)} kg</span>
+    <span>of ${maxWeightKg.toFixed(2)} kg</span>
+</div>
+${orderWeightKg === 0 ? '<div class="text-xs text-orange-600 mt-1">⚠️ No weight data provided</div>' : ''}
         </div>
     </div>`;
     

@@ -82,18 +82,57 @@ $stmt->close();
 // Helper functions
 function calculateCubicMeters($width, $height, $length, $unit, $quantity = 1)
 {
-    $meters = ['cm' => 0.01, 'm' => 1, 'mm' => 0.001, 'in' => 0.0254, 'ft' => 0.3048];
-    $multiplier = $meters[strtolower($unit)] ?? 0.01;
+    // Return 0 if no dimensions provided
+    if (empty($width) || empty($height) || empty($length)) {
+        return 0;
+    }
+    
+    // Conversion factors to meters (matching database ENUM)
+    $meters = [
+        'mm' => 0.001,      // millimeters to meters
+        'cm' => 0.01,       // centimeters to meters
+        'inches' => 0.0254, // inches to meters
+        'm' => 1            // meters (no conversion)
+    ];
+    
+    // Get multiplier, default to 0 if unit not found (will result in 0 volume)
+    $multiplier = $meters[strtolower($unit)] ?? 0;
+    
+    // If multiplier is 0 (invalid unit), return 0
+    if ($multiplier === 0) {
+        return 0;
+    }
+    
     $widthM = ($width * $multiplier);
     $heightM = ($height * $multiplier);
     $lengthM = ($length * $multiplier);
+    
     return ($widthM * $heightM * $lengthM) * $quantity;
 }
 
 function convertToKilograms($weight, $unit, $quantity = 1)
 {
-    $kgConversion = ['kg' => 1, 'g' => 0.001, 'lb' => 0.453592, 'oz' => 0.0283495];
-    $multiplier = $kgConversion[strtolower($unit)] ?? 1;
+    // Return 0 if no weight provided
+    if (empty($weight)) {
+        return 0;
+    }
+    
+    // Conversion factors to kilograms (matching database ENUM)
+    $kgConversion = [
+        'g' => 0.001,      // grams to kg
+        'kg' => 1,         // kg (no conversion)
+        'lbs' => 0.453592, // pounds to kg
+        'oz' => 0.0283495  // ounces to kg
+    ];
+    
+    // Get multiplier, default to 0 if unit not found
+    $multiplier = $kgConversion[strtolower($unit)] ?? 0;
+    
+    // If multiplier is 0 (invalid unit), return 0
+    if ($multiplier === 0) {
+        return 0;
+    }
+    
     return ($weight * $multiplier) * $quantity;
 }
 
@@ -104,19 +143,28 @@ function assignTransportifyVehicle($cart_items, $transportify_vehicles)
     $itemVehicleData = [];
 
     foreach ($cart_items as $item) {
-        $width = floatval($item['width'] ?? 0);
-        $height = floatval($item['height'] ?? 0);
-        $length = floatval($item['length'] ?? 0);
-        $dimensionUnit = $item['dimension_unit'] ?? 'cm';
-        $weight = floatval($item['weight'] ?? 0);
-        $weightUnit = $item['weight_unit'] ?? 'kg';
-        $quantity = intval($item['quantity'] ?? 1);
+    // Get dimensions - use 0 if not provided (no fallback sizes)
+    $width = floatval($item['width'] ?? 0);
+    $height = floatval($item['height'] ?? 0);
+    $length = floatval($item['length'] ?? 0);
+    
+    // Get units - use database defaults if not provided
+    $dimensionUnit = $item['dimension_unit'] ?? 'cm';
+    $weight = floatval($item['weight'] ?? 0);
+    $weightUnit = $item['weight_unit'] ?? 'kg';
+    $quantity = intval($item['quantity'] ?? 1);
 
-        $itemCubicM = calculateCubicMeters($width, $height, $length, $dimensionUnit, $quantity);
-        $itemWeightKg = convertToKilograms($weight, $weightUnit, $quantity);
+    // Calculate cubic meters and weight (will be 0 if no data)
+    $itemCubicM = calculateCubicMeters($width, $height, $length, $dimensionUnit, $quantity);
+    $itemWeightKg = convertToKilograms($weight, $weightUnit, $quantity);
 
-        $totalCubicMeters += $itemCubicM;
-        $totalWeightKg += $itemWeightKg;
+    $totalCubicMeters += $itemCubicM;
+    $totalWeightKg += $itemWeightKg;
+    
+    // Debug log for items with no dimensions
+    if ($itemCubicM === 0 && $itemWeightKg === 0) {
+        error_log("⚠️ Item has no dimensions/weight: " . ($item['variant_name'] ?? $item['product_name']));
+    }
 
         $itemVehicleData[] = [
             'item_id' => $item['id'] ?? $item['variant_id'],

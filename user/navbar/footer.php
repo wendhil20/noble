@@ -3,7 +3,7 @@
 
   <footer class=" text-black py-16 mt-12 relative overflow-hidden font-roboto">
           <!-- Divider -->
-          <div class="h-px bg-gradient-to-r from-transparent via-gray-600 to-transparent mb-8"></div>
+    <div class="h-px bg-gradient-to-r from-transparent via-gray-600 to-transparent mb-8"></div>
 
       <div class="max-w-7xl mx-auto px-6 relative z-10">
           <!-- Main Footer Content -->

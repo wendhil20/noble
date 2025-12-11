@@ -363,6 +363,7 @@ $stmt->close();
 
 // ✅ Check if this is a Windows product
 $is_windows_category = strtolower($product['codename']) === 'windows';
+$product_specs = $product;
 
 // ✅ GET AVERAGE RATING
 $avg_stmt = $conn->prepare("

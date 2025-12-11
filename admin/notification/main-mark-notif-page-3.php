@@ -56,24 +56,76 @@ if ($action === 'mark_all') {
     exit();
 }
 
+// Delete all notifications
+if ($action === 'delete_all') {
+    $query = "DELETE FROM admin_notifications";
+    $result = $conn->query($query);
+    
+    if ($result) {
+        $affected_rows = $conn->affected_rows;
+        echo json_encode([
+            'success' => true,
+            'message' => 'All notifications deleted successfully',
+            'unread_count' => 0,
+            'affected_rows' => $affected_rows
+        ]);
+    } else {
+        echo json_encode([
+            'success' => false,
+            'message' => 'Failed to delete all notifications: ' . $conn->error
+        ]);
+    }
+    exit();
+}
+
 // Delete notification
 if ($action === 'delete' && $notification_id) {
+    $notification_id = (int)$notification_id; // Ensure it's an integer
+    
     $query = "DELETE FROM admin_notifications WHERE id = ?";
     $stmt = $conn->prepare($query);
-    if ($stmt) {
-        $stmt->bind_param("i", $notification_id);
-        $result = $stmt->execute();
+    
+    if (!$stmt) {
+        // Prepare failed
+        echo json_encode([
+            'success' => false,
+            'message' => 'Database error: ' . $conn->error,
+            'error_type' => 'prepare_failed'
+        ]);
+        exit();
+    }
+    
+    $stmt->bind_param("i", $notification_id);
+    $result = $stmt->execute();
+    
+    if (!$result) {
+        // Execute failed
+        echo json_encode([
+            'success' => false,
+            'message' => 'Delete failed: ' . $stmt->error,
+            'error_type' => 'execute_failed'
+        ]);
         $stmt->close();
-        
-        if ($result) {
-            echo json_encode([
-                'success' => true,
-                'message' => 'Notification deleted',
-                'unread_count' => getUnreadCount($conn)
-            ]);
-        } else {
-            echo json_encode(['success' => false, 'message' => 'Failed to delete']);
-        }
+        exit();
+    }
+    
+    $affected_rows = $stmt->affected_rows;
+    $stmt->close();
+    
+    // Check if any rows were affected
+    if ($affected_rows > 0) {
+        echo json_encode([
+            'success' => true,
+            'message' => 'Notification deleted successfully',
+            'unread_count' => getUnreadCount($conn),
+            'affected_rows' => $affected_rows
+        ]);
+    } else {
+        echo json_encode([
+            'success' => false,
+            'message' => 'Notification not found or already deleted',
+            'error_type' => 'no_rows_affected'
+        ]);
     }
     exit();
 }

@@ -122,7 +122,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['delete_id'])) {
   }
 }
 
-// ✅ FIXED QUERY - Get product with color and variant (size) stock
+// ✅ UPDATED QUERY - Get stock from product_variant_colors (stock_quantity)
 $products = $conn->query("
   SELECT 
     p.id, 
@@ -133,12 +133,13 @@ $products = $conn->query("
     p.created_at, 
     p.updated_at,
     COALESCE(SUM(pc.stock), 0) as total_color_stock,
-    COALESCE(SUM(pv.stock), 0) as total_size_stock,
+    COALESCE(SUM(pvc.stock_quantity), 0) as total_size_stock,
     COUNT(DISTINCT pc.id) as color_count,
     COUNT(DISTINCT pv.id) as size_count
   FROM products p
   LEFT JOIN product_colors pc ON p.id = pc.product_id
   LEFT JOIN product_variants pv ON p.id = pv.product_id
+  LEFT JOIN product_variant_colors pvc ON pv.id = pvc.variant_id
   GROUP BY p.id, p.product_name, p.codename, p.quantity, p.main_image, p.created_at, p.updated_at
   ORDER BY p.product_name
 ");
@@ -203,6 +204,10 @@ $products = $conn->query("
             <i class="fas fa-edit"></i>
             Update New Item
           </a>
+             <a href="main-adminshop-page-1" class="inline-flex items-center gap-2 bg-gray-600 hover:bg-gray-700 text-white px-6 py-2 rounded-lg transition shadow-sm">
+        
+        Back 
+      </a>
         </div>
       </div>
     </div>
@@ -245,9 +250,7 @@ $products = $conn->query("
                 <th class="px-6 py-4 text-left font-semibold text-gray-700">Image</th>
                 <th class="px-6 py-4 text-left font-semibold text-gray-700">Product Name</th>
                 <th class="px-6 py-4 text-left font-semibold text-gray-700">Product Code</th>
-                <th class="px-6 py-4 text-center font-semibold text-gray-700">Color Stock</th>
-                <th class="px-6 py-4 text-center font-semibold text-gray-700">Size Stock</th>
-                <th class="px-6 py-4 text-center font-semibold text-gray-700">Total Stock</th>
+                <th class="px-6 py-4 text-center font-semibold text-gray-700">Stock</th>
                 <th class="px-6 py-4 text-center font-semibold text-gray-700">Status</th>
                 <th class="px-6 py-4 text-center font-semibold text-gray-700">Created</th>
                 <th class="px-6 py-4 text-center font-semibold text-gray-700">Updated</th>
@@ -259,8 +262,13 @@ $products = $conn->query("
                 <?php
                 $createdAt = strtotime($product['created_at']);
                 $updatedAt = strtotime($product['updated_at']);
-                $isInStock = ($product['total_color_stock'] > 0 || $product['total_size_stock'] > 0);
+                
+                // ✅ UPDATED LOGIC - Check if ANY color OR size has stock
                 $totalStock = $product['total_color_stock'] + $product['total_size_stock'];
+                $isInStock = ($totalStock > 0); // Simple check: if total stock > 0, then IN STOCK
+                
+                // Alternative detailed check (optional):
+                // $isInStock = ($product['total_color_stock'] > 0 || $product['total_size_stock'] > 0);
                 ?>
                 <tr class="table-row-hover border-b border-gray-100 product-row " 
                     data-name="<?= htmlspecialchars(strtolower($product['product_name'])) ?>"
@@ -296,26 +304,11 @@ $products = $conn->query("
                     </span>
                   </td>
 
-                  <!-- Color Stock -->
-                  <td class="px-6 py-4 text-center">
-                    <span class="inline-flex items-center justify-center gap-1 bg-blue-50 text-blue-700 px-3 py-1 rounded-full text-xs font-semibold color-stock">
-                      <i class="fas fa-palette text-xs"></i>
-                      <?= $product['total_color_stock'] ?>
-                    </span>
-                  </td>
 
                   <!-- Size Stock -->
                   <td class="px-6 py-4 text-center">
                     <span class="inline-flex items-center justify-center gap-1 bg-green-50 text-green-700 px-3 py-1 rounded-full text-xs font-semibold size-stock">
-                      <i class="fas fa-ruler text-xs"></i>
                       <?= $product['total_size_stock'] ?>
-                    </span>
-                  </td>
-
-                  <!-- Total Stock -->
-                  <td class="px-6 py-4 text-center">
-                    <span class="font-bold text-lg text-gray-900 total-stock">
-                      <?= $totalStock ?>
                     </span>
                   </td>
 
@@ -323,7 +316,7 @@ $products = $conn->query("
                   <td class="px-6 py-4 text-center">
                     <span class="<?= $isInStock ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800' ?> text-xs font-semibold px-3 py-1 rounded-full flex items-center justify-center gap-1 stock-badge mx-auto w-fit">
                       <i class="fas fa-<?= $isInStock ? 'check-circle' : 'times-circle' ?>"></i>
-                      <?= $isInStock ? 'In Stock' : 'Out' ?>
+                      <?= $isInStock ? 'In Stock' : 'Out of Stock' ?>
                     </span>
                   </td>
 
@@ -379,13 +372,6 @@ $products = $conn->query("
       </div>
     <?php endif; ?>
 
-    <!-- Footer Navigation -->
-    <div class="mt-10 flex justify-center">
-      <a href="main-adminshop-page-1" class="inline-flex items-center gap-2 bg-gray-600 hover:bg-gray-700 text-white px-6 py-2 rounded-lg transition shadow-sm">
-        <i class="fas fa-arrow-left"></i>
-        Back to Dashboard
-      </a>
-    </div>
   </div>
 
   <script>

@@ -718,73 +718,134 @@ while ($row = $banners_result->fetch_assoc()) {
     <?php endif; ?>
 
     <!-- DYNAMIC BANNER SLIDER WITH CATEGORY LINKS -->
-    <div class="w-full grid grid-cols-1 lg:grid-cols-12 gap-1">
+    <div class="w-full">
+        <!-- Mobile: Full width slider, Desktop: 8 cols + 4 cols grid -->
+        <div class="grid grid-cols-1 lg:grid-cols-12 gap-1">
 
-        <!-- Main Slider - Takes 8 columns -->
-        <div class="lg:col-span-8 relative overflow-hidden ">
-            <div class="mySwiper h-[250px] sm:h-[350px] lg:h-[400px]">
-                <div class="swiper-wrapper">
-                    <?php if (!empty($banners)): ?>
-                        <?php foreach ($banners as $idx => $banner): ?>
-                            <a href="../otherpage/index-subcategory_grid_page-14.php?category_name=<?= urlencode(strtolower($banner['category_name'])) ?>"
-                                class="swiper-slide block cursor-pointer hover:opacity-90 transition-opacity group">
-                                <div class="relative w-full h-full overflow-hidden">
-                                    <img src="../../uploads/<?= basename($banner['filename']) ?>"
-                                        alt="<?= htmlspecialchars($banner['category_name'] ?? 'Banner') ?>"
-                                        class="w-full h-full object-contain group-hover:scale-105 transition-transform duration-500"
-                                        onerror="this.src='../../uploads/placeholder.jpg'" />
+            <!-- Main Slider -->
+            <div class="lg:col-span-8 w-full">
+                <div class="relative overflow-hidden">
+                    <div class="mySwiper h-[200px] sm:h-[300px] lg:h-[400px]">
+                        <div class="swiper-wrapper">
+                            <?php if (!empty($banners)): ?>
+                                <?php foreach ($banners as $idx => $banner): ?>
+                                    <a href="../otherpage/index-subcategory_grid_page-14.php?category_name=<?= urlencode(strtolower($banner['category_name'])) ?>"
+                                        class="swiper-slide block cursor-pointer hover:opacity-90 transition-opacity group">
+                                        <div class="relative w-full h-full overflow-hidden">
+                                            <img src="../../uploads/<?= basename($banner['filename']) ?>"
+                                                alt="<?= htmlspecialchars($banner['category_name'] ?? 'Banner') ?>"
+                                                class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
+                                                onerror="this.src='../../uploads/placeholder.jpg'" />
+                                        </div>
+                                    </a>
+                                <?php endforeach; ?>
+                            <?php else: ?>
+                                <div class="swiper-slide bg-gray-800 flex items-center justify-center">
+                                    <p class="text-gray-400">No banners available</p>
                                 </div>
-                            </a>
-                        <?php endforeach; ?>
-                    <?php else: ?>
-                        <div class="swiper-slide bg-gray-800 flex items-center justify-center">
-                            <p class="text-gray-400">No banners available</p>
+                            <?php endif; ?>
                         </div>
-                    <?php endif; ?>
+                        <div class="swiper-pagination"></div>
+                    </div>
                 </div>
-                <div class="swiper-pagination"></div>
+            </div>
+
+            <!-- Right Side Cards - Hidden on mobile, visible on desktop -->
+            <div class="hidden lg:grid lg:col-span-4 gap-1">
+
+                <!-- Card 1: Flash Discount -->
+                <a href="index-countdowntimer-page-17.php" class="relative overflow-hidden h-[197px] group  transition-all">
+                    <div class="absolute inset-0">
+                        <img src="../img/gif1.gif"
+                            alt="Flash Discount"
+                            class="w-full h-full object-cover mix-blend-overlay group-hover:scale-105 transition-transform duration-300" />
+                    </div>
+                    <div class="relative h-full flex flex-col justify-end p-4 bg-gradient-to-t from-black/70 via-black/30 to-transparent">
+                        <div class="text-white text-sm font-semibold group-hover:text-orange-400 transition-colors">
+                            Flash Discount ➜
+                        </div>
+                    </div>
+                </a>
+
+                <!-- Card 2: Category/Deals - Links to first banner category -->
+                <a href="<?= !empty($banners) ? '../otherpage/index-subcategory_grid_page-14.php?category_name=' . urlencode(strtolower($banners[0]['category_name'])) : '#' ?>"
+                    class="relative overflow-hidden h-[197px] group transition-all">
+                    <div class="absolute inset-0">
+                        <?php if (!empty($banners)): ?>
+                            <img src="../../uploads/<?= basename($banners[0]['filename']) ?>"
+                                alt="<?= htmlspecialchars($banners[0]['category_name']) ?>"
+                                class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
+                                onerror="this.src='../../uploads/placeholder.jpg'" />
+                        <?php else: ?>
+                            <img src="../img/gif1.gif" alt="Deals" class="w-full h-full object-cover mix-blend-overlay" />
+                        <?php endif; ?>
+                    </div>
+                    <div class="relative h-full flex flex-col justify-end p-4 bg-gradient-to-t from-black/70 via-black/30 to-transparent">
+                        <div class="text-white text-sm font-semibold group-hover:text-orange-400 transition-colors">
+                            <?php
+                            $label = !empty($banners) ? $banners[0]['category_name'] : 'Holiday Deals';
+                            echo ucfirst(htmlspecialchars($label));
+                            ?>➜
+                        </div>
+                    </div>
+                </a>
             </div>
         </div>
 
-        <!-- Right Side Grid - Takes 4 columns, split into 2 cards -->
-        <div class="lg:col-span-4 grid grid-cols-2 lg:grid-cols-1 gap-1">
-
-            <!-- Card 1: Recent Views -->
-            <a href="index-countdowntimer-page-17.php" class="relative overflow-hidden h-[125px] sm:h-[175px] lg:h-[197px] group  transition-all ">
+        <!-- Mobile-only category cards (visible on small screens) -->
+        <div class="lg:hidden grid grid-cols-2 gap-1 mt-1">
+            <a href="index-countdowntimer-page-17.php" class="relative overflow-hidden h-[150px] group  transition-all">
                 <div class="absolute inset-0">
-                    <img src="../img/gif1.gif" alt="Recent" class="w-full h-full object-cover mix-blend-overlay" />
+                    <img src="../img/gif1.gif"
+                        alt="Flash Discount"
+                        class="w-full h-full object-cover mix-blend-overlay group-hover:scale-105 transition-transform duration-300" />
                 </div>
-                <div class="relative h-full flex flex-col justify-end p-4 bg-gradient-to-t from-black/60 to-transparent">
-                   
-                    <div class="text-white text-sm group-hover:text-orange-400 transition-colors ">Flash Discount</div>
+                <div class="relative h-full flex flex-col justify-end p-3 bg-gradient-to-t from-black/70 to-transparent">
+                    <div class="text-white text-xs font-semibold group-hover:text-orange-400 transition-colors">
+                        Flash Discount ➜
+                    </div>
                 </div>
             </a>
 
-            <!-- Card 2: Deals - Links to first banner category -->
             <a href="<?= !empty($banners) ? '../otherpage/index-subcategory_grid_page-14.php?category_name=' . urlencode(strtolower($banners[0]['category_name'])) : '#' ?>"
-                class="relative overflow-hidden h-[125px] sm:h-[175px] lg:h-[197px] group transition-all ">
+                class="relative overflow-hidden h-[150px] group  transition-all">
                 <div class="absolute inset-0">
                     <?php if (!empty($banners)): ?>
                         <img src="../../uploads/<?= basename($banners[0]['filename']) ?>"
                             alt="<?= htmlspecialchars($banners[0]['category_name']) ?>"
-                            class="w-full h-full object-cover"
+                            class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
                             onerror="this.src='../../uploads/placeholder.jpg'" />
                     <?php else: ?>
                         <img src="../img/gif1.gif" alt="Deals" class="w-full h-full object-cover mix-blend-overlay" />
                     <?php endif; ?>
                 </div>
-           <div class="relative h-full flex flex-col justify-end p-4 bg-gradient-to-t from-black/60 to-transparent">
-    <div class="text-white text-sm group-hover:text-orange-400 transition-colors">
-        <?php
-            $label = !empty($banners) ? $banners[0]['category_name'] : 'Holiday Deals';
-            echo ucfirst(htmlspecialchars($label));
-        ?> 
-    </div>
-</div>
-
+                <div class="relative h-full flex flex-col justify-end p-3 bg-gradient-to-t from-black/70 to-transparent">
+                    <div class="text-white text-xs font-semibold group-hover:text-orange-400 transition-colors">
+                        <?php
+                        $label = !empty($banners) ? $banners[0]['category_name'] : 'Deals';
+                        echo ucfirst(htmlspecialchars($label));
+                        ?>➜ 
+                    </div>
+                </div>
             </a>
         </div>
     </div>
+
+    <style>
+        .swiper-pagination {
+            bottom: 15px !important;
+        }
+
+        .swiper-pagination-bullet {
+            background: rgba(255, 255, 255, 0.7) !important;
+            opacity: 0.7 !important;
+        }
+
+        .swiper-pagination-bullet-active {
+            background: #ff8c42 !important;
+            opacity: 1 !important;
+        }
+    </style>
 
     <section class="bg-black hidden md:block border border-black/20">
         <div class="px-4 sm:px-8 lg:px-9">
@@ -988,8 +1049,8 @@ while ($row = $banners_result->fetch_assoc()) {
                 <div class="w-full">
                     <div class="flex items-center justify-between mb-4">
                         <div class="flex items-center gap-2.5">
-                            <div class="w-1 h-6 bg-neutral-900"></div>
-                            <h2 class="text-base sm:text-xl font-bold text-neutral-900">Recently Viewed</h2>
+                         
+                            <h2 class="text-base sm:text-xl font-bold text-neutral-900">Recently Viewed ➜</h2>
                         </div>
                         <?php if ($recent_count > 0): ?>
                             <div class="flex gap-1.5">
@@ -1027,8 +1088,8 @@ while ($row = $banners_result->fetch_assoc()) {
                     <div class="w-full">
                         <div class="flex items-center justify-between mb-4">
                             <div class="flex items-center gap-2.5">
-                                <div class="w-1 h-6 bg-black"></div>
-                                <h2 class="text-base sm:text-xl font-bold text-neutral-900">Recommended for You</h2>
+                             
+                                <h2 class="text-base sm:text-xl font-bold text-neutral-900">Recommended for You ➜</h2>
                             </div>
                             <div class="flex gap-1.5">
                                 <button class="swiper-button-prev-recommended w-8 h-8 rounded-full bg-gray-100 hover:bg-gray-200 flex items-center justify-center transition-colors">
@@ -1128,7 +1189,7 @@ while ($row = $banners_result->fetch_assoc()) {
                             alt="Promo 1"
                             class="w-full h-[300px] object-cover transition-transform duration-500 group-hover:scale-105">
                     </div>
-                    <h3 class="text-lg font-semibold text-neutral-900">Style to Modern your house!</h3>
+                    <h3 class="text-lg font-semibold text-neutral-900">Style to Modern your house! </h3>
                 </a>
 
                 <!-- Box 2 -->
@@ -1141,25 +1202,7 @@ while ($row = $banners_result->fetch_assoc()) {
                     <h3 class="text-lg font-semibold text-neutral-900">Chair furniture deals below ₱5,000</h3>
                 </a>
 
-                <!-- Box 3 -->
-                <a href="#" onclick="showUnavailable(event)" class="group block">
-                    <div class="overflow-hidden ">
-                        <img src="../img/gif2.gif"
-                            alt="Promo 3"
-                            class="w-full h-[300px] object-cover transition-transform duration-500 group-hover:scale-105">
-                    </div>
-                    <h3 class="text-lg font-semibold text-neutral-900">Keep Shopping For Holiday</h3>
-                </a>
-
-                <!-- Box 4 -->
-                <a href="#" onclick="showUnavailable(event)" class="group block">
-                    <div class="overflow-hidden ">
-                        <img src="../img/display3.webp"
-                            alt="Promo 4"
-                            class="w-full h-[300px] object-cover transition-transform duration-500 group-hover:scale-105">
-                    </div>
-                    <h3 class="text-lg font-semibold text-neutral-900">Upgrade Your Living Space Today!</h3>
-                </a>
+              
             </div>
         </div>
     </section>
@@ -1392,73 +1435,100 @@ while ($row = $banners_result->fetch_assoc()) {
             <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 lg:gap-8">
 
                 <!-- LEFT SIDE: FURNITURE -->
-                <div class="space-y-4 border-r-0 lg:border-r-2 lg:border-gray-200 lg:pr-6">
-                    <!-- Header -->
-                    <div class="flex items-center justify-between mb-2">
-                        <div class="flex items-center gap-3">
-                            <div class="w-1 h-8 bg-neutral-900"></div>
-                            <h2 class="text-xl sm:text-2xl lg:text-3xl font-light text-neutral-900 tracking-tight">
-                                Furniture
-                            </h2>
-                        </div>
+                <div class="space-y-4">
+                    <!-- Header with Better Design -->
+                    <div class="mb-6">
+                        <!-- Centered Title with Black Divider -->
+                        <div class="flex justify-center items-center gap-3">
+                            <div class="w-12 h-px bg-black"></div>
 
-                        <div class="flex items-center gap-4">
+                            <div class="text-center">
+                                <h2 class="text-xl sm:text-2xl lg:text-3xl font-light text-black tracking-tight">
+                                    Furniture
+                                </h2>
+                            </div>
 
-
-                            <a href="#" class="text-xs sm:text-sm text-neutral-900 hover:text-neutral-600 font-light flex items-center gap-1 transition-colors duration-300 group">
-                                See All
-                                <svg class="w-3 h-3 group-hover:translate-x-1 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="1.5">
-                                    <path stroke-linecap="round" stroke-linejoin="round" d="M13.5 4.5L21 12m0 0l-7.5 7.5M21 12H3"></path>
-                                </svg>
-                            </a>
+                            <div class="w-12 h-px bg-black"></div>
                         </div>
                     </div>
 
-                    <!-- Label: Suggestions -->
+                    <?php
+                    // Assuming $conn is your database connection
+                    $furniture_cat_id = 1;
+
+                    // Get category name
+                    $cat_name_query = $conn->prepare("SELECT name FROM categories WHERE id = ?");
+                    $cat_name_query->bind_param("i", $furniture_cat_id);
+                    $cat_name_query->execute();
+                    $cat_name_result = $cat_name_query->get_result();
+                    $furniture_cat_name = $cat_name_result->fetch_assoc()['name'] ?? 'furniture';
+                    $cat_name_query->close();
+
+                    // Get ALL subcategories for the modal
+                    $all_sub_query = $conn->prepare("
+    SELECT DISTINCT id, subcategory_name 
+    FROM product_subcategories 
+    WHERE category_id = ? 
+    ORDER BY subcategory_name ASC
+");
+                    $all_sub_query->bind_param("i", $furniture_cat_id);
+                    $all_sub_query->execute();
+                    $all_sub_result = $all_sub_query->get_result();
+                    $all_subcats = [];
+                    while ($sub_row = $all_sub_result->fetch_assoc()) {
+                        $all_subcats[] = $sub_row;
+                    }
+                    $all_sub_query->close();
+                    ?>
+
+                    <!-- Hamburger Menu Button -->
                     <div class="mb-3">
-                        <p class="text-xs text-gray-500 uppercase tracking-wider font-medium mb-2">
+                        <button
+                            type="button"
+                            id="filterMenuBtn"
+                            onclick="toggleFilterMenu()"
+                            class="inline-flex items-center gap-2 px-2 py-2.5 text-sm text-gray-800 bg-white hover:bg-gray-50 transition-all duration-300 hover:shadow-md uppercase">
 
-                            Suggestions for you
-                        </p>
+                            <span>Suggestions for you ➜</span>
+                        </button>
                     </div>
 
-                    <!-- ✅ UPDATED: Filter Buttons now link to Recommendations Page -->
-                    <div class="flex flex-wrap gap-2 mb-3">
-                        <?php
-                        // Get 3 random subcategories for Furniture (category_id = 1)
-                        $furniture_cat_id = 1;
 
-                        // First get the category name
-                        $cat_name_query = $conn->prepare("SELECT name FROM categories WHERE id = ?");
-                        $cat_name_query->bind_param("i", $furniture_cat_id);
-                        $cat_name_query->execute();
-                        $cat_name_result = $cat_name_query->get_result();
-                        $furniture_cat_name = $cat_name_result->fetch_assoc()['name'] ?? 'furniture';
-                        $cat_name_query->close();
-
-                        $sub_query = $conn->prepare("
-            SELECT DISTINCT id, subcategory_name 
-            FROM product_subcategories 
-            WHERE category_id = ? 
-            ORDER BY RAND() 
-            LIMIT 3
-        ");
-                        $sub_query->bind_param("i", $furniture_cat_id);
-                        $sub_query->execute();
-                        $sub_result = $sub_query->get_result();
-
-                        while ($sub_row = $sub_result->fetch_assoc()):
-                            $sub_name = $sub_row['subcategory_name'];
-                            $sub_id = $sub_row['id'];
-                        ?>
-                            <!-- ✅ CHANGED: Now goes to Recommendations page with visual indicator -->
-                            <a href="../otherpage/index-subcategory-recommendations-page-15.php?subcategory_id=<?= $sub_id ?>&from=home"
-                                class="furniture-filter-btn px-4 py-2.5 text-sm font-semibold rounded-lg border-2 transition-all duration-300 hover:shadow-md hover:scale-105 inline-flex items-center gap-2 group">
-
-                                <?= ucfirst(htmlspecialchars($sub_name)) ?>
-                            </a>
-                        <?php endwhile; ?>
+                    <!-- Dropdown Menu (Hidden by default) -->
+                    <div id="filterMenu" class="hidden bg-white  shadow-lg mb-4 overflow-hidden">
+                        <div class="p-3">
+                            <h3 class="text-sm font-bold text-gray-700 px-2 py-2"><?= ucfirst($furniture_cat_name) ?> Categories</h3>
+                            <ul class="space-y-1">
+                                <?php foreach ($all_subcats as $subcat): ?>
+                                    <li>
+                                        <a
+                                            href="../otherpage/index-subcategory-recommendations-page-15.php?subcategory_id=<?= $subcat['id'] ?>&from=home"
+                                            onclick="toggleFilterMenu()"
+                                            class="block w-full text-left px-4 py-3 rounded-lg text-gray-700 hover:bg-blue-100 hover:text-blue-600 transition-colors font-medium">
+                                            <?= ucfirst(htmlspecialchars($subcat['subcategory_name'])) ?>
+                                        </a>
+                                    </li>
+                                <?php endforeach; ?>
+                            </ul>
+                        </div>
                     </div>
+
+                    <script>
+                        function toggleFilterMenu() {
+                            const menu = document.getElementById('filterMenu');
+                            menu.classList.toggle('hidden');
+                        }
+
+                        // Close menu when clicking outside
+                        document.addEventListener('click', function(e) {
+                            const menu = document.getElementById('filterMenu');
+                            const btn = document.getElementById('filterMenuBtn');
+
+                            if (!menu.contains(e.target) && !btn.contains(e.target)) {
+                                menu.classList.add('hidden');
+                            }
+                        });
+                    </script>
 
                     <!-- Product Swiper -->
                     <div class="swiper mySwiper-furniture w-full">
@@ -1621,73 +1691,102 @@ while ($row = $banners_result->fetch_assoc()) {
 
                 <!-- RIGHT SIDE: BED FURNITURE -->
                 <div class="space-y-4">
-                    <!-- Header -->
-                    <div class="flex items-center justify-between mb-3">
-                        <div class="flex items-center gap-3">
-                            <div class="w-1 h-8 bg-neutral-900"></div>
-                            <h2 class="text-xl sm:text-2xl lg:text-3xl font-light text-neutral-900 tracking-tight">
-                                Tiles
-                            </h2>
+
+                    <!-- Header with Better Design -->
+                    <div class="mb-6">
+                        <!-- Centered Title with Black Divider -->
+                        <div class="flex justify-center items-center gap-3">
+                            <div class="w-12 h-px bg-black"></div>
+
+                            <div class="text-center">
+                                <h2 class="text-xl sm:text-2xl lg:text-3xl font-light text-black tracking-tight">
+                                    Tiles
+                                </h2>
+                            </div>
+
+                            <div class="w-12 h-px bg-black"></div>
                         </div>
-                        <a href="#" class="text-xs sm:text-sm text-neutral-900 hover:text-neutral-600 font-light flex items-center gap-1 transition-colors duration-300 group">
-                            See All
-                            <svg class="w-3 h-3 group-hover:translate-x-1 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="1.5">
-                                <path stroke-linecap="round" stroke-linejoin="round" d="M13.5 4.5L21 12m0 0l-7.5 7.5M21 12H3"></path>
-                            </svg>
-                        </a>
                     </div>
+                    <?php
+                    // Get subcategories for Tiles/Aircon from actual product variants
+                    $tiles_cat_query = $conn->prepare("SELECT id, name FROM categories WHERE name LIKE '%aircon%' OR name LIKE '%tiles%' LIMIT 1");
+                    $tiles_cat_query->execute();
+                    $tiles_cat_result = $tiles_cat_query->get_result();
 
-                    <!-- Label: Suggestions -->
-                    <div class="mb-3">
-                        <p class="text-xs text-gray-500 uppercase tracking-wider font-medium mb-2">
+                    $category_name = 'Categories';
+                    $all_tiles_subcats = [];
 
-                            Suggestions for you
-                        </p>
-                    </div>
+                    if ($tiles_cat_row = $tiles_cat_result->fetch_assoc()) {
+                        $tiles_cat_id = $tiles_cat_row['id'];
+                        $category_name = $tiles_cat_row['name'];
+                        $tiles_cat_query->close();
 
-                    <!-- ✅ UPDATED: Filter Buttons now link to Recommendations Page -->
-                    <div class="flex flex-wrap gap-2 mb-3">
-                        <?php
-                        // Get subcategories for Tiles/Aircon from actual product variants
-                        $tiles_cat_query = $conn->prepare("SELECT id FROM categories WHERE name LIKE '%aircon%' OR name LIKE '%tiles%' LIMIT 1");
-                        $tiles_cat_query->execute();
-                        $tiles_cat_result = $tiles_cat_query->get_result();
+                        // Get ALL subcategories for the menu
+                        $all_tiles_sub_query = $conn->prepare("
+        SELECT DISTINCT ps.id, ps.subcategory_name
+        FROM product_subcategories ps
+        WHERE ps.category_id = ?
+        ORDER BY ps.subcategory_name ASC
+    ");
+                        $all_tiles_sub_query->bind_param("i", $tiles_cat_id);
+                        $all_tiles_sub_query->execute();
+                        $all_tiles_sub_result = $all_tiles_sub_query->get_result();
 
-                        if ($tiles_cat_row = $tiles_cat_result->fetch_assoc()) {
-                            $tiles_cat_id = $tiles_cat_row['id'];
-                            $tiles_cat_query->close();
-
-                            // Get 3 random unique subcategories with their IDs
-                            $tiles_sub_query = $conn->prepare("
-                SELECT DISTINCT ps.id, ps.subcategory_name
-                FROM product_subcategories ps
-                WHERE ps.category_id = ?
-                ORDER BY RAND()
-                LIMIT 3
-            ");
-                            $tiles_sub_query->bind_param("i", $tiles_cat_id);
-                            $tiles_sub_query->execute();
-                            $tiles_sub_result = $tiles_sub_query->get_result();
-
-                            // ✅ CHANGED: Display filter buttons as RECOMMENDATIONS LINKS
-                            while ($tiles_sub_row = $tiles_sub_result->fetch_assoc()):
-                                $tiles_sub_name = $tiles_sub_row['subcategory_name'];
-                                $tiles_sub_id = $tiles_sub_row['id'];
-                        ?>
-                                <a href="../otherpage/index-subcategory-recommendations-page-15.php?subcategory_id=<?= $tiles_sub_id ?>&from=home"
-                                    class="bed-filter-btn px-4 py-2.5 text-sm font-semibold rounded-lg border-2 transition-all duration-300 hover:shadow-md hover:scale-105 inline-flex items-center gap-2 group">
-
-                                    <?= ucfirst(htmlspecialchars($tiles_sub_name)) ?>
-                                </a>
-                        <?php
-                            endwhile;
-                            $tiles_sub_query->close();
-                        } else {
-                            $tiles_cat_query->close();
+                        while ($row = $all_tiles_sub_result->fetch_assoc()) {
+                            $all_tiles_subcats[] = $row;
                         }
-                        ?>
+                        $all_tiles_sub_query->close();
+                    } else {
+                        $tiles_cat_query->close();
+                    }
+                    ?>
+
+
+                    <!-- Hamburger Menu Button -->
+                    <div class="mb-3">
+                        <button
+                            type="button"
+                            id="tilesFilterMenuBtn"
+                            onclick="toggleTilesFilterMenu()"
+                            class="inline-flex items-center gap-2 px-2 py-2.5 text-sm text-gray-800 bg-white hover:bg-gray-50 transition-all duration-300 hover:shadow-md uppercase">
+
+                            <span>Suggestions for you ➜</span>
+                        </button>
                     </div>
 
+                    <!-- Dropdown Menu (Hidden by default) -->
+                    <div id="tilesFilterMenu" class="hidden bg-white border-2 border-gray-300 rounded-lg shadow-lg mb-4 overflow-hidden">
+                        <div class="p-4">
+                            <h3 class="text-sm font-bold text-gray-700 px-2 py-2 mb-2">All <?= ucfirst($category_name) ?></h3>
+                            <div class="flex flex-col gap-2">
+                                <?php foreach ($all_tiles_subcats as $subcat): ?>
+                                    <a
+                                        href="../otherpage/index-subcategory-recommendations-page-15.php?subcategory_id=<?= $subcat['id'] ?>&from=home"
+                                        onclick="toggleTilesFilterMenu()"
+                                        class="bed-filter-btn px-6 py-3 text-sm font-semibold rounded-lg border-2 border-gray-300 text-gray-600 transition-all duration-300 hover:shadow-md hover:border-blue-400 hover:bg-blue-50 hover:text-blue-600 text-center">
+                                        <?= ucfirst(htmlspecialchars($subcat['subcategory_name'])) ?>
+                                    </a>
+                                <?php endforeach; ?>
+                            </div>
+                        </div>
+                    </div>
+
+                    <script>
+                        function toggleTilesFilterMenu() {
+                            const menu = document.getElementById('tilesFilterMenu');
+                            menu.classList.toggle('hidden');
+                        }
+
+                        // Close menu when clicking outside
+                        document.addEventListener('click', function(e) {
+                            const menu = document.getElementById('tilesFilterMenu');
+                            const btn = document.getElementById('tilesFilterMenuBtn');
+
+                            if (!menu.contains(e.target) && !btn.contains(e.target)) {
+                                menu.classList.add('hidden');
+                            }
+                        });
+                    </script>
 
                     <!-- Product Swiper -->
                     <div class="swiper mySwiper-bedfurniture w-full">
@@ -1963,14 +2062,26 @@ while ($row = $banners_result->fetch_assoc()) {
                 <script>
                     // Initialize Swiper for Furniture
                     let furnitureSwiper = new Swiper('.mySwiper-furniture', {
-                        slidesPerView: 2,
-                        spaceBetween: 10,
+                        slidesPerView: 1,
+                        spaceBetween: 8,
                         breakpoints: {
+                            320: {
+                                slidesPerView: 2,
+                                spaceBetween: 8,
+                            },
+                            480: {
+                                slidesPerView: 2,
+                                spaceBetween: 10,
+                            },
                             640: {
                                 slidesPerView: 2,
                                 spaceBetween: 15,
                             },
                             1024: {
+                                slidesPerView: 3,
+                                spaceBetween: 20,
+                            },
+                            1536: {
                                 slidesPerView: 4,
                                 spaceBetween: 20,
                             },
@@ -1979,20 +2090,31 @@ while ($row = $banners_result->fetch_assoc()) {
 
                     // Initialize Swiper for Bed Furniture
                     let bedFurnitureSwiper = new Swiper('.mySwiper-bedfurniture', {
-                        slidesPerView: 2,
-                        spaceBetween: 10,
+                        slidesPerView: 1,
+                        spaceBetween: 8,
                         breakpoints: {
+                            320: {
+                                slidesPerView: 2,
+                                spaceBetween: 8,
+                            },
+                            480: {
+                                slidesPerView: 2,
+                                spaceBetween: 10,
+                            },
                             640: {
                                 slidesPerView: 2,
                                 spaceBetween: 15,
                             },
                             1024: {
+                                slidesPerView: 3,
+                                spaceBetween: 20,
+                            },
+                            1536: {
                                 slidesPerView: 4,
                                 spaceBetween: 20,
                             },
                         }
                     });
-
                     // Filter Furniture by Subcategory
                     function filterFurniture(subcategory) {
                         const items = document.querySelectorAll('.furniture-item');
@@ -2128,7 +2250,7 @@ while ($row = $banners_result->fetch_assoc()) {
 
 
 
-   <?php
+    <?php
     // MAIN query for bestseller items
     $bestsellerItems = $conn->query("SELECT * FROM bestseller ORDER BY id DESC");
     $bestsellerData = $bestsellerItems->fetch_all(MYSQLI_ASSOC);
@@ -2174,7 +2296,7 @@ while ($row = $banners_result->fetch_assoc()) {
                                     <!-- CTA Button - Next to BESTSELLER -->
                                     <a href="index-bestseller-detail-B.php?slug=<?= htmlspecialchars($item['slug']) ?>"
                                         class="inline-block bg-black text-white px-4 sm:px-6 py-1.5 sm:py-2 rounded-lg font-semibold text-xs sm:text-sm hover:bg-red-600 transition-colors duration-300">
-                                        Learn More 
+                                        Learn More
                                     </a>
                                     <!-- Navigation Arrows - Always visible next to BESTSELLER -->
                                     <div class="flex gap-2 ml-auto sm:ml-0">
@@ -2190,7 +2312,7 @@ while ($row = $banners_result->fetch_assoc()) {
                                         </button>
                                     </div>
                                 </div>
-                                
+
                                 <h3 class="text-xl sm:text-2xl md:text-3xl lg:text-4xl font-bold text-gray-900 mb-3 uppercase leading-tight">
                                     <?= htmlspecialchars($item['title']) ?>
                                 </h3>
@@ -2304,18 +2426,18 @@ while ($row = $banners_result->fetch_assoc()) {
     </script>
 
 
-    <section class="px-4 ">
+    <section class="px-4 p-2">
         <!-- Combined Container for Both Sections -->
-        <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 lg:gap-8">
+        <div class="grid grid-cols-1 lg:grid-cols-2 gap-2 ">
 
             <!-- LEFT SECTION: Top Sales (10% Discount) -->
             <?php if (mysqli_num_rows($material_results) > 0): ?>
-                <div class="p-4 rounded-lg">
+                <div class="p-1 rounded-lg">
                     <!-- Header -->
                     <div class="text-center mb-6">
                         <h2 class="text-2xl lg:text-3xl text-black mb-1 tracking-tight" data-aos="fade-up">Top Sales</h2>
                         <h3 class="text-base lg:text-lg text-black mb-2" data-aos="fade-up">
-                            Up to <span class="text-red-500">10% OFF</span>
+                            Up to <span class="text-red-500">10% OFF ➜</span>
                         </h3>
                         <div class="mx-auto w-24 h-0.5 bg-gradient-to-r from-orange-500 to-transparent rounded-full"></div>
                     </div>
@@ -2339,7 +2461,7 @@ while ($row = $banners_result->fetch_assoc()) {
                                 $avgRating = (float)($row['avg_rating'] ?? 0);
                                 $ratingCount = (int)($row['rating_count'] ?? 0);
                             ?>
-                                <div class="swiper-slide p-2">
+                                <div class="swiper-slide p-1">
                                     <div class="bg-white p-2 lg:p-3 group hover:shadow-lg transition duration-300 flex flex-col justify-between h-[320px] text-center relative rounded-md">
                                         <!-- Discount Badge -->
                                         <div class="absolute top-0 left-0 z-10">
@@ -2437,12 +2559,12 @@ while ($row = $banners_result->fetch_assoc()) {
 
             <!-- RIGHT SECTION: Discounted Minimal (5% Discount) -->
             <?php if (mysqli_num_rows($material_resultsone) > 0): ?>
-                <div class="p-4 rounded-lg">
+                <div class="p-1 rounded-lg">
                     <!-- Header -->
                     <div class="text-center mb-6">
                         <h2 class="text-2xl lg:text-3xl text-black mb-1 tracking-tight" data-aos="fade-up">Discounted Minimal</h2>
                         <h3 class="text-base lg:text-lg text-black mb-2" data-aos="fade-up">
-                            Up to <span class="text-red-500">5% OFF</span>
+                            Up to <span class="text-red-500">5% OFF ➜</span>
                         </h3>
                         <div class="mx-auto w-24 h-0.5 bg-gradient-to-r from-orange-500 to-transparent rounded-full"></div>
                     </div>
@@ -2466,7 +2588,7 @@ while ($row = $banners_result->fetch_assoc()) {
                                 $avgRating = (float)($row['avg_rating'] ?? 0);
                                 $ratingCount = (int)($row['rating_count'] ?? 0);
                             ?>
-                                <div class="swiper-slide p-2">
+                                <div class="swiper-slide p-1">
                                     <div class="bg-white p-2 lg:p-3 group hover:shadow-lg transition duration-300 flex flex-col justify-between h-[320px] text-center relative rounded-md">
                                         <!-- Discount Badge -->
                                         <div class="absolute top-0 left-0 z-10">
@@ -2565,9 +2687,47 @@ while ($row = $banners_result->fetch_assoc()) {
     </section>
 
     <script>
-        // Initialize separate Swiper instances for each section
+        // Initialize Swiper instances with better scaling and configuration
         document.addEventListener('DOMContentLoaded', function() {
-            new Swiper('.mySwiper-topsales', {
+
+            // Common breakpoint configuration for reusability
+            const commonBreakpoints = {
+                320: {
+                    slidesPerView: 2,
+                    spaceBetween: 8,
+                },
+                480: {
+                    slidesPerView: 2,
+                    spaceBetween: 8,
+                },
+                640: {
+                    slidesPerView: 2,
+                    spaceBetween: 8,
+                },
+                768: {
+                    slidesPerView: 2,
+                    spaceBetween: 12,
+                },
+                820: {
+                    slidesPerView: 3,
+                    spaceBetween: 12,
+                },
+                1024: {
+                    slidesPerView: 2,
+                    spaceBetween: 15,
+                },
+                1280: {
+                    slidesPerView: 4,
+                    spaceBetween: 15,
+                },
+                1536: {
+                    slidesPerView: 4,
+                    spaceBetween: 20,
+                }
+            };
+
+            // Top Sales Swiper
+            const topSalesSwiper = new Swiper('.mySwiper-topsales', {
                 slidesPerView: 1,
                 spaceBetween: 10,
                 loop: true,
@@ -2575,17 +2735,19 @@ while ($row = $banners_result->fetch_assoc()) {
                     delay: 3000,
                     disableOnInteraction: false,
                 },
-                breakpoints: {
-                    640: {
-                        slidesPerView: 2,
-                    },
-                    1024: {
-                        slidesPerView: 4,
-                    }
-                }
+                pagination: {
+                    el: '.swiper-pagination-topsales',
+                    clickable: true,
+                },
+                navigation: {
+                    nextEl: '.swiper-button-next-topsales',
+                    prevEl: '.swiper-button-prev-topsales',
+                },
+                breakpoints: commonBreakpoints
             });
 
-            new Swiper('.mySwiper-minimal', {
+            // Minimal Swiper
+            const minimalSwiper = new Swiper('.mySwiper-minimal', {
                 slidesPerView: 1,
                 spaceBetween: 10,
                 loop: true,
@@ -2593,14 +2755,21 @@ while ($row = $banners_result->fetch_assoc()) {
                     delay: 3500,
                     disableOnInteraction: false,
                 },
-                breakpoints: {
-                    640: {
-                        slidesPerView: 2,
-                    },
-                    1024: {
-                        slidesPerView: 4,
-                    }
-                }
+                pagination: {
+                    el: '.swiper-pagination-minimal',
+                    clickable: true,
+                },
+                navigation: {
+                    nextEl: '.swiper-button-next-minimal',
+                    prevEl: '.swiper-button-prev-minimal',
+                },
+                breakpoints: commonBreakpoints
+            });
+
+            // Optional: Add keyboard support
+            document.addEventListener('keydown', function(e) {
+                if (e.key === 'ArrowLeft') topSalesSwiper.slidePrev();
+                if (e.key === 'ArrowRight') topSalesSwiper.slideNext();
             });
         });
     </script>
@@ -3281,132 +3450,68 @@ while ($row = $banners_result->fetch_assoc()) {
         }
     </style>
 
-    <section class="w-full bg-white py-20 px-6 border-t border-gray-200">
+       <!-- Modal for "Not Available" -->
+    <div id="unavailableModal" class="hidden fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4">
+        <div class="bg-white rounded-lg shadow-2xl max-w-md w-full p-6 transform transition-all">
+            <div class="text-center">
+                <div class="mx-auto flex items-center justify-center h-12 w-12 rounded-full bg-yellow-100 mb-4">
+                    <svg class="h-6 w-6 text-yellow-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+                    </svg>
+                </div>
+                <h3 class="text-lg font-medium text-neutral-900 mb-2">Not Available</h3>
+                <p class="text-sm text-neutral-600 mb-6">This promotion is currently unavailable. Please check back later.</p>
+                <button onclick="closeModal()" class="w-full bg-neutral-900 text-white px-4 py-2 rounded-lg hover:bg-neutral-800 transition-colors">
+                    Close
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <section class="px-4 sm:px-6 lg:px-8 py-8">
         <div class="max-w-full mx-auto">
-            <!-- Section Header -->
-            <div class="text-center mb-16">
-                <div class="inline-block mb-6">
-                    <span class="text-lg  text-gray-500 tracking-wider uppercase mb-2 block">Our NobleHome</span>
-                    <div class="w-24 h-1 bg-gradient-to-r from-slate-600 to-slate-800 mx-auto mb-3"></div>
-                </div>
-                <p class="text-lg text-gray-600 max-w-2xl mx-auto leading-relaxed">
-                    Discover our premium collection through detailed product demonstrations and professional showcases
-                </p>
+            <!-- 2x2 Grid Content -->
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
+                <!-- Box 3 -->
+                <a href="#" onclick="showUnavailable(event)" class="group block">
+                    <div class="overflow-hidden ">
+                        <img src="../img/gif2.gif"
+                            alt="Promo 3"
+                            class="w-full h-[300px] object-cover transition-transform duration-500 group-hover:scale-105">
+                    </div>
+                    <h3 class="text-lg font-semibold text-neutral-900">Keep Shopping For Holiday ➜</h3>
+                </a>
+
+                <!-- Box 4 -->
+                <a href="#" onclick="showUnavailable(event)" class="group block">
+                    <div class="overflow-hidden ">
+                        <img src="../img/display3.webp"
+                            alt="Promo 4"
+                            class="w-full h-[300px] object-cover transition-transform duration-500 group-hover:scale-105">
+                    </div>
+                    <h3 class="text-lg font-semibold text-neutral-900">Upgrade Your Living Space Today! ➜</h3>
+                </a>
             </div>
-
-            <!-- Video Grid -->
-            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
-
-                <!-- Video Item 1 -->
-                <div class="bg-white overflow-hidden  hover:shadow-2xl transition-all duration-500 border border-gray-100 group h-full flex flex-col">
-                    <div class="relative overflow-hidden" style="aspect-ratio: 16/9; height: 220px;">
-                        <video autoplay muted loop playsinline class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-700">
-                            <source src="../../video/a.mp4" type="video/mp4">
-                            Your browser does not support the video tag.
-                        </video>
-                        <div class="absolute inset-0 bg-gradient-to-t from-black/20 via-transparent to-transparent"></div>
-                    </div>
-                    <div class="p-6 flex-1 flex flex-col">
-                        <h3 class=" text-xl text-gray-900 mb-2 tracking-tight">WPC Wall Panel</h3>
-                        <p class="text-gray-600 mb-4 leading-relaxed flex-1">Premium waterproof panels designed for contemporary interior applications</p>
-                        <div class="flex items-center justify-between">
-                            <span class="bg-black border border-black text-white px-3 py-1.5 rounded-full text-xs  tracking-wide uppercase">
-                                Premium
-                            </span>
-                            <button class="text-slate-700 hover:text-slate-900  flex items-center group">
-                                View Details
-                                <svg class="w-4 h-4 ml-1 group-hover:translate-x-1 transition-transform duration-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path>
-                                </svg>
-                            </button>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- Video Item 2 -->
-                <div class="bg-white  overflow-hidden  hover:shadow-2xl transition-all duration-500 border border-gray-100 group h-full flex flex-col">
-                    <div class="relative overflow-hidden" style="aspect-ratio: 16/9; height: 220px;">
-                        <video autoplay muted loop playsinline class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-700">
-                            <source src="../../video/b.mp4" type="video/mp4">
-                            Your browser does not support the video tag.
-                        </video>
-                        <div class="absolute inset-0 bg-gradient-to-t from-black/20 via-transparent to-transparent"></div>
-                    </div>
-                    <div class="p-6 flex-1 flex flex-col">
-                        <h3 class=" text-xl text-gray-900 mb-2 tracking-tight">Interior Design</h3>
-                        <p class="text-gray-600 mb-4 leading-relaxed flex-1">Professional styling concepts and innovative design solutions</p>
-                        <div class="flex items-center justify-between">
-                            <span class="bg-black border border-black text-white px-3 py-1.5 rounded-full text-xs  tracking-wide uppercase">
-                                Inspiration
-                            </span>
-                            <a href="../explore/explore_first.php" class="text-slate-700 hover:text-slate-900 flex items-center group">
-                                Explore Ideas
-                                <svg class="w-4 h-4 ml-1 group-hover:translate-x-1 transition-transform duration-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path>
-                                </svg>
-                            </a>
-
-                        </div>
-                    </div>
-                </div>
-
-                <!-- Video Item 3 -->
-                <div class="bg-white  overflow-hidden  hover:shadow-2xl transition-all duration-500 border border-gray-100 group h-full flex flex-col">
-                    <div class="relative overflow-hidden" style="aspect-ratio: 16/9; height: 220px;">
-                        <video autoplay muted loop playsinline class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-700">
-                            <source src="../../video/c.mp4" type="video/mp4">
-                            Your browser does not support the video tag.
-                        </video>
-                        <div class="absolute inset-0 bg-gradient-to-t from-black/20 via-transparent to-transparent"></div>
-                    </div>
-                    <div class="p-6 flex-1 flex flex-col">
-                        <h3 class=" text-xl text-gray-900 mb-2 tracking-tight">Product Highlights</h3>
-                        <p class="text-gray-600 mb-4 leading-relaxed flex-1">Featured products showcased in real-world applications</p>
-                        <div class="flex items-center justify-between">
-                            <span class="bg-black border border-black text-white px-3 py-1.5 rounded-full text-xs  tracking-wide uppercase">
-                                Featured
-                            </span>
-                            <button class="text-slate-700 hover:text-slate-900 flex items-center group">
-                                Shop Collection
-                                <svg class="w-4 h-4 ml-1 group-hover:translate-x-1 transition-transform duration-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path>
-                                </svg>
-                            </button>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- Video Item 4 -->
-                <div class="bg-white overflow-hidden  hover:shadow-2xl transition-all duration-500 border border-gray-100 group h-full flex flex-col">
-                    <div class="relative overflow-hidden" style="aspect-ratio: 16/9; height: 220px;">
-                        <video autoplay muted loop playsinline class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-700">
-                            <source src="../../video/d.mp4" type="video/mp4">
-                            Your browser does not support the video tag.
-                        </video>
-                        <div class="absolute inset-0 bg-gradient-to-t from-black/20 via-transparent to-transparent"></div>
-                    </div>
-                    <div class="p-6 flex-1 flex flex-col">
-                        <h3 class="text-xl text-gray-900 mb-2 tracking-tight">World Bex</h3>
-                        <p class="text-gray-600 mb-4 leading-relaxed flex-1">Thank You for Visiting Us at WORLDBEX 2025! 🎉🏡
-                            We truly appreciate your time, support, and interest in Noblehome Depot at WORLDBEX 2025! Your presence made this event even more special, and we’re excited to help bring your home and construction projects to life.</p>
-                        <div class="flex items-center justify-between">
-                            <span class="bg-black border border-black text-white px-3 py-1.5 rounded-full text-xs  tracking-wide uppercase">
-                                Event
-                            </span>
-                            <button class="text-slate-700 hover:text-slate-900  flex items-center group">
-                                Learn More
-                                <svg class="w-4 h-4 ml-1 group-hover:translate-x-1 transition-transform duration-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path>
-                                </svg>
-                            </button>
-                        </div>
-                    </div>
-                </div>
-
-            </div>
-
         </div>
     </section>
+
+    <script>
+        function showUnavailable(event) {
+            event.preventDefault();
+            document.getElementById('unavailableModal').classList.remove('hidden');
+        }
+
+        function closeModal() {
+            document.getElementById('unavailableModal').classList.add('hidden');
+        }
+
+        document.getElementById('unavailableModal')?.addEventListener('click', function(e) {
+            if (e.target === this) {
+                closeModal();
+            }
+        });
+    </script>
+
 
     <?php include '../navbar/footer.php'; ?>
 

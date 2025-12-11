@@ -551,7 +551,7 @@ if (!isset($_SESSION['noble_name']) || !isset($_SESSION['noble_lvl']) || !isset(
                                         </a>
 
                                         <!-- Dashboard Sales -->
-                                        <a href="../orders/dashboardorder"
+                                        <a href="../orders/main-dashboardorder-page-1"
                                             class="quick-action-item flex items-center space-x-3 px-3 py-2.5 text-sm text-gray-700 
                   hover:bg-orange-50 hover:text-orange-600 rounded-lg transition-all duration-150">
                                             <i class="ri-bar-chart-grouped-line text-lg"></i>
@@ -797,308 +797,341 @@ if (!isset($_SESSION['noble_name']) || !isset($_SESSION['noble_lvl']) || !isset(
                 </div>
             </div>
         </div>
+
 <!-- Notifications with Real-time AJAX - Instant Display -->
-                    <div class="relative" x-data="notificationPanel()">
-                        <button @click="activeDropdown = activeDropdown === 'notifications' ? null : 'notifications'; openDropdown();"
-                            class="p-2 rounded-lg hover:bg-gray-50 transition-all duration-300 relative">
-                            <i class="ri-notification-3-line text-2xl text-gray-700"></i>
-                            <span x-show="unreadCount > 0" class="absolute top-1 right-1 w-3 h-3 bg-red-500 rounded-full animate-pulse"></span>
-                            <span x-show="unreadCount > 0" x-text="unreadCount" class="absolute top-0 right-0 bg-red-500 text-white text-xs rounded-full w-5 h-5 flex items-center justify-center text-[10px] font-bold"></span>
-                        </button>
+<div class="relative" x-data="notificationPanel()">
+    <button @click="activeDropdown = activeDropdown === 'notifications' ? null : 'notifications'; openDropdown();"
+        class="p-2 rounded-lg hover:bg-gray-50 transition-all duration-300 relative">
+        <i class="ri-notification-3-line text-2xl text-gray-700"></i>
+        <span x-show="unreadCount > 0" class="absolute top-1 right-1 w-3 h-3 bg-red-500 rounded-full animate-pulse"></span>
+        <span x-show="unreadCount > 0" x-text="unreadCount" class="absolute top-0 right-0 bg-red-500 text-white text-xs rounded-full w-5 h-5 flex items-center justify-center text-[10px] font-bold"></span>
+    </button>
 
-                        <!-- Notifications Sidebar -->
-                        <div x-show="activeDropdown === 'notifications'"
-                            @click.away="activeDropdown = null"
-                            x-transition:enter="transition ease-out duration-300 transform"
-                            x-transition:enter-start="opacity-0 -translate-x-full"
-                            x-transition:enter-end="opacity-100 translate-x-0"
-                            x-transition:leave="transition ease-in duration-200 transform"
-                            x-transition:leave-start="opacity-100 translate-x-0"
-                            x-transition:leave-end="opacity-0 -translate-x-full"
-                            x-cloak
-                            class="absolute right-0 top-full mt-2 w-96 max-h-96 bg-white rounded-xl shadow-2xl border border-gray-200 overflow-hidden flex flex-col z-50">
-                            
-                            <!-- Header -->
-                            <div class="sticky top-0 bg-gradient-to-r from-orange-500 to-red-500 px-6 py-4 flex items-center justify-between z-10">
-                                <h3 class="text-lg font-bold text-white flex items-center space-x-2">
-                                    <i class="ri-notification-3-line"></i>
-                                    <span>Notifications</span>
-                                    <span x-show="unreadCount > 0" class="ml-2 bg-white text-orange-600 px-2 py-0.5 rounded-full text-xs font-semibold" x-text="unreadCount"></span>
-                                </h3>
-                                <div class="flex items-center space-x-2">
-                                    <!-- Mark all as read button -->
-                                    <button @click="markAllAsRead()" x-show="unreadCount > 0" 
-                                        class="text-white hover:bg-white/20 p-1 rounded-lg transition-all" title="Mark all as read">
-                                        <i class="ri-check-double-line text-lg"></i>
-                                    </button>
-                                    <!-- Close button -->
-                                    <button @click="activeDropdown = null" class="text-white hover:bg-white/20 p-1 rounded-lg transition-all">
-                                        <i class="ri-close-line text-xl"></i>
-                                    </button>
-                                </div>
+    <!-- Notifications Sidebar -->
+    <div x-show="activeDropdown === 'notifications'"
+        @click.away="activeDropdown = null"
+        x-transition:enter="transition ease-out duration-300 transform"
+        x-transition:enter-start="opacity-0 -translate-x-full"
+        x-transition:enter-end="opacity-100 translate-x-0"
+        x-transition:leave="transition ease-in duration-200 transform"
+        x-transition:leave-start="opacity-100 translate-x-0"
+        x-transition:leave-end="opacity-0 -translate-x-full"
+        x-cloak
+        class="absolute right-0 top-full mt-2 w-96 max-h-96 bg-white rounded-xl shadow-2xl border border-gray-200 overflow-hidden flex flex-col z-50">
+        
+        <!-- Header -->
+        <div class="sticky top-0 bg-gradient-to-r from-orange-500 to-red-500 px-6 py-4 flex items-center justify-between z-10">
+            <h3 class="text-lg font-bold text-white flex items-center space-x-2">
+                <i class="ri-notification-3-line"></i>
+                <span>Notifications</span>
+                <span x-show="unreadCount > 0" class="ml-2 bg-white text-orange-600 px-2 py-0.5 rounded-full text-xs font-semibold" x-text="unreadCount"></span>
+            </h3>
+            <div class="flex items-center space-x-2">
+                <!-- Mark all as read button -->
+                <button @click="markAllAsRead()" x-show="unreadCount > 0" 
+                    class="text-white hover:bg-white/20 p-1 rounded-lg transition-all" title="Mark all as read">
+                    <i class="ri-check-double-line text-lg"></i>
+                </button>
+                <!-- Delete all button -->
+                <button @click="deleteAll()" x-show="notifications.length > 0" 
+                    class="text-white hover:bg-white/20 p-1 rounded-lg transition-all" title="Delete all notifications">
+                    <i class="ri-delete-bin-2-line text-lg"></i>
+                </button>
+                <!-- Close button -->
+                <button @click="activeDropdown = null" class="text-white hover:bg-white/20 p-1 rounded-lg transition-all">
+                    <i class="ri-close-line text-xl"></i>
+                </button>
+            </div>
+        </div>
+
+        <!-- Notifications List -->
+        <div class="overflow-y-auto flex-1 custom-scrollbar">
+            <!-- Loading State -->
+            <div x-show="loading" class="px-6 py-8 text-center">
+                <div class="inline-block animate-spin">
+                    <i class="ri-loader-4-line text-2xl text-orange-600"></i>
+                </div>
+                <p class="text-gray-600 mt-2 text-sm">Loading notifications...</p>
+            </div>
+
+            <!-- Empty State -->
+            <div x-show="!loading && notifications.length === 0" class="px-6 py-12 text-center">
+                <i class="ri-notification-off-line text-4xl text-gray-300 mb-2"></i>
+                <p class="text-gray-600 text-sm">No notifications yet</p>
+            </div>
+
+            <!-- Notification Items -->
+            <template x-for="notif in notifications" :key="notif.id">
+                <div :class="notif.color_class" class="px-6 py-4 border-b border-gray-200 hover:bg-opacity-75 transition-all duration-200 cursor-pointer group">
+                    <div class="flex items-start space-x-3 justify-between">
+                        <div class="flex items-start space-x-3 flex-1">
+                            <div :class="notif.color_class" class="w-10 h-10 rounded-full flex items-center justify-center flex-shrink-0 mt-0.5">
+                                <i :class="notif.icon_class" class="text-lg" :style="getIconColor(notif.color_class)"></i>
                             </div>
-
-                            <!-- Notifications List -->
-                            <div class="overflow-y-auto flex-1 custom-scrollbar">
-                                <!-- Loading State -->
-                                <div x-show="loading" class="px-6 py-8 text-center">
-                                    <div class="inline-block animate-spin">
-                                        <i class="ri-loader-4-line text-2xl text-orange-600"></i>
-                                    </div>
-                                    <p class="text-gray-600 mt-2 text-sm">Loading notifications...</p>
-                                </div>
-
-                                <!-- Empty State -->
-                                <div x-show="!loading && notifications.length === 0" class="px-6 py-12 text-center">
-                                    <i class="ri-notification-off-line text-4xl text-gray-300 mb-2"></i>
-                                    <p class="text-gray-600 text-sm">No notifications yet</p>
-                                </div>
-
-                                <!-- Notification Items -->
-                                <template x-for="notif in notifications" :key="notif.id">
-                                    <div :class="notif.color_class" class="px-6 py-4 border-b border-gray-200 hover:bg-opacity-75 transition-all duration-200 cursor-pointer group">
-                                        <div class="flex items-start space-x-3 justify-between">
-                                            <div class="flex items-start space-x-3 flex-1">
-                                                <div :class="notif.color_class" class="w-10 h-10 rounded-full flex items-center justify-center flex-shrink-0 mt-0.5">
-                                                    <i :class="notif.icon_class" class="text-lg" :style="getIconColor(notif.color_class)"></i>
-                                                </div>
-                                                <div class="flex-1 min-w-0">
-                                                    <p class="font-semibold text-gray-800 text-sm" x-text="notif.title"></p>
-                                                    <p class="text-xs text-gray-600 mt-1" x-text="notif.message"></p>
-                                                    <p class="text-xs text-gray-500 mt-2" x-text="formatTime(notif.created_at)"></p>
-                                                </div>
-                                            </div>
-                                            
-                                            <!-- Action Buttons (appear on hover) -->
-                                            <div class="flex items-center space-x-2 opacity-0 group-hover:opacity-100 transition-opacity ml-2 flex-shrink-0">
-                                                <!-- Mark as read/unread -->
-                                                <button @click.stop="toggleRead(notif.id, notif.is_read)" 
-                                                    class="p-1 hover:bg-white/50 rounded transition-all"
-                                                    :title="notif.is_read ? 'Mark as unread' : 'Mark as read'">
-                                                    <i :class="notif.is_read ? 'ri-mail-open-line' : 'ri-mail-line'" class="text-sm text-gray-600"></i>
-                                                </button>
-                                                <!-- Delete -->
-                                                <button @click.stop="deleteNotification(notif.id)" 
-                                                    class="p-1 hover:bg-red-100 rounded transition-all"
-                                                    title="Delete">
-                                                    <i class="ri-delete-bin-line text-sm text-red-600"></i>
-                                                </button>
-                                            </div>
-                                        </div>
-                                    </div>
-                                </template>
-                            </div>
-
-                            <!-- Footer -->
-                            <div class="sticky bottom-0 bg-gray-50 border-t border-gray-200 px-6 py-3 flex items-center justify-between">
-                                <a href="../notification/notification_history.php" class="text-sm font-semibold text-orange-600 hover:text-orange-700 transition-colors">
-                                    View History
-                                </a>
-                                <button @click="loadNotifications()" class="text-gray-600 hover:text-gray-800" title="Refresh">
-                                    <i class="ri-refresh-line"></i>
-                                </button>
+                            <div class="flex-1 min-w-0">
+                                <p class="font-semibold text-gray-800 text-sm" x-text="notif.title"></p>
+                                <p class="text-xs text-gray-600 mt-1" x-text="notif.message"></p>
+                                <p class="text-xs text-gray-500 mt-2" x-text="formatTime(notif.created_at)"></p>
                             </div>
                         </div>
+                        
+                        <!-- Action Buttons (appear on hover) -->
+                        <div class="flex items-center space-x-2 opacity-0 group-hover:opacity-100 transition-opacity ml-2 flex-shrink-0">
+                            <!-- Mark as read/unread -->
+                            <button @click.stop="toggleRead(notif.id, notif.is_read)" 
+                                class="p-1 hover:bg-white/50 rounded transition-all"
+                                :title="notif.is_read ? 'Mark as unread' : 'Mark as read'">
+                                <i :class="notif.is_read ? 'ri-mail-open-line' : 'ri-mail-line'" class="text-sm text-gray-600"></i>
+                            </button>
+                            <!-- Delete -->
+                            <button @click.stop="deleteNotification(notif.id)" 
+                                class="p-1 hover:bg-red-100 rounded transition-all"
+                                title="Delete">
+                                <i class="ri-delete-bin-line text-sm text-red-600"></i>
+                            </button>
+                        </div>
                     </div>
+                </div>
+            </template>
+        </div>
 
-                    <script>
-                        function notificationPanel() {
-                            return {
-                                notifications: [],
-                                unreadCount: 0,
-                                loading: false,
-                                pollInterval: null,
-                                lastNotificationId: 0,
+        <!-- Footer -->
+        <div class="sticky bottom-0 bg-gray-50 border-t border-gray-200 px-6 py-3 flex items-center justify-between">
+            <a href="../notification/notification_history.php" class="text-sm font-semibold text-orange-600 hover:text-orange-700 transition-colors">
+                View History
+            </a>
+            <button @click="loadNotifications()" class="text-gray-600 hover:text-gray-800" title="Refresh">
+                <i class="ri-refresh-line"></i>
+            </button>
+        </div>
+    </div>
+</div>
+
+<script>
+    function notificationPanel() {
+        return {
+            notifications: [],
+            unreadCount: 0,
+            loading: false,
+            pollInterval: null,
+            lastNotificationId: 0,
+            
+            async init() {
+                // ✅ INSTANT: Load notifications immediately on page load
+                await this.loadNotifications();
+                
+                // Start polling every 3 seconds for new notifications
+                this.pollInterval = setInterval(() => {
+                    this.loadNotifications();
+                }, 3000);
+            },
+
+            openDropdown() {
+                // Load fresh notifications when opening dropdown
+                this.loadNotifications();
+            },
+            
+            async loadNotifications() {
+                try {
+                    const response = await fetch('../notification/main-get-notif-page-1.php');
+                    const data = await response.json();
+                    
+                    if (data.success) {
+                        const newNotifications = data.notifications;
+                        
+                        // Check if we have new notifications
+                        if (newNotifications.length > 0) {
+                            const latestId = newNotifications[0].id;
+                            
+                            // If we have a new notification not seen before
+                            if (latestId > this.lastNotificationId) {
+                                // Play notification sound
+                                this.playNotificationSound();
                                 
-                                async init() {
-                                    // ✅ INSTANT: Load notifications immediately on page load
-                                    await this.loadNotifications();
-                                    
-                                    // Start polling every 3 seconds for new notifications
-                                    this.pollInterval = setInterval(() => {
-                                        this.loadNotifications();
-                                    }, 3000);
-                                },
-
-                                openDropdown() {
-                                    // Load fresh notifications when opening dropdown
-                                    this.loadNotifications();
-                                },
+                                // Show browser notification if permitted
+                                this.showBrowserNotification(newNotifications[0]);
                                 
-                                async loadNotifications() {
-                                    try {
-                                        const response = await fetch('../notification/main-get-notif-page-1.php');
-                                        const data = await response.json();
-                                        
-                                        if (data.success) {
-                                            const newNotifications = data.notifications;
-                                            
-                                            // Check if we have new notifications
-                                            if (newNotifications.length > 0) {
-                                                const latestId = newNotifications[0].id;
-                                                
-                                                // If we have a new notification not seen before
-                                                if (latestId > this.lastNotificationId) {
-                                                    // Play notification sound
-                                                    this.playNotificationSound();
-                                                    
-                                                    // Show browser notification if permitted
-                                                    this.showBrowserNotification(newNotifications[0]);
-                                                    
-                                                    this.lastNotificationId = latestId;
-                                                }
-                                            }
-                                            
-                                            this.notifications = newNotifications;
-                                            this.unreadCount = data.unread_count;
-                                        }
-                                    } catch (error) {
-                                        console.error('Error loading notifications:', error);
-                                    }
-                                },
-
-                                async toggleRead(notifId, isRead) {
-                                    try {
-                                        const formData = new FormData();
-                                        formData.append('action', 'mark_single');
-                                        formData.append('notification_id', notifId);
-
-                                        const response = await fetch('../notification/main-mark-notif-page-3.php', {
-                                            method: 'POST',
-                                            body: formData
-                                        });
-
-                                        const data = await response.json();
-                                        if (data.success) {
-                                            // ✅ INSTANT: Update count immediately
-                                            this.unreadCount = data.unread_count;
-                                            await this.loadNotifications();
-                                        }
-                                    } catch (error) {
-                                        console.error('Error toggling read:', error);
-                                    }
-                                },
-
-                                async markAllAsRead() {
-                                    try {
-                                        const formData = new FormData();
-                                        formData.append('action', 'mark_all');
-
-                                        const response = await fetch('../notification/main-mark-notif-page-3.php', {
-                                            method: 'POST',
-                                            body: formData
-                                        });
-
-                                        const data = await response.json();
-                                        if (data.success) {
-                                            // ✅ INSTANT: Set count to 0 immediately
-                                            this.unreadCount = 0;
-                                            await this.loadNotifications();
-                                        }
-                                    } catch (error) {
-                                        console.error('Error marking all as read:', error);
-                                    }
-                                },
-
-                                async deleteNotification(notifId) {
-                                    if (!confirm('Delete this notification?')) return;
-
-                                    try {
-                                        const formData = new FormData();
-                                        formData.append('action', 'delete');
-                                        formData.append('notification_id', notifId);
-
-                                        const response = await fetch('../notification/main-mark-notif-page-3.php', {
-                                            method: 'POST',
-                                            body: formData
-                                        });
-
-                                        const data = await response.json();
-                                        if (data.success) {
-                                            // ✅ INSTANT: Update count immediately
-                                            this.unreadCount = data.unread_count;
-                                            await this.loadNotifications();
-                                        }
-                                    } catch (error) {
-                                        console.error('Error deleting notification:', error);
-                                    }
-                                },
-
-                                playNotificationSound() {
-                                    try {
-                                        const audioContext = new (window.AudioContext || window.webkitAudioContext)();
-                                        const oscillator = audioContext.createOscillator();
-                                        const gainNode = audioContext.createGain();
-                                        
-                                        oscillator.connect(gainNode);
-                                        gainNode.connect(audioContext.destination);
-                                        
-                                        oscillator.frequency.value = 800;
-                                        oscillator.type = 'sine';
-                                        
-                                        gainNode.gain.setValueAtTime(0.3, audioContext.currentTime);
-                                        gainNode.gain.exponentialRampToValueAtTime(0.01, audioContext.currentTime + 0.5);
-                                        
-                                        oscillator.start(audioContext.currentTime);
-                                        oscillator.stop(audioContext.currentTime + 0.5);
-                                    } catch (e) {
-                                        // Silently fail if audio context is not available
-                                    }
-                                },
-
-                                showBrowserNotification(notif) {
-                                    if ('Notification' in window && Notification.permission === 'granted') {
-                                        new Notification('Noble Home - ' + notif.title, {
-                                            body: notif.message,
-                                            icon: '../img/logo/logo.png',
-                                            tag: 'noble-notification',
-                                            requireInteraction: false
-                                        });
-                                    }
-                                },
-
-                                formatTime(dateString) {
-                                    const date = new Date(dateString);
-                                    const now = new Date();
-                                    const diffMs = now - date;
-                                    const diffMins = Math.floor(diffMs / 60000);
-                                    const diffHours = Math.floor(diffMs / 3600000);
-                                    const diffDays = Math.floor(diffMs / 86400000);
-
-                                    if (diffMins < 1) return 'just now';
-                                    if (diffMins < 60) return `${diffMins} minute${diffMins > 1 ? 's' : ''} ago`;
-                                    if (diffHours < 24) return `${diffHours} hour${diffHours > 1 ? 's' : ''} ago`;
-                                    if (diffDays < 7) return `${diffDays} day${diffDays > 1 ? 's' : ''} ago`;
-                                    
-                                    return date.toLocaleDateString();
-                                },
-
-                                getIconColor(colorClass) {
-                                    const colors = {
-                                        'bg-green-100': '#16a34a',
-                                        'bg-blue-100': '#2563eb',
-                                        'bg-orange-100': '#ea580c',
-                                        'bg-yellow-100': '#eab308',
-                                        'bg-purple-100': '#a855f7'
-                                    };
-                                    return { color: colors[colorClass] || '#666' };
-                                }
+                                this.lastNotificationId = latestId;
                             }
                         }
+                        
+                        this.notifications = newNotifications;
+                        this.unreadCount = data.unread_count;
+                    }
+                } catch (error) {
+                    console.error('Error loading notifications:', error);
+                }
+            },
 
-                        // ✅ Initialize notification panel on page load
-                        document.addEventListener('DOMContentLoaded', () => {
-                            const notifPanel = document.querySelector('[x-data*="notificationPanel"]')?.__x;
-                            if (notifPanel) {
-                                notifPanel.init();
-                            }
-                        });
+            async toggleRead(notifId, isRead) {
+                try {
+                    const formData = new FormData();
+                    formData.append('action', 'mark_single');
+                    formData.append('notification_id', notifId);
 
-                        // Request browser notification permission on page load
-                        if ('Notification' in window && Notification.permission === 'default') {
-                            Notification.requestPermission();
-                        }
-                    </script>
+                    const response = await fetch('../notification/main-mark-notif-page-3.php', {
+                        method: 'POST',
+                        body: formData
+                    });
+
+                    const data = await response.json();
+                    if (data.success) {
+                        // ✅ INSTANT: Update count immediately
+                        this.unreadCount = data.unread_count;
+                        await this.loadNotifications();
+                    }
+                } catch (error) {
+                    console.error('Error toggling read:', error);
+                }
+            },
+
+            async markAllAsRead() {
+                try {
+                    const formData = new FormData();
+                    formData.append('action', 'mark_all');
+
+                    const response = await fetch('../notification/main-mark-notif-page-3.php', {
+                        method: 'POST',
+                        body: formData
+                    });
+
+                    const data = await response.json();
+                    if (data.success) {
+                        // ✅ INSTANT: Set count to 0 immediately
+                        this.unreadCount = 0;
+                        await this.loadNotifications();
+                    }
+                } catch (error) {
+                    console.error('Error marking all as read:', error);
+                }
+            },
+
+            async deleteNotification(notifId) {
+                if (!confirm('Delete this notification?')) return;
+
+                try {
+                    const formData = new FormData();
+                    formData.append('action', 'delete');
+                    formData.append('notification_id', notifId);
+
+                    const response = await fetch('../notification/main-mark-notif-page-3.php', {
+                        method: 'POST',
+                        body: formData
+                    });
+
+                    const data = await response.json();
+                    if (data.success) {
+                        // ✅ INSTANT: Update count immediately
+                        this.unreadCount = data.unread_count;
+                        await this.loadNotifications();
+                    }
+                } catch (error) {
+                    console.error('Error deleting notification:', error);
+                }
+            },
+
+            async deleteAll() {
+                if (!confirm('Are you sure you want to delete ALL notifications? This cannot be undone.')) return;
+
+                try {
+                    const formData = new FormData();
+                    formData.append('action', 'delete_all');
+
+                    const response = await fetch('../notification/main-mark-notif-page-3.php', {
+                        method: 'POST',
+                        body: formData
+                    });
+
+                    const data = await response.json();
+                    if (data.success) {
+                        // ✅ INSTANT: Clear everything
+                        this.unreadCount = 0;
+                        this.notifications = [];
+                        console.log('All notifications deleted:', data.affected_rows);
+                    } else {
+                        alert('Error: ' + data.message);
+                    }
+                } catch (error) {
+                    console.error('Error deleting all notifications:', error);
+                    alert('Failed to delete notifications');
+                }
+            },
+
+            playNotificationSound() {
+                try {
+                    const audioContext = new (window.AudioContext || window.webkitAudioContext)();
+                    const oscillator = audioContext.createOscillator();
+                    const gainNode = audioContext.createGain();
+                    
+                    oscillator.connect(gainNode);
+                    gainNode.connect(audioContext.destination);
+                    
+                    oscillator.frequency.value = 800;
+                    oscillator.type = 'sine';
+                    
+                    gainNode.gain.setValueAtTime(0.3, audioContext.currentTime);
+                    gainNode.gain.exponentialRampToValueAtTime(0.01, audioContext.currentTime + 0.5);
+                    
+                    oscillator.start(audioContext.currentTime);
+                    oscillator.stop(audioContext.currentTime + 0.5);
+                } catch (e) {
+                    // Silently fail if audio context is not available
+                }
+            },
+
+            showBrowserNotification(notif) {
+                if ('Notification' in window && Notification.permission === 'granted') {
+                    new Notification('Noble Home - ' + notif.title, {
+                        body: notif.message,
+                        icon: '../img/logo/logo.png',
+                        tag: 'noble-notification',
+                        requireInteraction: false
+                    });
+                }
+            },
+
+            formatTime(dateString) {
+                const date = new Date(dateString);
+                const now = new Date();
+                const diffMs = now - date;
+                const diffMins = Math.floor(diffMs / 60000);
+                const diffHours = Math.floor(diffMs / 3600000);
+                const diffDays = Math.floor(diffMs / 86400000);
+
+                if (diffMins < 1) return 'just now';
+                if (diffMins < 60) return `${diffMins} minute${diffMins > 1 ? 's' : ''} ago`;
+                if (diffHours < 24) return `${diffHours} hour${diffHours > 1 ? 's' : ''} ago`;
+                if (diffDays < 7) return `${diffDays} day${diffDays > 1 ? 's' : ''} ago`;
+                
+                return date.toLocaleDateString();
+            },
+
+            getIconColor(colorClass) {
+                const colors = {
+                    'bg-green-100': '#16a34a',
+                    'bg-blue-100': '#2563eb',
+                    'bg-orange-100': '#ea580c',
+                    'bg-yellow-100': '#eab308',
+                    'bg-purple-100': '#a855f7'
+                };
+                return { color: colors[colorClass] || '#666' };
+            }
+        }
+    }
+
+    // ✅ Initialize notification panel on page load
+    document.addEventListener('DOMContentLoaded', () => {
+        const notifPanel = document.querySelector('[x-data*="notificationPanel"]')?.__x;
+        if (notifPanel) {
+            notifPanel.init();
+        }
+    });
+
+    // Request browser notification permission on page load
+    if ('Notification' in window && Notification.permission === 'default') {
+        Notification.requestPermission();
+    }
+</script>
 
 
                     <!-- Profile Dropdown with User Info -->

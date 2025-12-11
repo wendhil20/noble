@@ -95,8 +95,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['confirm_payment'], $_
                 $mail->isSMTP();
                 $mail->Host = 'smtp.gmail.com';
                 $mail->SMTPAuth = true;
-                $mail->Username = 'wendhil10@gmail.com';
-                $mail->Password = 'tnjqjsuopqlwzoug';
+                $mail->Username = 'noblehomeconst.ph@gmail.com';
+                $mail->Password = 'icup vicc amrv xbxh';
                 $mail->SMTPSecure = 'tls';
                 $mail->Port = 587;
 

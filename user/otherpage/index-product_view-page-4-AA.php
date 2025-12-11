@@ -361,10 +361,8 @@ $stmt->execute();
 $related_products = $stmt->get_result();
 $stmt->close();
 
-// ✅ CHECK IF WINDOWS CATEGORY
+// ✅ Check if this is a Windows product
 $is_windows_category = strtolower($product['codename']) === 'windows';
-
-$product_specs = $product;
 
 // ✅ GET AVERAGE RATING
 $avg_stmt = $conn->prepare("
@@ -394,6 +392,10 @@ $is_guest = !isset($_SESSION['user_id']);
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <meta name="server-time" content="<?= $server_time ?>">
+  <?php if ($is_logged_in): ?>
+  <meta name="user-email" content="<?= htmlspecialchars($_SESSION['user_email'] ?? '') ?>">
+  <meta name="user-name" content="<?= htmlspecialchars($_SESSION['user_name'] ?? '') ?>">
+<?php endif; ?>
   <link rel="icon" type="image/png" sizes="96x96" href="../img/favicon.ico">
   <title><?= htmlspecialchars($product['product_name']) ?> - Noble Home</title>
   <script src="https://cdn.jsdelivr.net/npm/swiper@11/swiper-bundle.min.js"></script>
@@ -1823,7 +1825,9 @@ $is_guest = !isset($_SESSION['user_id']);
               <input type="hidden" name="selected_type" id="selected_type">
               <input type="hidden" name="selected_variant" id="selected_variant">
               <input type="hidden" name="variant_id" id="variant_id">
-              <input type="hidden" name="is_windows" value="<?= $is_windows_category ? '1' : '0' ?>" />
+             <input type="hidden" name="is_windows" value="0" />
+
+
 
               <!-- Total Price Display -->
               <div class="bg-gradient-to-r from-green-50 to-blue-50 p-2 lg:p-5 ">
@@ -1838,16 +1842,18 @@ $is_guest = !isset($_SESSION['user_id']);
                 </div>
               </div>
 
-              <?php if ($is_windows_category): ?>
-                <button type="button" id="contactUsBtn" onclick="openContactModal()"
-                  disabled
-                  class="w-full py-3 lg:py-4 text-sm lg:text-lg font-semibold transition-all duration-300 bg-gray-400 text-white disabled:cursor-not-allowed disabled:opacity-75 ">
-                  <span id="contactBtnText" class="flex items-center justify-center gap-2">
-                    <i class="fas fa-phone"></i>
-                    Complete Steps to Contact Us
-                  </span>
-                </button>
-              <?php else: ?>
+              <!-- CUSTOMIZE BUTTON - Shows only for Windows products -->
+<?php if ($is_windows_category): ?>
+<div id="customizeButtonContainer">
+  <button type="button" 
+    onclick="openCustomizeModal()"
+    class="w-full py-3 lg:py-4 text-sm lg:text-lg font-semibold transition-all duration-300 bg-black text-white hover:bg-orange-500 ">
+    <span class="flex items-center justify-center gap-2">
+     Quote Customize 
+    </span>
+  </button>
+</div>
+<?php endif; ?>
                 <div class="flex gap-2 lg:gap-3 w-full">
                   <button type="submit" id="addToCartBtn"
                     disabled
@@ -1866,7 +1872,7 @@ $is_guest = !isset($_SESSION['user_id']);
                     </span>
                   </button>
                 </div>
-              <?php endif; ?>
+          
             </form>
           </div>
         </div>
@@ -1980,146 +1986,278 @@ $is_guest = !isset($_SESSION['user_id']);
   </style>
 
 
-  <!-- Contact Modal -->
-  <div id="contactModal" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 hidden">
-    <div class="bg-white rounded-xl p-6 lg:p-8 max-w-md w-full mx-4 relative">
-      <button onclick="closeContactModal()" class="absolute top-4 right-4 text-gray-400 hover:text-gray-600 transition-colors">
-        <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
-        </svg>
-      </button>
 
-      <div class="mb-6">
-        <h3 class="text-xl lg:text-2xl font-bold text-gray-800 mb-2">Contact Us for Quote</h3>
-        <p class="text-gray-600 text-sm">Get a personalized quote for your selected windows.</p>
-      </div>
+<!-- CUSTOMIZE MODAL -->
+<div id="customizeModal" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-[9999] hidden">
+  <div class="bg-white rounded-2xl p-6 lg:p-8 max-w-2xl w-full mx-4 relative max-h-[90vh] overflow-y-auto">
+    
+    <!-- Close Button -->
+    <button onclick="closeCustomizeModal()" class="absolute top-4 right-4 text-gray-400 hover:text-gray-600 transition-colors">
+      <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+      </svg>
+    </button>
 
-      <div class="mb-6 p-4 bg-gray-50 rounded-lg">
-        <h4 class="font-semibold text-gray-700 mb-2">Product: <?= htmlspecialchars($product['product_name']) ?></h4>
-        <div id="selectedOptionsText" class="text-sm text-gray-600 mb-2">No specific options selected</div>
-        <div id="selectedPriceText" class="text-lg font-bold text-green-600"></div>
-      </div>
-
-      <div class="space-y-4">
-        <a id="emailLink"
-          href="mailto:noblehomeconst.ph@gmail.com?subject=Windows Quote Request&body=Hi, I'm interested in getting a quote."
-          class="block w-full bg-orange-500 hover:bg-orange-600 text-white text-center px-4 py-3 rounded-lg font-medium transition-colors">
-          <i class="fas fa-envelope mr-2"></i>Send Email Quote Request
-        </a>
-
-        <div class="text-center">
-          <p class="text-sm text-gray-600 mb-2">Or call us directly:</p>
-          <a href="tel:+639922394563" class="text-orange-500 font-semibold text-lg hover:text-orange-600 transition-colors">
-            <i class="fas fa-phone mr-2"></i>(02) 8822-1295 / +63992-239-4563
-          </a>
+    <!-- Modal Header -->
+    <div class="mb-6">
+      <div class="flex items-center gap-3 mb-2">
+      
+        <div>
+          <h3 class="text-2xl lg:text-3xl font-bold text-gray-900">Customize Your Windows</h3>
+          <p class="text-sm text-gray-600 mt-1">Get a personalized quote for your custom specifications</p>
         </div>
+      </div>
+    </div>
 
-        <a href="https://wa.me/639922394563" target="_blank"
-          class="block w-full bg-green-500 hover:bg-green-600 text-white text-center px-4 py-3 rounded-lg font-medium transition-colors">
-          <i class="fab fa-whatsapp mr-2"></i>Chat on WhatsApp
-        </a>
+    <!-- Product Summary -->
+    <div class="bg-gradient-to-r from-blue-50 to-purple-50 p-4 rounded-lg mb-6 border border-blue-200">
+      <h4 class="font-semibold text-gray-900 mb-2">Product Details</h4>
+      <p id="customizeProductName" class="text-gray-700 font-medium mb-1"></p>
+      <p id="customizeProductInfo" class="text-sm text-gray-600"></p>
+    </div>
+
+    <!-- Customize Form -->
+    <form id="customizeForm" class="space-y-5" onsubmit="submitCustomizeForm(event)">
+      
+      <!-- Customization Type -->
+      <div>
+        <label class="block text-sm font-semibold text-gray-900 mb-3">What would you like to customize?</label>
+        <div class="space-y-2">
+          <label class="flex items-center p-3 border-2 border-gray-200 rounded-lg cursor-pointer hover:border-purple-400 hover:bg-purple-50 transition">
+            <input type="radio" name="customType" value="size" checked class="w-4 h-4 text-purple-600">
+            <span class="ml-3 font-medium text-gray-700">Custom Size</span>
+          </label>
+          <label class="flex items-center p-3 border-2 border-gray-200 rounded-lg cursor-pointer hover:border-purple-400 hover:bg-purple-50 transition">
+            <input type="radio" name="customType" value="color" class="w-4 h-4 text-purple-600">
+            <span class="ml-3 font-medium text-gray-700">Custom Color/Design</span>
+          </label>
+          <label class="flex items-center p-3 border-2 border-gray-200 rounded-lg cursor-pointer hover:border-purple-400 hover:bg-purple-50 transition">
+            <input type="radio" name="customType" value="material" class="w-4 h-4 text-purple-600">
+            <span class="ml-3 font-medium text-gray-700">Different Material</span>
+          </label>
+          <label class="flex items-center p-3 border-2 border-gray-200 rounded-lg cursor-pointer hover:border-purple-400 hover:bg-purple-50 transition">
+            <input type="radio" name="customType" value="other" class="w-4 h-4 text-purple-600">
+            <span class="ml-3 font-medium text-gray-700">Other</span>
+          </label>
+        </div>
       </div>
 
-      <div class="mt-6 text-center text-sm text-gray-500">
-        <p>We'll get back to you within 24 hours with detailed pricing and installation information.</p>
+      <!-- Specifications -->
+      <div>
+        <label class="block text-sm font-semibold text-gray-900 mb-2">Your Specifications</label>
+        <textarea 
+          name="specifications" 
+          placeholder="Describe your custom requirements in detail (dimensions, colors, materials, quantity, etc.)"
+          class="w-full px-4 py-3 border-2 border-gray-300 rounded-lg focus:outline-none focus:border-purple-500 resize-none"
+          rows="4"
+          required></textarea>
+      </div>
+
+      <!-- Contact Information -->
+      <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+        <div>
+          <label class="block text-sm font-semibold text-gray-900 mb-2">Full Name</label>
+          <input 
+            type="text" 
+            name="fullName"
+            id="customizeFullName"
+            placeholder="Your name"
+            class="w-full px-4 py-2 border-2 border-gray-300 rounded-lg focus:outline-none focus:border-purple-500 bg-gray-100 cursor-not-allowed"
+            readonly
+            required>
+          <p class="text-xs text-gray-500 mt-1">From your account</p>
+        </div>
+        <div>
+          <label class="block text-sm font-semibold text-gray-900 mb-2">Email</label>
+          <input 
+            type="email" 
+            name="email"
+            id="customizeEmail"
+            placeholder="your@email.com"
+            class="w-full px-4 py-2 border-2 border-gray-300 rounded-lg focus:outline-none focus:border-purple-500 bg-gray-100 cursor-not-allowed"
+            readonly
+            required>
+          <p class="text-xs text-gray-500 mt-1">From your account</p>
+        </div>
+      </div>
+
+      <div>
+        <label class="block text-sm font-semibold text-gray-900 mb-2">Phone Number</label>
+        <input 
+          type="tel" 
+          name="phone"
+          placeholder="+63 9XX XXX XXXX"
+          class="w-full px-4 py-2 border-2 border-gray-300 rounded-lg focus:outline-none focus:border-purple-500"
+          required>
+      </div>
+
+      <!-- Message (Optional) -->
+      <div>
+        <label class="block text-sm font-semibold text-gray-900 mb-2">Additional Message (Optional)</label>
+        <textarea 
+          name="message" 
+          placeholder="Any additional information you'd like to share..."
+          class="w-full px-4 py-3 border-2 border-gray-300 rounded-lg focus:outline-none focus:border-purple-500 resize-none"
+          rows="3"></textarea>
+      </div>
+
+      <!-- Checkbox -->
+      <label class="flex items-start p-3 border-2 border-gray-200 rounded-lg cursor-pointer hover:bg-gray-50 transition">
+        <input type="checkbox" name="agreeTerms" class="w-4 h-4 mt-1 text-purple-600" required>
+        <span class="ml-3 text-sm text-gray-700">
+          I agree to receive updates and quote details from Noble Home Construction
+        </span>
+      </label>
+
+      <!-- Submit Buttons -->
+      <div class="grid grid-cols-2 gap-3 pt-4">
+        <button type="button" 
+          onclick="closeCustomizeModal()"
+          class="py-3 bg-gray-200 hover:bg-gray-300 text-gray-900 font-semibold rounded-lg transition-colors">
+          Cancel
+        </button>
+        <button type="submit"
+          class="py-3 bg-black hover:bg-orange-500 text-white font-semibold ">
+          <i class="fas fa-paper-plane mr-2"></i>Send Request
+        </button>
+      </div>
+    </form>
+
+    <!-- Contact Info -->
+    <div class="mt-6 pt-6 border-t border-gray-200">
+      <p class="text-xs text-gray-600 text-center mb-3">Or contact us directly:</p>
+      <div class="flex gap-2 justify-center">
+        <a href="tel:+639922394563" class="flex items-center gap-2 px-4 py-2 bg-blue-100 hover:bg-blue-200 text-blue-700 rounded-lg text-sm font-medium transition">
+          <i class="fas fa-phone"></i> Call
+        </a>
+        <a href="https://wa.me/639922394563" target="_blank" class="flex items-center gap-2 px-4 py-2 bg-green-100 hover:bg-green-200 text-green-700 rounded-lg text-sm font-medium transition">
+          <i class="fab fa-whatsapp"></i> WhatsApp
+        </a>
+        <a href="mailto:noblehomeconst.ph@gmail.com" class="flex items-center gap-2 px-4 py-2 bg-orange-100 hover:bg-orange-200 text-orange-700 rounded-lg text-sm font-medium transition">
+          <i class="fas fa-envelope"></i> Email
+        </a>
       </div>
     </div>
   </div>
+</div>
 
-  <style>
-    /* Sidebar animations */
-    #productOptionsContainer.sidebar-open {
-      transform: translateX(0);
+<style>
+  /* Modal animations */
+  #customizeModal {
+    animation: modalFadeIn 0.3s ease-out;
+  }
+
+  @keyframes modalFadeIn {
+    from {
+      opacity: 0;
+      transform: scale(0.95);
     }
-
-    /* Button styles */
-    .type-btn,
-    .color-btn,
-    .variant-btn {
-      position: relative;
-      transition: all 0.2s ease;
+    to {
+      opacity: 1;
+      transform: scale(1);
     }
+  }
 
-    .type-btn:hover,
-    .color-btn:hover,
-    .variant-btn:hover {
-      transform: translateY(-1px);
+  #customizeModal > div {
+    animation: slideUp 0.3s ease-out;
+  }
+
+  @keyframes slideUp {
+    from {
+      transform: translateY(30px);
+      opacity: 0;
     }
-
-    .type-btn:active,
-    .color-btn:active,
-    .variant-btn:active {
+    to {
       transform: translateY(0);
+      opacity: 1;
     }
+  }
 
-    /* Selected states */
-    .type-btn.selected,
-    .color-btn.selected,
-    .variant-btn.selected {
-      border-color: #f97316 !important;
-      background-color: #fff7ed !important;
-    }
+  /* Form styling */
+  #customizeForm input:focus,
+  #customizeForm textarea:focus {
+    box-shadow: 0 0 0 3px rgba(147, 51, 234, 0.1);
+  }
 
-    .variant-btn.selected .text-gray-700,
-    .color-btn.selected span {
-      color: #000000 !important;
-      font-weight: 600;
-    }
+  #customizeForm textarea {
+    font-family: inherit;
+  }
+</style>
 
-    /* Custom scrollbar */
-    .scrollbar-thin {
-      scrollbar-width: thin;
-      scrollbar-color: #d1d5db #f9fafb;
-    }
+<script>
+  // Open customize modal
+  function openCustomizeModal() {
+    const modal = document.getElementById('customizeModal');
+    const productName = document.querySelector('h1.text-xl')?.textContent || 'Product';
+    const selectedColor = document.getElementById('selected_color')?.value || 'Not selected';
+    const selectedSize = document.querySelector('.variant-btn.selected')?.textContent || 'Not selected';
 
-    .scrollbar-thin::-webkit-scrollbar {
-      width: 6px;
-    }
+    // Populate product info
+    document.getElementById('customizeProductName').textContent = productName;
+    document.getElementById('customizeProductInfo').textContent = 
+      `Color: ${selectedColor} | Size: ${selectedSize}`;
 
-    .scrollbar-thin::-webkit-scrollbar-track {
-      background: #f9fafb;
-      border-radius: 3px;
-    }
+    // Pre-fill user info from PHP session data
+    const userEmail = document.querySelector('meta[name="user-email"]')?.getAttribute('content') || '';
+    const userName = document.querySelector('meta[name="user-name"]')?.getAttribute('content') || '';
+    
+    if (userName) document.getElementById('customizeFullName').value = userName;
+    if (userEmail) document.getElementById('customizeEmail').value = userEmail;
 
-    .scrollbar-thin::-webkit-scrollbar-thumb {
-      background: #d1d5db;
-      border-radius: 3px;
-    }
+    modal.classList.remove('hidden');
+    document.body.style.overflow = 'hidden';
+  }
 
-    .scrollbar-thin::-webkit-scrollbar-thumb:hover {
-      background: #9ca3af;
-    }
+  // Close customize modal
+  function closeCustomizeModal() {
+    const modal = document.getElementById('customizeModal');
+    modal.classList.add('hidden');
+    document.body.style.overflow = 'auto';
+  }
 
-    /* Modal animations */
-    #contactModal {
-      animation: modalFadeIn 0.3s ease-out;
-    }
+  // Submit customize form
+  function submitCustomizeForm(event) {
+    event.preventDefault();
 
-    @keyframes modalFadeIn {
-      from {
-        opacity: 0;
-        transform: scale(0.95);
+    const form = document.getElementById('customizeForm');
+    const formData = new FormData(form);
+    const productId = document.querySelector('input[name="product_id"]').value;
+    const selectedColor = document.getElementById('selected_color')?.value || '';
+    const selectedVariant = document.getElementById('selected_variant')?.value || '';
+
+    // Add product details
+    formData.append('product_id', productId);
+    formData.append('selected_color', selectedColor);
+    formData.append('selected_variant', selectedVariant);
+
+    // Send to server
+    fetch('index-customize_quote_handler-page-4-AA.php', {
+      method: 'POST',
+      body: formData
+    })
+    .then(response => response.json())
+    .then(data => {
+      if (data.success) {
+        alert('✅ Your customization request has been sent! We will contact you shortly.');
+        closeCustomizeModal();
+        form.reset();
+      } else {
+        alert('❌ Error: ' + (data.message || 'Something went wrong'));
       }
+    })
+    .catch(error => {
+      console.error('Error:', error);
+      alert('❌ Error sending request. Please try again or contact us directly.');
+    });
+  }
 
-      to {
-        opacity: 1;
-        transform: scale(1);
-      }
+  // Close modal with Escape key
+  document.addEventListener('keydown', function(e) {
+    if (e.key === 'Escape') {
+      closeCustomizeModal();
     }
-
-    #contactModal>div {
-      transform: translateY(-20px);
-      animation: slideUp 0.3s ease-out forwards;
-    }
-
-    @keyframes slideUp {
-      to {
-        transform: translateY(0);
-      }
-    }
-  </style>
-
-
+  });
+</script>
 
   <?php if ($related_products->num_rows > 0): ?>
     <!-- RELATED PRODUCTS SECTION - MOBILE SIDEBAR & DESKTOP CAROUSEL -->

@@ -565,7 +565,6 @@ while ($row = $subcategories_result->fetch_assoc()) {
     $subcategories[] = $row;
 }
 
-// Display hierarchy
 // Around line 450, update the display_sql to include product counts
 $display_sql = "SELECT 
     c.id as category_id,

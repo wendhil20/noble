@@ -824,7 +824,7 @@ while ($row = $banners_result->fetch_assoc()) {
                         <?php
                         $label = !empty($banners) ? $banners[0]['category_name'] : 'Deals';
                         echo ucfirst(htmlspecialchars($label));
-                        ?>➜ 
+                        ?>➜
                     </div>
                 </div>
             </a>
@@ -1049,7 +1049,7 @@ while ($row = $banners_result->fetch_assoc()) {
                 <div class="w-full">
                     <div class="flex items-center justify-between mb-4">
                         <div class="flex items-center gap-2.5">
-                         
+
                             <h2 class="text-base sm:text-xl font-bold text-neutral-900">Recently Viewed ➜</h2>
                         </div>
                         <?php if ($recent_count > 0): ?>
@@ -1088,7 +1088,7 @@ while ($row = $banners_result->fetch_assoc()) {
                     <div class="w-full">
                         <div class="flex items-center justify-between mb-4">
                             <div class="flex items-center gap-2.5">
-                             
+
                                 <h2 class="text-base sm:text-xl font-bold text-neutral-900">Recommended for You ➜</h2>
                             </div>
                             <div class="flex gap-1.5">
@@ -1202,7 +1202,7 @@ while ($row = $banners_result->fetch_assoc()) {
                     <h3 class="text-lg font-semibold text-neutral-900">Chair furniture deals below ₱5,000</h3>
                 </a>
 
-              
+
             </div>
         </div>
     </section>
@@ -1464,12 +1464,13 @@ while ($row = $banners_result->fetch_assoc()) {
                     $furniture_cat_name = $cat_name_result->fetch_assoc()['name'] ?? 'furniture';
                     $cat_name_query->close();
 
-                    // Get ALL subcategories for the modal
+                    // Get 4 RANDOM subcategories for the modal
                     $all_sub_query = $conn->prepare("
     SELECT DISTINCT id, subcategory_name 
     FROM product_subcategories 
     WHERE category_id = ? 
-    ORDER BY subcategory_name ASC
+    ORDER BY RAND()
+    LIMIT 4
 ");
                     $all_sub_query->bind_param("i", $furniture_cat_id);
                     $all_sub_query->execute();
@@ -1480,7 +1481,6 @@ while ($row = $banners_result->fetch_assoc()) {
                     }
                     $all_sub_query->close();
                     ?>
-
                     <!-- Hamburger Menu Button -->
                     <div class="mb-3">
                         <button
@@ -1721,12 +1721,13 @@ while ($row = $banners_result->fetch_assoc()) {
                         $category_name = $tiles_cat_row['name'];
                         $tiles_cat_query->close();
 
-                        // Get ALL subcategories for the menu
+                        // Get 4 RANDOM subcategories for the menu
                         $all_tiles_sub_query = $conn->prepare("
         SELECT DISTINCT ps.id, ps.subcategory_name
         FROM product_subcategories ps
         WHERE ps.category_id = ?
-        ORDER BY ps.subcategory_name ASC
+        ORDER BY RAND()
+        LIMIT 4
     ");
                         $all_tiles_sub_query->bind_param("i", $tiles_cat_id);
                         $all_tiles_sub_query->execute();
@@ -1740,7 +1741,6 @@ while ($row = $banners_result->fetch_assoc()) {
                         $tiles_cat_query->close();
                     }
                     ?>
-
 
                     <!-- Hamburger Menu Button -->
                     <div class="mb-3">
@@ -3450,7 +3450,7 @@ while ($row = $banners_result->fetch_assoc()) {
         }
     </style>
 
-       <!-- Modal for "Not Available" -->
+    <!-- Modal for "Not Available" -->
     <div id="unavailableModal" class="hidden fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4">
         <div class="bg-white rounded-lg shadow-2xl max-w-md w-full p-6 transform transition-all">
             <div class="text-center">

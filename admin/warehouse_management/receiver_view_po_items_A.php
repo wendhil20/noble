@@ -19,12 +19,20 @@ if (!isset($_SESSION['noble_user'])) {
 
 // Get user info
 $sessionUser = $_SESSION['noble_user'];
-$user_id = null;
+$user_id = $_SESSION['noble_id'] ?? null; // Get from noble_id session variable
 $fullname = '';
 
 if (is_array($sessionUser)) {
-    $user_id = $sessionUser['id'] ?? $sessionUser['user_id'] ?? null;
+    // Try multiple possible locations for user ID
+    if (!$user_id) {
+        $user_id = $sessionUser['id'] ?? $sessionUser['user_id'] ?? null;
+    }
     $fullname = $sessionUser['fullname'] ?? $sessionUser['name'] ?? '';
+}
+
+// If still no user_id, try noble_id directly
+if (!$user_id && isset($_SESSION['noble_id'])) {
+    $user_id = $_SESSION['noble_id'];
 }
 
 $po_number = isset($_GET['po_number']) ? trim($_GET['po_number']) : '';
@@ -364,14 +372,14 @@ if (!empty($po_number)) {
                 </div>
 
                 <?php
-// Check if all items with this PO are received
+// Check if all items with this PO are received (including replacements)
 $allReceivedSql = "SELECT 
-                    COUNT(*) as total,
-                    SUM(CASE WHEN received_status = 'received' THEN 1 ELSE 0 END) as received_count
-                   FROM order_items 
-                   WHERE po_number = ?";
+                    (SELECT COUNT(*) FROM order_items WHERE po_number = ?) +
+                    (SELECT COUNT(*) FROM replacement_requests WHERE po_number = ?) as total,
+                    (SELECT COUNT(*) FROM order_items WHERE po_number = ? AND received_status = 'received') +
+                    (SELECT COUNT(*) FROM replacement_requests WHERE po_number = ? AND received_status = 'received') as received_count";
 $allReceivedStmt = $conn->prepare($allReceivedSql);
-$allReceivedStmt->bind_param("s", $po_number);
+$allReceivedStmt->bind_param("ssss", $po_number, $po_number, $po_number, $po_number);
 $allReceivedStmt->execute();
 $receivedStats = $allReceivedStmt->get_result()->fetch_assoc();
 $allReceivedStmt->close();
@@ -379,80 +387,117 @@ $allReceivedStmt->close();
 $allItemsReceived = ($receivedStats['total'] == $receivedStats['received_count']) && $receivedStats['total'] > 0;
 $someItemsReceived = $receivedStats['received_count'] > 0;
 
-// Check if PO attachment already marked as all received
-$poStatusSql = "SELECT pa.all_items_received 
-                FROM po_attachments pa
-                INNER JOIN order_items oi ON pa.order_id = oi.order_id
-                WHERE oi.po_number = ?
+// Get current user ID from session (it might be stored differently)
+$current_user_id = $user_id; // From the earlier code that gets user info
+
+// Check if this specific assignment is already marked as complete
+$assignmentCheckSql = "SELECT status, completed_at 
+                       FROM po_receiver_assignments 
+                       WHERE po_number = ? AND receiver_id = ?
+                       LIMIT 1";
+$assignmentCheckStmt = $conn->prepare($assignmentCheckSql);
+$assignmentCheckStmt->bind_param("si", $po_number, $current_user_id);
+$assignmentCheckStmt->execute();
+$assignmentStatus = $assignmentCheckStmt->get_result()->fetch_assoc();
+$assignmentCheckStmt->close();
+
+// Debug: Check what we got
+echo "<!-- DEBUG2: user_id=$user_id, po_number=$po_number, found_receiver=".($assignmentStatus['receiver_id'] ?? 'null').", assignment_status=".($assignmentStatus['status'] ?? 'null').", alreadyMarkedComplete will be calculated... -->";
+
+// Also check if PO attachment is marked as all received
+$poStatusSql = "SELECT all_items_received, all_items_received_at 
+                FROM po_attachments 
+                WHERE po_number = ?
                 LIMIT 1";
 $poStatusStmt = $conn->prepare($poStatusSql);
 $poStatusStmt->bind_param("s", $po_number);
 $poStatusStmt->execute();
 $poStatus = $poStatusStmt->get_result()->fetch_assoc();
 $poStatusStmt->close();
-$alreadyMarkedComplete = ($poStatus['all_items_received'] ?? 0) == 1;
+
+// Check if marked complete in EITHER place
+$alreadyMarkedComplete = false;
+$completionDate = null;
+
+if ($assignmentStatus && $assignmentStatus['status'] == 'completed') {
+    $alreadyMarkedComplete = true;
+    $completionDate = $assignmentStatus['completed_at'];
+} elseif ($poStatus && $poStatus['all_items_received'] == 1) {
+    $alreadyMarkedComplete = true;
+    $completionDate = $poStatus['all_items_received_at'];
+}
+
+// DEBUG - Remove this after confirming it works
+echo "<!-- DEBUG: user_id=$current_user_id, po_number=$po_number, assignment_status=".($assignmentStatus['status'] ?? 'null').", alreadyMarkedComplete=".($alreadyMarkedComplete ? 'true' : 'false')." -->";
 ?>
 
-<?php if ($someItemsReceived): ?>
+<?php if ($someItemsReceived || $alreadyMarkedComplete): ?>
 <!-- Reception Progress Card -->
-<div class="bg-gradient-to-r from-<?php echo $allItemsReceived ? 'green' : 'blue'; ?>-50 to-<?php echo $allItemsReceived ? 'emerald' : 'indigo'; ?>-50 border-2 border-<?php echo $allItemsReceived ? 'green' : 'blue'; ?>-300 rounded-xl shadow-lg p-6 mb-6">
+<div class="bg-gradient-to-r from-<?php echo $alreadyMarkedComplete ? 'green' : ($allItemsReceived ? 'green' : 'blue'); ?>-50 to-<?php echo $alreadyMarkedComplete ? 'emerald' : ($allItemsReceived ? 'emerald' : 'indigo'); ?>-50 border-2 border-<?php echo $alreadyMarkedComplete ? 'green' : ($allItemsReceived ? 'green' : 'blue'); ?>-300 rounded-xl shadow-lg p-6 mb-6">
     <div class="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
         <div class="flex items-start space-x-4">
-            <div class="bg-<?php echo $allItemsReceived ? 'green' : 'blue'; ?>-500 p-3 rounded-lg flex-shrink-0">
-                <i class="fas fa-<?php echo $allItemsReceived ? 'check-circle' : 'tasks'; ?> text-white text-2xl"></i>
+            <div class="bg-<?php echo $alreadyMarkedComplete ? 'green' : ($allItemsReceived ? 'green' : 'blue'); ?>-500 p-3 rounded-lg flex-shrink-0">
+                <i class="fas fa-<?php echo $alreadyMarkedComplete ? 'check-double' : ($allItemsReceived ? 'check-circle' : 'tasks'); ?> text-white text-2xl"></i>
             </div>
             <div>
-                <h3 class="text-xl font-bold text-<?php echo $allItemsReceived ? 'green' : 'blue'; ?>-900 mb-2">
-                    <?php echo $allItemsReceived ? 'All Items Received!' : 'Reception In Progress'; ?>
+                <h3 class="text-xl font-bold text-<?php echo $alreadyMarkedComplete ? 'green' : ($allItemsReceived ? 'green' : 'blue'); ?>-900 mb-2">
+                    <?php 
+                    if ($alreadyMarkedComplete) {
+                        echo 'P.O. Completely Received!';
+                    } elseif ($allItemsReceived) {
+                        echo 'All Items Received!';
+                    } else {
+                        echo 'Reception In Progress';
+                    }
+                    ?>
                 </h3>
                 <div class="space-y-2">
                     <div class="flex items-center space-x-3">
-                        <div class="text-sm text-<?php echo $allItemsReceived ? 'green' : 'blue'; ?>-700">
+                        <div class="text-sm text-<?php echo $alreadyMarkedComplete ? 'green' : ($allItemsReceived ? 'green' : 'blue'); ?>-700">
                             <i class="fas fa-box-check mr-1"></i>
                             <span class="font-semibold"><?php echo $receivedStats['received_count']; ?> of <?php echo $receivedStats['total']; ?></span> items received
                         </div>
                         <div class="flex-1 max-w-xs">
                             <div class="w-full bg-white rounded-full h-3 shadow-inner">
-                                <div class="bg-<?php echo $allItemsReceived ? 'green' : 'blue'; ?>-500 h-3 rounded-full transition-all duration-500" 
+                                <div class="bg-<?php echo ($alreadyMarkedComplete || $allItemsReceived) ? 'green' : 'blue'; ?>-500 h-3 rounded-full transition-all duration-500" 
                                      style="width: <?php echo ($receivedStats['received_count'] / $receivedStats['total']) * 100; ?>%"></div>
                             </div>
                         </div>
-                        <span class="text-sm font-bold text-<?php echo $allItemsReceived ? 'green' : 'blue'; ?>-700">
+                        <span class="text-sm font-bold text-<?php echo $alreadyMarkedComplete ? 'green' : ($allItemsReceived ? 'green' : 'blue'); ?>-700">
                             <?php echo round(($receivedStats['received_count'] / $receivedStats['total']) * 100); ?>%
                         </span>
                     </div>
                     
-                    <?php if ($allItemsReceived && !$alreadyMarkedComplete): ?>
+                    <?php if ($alreadyMarkedComplete): ?>
+                    <p class="text-sm text-green-700 mt-2">
+    <i class="fas fa-check-double mr-1"></i>
+    P.O. marked as completely received on <?php echo $completionDate ? date('M j, Y g:i A', strtotime($completionDate)) : date('M j, Y g:i A'); ?>
+</p>
+                    <?php elseif ($allItemsReceived && !$alreadyMarkedComplete): ?>
                     <p class="text-sm text-green-700 mt-2">
                         <i class="fas fa-info-circle mr-1"></i>
                         Ready to mark P.O. as completely received
-                    </p>
-                    <?php elseif ($alreadyMarkedComplete): ?>
-                    <p class="text-sm text-green-700 mt-2">
-                        <i class="fas fa-check-double mr-1"></i>
-                        P.O. marked as completely received
                     </p>
                     <?php endif; ?>
                 </div>
             </div>
         </div>
         
-        <?php if ($allItemsReceived && !$alreadyMarkedComplete): ?>
+        <?php if ($alreadyMarkedComplete): ?>
+        <div class="bg-green-100 border-2 border-green-400 text-green-800 px-6 py-3 rounded-lg flex items-center space-x-2">
+            <i class="fas fa-check-circle text-xl"></i>
+            <span class="font-semibold">Complete</span>
+        </div>
+        <?php elseif ($allItemsReceived && !$alreadyMarkedComplete): ?>
         <button onclick="markPOAsCompletelyReceived('<?php echo htmlspecialchars($po_number, ENT_QUOTES); ?>')"
                 class="bg-green-500 hover:bg-green-600 text-white px-6 py-3 rounded-lg transition-colors duration-200 flex items-center justify-center space-x-2 shadow-lg hover:shadow-xl transform hover:scale-105 whitespace-nowrap">
             <i class="fas fa-clipboard-check text-xl"></i>
             <span class="font-semibold">Mark P.O. as Completely Received</span>
         </button>
-        <?php elseif ($alreadyMarkedComplete): ?>
-        <div class="bg-green-100 border-2 border-green-400 text-green-800 px-6 py-3 rounded-lg flex items-center space-x-2">
-            <i class="fas fa-check-circle text-xl"></i>
-            <span class="font-semibold">Complete</span>
-        </div>
         <?php endif; ?>
     </div>
 </div>
 <?php endif; ?>
-
                 <!-- Items Grid -->
                 <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                     <?php foreach ($orderItems as $index => $item): ?>

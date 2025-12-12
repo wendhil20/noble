@@ -52,6 +52,50 @@ function generateCustomPONumber($supplier_id) {
     return 'NH' . $date . $time . $supplier_id;
 }
 
+// Check if we're editing an existing P.O.
+$editing_po_id = isset($_GET['edit_po']) ? (int)$_GET['edit_po'] : 0;
+$existing_po_data = null;
+
+if ($editing_po_id > 0) {
+    $poDataStmt = $conn->prepare("
+        SELECT * FROM po_attachments 
+        WHERE id = ? AND order_id = ? 
+        LIMIT 1
+    ");
+    $poDataStmt->bind_param("ii", $editing_po_id, $order_id);
+    $poDataStmt->execute();
+    $existing_po_data = $poDataStmt->get_result()->fetch_assoc();
+    $poDataStmt->close();
+    
+    // If P.O. doesn't exist or doesn't belong to this order, redirect
+    if (!$existing_po_data) {
+        header("Location: warehouse_staff_po_management_A.php?order_id=" . $order_id);
+        exit();
+    }
+}
+
+// Get P.O. rejection status for each supplier
+$poRejectionsSql = "SELECT id,
+                           supplier_name, 
+                           superadmin_approval_status, 
+                           approval_status,
+                           superadmin_rejection_reason,
+                           rejection_reason
+                    FROM po_attachments 
+                    WHERE order_id = ? 
+                    AND (superadmin_approval_status = 'rejected' OR approval_status = 'rejected')";
+$poRejectionsStmt = $conn->prepare($poRejectionsSql);
+$poRejectionsStmt->bind_param("i", $order_id);
+$poRejectionsStmt->execute();
+$rejectedPOs = $poRejectionsStmt->get_result()->fetch_all(MYSQLI_ASSOC);
+$poRejectionsStmt->close();
+
+// Create a lookup array for rejected suppliers
+$rejectedSuppliers = [];
+foreach ($rejectedPOs as $rejection) {
+    $rejectedSuppliers[$rejection['supplier_name']] = $rejection;
+}
+
 // Get order items with assigned suppliers and original price from product_variants
 $itemStmt = $conn->prepare("
     SELECT 
@@ -70,7 +114,6 @@ $itemStmt = $conn->prepare("
         oi.subtotal as original_subtotal,
         oi.origin,
         oi.supplier_id,
-        oi.manual_supplier_name,
         oi.po_number,
         slp.supplier_price,
         COALESCE(slp.supplier_price, oi.price) as current_price,
@@ -89,7 +132,7 @@ $itemStmt = $conn->prepare("
     LEFT JOIN supp_link_products slp ON oi.variant_id = slp.variant_id 
         AND oi.supplier_id = slp.supplier_id 
         AND slp.status = 'active'
-    WHERE oi.order_id = ? AND (oi.supplier_id IS NOT NULL OR oi.manual_supplier_name IS NOT NULL)
+    WHERE oi.order_id = ? AND oi.supplier_id IS NOT NULL
     ORDER BY oi.id
 ");
 $itemStmt->bind_param("i", $order_id);
@@ -111,34 +154,70 @@ $suppliersStmt->close();
 // Group items by supplier
 $supplierGroups = [];
 foreach ($allItems as $item) {
-    $supplierKey = $item['supplier_id'] ? 
-        strval($item['supplier_id']) : 
-        'manual_' . $item['manual_supplier_name'];
+    $supplierKey = strval($item['supplier_id']);
     
     if (!isset($supplierGroups[$supplierKey])) {
-        // Check if any item has a P.O. number for this supplier
-        $existing_po = null;
+    // Check if any item has a P.O. number for this supplier
+    $existing_po = null;
+    $po_attachment_id = null;
+    $po_approval_status = null;
+    $po_superadmin_approval_status = null;
+    
+    // First, get P.O. attachment by supplier_id directly (more reliable)
+    $poAttachmentSql = "SELECT id, po_number, approval_status, superadmin_approval_status 
+                        FROM po_attachments 
+                        WHERE order_id = ? AND supplier_name = (SELECT business_name FROM supplier_list WHERE id = ? LIMIT 1)
+                        ORDER BY id DESC LIMIT 1";
+    $poAttachmentStmt = $conn->prepare($poAttachmentSql);
+    $poAttachmentStmt->bind_param("ii", $order_id, $item['supplier_id']);
+    $poAttachmentStmt->execute();
+    $poAttachmentResult = $poAttachmentStmt->get_result();
+    
+    if ($poAttachmentRow = $poAttachmentResult->fetch_assoc()) {
+        $po_attachment_id = $poAttachmentRow['id'];
+        $existing_po = $poAttachmentRow['po_number'];
+        $po_approval_status = $poAttachmentRow['approval_status'];
+        $po_superadmin_approval_status = $poAttachmentRow['superadmin_approval_status'];
+    }
+    $poAttachmentStmt->close();
+    
+    // Fallback: check order_items if P.O. attachment not found
+    if (!$existing_po) {
         foreach ($allItems as $checkItem) {
-            $checkKey = $checkItem['supplier_id'] ? 
-                strval($checkItem['supplier_id']) : 
-                'manual_' . $checkItem['manual_supplier_name'];
+            $checkKey = strval($checkItem['supplier_id']);
             if ($checkKey === $supplierKey && !empty($checkItem['po_number'])) {
                 $existing_po = $checkItem['po_number'];
+                
+                // Try to get attachment info again using this P.O. number
+                $poAttachmentSql2 = "SELECT id, approval_status, superadmin_approval_status FROM po_attachments WHERE order_id = ? AND po_number = ? LIMIT 1";
+                $poAttachmentStmt2 = $conn->prepare($poAttachmentSql2);
+                $poAttachmentStmt2->bind_param("is", $order_id, $existing_po);
+                $poAttachmentStmt2->execute();
+                $poAttachmentResult2 = $poAttachmentStmt2->get_result();
+                if ($poAttachmentRow2 = $poAttachmentResult2->fetch_assoc()) {
+                    $po_attachment_id = $poAttachmentRow2['id'];
+                    $po_approval_status = $poAttachmentRow2['approval_status'];
+                    $po_superadmin_approval_status = $poAttachmentRow2['superadmin_approval_status'];
+                }
+                $poAttachmentStmt2->close();
                 break;
             }
         }
+    }
         
         $supplierGroups[$supplierKey] = [
             'supplier_info' => [
-                'name' => $item['supplier_id'] ? $item['business_name'] : $item['manual_supplier_name'],
-                'contact' => $item['primary_contact_name'] ?? '',
-                'email' => $item['email_address'] ?? '',
-                'phone' => $item['phone_number'] ?? '',
-                'address' => $item['business_address'] ?? '',
-                'is_manual' => !$item['supplier_id'],
-                'supplier_id' => $item['supplier_id'] ?? 0,
-                'existing_po' => $existing_po
-            ],
+    'name' => $item['business_name'],
+    'contact' => $item['primary_contact_name'] ?? '',
+    'email' => $item['email_address'] ?? '',
+    'phone' => $item['phone_number'] ?? '',
+    'address' => $item['business_address'] ?? '',
+    'supplier_id' => $item['supplier_id'],
+    'existing_po' => $existing_po,
+    'po_attachment_id' => $po_attachment_id,
+    'po_approval_status' => $po_approval_status,
+    'po_superadmin_approval_status' => $po_superadmin_approval_status
+],
             'items' => []
         ];
     }
@@ -218,6 +297,11 @@ foreach ($allItems as $item) {
             <div class="flex items-center space-x-4">
                 <a href="warehouse_staff_po_management_A.php?order_id=<?php echo $order['id']; ?>" class="text-primary-600 hover:text-primary-700">
                     <i class="fas fa-arrow-left text-xl"></i>
+                </a>
+                <a href="warehouse_head_staff_view_po_files_B.php?order_id=<?php echo $order['id']; ?>" 
+                   class="bg-blue-500 hover:bg-blue-600 p-3 rounded-lg transition-colors duration-200"
+                   title="View All P.O. Files">
+                    <i class="fas fa-file-excel text-white text-2xl"></i>
                 </a>
                 <div class="bg-green-500 p-3 rounded-lg">
                     <i class="fas fa-file-invoice text-white text-2xl"></i>
@@ -312,14 +396,24 @@ foreach ($allItems as $item) {
                                     <?php echo htmlspecialchars($supplierData['supplier_info']['name']); ?>
                                 </h4>
                                 <div class="flex items-center gap-2 mt-1">
-                                    <span class="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium <?php echo $supplierData['supplier_info']['is_manual'] ? 'bg-blue-100 text-blue-800' : 'bg-green-100 text-green-800'; ?>">
-                                        <i class="fas <?php echo $supplierData['supplier_info']['is_manual'] ? 'fa-pen' : 'fa-link'; ?> mr-1"></i>
-                                        <?php echo $supplierData['supplier_info']['is_manual'] ? 'Manual' : 'Linked'; ?>
+                                    <span class="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-green-100 text-green-800">
+                                        <i class="fas fa-link mr-1"></i>
+                                        Linked
                                     </span>
                                     <?php if (!empty($supplierData['supplier_info']['existing_po'])): ?>
-                                        <span class="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-green-500 text-white">
-                                            <i class="fas fa-check-circle mr-1"></i>P.O. Generated
-                                        </span>
+                                        <?php 
+                                        // Check if this supplier's P.O. was rejected
+                                        $isRejected = isset($rejectedSuppliers[$supplierData['supplier_info']['name']]);
+                                        ?>
+                                        <?php if ($isRejected): ?>
+                                            <span class="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-red-500 text-white animate-pulse">
+                                                <i class="fas fa-exclamation-triangle mr-1"></i>Needs Edit - Rejected
+                                            </span>
+                                        <?php else: ?>
+                                            <span class="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-green-500 text-white">
+                                                <i class="fas fa-check-circle mr-1"></i>P.O. Generated
+                                            </span>
+                                        <?php endif; ?>
                                     <?php endif; ?>
                                     <span class="text-xs text-gray-500">
                                         <i class="fas fa-box mr-1"></i><?php echo count($supplierData['items']); ?> item(s)
@@ -328,16 +422,14 @@ foreach ($allItems as $item) {
                             </div>
                         </div>
                         
-                        <?php if (!$supplierData['supplier_info']['is_manual']): ?>
                         <div class="ml-12 text-xs text-gray-600 space-y-1">
-                            <?php if ($supplierData['supplier_info']['contact']): ?>
-                            <div><i class="fas fa-user w-4 text-gray-400"></i><?php echo htmlspecialchars($supplierData['supplier_info']['contact']); ?></div>
-                            <?php endif; ?>
-                            <?php if ($supplierData['supplier_info']['email']): ?>
-                            <div><i class="fas fa-envelope w-4 text-gray-400"></i><?php echo htmlspecialchars($supplierData['supplier_info']['email']); ?></div>
-                            <?php endif; ?>
-                        </div>
-                        <?php endif; ?>
+    <?php if ($supplierData['supplier_info']['contact']): ?>
+    <div><i class="fas fa-user w-4 text-gray-400"></i><?php echo htmlspecialchars($supplierData['supplier_info']['contact']); ?></div>
+    <?php endif; ?>
+    <?php if ($supplierData['supplier_info']['email']): ?>
+    <div><i class="fas fa-envelope w-4 text-gray-400"></i><?php echo htmlspecialchars($supplierData['supplier_info']['email']); ?></div>
+    <?php endif; ?>
+</div>
                     </div>
                     
                     <!-- Right: Action Buttons -->
@@ -350,12 +442,57 @@ foreach ($allItems as $item) {
                             <i id="itemsIcon-<?php echo $supplierKey; ?>" class="fas fa-chevron-down transition-transform duration-200"></i>
                         </button>
                         
-                        <!-- Generate P.O. Button -->
-                        <button onclick="selectSupplier('<?php echo htmlspecialchars($supplierKey); ?>')"
-                                class="bg-gradient-to-r from-green-500 to-green-600 hover:from-green-600 hover:to-green-700 text-white px-5 py-2 rounded-lg shadow-md transition-all duration-200 flex items-center gap-2 transform hover:scale-105">
-                            <i class="fas fa-file-invoice"></i>
-                            <span class="font-medium">Generate P.O.</span>
-                        </button>
+                        <!-- Generate/Edit P.O. Button -->
+<?php if (!empty($supplierData['supplier_info']['po_attachment_id'])): ?>
+    <?php 
+    // Check if P.O. is fully approved
+    $isFullyApproved = ($supplierData['supplier_info']['po_superadmin_approval_status'] == 'approved' && 
+                        $supplierData['supplier_info']['po_approval_status'] == 'approved');
+    $isRejected = ($supplierData['supplier_info']['po_superadmin_approval_status'] == 'rejected' || 
+                   $supplierData['supplier_info']['po_approval_status'] == 'rejected');
+    $isPending = (($supplierData['supplier_info']['po_superadmin_approval_status'] == 'pending' || 
+                   $supplierData['supplier_info']['po_approval_status'] == 'pending') && 
+                   !$isRejected);
+    ?>
+    
+    <?php if ($isFullyApproved): ?>
+        <!-- Fully Approved - Cannot Edit -->
+        <button disabled
+                title="P.O. is fully approved and cannot be edited. Download it from the P.O. Files page."
+                class="bg-gray-400 cursor-not-allowed text-white px-5 py-2 rounded-lg shadow-md flex items-center gap-2 opacity-60">
+            <i class="fas fa-lock"></i>
+            <span class="font-medium">P.O. Approved</span>
+        </button>
+        <a href="warehouse_head_staff_view_po_files_B.php?order_id=<?php echo $order['id']; ?>"
+           class="bg-gradient-to-r from-blue-500 to-blue-600 hover:from-blue-600 hover:to-blue-700 text-white px-5 py-2 rounded-lg shadow-md transition-all duration-200 flex items-center gap-2 transform hover:scale-105"
+           title="Go to P.O. Files to download">
+            <i class="fas fa-download"></i>
+            <span class="font-medium">Download P.O.</span>
+        </a>
+    <?php elseif ($isPending): ?>
+        <!-- Pending Approval - Cannot Edit -->
+        <button disabled
+                title="P.O. is pending approval and cannot be edited at this time."
+                class="bg-yellow-400 cursor-not-allowed text-white px-5 py-2 rounded-lg shadow-md flex items-center gap-2 opacity-60">
+            <i class="fas fa-clock"></i>
+            <span class="font-medium">Pending Approval</span>
+        </button>
+    <?php else: ?>
+        <!-- Not Approved or Rejected - Allow Edit -->
+        <a href="warehouse_staff_generate_po_A-B.php?order_id=<?php echo $order['id']; ?>&edit_po=<?php echo $supplierData['supplier_info']['po_attachment_id']; ?>"
+           class="bg-gradient-to-r from-blue-500 to-blue-600 hover:from-blue-600 hover:to-blue-700 text-white px-5 py-2 rounded-lg shadow-md transition-all duration-200 flex items-center gap-2 transform hover:scale-105">
+            <i class="fas fa-edit"></i>
+            <span class="font-medium"><?php echo $isRejected ? 'Edit Rejected P.O.' : 'Edit P.O.'; ?></span>
+        </a>
+    <?php endif; ?>
+<?php else: ?>
+    <!-- Generate new P.O. -->
+    <button onclick="selectSupplier('<?php echo htmlspecialchars($supplierKey); ?>')"
+            class="bg-gradient-to-r from-green-500 to-green-600 hover:from-green-600 hover:to-green-700 text-white px-5 py-2 rounded-lg shadow-md transition-all duration-200 flex items-center gap-2 transform hover:scale-105">
+        <i class="fas fa-file-invoice"></i>
+        <span class="font-medium">Generate P.O.</span>
+    </button>
+<?php endif; ?>
                         
                         <!-- Reset P.O. Button (if exists) -->
                         <?php if (!empty($supplierData['supplier_info']['existing_po'])): ?>
@@ -371,11 +508,44 @@ foreach ($allItems as $item) {
                 
                 <!-- P.O. Number Display (if exists) -->
                 <?php if (!empty($supplierData['supplier_info']['existing_po'])): ?>
-                <div class="ml-12 mt-3 inline-flex items-center gap-2 bg-green-50 border border-green-200 px-3 py-1 rounded-lg">
-                    <i class="fas fa-file-alt text-green-600 text-sm"></i>
-                    <span class="text-xs font-medium text-green-700">P.O. Number:</span>
-                    <span class="text-xs font-mono text-green-800"><?php echo htmlspecialchars($supplierData['supplier_info']['existing_po']); ?></span>
-                </div>
+                    <?php 
+                    $isRejected = isset($rejectedSuppliers[$supplierData['supplier_info']['name']]);
+                    $bgColor = $isRejected ? 'bg-red-50 border-red-200' : 'bg-green-50 border-green-200';
+                    $textColor = $isRejected ? 'text-red-600' : 'text-green-600';
+                    $labelColor = $isRejected ? 'text-red-700' : 'text-green-700';
+                    $valueColor = $isRejected ? 'text-red-800' : 'text-green-800';
+                    ?>
+                    <div class="ml-12 mt-3 inline-flex items-center gap-2 <?php echo $bgColor; ?> px-3 py-1 rounded-lg">
+                        <i class="fas fa-file-alt <?php echo $textColor; ?> text-sm"></i>
+                        <span class="text-xs font-medium <?php echo $labelColor; ?>">P.O. Number:</span>
+                        <span class="text-xs font-mono <?php echo $valueColor; ?>"><?php echo htmlspecialchars($supplierData['supplier_info']['existing_po']); ?></span>
+                    </div>
+                    
+                    <?php if ($isRejected): ?>
+                        <div class="ml-12 mt-2 p-3 bg-red-50 border-l-4 border-red-500 rounded">
+                            <p class="text-xs font-semibold text-red-900 mb-1">
+                                <i class="fas fa-times-circle mr-1"></i>
+                                Rejection Reason:
+                            </p>
+                            <p class="text-xs text-red-800">
+                                <?php 
+                                $rejection = $rejectedSuppliers[$supplierData['supplier_info']['name']];
+                                if ($rejection['superadmin_approval_status'] == 'rejected') {
+                                    echo '<strong>Superadmin:</strong> ' . htmlspecialchars($rejection['superadmin_rejection_reason']);
+                                } elseif ($rejection['approval_status'] == 'rejected') {
+                                    echo '<strong>Document Controller:</strong> ' . htmlspecialchars($rejection['rejection_reason']);
+                                }
+                                ?>
+                            </p>
+                            <div class="mt-2">
+                                <a href="warehouse_staff_generate_po_A-B.php?order_id=<?php echo $order['id']; ?>&edit_po=<?php echo $supplierData['supplier_info']['po_attachment_id']; ?>" 
+                                   class="inline-flex items-center px-3 py-1 bg-red-600 hover:bg-red-700 text-white text-xs font-medium rounded transition-colors duration-200">
+                                    <i class="fas fa-edit mr-1"></i>
+                                    Edit P.O. Now
+                                </a>
+                            </div>
+                        </div>
+                    <?php endif; ?>
                 <?php endif; ?>
             </div>
             
@@ -530,36 +700,6 @@ foreach ($allItems as $item) {
                                                 </div>
                                             </div>
                                         <?php endif; ?>
-                                        
-                                        <!-- Divider -->
-                                        <div class="flex items-center gap-3 my-4">
-                                            <div class="flex-1 border-t border-gray-300"></div>
-                                            <span class="text-xs text-gray-500 font-medium">OR</span>
-                                            <div class="flex-1 border-t border-gray-300"></div>
-                                        </div>
-                                        
-                                        <!-- Manual Supplier Section -->
-                                        <div>
-                                            <div class="flex items-center gap-2 mb-3">
-                                                <i class="fas fa-pen text-gray-600"></i>
-                                                <h6 class="text-sm font-semibold text-gray-900">Manual Supplier Entry</h6>
-                                            </div>
-                                            <div class="flex gap-2">
-                                                <input type="text" 
-                                                       id="manualSupplier-<?php echo $item['item_id']; ?>"
-                                                       placeholder="Enter supplier name manually..."
-                                                       class="flex-1 px-3 py-2 text-sm border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-gray-500 focus:border-transparent">
-                                                <button onclick="reassignItemSupplierManual(<?php echo $item['item_id']; ?>)"
-                                                        class="bg-gray-600 hover:bg-gray-700 text-white px-4 py-2 rounded-lg text-sm font-medium transition-colors duration-200 flex items-center gap-2 whitespace-nowrap">
-                                                    <i class="fas fa-plus"></i>
-                                                    <span>Assign Manual</span>
-                                                </button>
-                                            </div>
-                                            <p class="text-xs text-gray-500 mt-2">
-                                                <i class="fas fa-info-circle mr-1"></i>
-                                                Use this when the supplier is not in your system
-                                            </p>
-                                        </div>
                                     </div>
                                 </div>
                             </div>
@@ -577,8 +717,22 @@ foreach ($allItems as $item) {
         <div id="poDetailsForm" class="bg-white rounded-xl shadow-sm border border-gray-200 p-6 mb-6" style="display: none;">
             <h2 class="text-xl font-bold text-gray-900 mb-4">
                 <i class="fas fa-edit text-primary-600 mr-2"></i>
-                Purchase Order Details
+                <?php echo $existing_po_data ? 'Edit Purchase Order Details' : 'Purchase Order Details'; ?>
             </h2>
+            
+            <?php if ($existing_po_data): ?>
+                <div class="bg-yellow-50 border border-yellow-200 rounded-lg p-4 mb-4">
+                    <div class="flex items-center">
+                        <i class="fas fa-info-circle text-yellow-600 mr-2"></i>
+                        <div>
+                            <p class="text-yellow-800 font-medium">Editing Existing P.O.</p>
+                            <p class="text-yellow-700 text-sm">Original file: <?php echo htmlspecialchars($existing_po_data['original_filename']); ?></p>
+                            <p class="text-yellow-700 text-sm">Uploaded: <?php echo date('M j, Y g:i A', strtotime($existing_po_data['uploaded_at'])); ?></p>
+                        </div>
+                    </div>
+                </div>
+                <input type="hidden" id="editingPoId" value="<?php echo $editing_po_id; ?>">
+            <?php endif; ?>
             
             <!-- Prepared By Info -->
             <div class="bg-gray-50 rounded-lg p-4 mb-6">
@@ -594,33 +748,46 @@ foreach ($allItems as $item) {
             <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
                 <div>
                     <label class="block text-sm font-medium text-gray-700 mb-2">Payment Terms</label>
-                    <input type="text" id="paymentTerms" placeholder="e.g., After 7-14 Days" 
+                    <input type="text" id="paymentTerms" 
+                           placeholder="e.g., After 7-14 Days" 
+                           value="<?php echo $existing_po_data ? htmlspecialchars($existing_po_data['payment_terms']) : ''; ?>"
                            class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-primary-500 focus:border-primary-500">
                 </div>
                 <div>
                     <label class="block text-sm font-medium text-gray-700 mb-2">Delivery Details</label>
-                    <input type="text" id="deliveryDetails" placeholder="e.g., Pickup at warehouse" 
+                    <input type="text" id="deliveryDetails" 
+                           placeholder="e.g., Pickup at warehouse" 
+                           value="<?php echo $existing_po_data ? htmlspecialchars($existing_po_data['delivery_details']) : ''; ?>"
                            class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-primary-500 focus:border-primary-500">
                 </div>
             </div>
             
             <div class="mb-6">
                 <label class="block text-sm font-medium text-gray-700 mb-2">Condition and Other Special Instructions</label>
-                <textarea id="conditions" rows="3" placeholder="Enter any special conditions or instructions..."
-                          class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-primary-500 focus:border-primary-500"></textarea>
+                <textarea id="conditions" rows="3" 
+                          placeholder="Enter any special conditions or instructions..."
+                          class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-primary-500 focus:border-primary-500"><?php echo $existing_po_data ? htmlspecialchars($existing_po_data['conditions']) : ''; ?></textarea>
             </div>
             
             <div class="mb-6">
                 <label class="block text-sm font-medium text-gray-700 mb-2">Additional Notes</label>
-                <textarea id="additionalNotes" rows="3" placeholder="Enter any additional notes..."
-                          class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-primary-500 focus:border-primary-500"></textarea>
+                <textarea id="additionalNotes" rows="3" 
+                          placeholder="Enter any additional notes..."
+                          class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-primary-500 focus:border-primary-500"><?php echo $existing_po_data ? htmlspecialchars($existing_po_data['additional_notes']) : ''; ?></textarea>
             </div>
             
-            <div class="flex justify-end">
+            <div class="flex justify-end space-x-3">
+                <?php if ($existing_po_data): ?>
+                    <a href="warehouse_staff_po_management_A.php?order_id=<?php echo $order_id; ?>" 
+                       class="bg-gray-500 hover:bg-gray-600 text-white px-6 py-3 rounded-lg transition-colors duration-200 flex items-center space-x-2">
+                        <i class="fas fa-times"></i>
+                        <span class="font-medium">Cancel Edit</span>
+                    </a>
+                <?php endif; ?>
                 <button onclick="generatePO()" 
                         class="bg-gradient-to-r from-green-500 to-green-600 hover:from-green-600 hover:to-green-700 text-white px-8 py-3 rounded-lg shadow-lg transition-all duration-200 transform hover:scale-105 flex items-center space-x-2">
                     <i class="fas fa-file-download"></i>
-                    <span class="font-medium">Generate P.O.</span>
+                    <span class="font-medium"><?php echo $existing_po_data ? 'Update P.O.' : 'Generate P.O.'; ?></span>
                 </button>
             </div>
         </div>
@@ -718,45 +885,6 @@ foreach ($allItems as $item) {
         });
     }
 
-    function reassignItemSupplierManual(itemId) {
-        const input = document.getElementById(`manualSupplier-${itemId}`);
-        const supplierName = input.value.trim();
-        
-        if (!supplierName) {
-            showAlert('Please enter a supplier name', 'error');
-            return;
-        }
-        
-        if (!confirm('Are you sure you want to assign this manual supplier?')) {
-            return;
-        }
-        
-        fetch('warehouse_staff_assign_supplier_A1&B1.php', {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-            },
-            body: JSON.stringify({
-                item_id: itemId,
-                supplier_id: 0,
-                manual_supplier_name: supplierName,
-                type: 'manual'
-            })
-        })
-        .then(response => response.json())
-        .then(data => {
-            if (data.success) {
-                showAlert('Manual supplier assigned successfully! Page will reload...', 'success');
-                setTimeout(() => location.reload(), 1500);
-            } else {
-                showAlert(data.error || 'Failed to assign manual supplier', 'error');
-            }
-        })
-        .catch(error => {
-            showAlert('An error occurred: ' + error.message, 'error');
-        });
-    }
-
     function resetPONumber(supplierKey) {
         if (!confirm('Are you sure you want to reset the P.O. number for this supplier? This will allow you to generate a new P.O.')) {
             return;
@@ -843,7 +971,9 @@ foreach ($allItems as $item) {
     }
 
     function generatePO() {
-        if (!selectedSupplier) {
+        const editingPoId = document.getElementById('editingPoId') ? document.getElementById('editingPoId').value : 0;
+        
+        if (!editingPoId && !selectedSupplier) {
             showAlert('Please select a supplier first', 'error');
             return;
         }
@@ -853,19 +983,23 @@ foreach ($allItems as $item) {
         const conditions = document.getElementById('conditions').value;
         const additionalNotes = document.getElementById('additionalNotes').value;
 
+        // Show loading indicator
+        showAlert(editingPoId ? 'Updating Purchase Order... Please wait.' : 'Saving Purchase Order... Please wait. File will be available for download after approval.', 'info');
+
         const form = document.createElement('form');
         form.method = 'POST';
         form.action = 'warehouse_staff_generate_po_excel_A-B1.php';
-        form.target = '_blank';
+        // Remove target='_blank' so it redirects in same window
 
         const fields = [
             ['order_id', <?php echo $order['id']; ?>],
-            ['supplier_key', selectedSupplier],
+            ['supplier_key', editingPoId ? '<?php echo $existing_po_data ? ($existing_po_data['supplier_name'] ?? '') : ''; ?>' : selectedSupplier],
             ['payment_terms', paymentTerms],
             ['delivery_details', deliveryDetails],
             ['conditions', conditions],
             ['additional_notes', additionalNotes],
-            ['prepared_by', '<?php echo htmlspecialchars($prepared_by); ?>']
+            ['prepared_by', '<?php echo htmlspecialchars($prepared_by); ?>'],
+            ['editing_po_id', editingPoId]
         ];
 
         fields.forEach(([name, value]) => {
@@ -880,12 +1014,35 @@ foreach ($allItems as $item) {
         form.submit();
         document.body.removeChild(form);
 
-        showAlert('Generating Purchase Order Excel file... Page will reload shortly.', 'success');
-        
-        setTimeout(() => {
-            location.reload();
-        }, 2000);
+        // Don't show success here - the redirect will handle it
+        // The form submission will redirect to view page with success message
     }
+
+    // Auto-select supplier and show form if editing
+    <?php if ($existing_po_data): ?>
+        window.addEventListener('DOMContentLoaded', function() {
+            // Find the supplier key from the existing P.O.
+            const supplierName = '<?php echo addslashes($existing_po_data['supplier_name']); ?>';
+            
+            // Try to find matching supplier key
+            let foundSupplierKey = null;
+            Object.keys(supplierData).forEach(key => {
+                if (supplierData[key].supplier_info.name === supplierName) {
+                    foundSupplierKey = key;
+                }
+            });
+            
+            if (foundSupplierKey) {
+                selectedSupplier = foundSupplierKey;
+                document.getElementById('poDetailsForm').style.display = 'block';
+                document.getElementById('itemsPreview').style.display = 'block';
+                updateItemsPreview(foundSupplierKey);
+                
+                // Scroll to form
+                document.getElementById('poDetailsForm').scrollIntoView({ behavior: 'smooth', block: 'start' });
+            }
+        });
+    <?php endif; ?>
 </script>
 </body>
 </html>

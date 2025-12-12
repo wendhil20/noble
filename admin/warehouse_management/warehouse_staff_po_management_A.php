@@ -64,7 +64,6 @@ $itemStmt = $conn->prepare("
         oi.subtotal as original_subtotal,
         oi.origin,
         oi.supplier_id,
-        oi.manual_supplier_name,
         p.product_name as product_full_name,
         p.codename as product_code,
         pv.namevariant,
@@ -108,8 +107,7 @@ for ($i = 0; $i < count($allItems); $i++) {
     $allItems[$i]['primary_supplier'] = null;
 
     // Check if item is unassigned
-    $isUnassigned = (is_null($allItems[$i]['supplier_id']) || 
-                    ($allItems[$i]['supplier_id'] == 0 && empty($allItems[$i]['manual_supplier_name'])));
+    $isUnassigned = (is_null($allItems[$i]['supplier_id']) || $allItems[$i]['supplier_id'] == 0);
     
     if ($isUnassigned) {
         $unassignedCount++;
@@ -157,8 +155,7 @@ if ($allItems[$i]['variant_id']) {
                     // AUTO-ASSIGN: If item is unassigned and has a primary supplier, assign it automatically
                     $autoAssignStmt = $conn->prepare("
                         UPDATE order_items 
-                        SET supplier_id = ?, 
-                            manual_supplier_name = NULL 
+                        SET supplier_id = ?
                         WHERE id = ?
                     ");
                     $autoAssignStmt->bind_param("ii", $supplier['supplier_id'], $allItems[$i]['item_id']);
@@ -166,7 +163,6 @@ if ($allItems[$i]['variant_id']) {
                     if ($autoAssignStmt->execute()) {
                         // Update the current item data to reflect the assignment
                         $allItems[$i]['supplier_id'] = $supplier['supplier_id'];
-                        $allItems[$i]['manual_supplier_name'] = null;
                         $autoAssignedCount++;
                         $autoAssignedItems[] = [
                             'item_id' => $allItems[$i]['item_id'],
@@ -519,38 +515,19 @@ if ($allItems[$i]['variant_id']) {
                                         </button>
                                     </div>
                                 </div>
-                            <?php elseif ($item['supplier_id'] == 0 && !empty($item['manual_supplier_name'])): ?>
-                                <div class="mb-4 p-3 bg-blue-50 border border-blue-200 rounded-lg">
-                                    <div class="flex items-center justify-between">
-                                        <div class="flex items-center">
-                                            <i class="fas fa-user-edit text-blue-600 mr-2"></i>
-                                            <span class="font-medium text-blue-800">
-                                                Currently assigned to: <?php echo htmlspecialchars($item['manual_supplier_name']); ?>
-                                                <span class="text-sm text-blue-600 ml-1">(Manual Supplier)</span>
-                                            </span>
-                                        </div>
-                                        <button onclick="unassignManualSupplier(<?php echo $item['item_id']; ?>)"
-                                            class="bg-red-500 hover:bg-red-600 text-white px-3 py-1 rounded text-sm transition-colors duration-200">
-                                            <i class="fas fa-times mr-1"></i>Remove
-                                        </button>
-                                    </div>
-                                </div>
                             <?php endif; ?>
 
                             <!-- Supplier Assignment Section -->
                             <div class="border-t pt-4">
                                 <?php
                                 $hasLinkedSuppliers = !empty($item['linked_suppliers']);
-                                $hasManualSupplier = ($item['supplier_id'] == 0 && !empty($item['manual_supplier_name']));
-                                $isDisabled = $hasManualSupplier;
                                 ?>
 
                                 <!-- Linked Suppliers Collapsible Section -->
                                 <div class="mb-4">
                                     <!-- Header/Toggle Button -->
                                     <button onclick="toggleSupplierDropdown(<?php echo $item['item_id']; ?>)"
-                                        class="w-full flex items-center justify-between p-3 bg-primary-50 hover:bg-primary-100 border border-primary-200 rounded-lg transition-colors duration-200 <?php echo $isDisabled ? 'opacity-50 cursor-not-allowed' : ''; ?>"
-                                        <?php echo $isDisabled ? 'disabled' : ''; ?>>
+                                        class="w-full flex items-center justify-between p-3 bg-primary-50 hover:bg-primary-100 border border-primary-200 rounded-lg transition-colors duration-200">
                                         <div class="flex items-center">
                                             <i class="fas fa-link text-primary-600 mr-2"></i>
                                             <span class="font-medium text-primary-800">
@@ -640,36 +617,7 @@ if ($allItems[$i]['variant_id']) {
                                     </div>
                                 </div>
 
-                                <!-- Manual Supplier Input -->
-                                <div class="mb-4">
-                                    <label class="block text-sm font-medium text-gray-700 mb-2">
-                                        <i class="fas fa-user-edit text-gray-600 mr-1"></i>
-                                        Manual Supplier Entry
-                                    </label>
-                                    <div class="flex space-x-2">
-                                        <input type="text"
-                                            id="manualSupplierInput-<?php echo $item['item_id']; ?>"
-                                            placeholder="Enter supplier name manually..."
-                                            value="<?php echo $item['supplier_id'] == 0 ? htmlspecialchars($item['manual_supplier_name'] ?? '') : ''; ?>"
-                                            class="flex-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-gray-500 focus:border-gray-500">
-                                        <button onclick="assignManualSupplier(<?php echo $item['item_id']; ?>)"
-                                            class="bg-gray-600 hover:bg-gray-700 text-white px-4 py-2 rounded-md text-sm transition-colors duration-200">
-                                            <i class="fas fa-plus mr-1"></i>Assign
-                                        </button>
-                                    </div>
-                                    <p class="text-xs text-gray-500 mt-1">
-                                        Use this option when the supplier is not in the system or not linked to this product
-                                    </p>
-                                </div>
-
-                                <?php if ($hasManualSupplier): ?>
-                                    <div class="bg-blue-50 border-l-4 border-blue-400 p-3 rounded">
-                                        <p class="text-sm text-blue-700">
-                                            <i class="fas fa-info-circle mr-1"></i>
-                                            Manual supplier assigned. Linked suppliers are disabled. Remove the manual supplier to use linked suppliers again.
-                                        </p>
-                                    </div>
-                                <?php endif; ?>
+                                
                             </div>
                         </div>
                     <?php endforeach; ?>
@@ -746,44 +694,7 @@ if ($allItems[$i]['variant_id']) {
             window.location.href = `mailto:${email}?subject=Purchase Order Inquiry - Order #${orderId}&body=Hello,%0D%0A%0D%0AI would like to inquire about products for Order #${orderId}.%0D%0A%0D%0AThank you.`;
         }
 
-        function assignManualSupplier(itemId) {
-            const input = document.getElementById(`manualSupplierInput-${itemId}`);
-            const supplierName = input.value.trim();
-
-            if (!supplierName) {
-                showAlert('Please enter a supplier name', 'error');
-                return;
-            }
-
-            if (!confirm('Are you sure you want to assign this manual supplier to this item?')) {
-                return;
-            }
-
-            fetch('warehouse_staff_assign_supplier_A1&B1.php', {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json',
-                    },
-                    body: JSON.stringify({
-                        item_id: itemId,
-                        supplier_id: 0,
-                        manual_supplier_name: supplierName,
-                        type: 'manual'
-                    })
-                })
-                .then(response => response.json())
-                .then(data => {
-                    if (data.success) {
-                        showAlert('Manual supplier assigned successfully!', 'success');
-                        setTimeout(() => location.reload(), 1000);
-                    } else {
-                        showAlert(data.error || 'Failed to assign manual supplier', 'error');
-                    }
-                })
-                .catch(error => {
-                    showAlert('An error occurred: ' + error.message, 'error');
-                });
-        }
+        
 
         function unassignSupplier(itemId) {
             if (!confirm('Are you sure you want to remove the assigned supplier from this item?')) {
@@ -808,37 +719,6 @@ if ($allItems[$i]['variant_id']) {
                         setTimeout(() => location.reload(), 1000);
                     } else {
                         showAlert(data.error || 'Failed to remove supplier', 'error');
-                    }
-                })
-                .catch(error => {
-                    showAlert('An error occurred: ' + error.message, 'error');
-                });
-        }
-
-        function unassignManualSupplier(itemId) {
-            if (!confirm('Are you sure you want to remove the manual supplier from this item?')) {
-                return;
-            }
-
-            fetch('warehouse_staff_assign_supplier_A1&B1.php', {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json',
-                    },
-                    body: JSON.stringify({
-                        item_id: itemId,
-                        supplier_id: null,
-                        manual_supplier_name: null,
-                        type: 'unassign_manual'
-                    })
-                })
-                .then(response => response.json())
-                .then(data => {
-                    if (data.success) {
-                        showAlert('Manual supplier removed successfully!', 'success');
-                        setTimeout(() => location.reload(), 1000);
-                    } else {
-                        showAlert(data.error || 'Failed to remove manual supplier', 'error');
                     }
                 })
                 .catch(error => {

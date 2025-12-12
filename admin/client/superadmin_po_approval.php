@@ -14,6 +14,36 @@ if (!isset($_SESSION['noble_user'])) {
 
 $current_user_id = $_SESSION['noble_id'] ?? 0;
 
+// Handle file download BEFORE any HTML output
+if (isset($_GET['download']) && isset($_GET['file_id'])) {
+    $file_id = (int)$_GET['file_id'];
+    $downloadSql = "SELECT * FROM po_attachments WHERE id = ? LIMIT 1";
+    $downloadStmt = $conn->prepare($downloadSql);
+    $downloadStmt->bind_param("i", $file_id);
+    $downloadStmt->execute();
+    $file = $downloadStmt->get_result()->fetch_assoc();
+    $downloadStmt->close();
+    
+    if ($file && file_exists($file['file_path'])) {
+        // Clear any output buffers
+        while (ob_get_level()) {
+            ob_end_clean();
+        }
+        
+        header('Content-Type: application/pdf');
+header('Content-Disposition: inline; filename="' . $file['original_filename'] . '"');
+        header('Content-Length: ' . filesize($file['file_path']));
+        header('Cache-Control: must-revalidate, post-check=0, pre-check=0');
+        header('Pragma: public');
+        readfile($file['file_path']);
+        exit();
+    } else {
+        $_SESSION['error_message'] = "File not found or has been deleted.";
+        header("Location: superadmin_po_approval.php");
+        exit();
+    }
+}
+
 // Get filter parameters
 $status_filter = isset($_GET['status']) ? $_GET['status'] : 'pending';
 $search = isset($_GET['search']) ? trim($_GET['search']) : '';
@@ -267,7 +297,7 @@ while ($row = $countResult->fetch_assoc()) {
                                     </td>
                                     <td class="px-6 py-4">
                                         <div class="flex items-center">
-                                            <i class="fas fa-file-excel text-green-600 mr-2"></i>
+                                            <i class="fas fa-file-pdf text-red-600 mr-2"></i>
                                             <div>
                                                 <div class="text-sm font-medium text-gray-900"><?php echo htmlspecialchars($file['original_filename']); ?></div>
                                                 <div class="text-xs text-gray-500"><?php echo date('M j, Y g:i A', strtotime($file['uploaded_at'])); ?></div>
@@ -292,10 +322,11 @@ while ($row = $countResult->fetch_assoc()) {
                                     </td>
                                     <td class="px-6 py-4">
                                         <div class="flex items-center space-x-2">
-                                            <a href="?download=1&file_id=<?php echo $file['id']; ?>" 
-                                               class="text-blue-600 hover:text-blue-900">
-                                                <i class="fas fa-download"></i>
-                                            </a>
+    <a href="?download=1&file_id=<?php echo $file['id']; ?>" 
+   target="_blank"
+   class="text-blue-600 hover:text-blue-900" title="View PDF">
+    <i class="fas fa-file-pdf"></i>
+</a>
                                             <?php if ($file['superadmin_approval_status'] === 'pending'): ?>
                                                 <button onclick="approveFile(<?php echo $file['id']; ?>, '<?php echo htmlspecialchars($file['original_filename'], ENT_QUOTES); ?>')"
                                                         class="text-green-600 hover:text-green-900">
@@ -411,23 +442,3 @@ while ($row = $countResult->fetch_assoc()) {
     </script>
 </body>
 </html>
-
-<?php
-// Handle file download
-if (isset($_GET['download']) && isset($_GET['file_id'])) {
-    $file_id = (int)$_GET['file_id'];
-    $stmt = $conn->prepare("SELECT * FROM po_attachments WHERE id = ? LIMIT 1");
-    $stmt->bind_param("i", $file_id);
-    $stmt->execute();
-    $file = $stmt->get_result()->fetch_assoc();
-    $stmt->close();
-    
-    if ($file && file_exists($file['file_path'])) {
-        header('Content-Type: application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
-        header('Content-Disposition: attachment; filename="' . $file['original_filename'] . '"');
-        header('Content-Length: ' . filesize($file['file_path']));
-        readfile($file['file_path']);
-        exit();
-    }
-}
-?>

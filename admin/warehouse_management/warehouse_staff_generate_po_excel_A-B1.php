@@ -1,5 +1,5 @@
 <?php
-// warehouse_staff_generate_po_excel_A-B1.php
+// warehouse_staff_generate_po_pdf_A-B1.php
 session_name("nobleadmin");
 session_start();
 
@@ -18,38 +18,84 @@ if (!isset($_SESSION['noble_user'])) {
     exit();
 }
 
-// Include PhpSpreadsheet
+// Include DomPDF
 require_once '../../vendor/autoload.php';
+use Dompdf\Dompdf;
+use Dompdf\Options;
 
-use PhpOffice\PhpSpreadsheet\IOFactory;
-use PhpOffice\PhpSpreadsheet\Writer\Xlsx;
-use PhpOffice\PhpSpreadsheet\Style\Alignment;
-use PhpOffice\PhpSpreadsheet\Style\Border;
-use PhpOffice\PhpSpreadsheet\Style\Fill;
+// Allow both POST and GET requests (GET for downloads, POST for generation)
+$is_download_request = isset($_GET['download_approved']) && $_GET['download_approved'] == '1';
 
-if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
+if ($_SERVER['REQUEST_METHOD'] !== 'POST' && !$is_download_request) {
     header("Location: ordering.php");
     exit();
 }
 
-$order_id = intval($_POST['order_id']);
-$supplier_key = $_POST['supplier_key'];
-$payment_terms = $_POST['payment_terms'] ?? '';
-$delivery_details = $_POST['delivery_details'] ?? '';
-$conditions = $_POST['conditions'] ?? '';
-$additional_notes = $_POST['additional_notes'] ?? '';
+// Check if this is a download request for approved PO (can come from GET or POST)
+$is_download_approved = (isset($_POST['download_approved']) && $_POST['download_approved'] == '1') || 
+                        (isset($_GET['download_approved']) && $_GET['download_approved'] == '1');
 
-// Get the prepared_by from POST data first, then fallback to session
-$prepared_by = $_POST['prepared_by'] ?? $_SESSION['noble_name'] ?? 'Unknown User';
+// Function to fetch logo from database
+function getCompanyLogoBlob($conn)
+{
+    $query = "SELECT logo_blob FROM company_logos ORDER BY created_at DESC LIMIT 1";
+    $result = mysqli_query($conn, $query);
 
-// Also get user role and ID for additional info if needed
+    if (!$result || mysqli_num_rows($result) == 0) {
+        return null;
+    }
+
+    $row = mysqli_fetch_assoc($result);
+    return $row['logo_blob'] ?? null;
+}
+
+// Try to get logo from database first
+$logo_blob = getCompanyLogoBlob($conn);
+
+if ($logo_blob) {
+    // Convert BLOB to base64 for PDF
+    $base64_logo = base64_encode($logo_blob);
+    $company_logo = 'data:image/png;base64,' . $base64_logo;
+} else {
+    // Fallback to default logo path
+    $logo_file = __DIR__ . '/../../img/logo/logo.png';
+    if (file_exists($logo_file)) {
+        $company_logo = 'data:image/png;base64,' . base64_encode(file_get_contents($logo_file));
+    } else {
+        $company_logo = null;
+    }
+}
+
+// Get parameters from POST or GET (GET for downloads)
+$params = $is_download_request ? $_GET : $_POST;
+
+$order_id = intval($params['order_id']);
+$supplier_key = $params['supplier_key'];
+$editing_po_id = isset($params['editing_po_id']) ? (int)$params['editing_po_id'] : 0;
+$payment_terms = $params['payment_terms'] ?? '';
+$delivery_details = $params['delivery_details'] ?? '';
+
+// If editing, convert supplier name to supplier ID
+if ($editing_po_id > 0 && !is_numeric($supplier_key)) {
+    $supplierLookupSql = "SELECT id FROM supplier_list WHERE business_name = ? LIMIT 1";
+    $supplierLookupStmt = $conn->prepare($supplierLookupSql);
+    $supplierLookupStmt->bind_param("s", $supplier_key);
+    $supplierLookupStmt->execute();
+    $supplierLookupResult = $supplierLookupStmt->get_result();
+    
+    if ($supplierRow = $supplierLookupResult->fetch_assoc()) {
+        $supplier_key = strval($supplierRow['id']);
+    }
+    $supplierLookupStmt->close();
+}
+
+$conditions = $params['conditions'] ?? '';
+$additional_notes = $params['additional_notes'] ?? '';
+
+// Get the prepared_by from request data first, then fallback to session
+$prepared_by = $params['prepared_by'] ?? $_SESSION['noble_name'] ?? 'Unknown User';
 $user_role = $_SESSION['noble_lvl'] ?? 'Unknown Role';
 $user_id = $_SESSION['noble_id'] ?? null;
-
-// Debug information (remove in production)
-error_log("Prepared By from POST: " . ($_POST['prepared_by'] ?? 'Not set'));
-error_log("Prepared By from SESSION: " . ($_SESSION['noble_name'] ?? 'Not set'));
-error_log("Final Prepared By: " . $prepared_by);
 
 // Get order details
 $orderStmt = $conn->prepare("SELECT id, customer_name, email, created_at, status, total FROM orders WHERE id = ?");
@@ -62,7 +108,7 @@ if (!$order) {
     die("Order not found");
 }
 
-// Get order items for the selected supplier with original_price from product_variants
+// Get order items for the selected supplier
 $itemStmt = $conn->prepare("
     SELECT 
         oi.id as item_id,
@@ -117,8 +163,6 @@ foreach ($allItems as $item) {
         'manual_' . $item['manual_supplier_name'];
     
     if ($itemSupplierKey === $supplier_key) {
-        // unit_price and calculated_subtotal are already computed in the SQL query
-        
         $supplierItems[] = $item;
         if (!$supplierInfo) {
             $supplierInfo = [
@@ -137,36 +181,6 @@ if (empty($supplierItems)) {
     die("No items found for selected supplier. Selected key: " . $supplier_key);
 }
 
-// Load the template
-$templatePath = '../template/p.o_templates.xlsx';
-if (!file_exists($templatePath)) {
-    die("Template file not found: " . $templatePath);
-}
-
-try {
-    // Load the template
-    $spreadsheet = IOFactory::load($templatePath);
-    $worksheet = $spreadsheet->getActiveSheet();
-    
-    // Fill in the header information
-    $worksheet->setCellValue('B2', $supplierInfo['name']);
-    
-    if (!empty($supplierInfo['contact'])) {
-        $worksheet->setCellValue('C4', $supplierInfo['contact']);
-    }
-    if (!empty($supplierInfo['email'])) {
-        $worksheet->setCellValue('C5', $supplierInfo['email']);
-    }
-    if (!empty($supplierInfo['phone'])) {
-        $worksheet->setCellValue('C6', $supplierInfo['phone']);
-    }
-    
-    // Company info
-$worksheet->setCellValue('E3', 'NHCC');
-$worksheet->setCellValue('E4', 'Unit Floor MC Residence, Salcedo City Metro Manila');
-$worksheet->setCellValue('E5', 'Mobile Number: +639974894523');
-$worksheet->setCellValue('E6', 'Email: nhccbusinessmail@gmail.com');
-
 // Generate custom P.O. number
 $supplier_id_for_po = 0;
 foreach ($supplierItems as $item) {
@@ -177,191 +191,726 @@ foreach ($supplierItems as $item) {
 }
 $custom_po_number = 'NH' . date('mdY') . date('Gis') . $supplier_id_for_po;
 
-// P.O Details
-$worksheet->setCellValue('A11', date('Y-m-d'));
-$worksheet->setCellValue('B11', 'P.O# ' . $custom_po_number);
-$worksheet->setCellValue('D11', $payment_terms);
+// Get signatures if this is an approved download
+$preparer_signature = null;
+$approver_name = '';
+$approver_signature = null;
+$noter_name = '';
+$noter_signature = null;
+
+if ($is_download_approved && $editing_po_id > 0) {
+    $approvalSql = "SELECT 
+                        pa.superadmin_approved_by,
+                        pa.approved_by,
+                        superadmin.fullname as superadmin_name,
+                        superadmin.e_signature as superadmin_signature,
+                        approver.fullname as approver_name,
+                        approver.e_signature as approver_signature,
+                        preparer.e_signature as preparer_signature
+                    FROM po_attachments pa
+                    LEFT JOIN nobleaccount superadmin ON pa.superadmin_approved_by = superadmin.id
+                    LEFT JOIN nobleaccount approver ON pa.approved_by = approver.id
+                    LEFT JOIN nobleaccount preparer ON preparer.fullname = ?
+                    WHERE pa.id = ?";
+    $approvalStmt = $conn->prepare($approvalSql);
+    $approvalStmt->bind_param("si", $prepared_by, $editing_po_id);
+    $approvalStmt->execute();
+    $approvalData = $approvalStmt->get_result()->fetch_assoc();
+    $approvalStmt->close();
     
-    // DEFINE FIXED POSITIONS FOR DIFFERENT SECTIONS
-    $startRow = 15;
-    $itemCount = count($supplierItems);
-    
-    // Fixed positions based on your template structure
-    $conditionsStartRow = 16; // Fixed position where conditions should start
-    $notesStartRow = 22; // Fixed position where additional notes should start  
-    $signatureStartRow = 26; // Fixed position where signature section should start
-    
-    // Calculate how many additional rows we need beyond the template row
-    $additionalRowsNeeded = max(0, $itemCount - 1);
-    
-    // If we need more rows, we need to shift the fixed sections down
-    if ($additionalRowsNeeded > 0) {
-        // Calculate how much to shift down the fixed sections
-        $shiftAmount = $additionalRowsNeeded;
-        
-        // Adjust the fixed positions
-        $conditionsStartRow += $shiftAmount;
-        $notesStartRow += $shiftAmount;
-        $signatureStartRow += $shiftAmount;
-        
-        // Insert rows after the template row (A15)
-        $worksheet->insertNewRowBefore($startRow + 1, $additionalRowsNeeded);
-        
-        // Copy the formatting from the template row to new rows
-        for ($i = 1; $i <= $additionalRowsNeeded; $i++) {
-            $newRowIndex = $startRow + $i;
-            
-            // Copy row formatting from template row (A15)
-            $worksheet->duplicateStyle(
-                $worksheet->getStyle('A' . $startRow . ':H' . $startRow),
-                'A' . $newRowIndex . ':H' . $newRowIndex
-            );
-            
-            // Apply borders to the new row
-            $worksheet->getStyle('A' . $newRowIndex . ':H' . $newRowIndex)->applyFromArray([
-                'borders' => [
-                    'allBorders' => [
-                        'borderStyle' => Border::BORDER_THIN,
-                        'color' => ['argb' => '000000']
-                    ],
-                ],
-                'alignment' => [
-                    'horizontal' => Alignment::HORIZONTAL_CENTER,
-                    'vertical' => Alignment::VERTICAL_CENTER,
-                ],
-            ]);
-            
-            // Merge columns G and H for Total Price in the new row
-            $worksheet->mergeCells('G' . $newRowIndex . ':H' . $newRowIndex);
-        }
+    if ($approvalData) {
+        $approver_name = $approvalData['superadmin_name'] ?? '';
+        $approver_signature = $approvalData['superadmin_signature'];
+        $noter_name = $approvalData['approver_name'] ?? '';
+        $noter_signature = $approvalData['approver_signature'];
+        $preparer_signature = $approvalData['preparer_signature'];
     }
-    
-    // Fill in all items starting from row 15
-    foreach ($supplierItems as $index => $item) {
-    $rowIndex = $startRow + $index;
-    
-    // Item No. (Column A)
-    $worksheet->setCellValue('A' . $rowIndex, $index + 1);
-    
-    // Item Name (Column B) - include variant name if available
+}
+
+// Convert blob signatures to base64 for PDF
+function blobToBase64($blob) {
+    if (!$blob) return null;
+    return 'data:image/png;base64,' . base64_encode($blob);
+}
+
+$preparer_sig_base64 = blobToBase64($preparer_signature);
+$approver_sig_base64 = blobToBase64($approver_signature);
+$noter_sig_base64 = blobToBase64($noter_signature);
+
+// Calculate total
+$total_amount = 0;
+foreach ($supplierItems as $item) {
+    $total_amount += floatval($item['calculated_subtotal']);
+}
+
+// Build HTML content for PDF
+$html = '
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: Arial, sans-serif;
+            font-size: 10pt;
+            line-height: 1.4;
+            color: #333;
+        }
+        
+        .container {
+            padding: 20px;
+        }
+        
+        .header {
+            text-align: center;
+            margin-bottom: 20px;
+            border-bottom: 2px solid #333;
+            padding-bottom: 10px;
+        }
+        
+        .header h1 {
+            font-size: 24pt;
+            margin-bottom: 5px;
+            color: #2c3e50;
+        }
+        
+        .header p {
+            font-size: 9pt;
+            color: #666;
+        }
+        
+        .info-section {
+            margin-bottom: 15px;
+            display: table;
+            width: 100%;
+        }
+        
+        .info-left, .info-right {
+            display: table-cell;
+            width: 50%;
+            vertical-align: top;
+            padding: 10px;
+        }
+        
+        .info-left {
+            border-right: 1px solid #ddd;
+        }
+        
+        .info-box {
+            margin-bottom: 10px;
+        }
+        
+        .info-box strong {
+            display: block;
+            color: #2c3e50;
+            margin-bottom: 3px;
+            font-size: 9pt;
+        }
+        
+        .info-box p {
+            margin-left: 5px;
+            font-size: 9pt;
+        }
+        
+        .po-details {
+            background-color: #f8f9fa;
+            padding: 10px;
+            margin-bottom: 15px;
+            border-radius: 4px;
+        }
+        
+        .po-details table {
+            width: 100%;
+        }
+        
+        .po-details td {
+            padding: 5px;
+            font-size: 9pt;
+        }
+        
+        .po-details strong {
+            color: #2c3e50;
+        }
+        
+        table.items-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-bottom: 15px;
+        }
+        
+        table.items-table th {
+            background-color: #2c3e50;
+            color: white;
+            padding: 8px;
+            text-align: left;
+            font-size: 9pt;
+            font-weight: bold;
+        }
+        
+        table.items-table td {
+            padding: 8px;
+            border-bottom: 1px solid #ddd;
+            font-size: 9pt;
+        }
+        
+        table.items-table tr:nth-child(even) {
+            background-color: #f8f9fa;
+        }
+        
+        .text-right {
+            text-align: right;
+        }
+        
+        .text-center {
+            text-align: center;
+        }
+        
+        .total-section {
+            text-align: right;
+            margin-bottom: 20px;
+            padding: 10px;
+            background-color: #f8f9fa;
+        }
+        
+        .total-section strong {
+            font-size: 12pt;
+            color: #2c3e50;
+        }
+        
+        .notes-section {
+            margin-bottom: 15px;
+            padding: 15px;
+            background-color: #f5f5f5;
+            border: 1px solid #ddd;
+            text-align: center;
+        }
+        
+        .notes-section strong {
+            display: block;
+            margin-bottom: 8px;
+            color: #666;
+            font-size: 10pt;
+        }
+        
+        .notes-section p {
+            font-size: 9pt;
+            color: #666;
+            text-align: center;
+        }
+        
+        .signature-section {
+            margin-top: 40px;
+            display: table;
+            width: 100%;
+        }
+        
+        .signature-box {
+            display: table-cell;
+            width: 25%;
+            padding: 10px;
+            text-align: center;
+            vertical-align: bottom;
+        }
+        
+        .signature-box .sig-image {
+            height: 50px;
+            margin-bottom: 5px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        
+        .signature-box .sig-image img {
+            max-height: 45px;
+            max-width: 100%;
+        }
+        
+        .signature-box .sig-line {
+            border-top: 1px solid #333;
+            margin: 5px auto;
+            width: 80%;
+        }
+        
+        .signature-box .sig-name {
+            font-size: 9pt;
+            font-weight: bold;
+            color: #2c3e50;
+            margin-top: 3px;
+        }
+        
+        .signature-box .sig-label {
+            font-size: 8pt;
+            color: #666;
+            margin-bottom: 8px;
+        }
+        
+        .footer {
+            margin-top: 30px;
+            padding-top: 10px;
+            border-top: 1px solid #ddd;
+            text-align: center;
+            font-size: 8pt;
+            color: #999;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <table style="width: 100%; border: none;">
+                <tr>
+                    <td style="width: 20%; text-align: left; border: none;">';
+if ($company_logo) {
+    $html .= '<img src="' . $company_logo . '" style="max-height: 60px; max-width: 100px;">';
+}
+$html .= '
+                    </td>
+                    <td style="width: 80%; text-align: center; border: none;">
+                        <h1 style="margin: 0;">PURCHASE ORDER</h1>
+                        <p style="margin: 5px 0;">NHCC - 2nd Floor, MC Premiere, Quezon City Metro Manila</p>
+                        <p style="margin: 5px 0;">Mobile: +639922394563 | Email: noblehomeconst.ph@gmail.com</p>
+                    </td>
+                </tr>
+            </table>
+        </div>
+        
+        <div class="info-section">
+            <div class="info-left">
+                <div class="info-box">
+                    <strong>SUPPLIER:</strong>
+                    <p>' . htmlspecialchars($supplierInfo['name']) . '</p>
+                </div>';
+
+if (!empty($supplierInfo['contact'])) {
+    $html .= '
+                <div class="info-box">
+                    <strong>Contact Person:</strong>
+                    <p>' . htmlspecialchars($supplierInfo['contact']) . '</p>
+                </div>';
+}
+
+if (!empty($supplierInfo['email'])) {
+    $html .= '
+                <div class="info-box">
+                    <strong>Email:</strong>
+                    <p>' . htmlspecialchars($supplierInfo['email']) . '</p>
+                </div>';
+}
+
+if (!empty($supplierInfo['phone'])) {
+    $html .= '
+                <div class="info-box">
+                    <strong>Phone:</strong>
+                    <p>' . htmlspecialchars($supplierInfo['phone']) . '</p>
+                </div>';
+}
+
+if (!empty($supplierInfo['address'])) {
+    $html .= '
+                <div class="info-box">
+                    <strong>Address:</strong>
+                    <p>' . htmlspecialchars($supplierInfo['address']) . '</p>
+                </div>';
+}
+
+$html .= '
+            </div>
+            <div class="info-right">
+                <div class="info-box">
+                    <strong>P.O. Number:</strong>
+                    <p>' . htmlspecialchars($custom_po_number) . '</p>
+                </div>
+                <div class="info-box">
+                    <strong>Date:</strong>
+                    <p>' . date('F d, Y') . '</p>
+                </div>
+                <div class="info-box">
+                    <strong>Prepared By:</strong>
+                    <p>' . htmlspecialchars($prepared_by) . '</p>
+                </div>
+            </div>
+        </div>
+        
+        <div class="po-details">
+            <table>
+                <tr>
+                    <td width="50%"><strong>Payment Terms:</strong> ' . htmlspecialchars($payment_terms) . '</td>
+                    <td width="50%"><strong>Delivery:</strong> ' . htmlspecialchars($delivery_details) . '</td>
+                </tr>
+            </table>
+        </div>
+        
+        <table class="items-table">
+            <thead>
+                <tr>
+                    <th width="5%">No.</th>
+                    <th width="25%">Item Name</th>
+                    <th width="25%">Specification</th>
+                    <th width="8%">Unit</th>
+                    <th width="8%" class="text-center">Qty</th>
+                    <th width="12%" class="text-right">Unit Price</th>
+                    <th width="15%" class="text-right">Total Price</th>
+                </tr>
+            </thead>
+            <tbody>';
+
+foreach ($supplierItems as $index => $item) {
     $productName = $item['product_name'];
     if (!empty($item['namevariant'])) {
         $productName .= ' - ' . $item['namevariant'];
     }
-    $worksheet->setCellValue('B' . $rowIndex, $productName);
     
-    // Specification (Column C) - use variant-specific data, combining size and color
     $size = !empty($item['variant_size_db']) ? $item['variant_size_db'] : $item['size'];
     $color = !empty($item['variant_color_db']) ? $item['variant_color_db'] : $item['variant_color'];
     $specification = 'Variant ID: ' . $item['variant_id'] . ' | ' . $size . ' | ' . $color;
     if (!empty($item['descrip7'])) {
         $specification .= ' | ' . $item['descrip7'];
     }
-    $worksheet->setCellValue('C' . $rowIndex, $specification);
+    
+    $unit = !empty($item['descrip6']) ? $item['descrip6'] : 'pcs';
+    
+    $html .= '
+                <tr>
+                    <td>' . ($index + 1) . '</td>
+                    <td>' . htmlspecialchars($productName) . '</td>
+                    <td>' . htmlspecialchars($specification) . '</td>
+                    <td>' . htmlspecialchars($unit) . '</td>
+                    <td class="text-center">' . $item['quantity'] . '</td>
+                    <td class="text-right">PHP ' . number_format(floatval($item['unit_price']), 2) . '</td>
+                    <td class="text-right">PHP ' . number_format(floatval($item['calculated_subtotal']), 2) . '</td>
+                </tr>';
+}
+
+$html .= '
+            </tbody>
+        </table>
         
-        // Unit (Column D) - using descrip6 as the unit
-        $unit = !empty($item['descrip6']) ? $item['descrip6'] : 'pcs';
-        $worksheet->setCellValue('D' . $rowIndex, $unit);
+        <div class="total-section">
+            <strong>TOTAL AMOUNT: PHP ' . number_format($total_amount, 2) . '</strong>
+        </div>';
+
+if (!empty($conditions)) {
+    $html .= '
+        <div class="notes-section">
+            <strong>Conditions and Special Instructions:</strong>
+            <p>' . nl2br(htmlspecialchars($conditions)) . '</p>
+        </div>';
+}
+
+if (!empty($additional_notes)) {
+    $html .= '
+        <div class="notes-section">
+            <strong>Additional Notes:</strong>
+            <p>' . nl2br(htmlspecialchars($additional_notes)) . '</p>
+        </div>';
+}
+
+$html .= '
+        <div class="signature-section">
+            <div class="signature-box">
+                <div class="sig-label">Prepared By:</div>
+                <div class="sig-image">';
+if ($preparer_sig_base64) {
+    $html .= '<img src="' . $preparer_sig_base64 . '" alt="Signature">';
+}
+$html .= '
+                </div>
+                <div class="sig-line"></div>
+                <div class="sig-name">' . htmlspecialchars($prepared_by) . '</div>
+            </div>
+            
+            <div class="signature-box">
+                <div class="sig-label">Approved By:</div>
+                <div class="sig-image">';
+if ($approver_sig_base64) {
+    $html .= '<img src="' . $approver_sig_base64 . '" alt="Signature">';
+}
+$html .= '
+                </div>
+                <div class="sig-line"></div>
+                <div class="sig-name">' . ($approver_name ?: 'Pending') . '</div>
+            </div>
+            
+            <div class="signature-box">
+                <div class="sig-label">Noted By:</div>
+                <div class="sig-image">';
+if ($noter_sig_base64) {
+    $html .= '<img src="' . $noter_sig_base64 . '" alt="Signature">';
+}
+$html .= '
+                </div>
+                <div class="sig-line"></div>
+                <div class="sig-name">' . ($noter_name ?: 'Pending') . '</div>
+            </div>
+            
+            <div class="signature-box">
+                <div class="sig-label">Received By:</div>
+                <div class="sig-image"></div>
+                <div class="sig-line"></div>
+                <div class="sig-name">__________________</div>
+            </div>
+        </div>
         
-        // Quantity (Column E)
-        $worksheet->setCellValue('E' . $rowIndex, $item['quantity']);
-        
-        // Unit Price (Column F) - using supplier_price or fallback to price
-        $worksheet->setCellValue('F' . $rowIndex, number_format(floatval($item['unit_price']), 2));
-        
-        // Total Price (Column G) - using calculated subtotal
-        $worksheet->setCellValue('G' . $rowIndex, number_format(floatval($item['calculated_subtotal']), 2));
-        
-        // Optional: Add any additional data to Column H if needed
-        // $worksheet->setCellValue('H' . $rowIndex, 'Additional Data');
+        <div class="footer">
+            <p>This is a computer-generated document. No signature is required.</p>
+            <p>Generated on ' . date('F d, Y h:i A') . '</p>
+        </div>
+    </div>
+</body>
+</html>';
+
+try {
+    // Configure DomPDF
+    $options = new Options();
+    $options->set('isHtml5ParserEnabled', true);
+    $options->set('isPhpEnabled', true);
+    $options->set('isRemoteEnabled', true);
+    $options->set('defaultFont', 'Arial');
+    
+    $dompdf = new Dompdf($options);
+    $dompdf->loadHtml($html);
+    $dompdf->setPaper('A4', 'portrait');
+    $dompdf->render();
+    
+    // Save PDF to disk
+    $upload_dir = '../../uploads/p.o_files/';
+    if (!is_dir($upload_dir)) {
+        mkdir($upload_dir, 0755, true);
     }
     
-    // Add conditions section at fixed position (now adjusted for additional rows)
-    if (!empty($conditions)) {
-        $worksheet->setCellValue('A' . $conditionsStartRow, 'Conditions and Other Special Instructions:');
-        $worksheet->mergeCells('A' . $conditionsStartRow . ':H' . $conditionsStartRow);
-        $worksheet->getStyle('A' . $conditionsStartRow)->getFont()->setBold(true);
+    // Generate filename
+    if ($is_download_approved && $editing_po_id > 0) {
+        $existingFileSql = "SELECT stored_filename, file_path FROM po_attachments WHERE id = ?";
+        $existingFileStmt = $conn->prepare($existingFileSql);
+        $existingFileStmt->bind_param("i", $editing_po_id);
+        $existingFileStmt->execute();
+        $existingFileData = $existingFileStmt->get_result()->fetch_assoc();
+        $existingFileStmt->close();
         
-        $worksheet->setCellValue('A' . ($conditionsStartRow + 1), $conditions);
-        $worksheet->mergeCells('A' . ($conditionsStartRow + 1) . ':H' . ($conditionsStartRow + 2));
-        $worksheet->getStyle('A' . ($conditionsStartRow + 1))->getAlignment()->setWrapText(true);
+        if ($existingFileData) {
+            $stored_filename = $existingFileData['stored_filename'];
+            $file_path = $existingFileData['file_path'];
+        } else {
+            $stored_filename = 'PO_' . $custom_po_number . '_' . 
+                               preg_replace('/[^A-Za-z0-9]/', '_', $supplierInfo['name']) . '_' . 
+                               date('Y-m-d_H-i-s') . '_' . uniqid() . '.pdf';
+            $file_path = $upload_dir . $stored_filename;
+        }
+    } else {
+        $stored_filename = 'PO_' . $custom_po_number . '_' . 
+                           preg_replace('/[^A-Za-z0-9]/', '_', $supplierInfo['name']) . '_' . 
+                           date('Y-m-d_H-i-s') . '_' . uniqid() . '.pdf';
+        $file_path = $upload_dir . $stored_filename;
     }
     
-    // Add additional notes section at fixed position (now adjusted for additional rows)
-    if (!empty($additional_notes)) {
-        $worksheet->setCellValue('A' . $notesStartRow, 'Additional Notes:');
-        $worksheet->mergeCells('A' . $notesStartRow . ':H' . $notesStartRow);
-        $worksheet->getStyle('A' . $notesStartRow)->getFont()->setBold(true);
+    // Save PDF to file
+    file_put_contents($file_path, $dompdf->output());
+    
+    // Update database with file info
+    if ($is_download_approved && $editing_po_id > 0) {
+        $updateFileSql = "UPDATE po_attachments 
+                          SET file_replaced = 1, 
+                              file_replaced_at = NOW() 
+                          WHERE id = ?";
+        $updateFileStmt = $conn->prepare($updateFileSql);
+        $updateFileStmt->bind_param("i", $editing_po_id);
+        $updateFileStmt->execute();
+        $updateFileStmt->close();
+    }
+    
+    // Save P.O. number to order_items
+    $itemIds = array_column($supplierItems, 'item_id');
+    if (!empty($itemIds)) {
+        $placeholders = implode(',', array_fill(0, count($itemIds), '?'));
+        $updateStmt = $conn->prepare("UPDATE order_items SET po_number = ? WHERE id IN ($placeholders)");
         
-        $worksheet->setCellValue('A' . ($notesStartRow + 1), $additional_notes);
-        $worksheet->mergeCells('A' . ($notesStartRow + 1) . ':H' . ($notesStartRow + 2));
-        $worksheet->getStyle('A' . ($notesStartRow + 1))->getAlignment()->setWrapText(true);
+        $types = 's' . str_repeat('i', count($itemIds));
+        $params = array_merge([$custom_po_number], $itemIds);
+        
+        $bind_names = [$types];
+        for ($i = 0; $i < count($params); $i++) {
+            $bind_name = 'bind' . $i;
+            $$bind_name = $params[$i];
+            $bind_names[] = &$$bind_name;
+        }
+        call_user_func_array([$updateStmt, 'bind_param'], $bind_names);
+        
+        $updateStmt->execute();
+        $updateStmt->close();
     }
     
-    // Add signature section at fixed position (now adjusted for additional rows)
-    $worksheet->setCellValue('A' . $signatureStartRow, 'Prepared By:');
-    $worksheet->setCellValue('C' . $signatureStartRow, 'Approved By:');
-    $worksheet->setCellValue('E' . $signatureStartRow, 'Noted By:');
-    $worksheet->setCellValue('G' . $signatureStartRow, 'Received By:');
-    
-    // Use the logged-in user's name for "Prepared By"
-    $worksheet->setCellValue('A' . ($signatureStartRow + 2), $prepared_by);
-    $worksheet->setCellValue('C' . ($signatureStartRow + 2), 'Ken Yang');
-    $worksheet->setCellValue('E' . ($signatureStartRow + 2), 'Mary Grace Rivera');
-    
-    // Auto-adjust column widths for better appearance
-    foreach(range('A','H') as $columnID) {
-        $worksheet->getColumnDimension($columnID)->setAutoSize(true);
-    }
-    
-    // Clean any output buffer before sending headers
-    ob_end_clean();
-    
-    // Generate filename with custom P.O. number
+    // Update or insert PO record
     $sanitizedPreparedBy = preg_replace('/[^A-Za-z0-9]/', '_', $prepared_by);
     $filename = 'PO_' . $custom_po_number . '_' . 
                 preg_replace('/[^A-Za-z0-9]/', '_', $supplierInfo['name']) . '_' . 
-                $sanitizedPreparedBy . '.xlsx';
+                $sanitizedPreparedBy . '.pdf';
     
-    // Set headers for download
-    header('Content-Type: application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
-    header('Content-Disposition: attachment;filename="' . $filename . '"');
-    header('Cache-Control: max-age=0');
-    header('Pragma: public');
-    header('Cache-Control: max-age=0');
-    
-    // Save to output
-    $writer = new Xlsx($spreadsheet);
-    $writer->save('php://output');
-    
-    // Save the P.O. number to order_items for all items in this P.O.
-$itemIds = array_column($supplierItems, 'item_id');
-if (!empty($itemIds)) {
-    $placeholders = implode(',', array_fill(0, count($itemIds), '?'));
-    $updateStmt = $conn->prepare("UPDATE order_items SET po_number = ? WHERE id IN ($placeholders)");
-    
-    // Bind parameters: first the po_number, then all item IDs
-    $types = 's' . str_repeat('i', count($itemIds));
-    $params = array_merge([$custom_po_number], $itemIds);
-    
-    // Create references for bind_param
-    $bind_names = [$types];
-    for ($i = 0; $i < count($params); $i++) {
-        $bind_name = 'bind' . $i;
-        $$bind_name = $params[$i];
-        $bind_names[] = &$$bind_name;
+    if ($editing_po_id > 0) {
+        if (!$is_download_approved) {
+            $getOldFileSql = "SELECT file_path FROM po_attachments WHERE id = ? AND order_id = ?";
+            if ($getOldFileStmt = $conn->prepare($getOldFileSql)) {
+                $getOldFileStmt->bind_param("ii", $editing_po_id, $order_id);
+                $getOldFileStmt->execute();
+                $oldFileResult = $getOldFileStmt->get_result();
+                
+                if ($oldFileRow = $oldFileResult->fetch_assoc()) {
+                    $old_file_path = $oldFileRow['file_path'];
+                    if (file_exists($old_file_path)) {
+                        unlink($old_file_path);
+                    }
+                }
+                $getOldFileStmt->close();
+            }
+        }
+        
+        if ($is_download_approved) {
+            $updateSql = "UPDATE po_attachments 
+                         SET stored_filename = ?,
+                             file_path = ?,
+                             original_filename = ?,
+                             file_replaced = 1,
+                             file_replaced_at = NOW()
+                         WHERE id = ? AND order_id = ?";
+            
+            if ($updateStmt = $conn->prepare($updateSql)) {
+                $updateStmt->bind_param("sssii", 
+                    $stored_filename,
+                    $file_path,
+                    $filename,
+                    $editing_po_id,
+                    $order_id
+                );
+                $updateStmt->execute();
+                $updateStmt->close();
+            }
+        } else {
+            $updateSql = "UPDATE po_attachments 
+                         SET stored_filename = ?,
+                             file_path = ?,
+                             original_filename = ?,
+                             po_number = ?,
+                             payment_terms = ?,
+                             delivery_details = ?,
+                             conditions = ?,
+                             additional_notes = ?,
+                             prepared_by = ?,
+                             file_replaced = 1,
+                             file_replaced_at = NOW(),
+                             superadmin_approval_status = 'pending',
+                             approval_status = 'pending',
+                             superadmin_approved_by = NULL,
+                             superadmin_approved_at = NULL,
+                             superadmin_rejection_reason = NULL,
+                             approved_by = NULL,
+                             approved_at = NULL,
+                             rejection_reason = NULL
+                         WHERE id = ? AND order_id = ?";
+            
+            if ($updateStmt = $conn->prepare($updateSql)) {
+                $updateStmt->bind_param("sssssssssii", 
+                    $stored_filename,
+                    $file_path,
+                    $filename,
+                    $custom_po_number,
+                    $payment_terms,
+                    $delivery_details,
+                    $conditions,
+                    $additional_notes,
+                    $prepared_by,
+                    $editing_po_id,
+                    $order_id
+                );
+                $updateStmt->execute();
+                $updateStmt->close();
+            }
+        }
+    } else {
+        $insertSql = "INSERT INTO po_attachments 
+                      (order_id, supplier_name, original_filename, stored_filename, file_path, 
+                       po_number, payment_terms, delivery_details, conditions, additional_notes, 
+                       prepared_by, uploaded_at) 
+                      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, NOW())";
+        
+        if ($insertStmt = $conn->prepare($insertSql)) {
+            $insertStmt->bind_param("issssssssss", 
+                $order_id, 
+                $supplierInfo['name'], 
+                $filename, 
+                $stored_filename, 
+                $file_path,
+                $custom_po_number,
+                $payment_terms,
+                $delivery_details,
+                $conditions,
+                $additional_notes,
+                $prepared_by
+            );
+            
+            if ($insertStmt->execute()) {
+                $checkStatusSql = "SELECT status FROM orders WHERE id = ?";
+                if ($checkStmt = $conn->prepare($checkStatusSql)) {
+                    $checkStmt->bind_param("i", $order_id);
+                    $checkStmt->execute();
+                    $currentStatus = $checkStmt->get_result()->fetch_assoc()['status'];
+                    $checkStmt->close();
+                    
+                    if ($currentStatus !== 'processing') {
+                        $statusUpdateSql = "UPDATE orders SET status = 'processing' WHERE id = ?";
+                        if ($statusStmt = $conn->prepare($statusUpdateSql)) {
+                            $statusStmt->bind_param("i", $order_id);
+                            $statusStmt->execute();
+                            $statusStmt->close();
+                        }
+                    }
+                }
+                
+                $initTrackingSql = "UPDATE order_items SET tracking_status = 'processing' 
+                                   WHERE order_id = ? AND tracking_status IS NULL";
+                if ($trackingStmt = $conn->prepare($initTrackingSql)) {
+                    $trackingStmt->bind_param("i", $order_id);
+                    $trackingStmt->execute();
+                    $trackingStmt->close();
+                }
+                
+                error_log("P.O. Generated - Order ID: $order_id, Supplier: " . $supplierInfo['name'] . 
+                          ", Prepared By: $prepared_by, User Role: $user_role, P.O. Number: $custom_po_number, File: $stored_filename");
+            } else {
+                error_log("Failed to save P.O. attachment record: " . $insertStmt->error);
+            }
+            $insertStmt->close();
+        }
     }
-    call_user_func_array([$updateStmt, 'bind_param'], $bind_names);
     
-    $updateStmt->execute();
-    $updateStmt->close();
-}
-
-// Log the P.O generation for audit purposes
-error_log("P.O Generated - Order ID: $order_id, Supplier: " . $supplierInfo['name'] . ", Prepared By: $prepared_by, User Role: $user_role, P.O. Number: $custom_po_number");
+    // Log the P.O generation
+    error_log("P.O Generated - Order ID: $order_id, Supplier: " . $supplierInfo['name'] . 
+              ", Prepared By: $prepared_by, User Role: $user_role, P.O. Number: $custom_po_number, File: $stored_filename");
+    
+    // Clean output buffer
+    if (ob_get_length()) {
+        ob_end_clean();
+    }
+    
+    // Send file to browser if this is an approved download
+    if ($is_download_approved && file_exists($file_path)) {
+        header('Content-Type: application/pdf');
+        header('Content-Disposition: attachment;filename="' . $filename . '"');
+        header('Cache-Control: max-age=0');
+        header('Pragma: public');
+        header('Content-Length: ' . filesize($file_path));
+        readfile($file_path);
+        exit();
+    } elseif (!$is_download_approved) {
+        header("Location: warehouse_head_staff_view_po_files_B.php?order_id=" . $order_id . "&po_saved=1");
+        exit();
+    }
 
 } catch (Exception $e) {
-    // Clear any output buffer
     if (ob_get_length()) {
         ob_end_clean();
     }
@@ -369,7 +918,6 @@ error_log("P.O Generated - Order ID: $order_id, Supplier: " . $supplierInfo['nam
     error_log("Error generating P.O.: " . $e->getMessage());
     error_log("Stack trace: " . $e->getTraceAsString());
     
-    // Return to previous page with error
     echo "<script>
         alert('Error generating P.O.: " . addslashes($e->getMessage()) . "');
         window.close();

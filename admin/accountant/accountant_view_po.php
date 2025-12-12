@@ -91,102 +91,37 @@ if (isset($_GET['download']) && isset($_GET['file_id'])) {
     $downloadStmt->close();
     
     if ($file && file_exists($file['file_path'])) {
-        header('Content-Type: application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
-        header('Content-Disposition: attachment; filename="' . $file['original_filename'] . '"');
-        header('Content-Length: ' . filesize($file['file_path']));
-        readfile($file['file_path']);
+        header('Content-Type: application/pdf');
+header('Content-Disposition: inline; filename="' . $file['original_filename'] . '"');
+header('Content-Length: ' . filesize($file['file_path']));
+readfile($file['file_path']);
         exit();
     } else {
         $error_message = "File not found or has been deleted.";
     }
 }
 
-// Handle approval with optional file replacement
-if (isset($_POST['approve_with_file'])) {
+// Handle approval
+if (isset($_POST['approve_file'])) {
     $file_id = (int)$_POST['file_id'];
     $current_user_id = $_SESSION['noble_id'] ?? 0;
-    
-    // Get original file info
-    $getFileSql = "SELECT * FROM po_attachments WHERE id = ? AND order_id = ?";
-    $getFileStmt = $conn->prepare($getFileSql);
-    $getFileStmt->bind_param("ii", $file_id, $order_id);
-    $getFileStmt->execute();
-    $originalFile = $getFileStmt->get_result()->fetch_assoc();
-    $getFileStmt->close();
-    
-    if (!$originalFile) {
-        $error_message = "File not found.";
-    } else {
-        $file_path = $originalFile['file_path'];
-        $original_filename = $originalFile['original_filename'];
-        
-        // Check if a new file was uploaded
-        if (isset($_FILES['updated_po_file']) && $_FILES['updated_po_file']['error'] === UPLOAD_ERR_OK) {
-            $upload_file = $_FILES['updated_po_file'];
-            
-            // Validate file
-            $allowed_extensions = ['xlsx', 'xls'];
-            $file_extension = strtolower(pathinfo($upload_file['name'], PATHINFO_EXTENSION));
-            
-            if (in_array($file_extension, $allowed_extensions)) {
-                $upload_dir = '../../uploads/po_files/';
-                if (!file_exists($upload_dir)) {
-                    mkdir($upload_dir, 0777, true);
-                }
-                
-                // Generate new filename
-                $new_filename = 'PO_' . $order_id . '_' . time() . '_' . uniqid() . '.' . $file_extension;
-                $target_path = $upload_dir . $new_filename;
-                
-                if (move_uploaded_file($upload_file['tmp_name'], $target_path)) {
-                    // Delete old physical file
-                    if (file_exists($originalFile['file_path'])) {
-                        unlink($originalFile['file_path']);
-                    }
-                    
-                    // Update with new file path and filename
-                    $file_path = $target_path;
-                    $original_filename = $upload_file['name'];
-                } else {
-                    $error_message = "Failed to upload replacement file.";
-                }
-            } else {
-                $error_message = "Invalid file type. Only Excel files (.xlsx, .xls) are allowed.";
-            }
-        }
-        
-        // Approve the file (with or without replacement)
-if (!isset($error_message)) {
-    // Check if file was replaced
-    $fileReplaced = isset($_FILES['updated_po_file']) && $_FILES['updated_po_file']['error'] === UPLOAD_ERR_OK ? 1 : 0;
     
     $approveSql = "UPDATE po_attachments 
                    SET approval_status = 'approved', 
                        approved_by = ?,
-                       approved_at = NOW(),
-                       file_path = ?,
-                       original_filename = ?,
-                       uploaded_at = NOW(),
-                       file_replaced = ?,
-                       file_replaced_at = " . ($fileReplaced ? "NOW()" : "NULL") . "
+                       approved_at = NOW()
                    WHERE id = ? AND order_id = ?";
     $approveStmt = $conn->prepare($approveSql);
-    $approveStmt->bind_param("issiii", $current_user_id, $file_path, $original_filename, $fileReplaced, $file_id, $order_id);
-            
-            if ($approveStmt->execute()) {
-                if (isset($_FILES['updated_po_file']) && $_FILES['updated_po_file']['error'] === UPLOAD_ERR_OK) {
-                    $success_message = "File updated and approved successfully.";
-                } else {
-                    $success_message = "File approved successfully.";
-                }
-                header("Location: accountant_view_po.php?order_id=" . $order_id);
-                exit();
-            } else {
-                $error_message = "Failed to approve file.";
-            }
-            $approveStmt->close();
-        }
+    $approveStmt->bind_param("iii", $current_user_id, $file_id, $order_id);
+    
+    if ($approveStmt->execute()) {
+        $success_message = "File approved successfully.";
+        header("Location: accountant_view_po.php?order_id=" . $order_id);
+        exit();
+    } else {
+        $error_message = "Failed to approve file.";
     }
+    $approveStmt->close();
 }
 
 // Handle rejection
@@ -389,9 +324,9 @@ if (isset($_POST['reject_file'])) {
                                <?php foreach ($supplierFiles as $file): ?>
     <div class="flex items-center justify-between p-4 bg-gray-50 rounded-lg border border-gray-200 hover:bg-gray-100 transition-colors duration-200">
         <div class="flex items-center space-x-3 flex-1">
-            <div class="bg-green-100 p-2 rounded-lg">
-                <i class="fas fa-file-excel text-green-600 text-xl"></i>
-            </div>
+            <div class="bg-red-100 p-2 rounded-lg">
+    <i class="fas fa-file-pdf text-red-600 text-xl"></i>
+</div>
             <div class="flex-1">
                 <h4 class="font-medium text-gray-900"><?php echo htmlspecialchars($file['original_filename']); ?></h4>
                 <p class="text-sm text-gray-600">
@@ -532,10 +467,11 @@ if (isset($_POST['reject_file'])) {
     <?php endif; ?>
     
     <a href="?order_id=<?php echo $order_id; ?>&download=1&file_id=<?php echo $file['id']; ?>" 
-       class="inline-flex items-center px-3 py-2 border border-transparent text-sm leading-4 font-medium rounded-md text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition-colors">
-        <i class="fas fa-download mr-2"></i>
-        Download
-    </a>
+   target="_blank"
+   class="inline-flex items-center px-3 py-2 border border-transparent text-sm leading-4 font-medium rounded-md text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition-colors">
+    <i class="fas fa-file-pdf mr-2"></i>
+    View PDF
+</a>
 </div>
                                     </div>
                                 <?php endforeach; ?>
@@ -546,8 +482,8 @@ if (isset($_POST['reject_file'])) {
             </div>
         <?php else: ?>
             <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-12 text-center">
-    <i class="fas fa-file-excel text-6xl text-gray-300 mb-4"></i>
-    <h3 class="text-lg font-medium text-gray-900 mb-2">No P.O. Files Found</h3>
+    <i class="fas fa-file-pdf text-6xl text-gray-300 mb-4"></i>
+<h3 class="text-lg font-medium text-gray-900 mb-2">No P.O. Files Found</h3>
     <p class="text-sm text-gray-500 mb-4">No purchase order files have been approved by Superadmin yet.</p>
                 <a href="accountant_view_orders.php" 
                    class="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md text-white bg-noble-orange hover:bg-noble-orange-dark focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-noble-orange transition-colors">
@@ -570,7 +506,7 @@ if (isset($_POST['reject_file'])) {
 <div id="approveModal" class="fixed inset-0 z-50 hidden overflow-auto bg-black bg-opacity-50">
     <div class="flex items-center justify-center min-h-screen p-4">
         <div class="bg-white rounded-lg shadow-xl max-w-lg w-full">
-            <form method="POST" enctype="multipart/form-data">
+            <form method="POST">
                 <div class="p-6">
                     <div class="flex items-center mb-4">
                         <div class="bg-green-100 p-2 rounded-lg mr-3">
@@ -582,8 +518,8 @@ if (isset($_POST['reject_file'])) {
                     <!-- File Information Card -->
                     <div class="bg-gray-50 rounded-lg p-4 mb-4 border border-gray-200">
                         <div class="flex items-start space-x-3">
-                            <div class="bg-green-100 p-2 rounded-lg flex-shrink-0">
-                                <i class="fas fa-file-excel text-green-600 text-2xl"></i>
+                            <div class="bg-red-100 p-2 rounded-lg flex-shrink-0">
+                                <i class="fas fa-file-pdf text-red-600 text-2xl"></i>
                             </div>
                             <div class="flex-1 min-w-0">
                                 <h4 class="font-medium text-gray-900 mb-1" id="approveFileNameDisplay"></h4>
@@ -592,58 +528,18 @@ if (isset($_POST['reject_file'])) {
                                     <p id="approveFileSize"></p>
                                     <p id="approveFileUploader"></p>
                                 </div>
-                                <!-- Download button in modal -->
+                                <!-- View PDF button in modal -->
                                 <a id="approveFileDownloadLink" href="#" target="_blank"
                                    class="inline-flex items-center mt-3 px-3 py-1.5 text-xs font-medium text-blue-700 bg-blue-100 rounded-md hover:bg-blue-200 transition-colors">
-                                    <i class="fas fa-download mr-1"></i>
-                                    Download & Review Current File
+                                    <i class="fas fa-file-pdf mr-1"></i>
+                                    View PDF Before Approving
                                 </a>
                             </div>
                         </div>
                     </div>
                     
-                    <!-- Option to Replace File While Approving -->
-                    <div class="bg-blue-50 border border-blue-200 rounded-lg p-4 mb-4">
-                        <div class="flex items-start">
-                            <input type="checkbox" id="replaceWhileApproving" 
-                                   onchange="toggleReplaceFileSection()"
-                                   class="mt-1 mr-3 h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded">
-                            <div class="flex-1">
-                                <label for="replaceWhileApproving" class="font-medium text-blue-900 cursor-pointer">
-                                    <i class="fas fa-upload mr-1"></i>
-                                    Upload a corrected/updated file
-                                </label>
-                                <p class="text-sm text-blue-700 mt-1">
-                                    Check this if you want to replace the current file with a corrected version before approving.
-                                </p>
-                            </div>
-                        </div>
-                    </div>
-
-                    <!-- File Upload Section (Hidden by default) -->
-                    <div id="replaceFileSection" class="hidden mb-4">
-                        <div class="bg-purple-50 border border-purple-200 rounded-lg p-4">
-                            <label class="block text-sm font-medium text-gray-700 mb-2">
-                                <i class="fas fa-file-excel mr-1"></i>
-                                Select Updated P.O. File
-                            </label>
-                            <input type="file" 
-                                   name="updated_po_file" 
-                                   id="updatedPoFile"
-                                   accept=".xlsx,.xls"
-                                   class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-purple-500 bg-white">
-                            <p class="text-xs text-gray-500 mt-2">
-                                <i class="fas fa-info-circle mr-1"></i>
-                                Only Excel files (.xlsx, .xls) are allowed. This will replace the current file.
-                            </p>
-                        </div>
-                    </div>
-                    
                     <p class="text-gray-600 mb-6">
-                        Are you sure you want to approve this P.O. file? 
-                        <span class="block text-sm text-gray-500 mt-1">
-                            <span id="approvalActionText">The file will be approved as-is.</span>
-                        </span>
+                        Are you sure you want to approve this P.O. file?
                     </p>
                     
                     <input type="hidden" name="file_id" id="approveFileId">
@@ -653,10 +549,10 @@ if (isset($_POST['reject_file'])) {
                                 class="px-4 py-2 text-gray-600 bg-gray-100 rounded-lg hover:bg-gray-200 transition-colors duration-200">
                             Cancel
                         </button>
-                        <button type="submit" name="approve_with_file" 
+                        <button type="submit" name="approve_file" 
                                 class="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors duration-200">
                             <i class="fas fa-check mr-2"></i>
-                            <span id="approveButtonText">Approve File</span>
+                            Approve File
                         </button>
                     </div>
                 </div>
@@ -701,28 +597,6 @@ if (isset($_POST['reject_file'])) {
 
 
 <script>
-// Toggle the file replacement section in approve modal
-function toggleReplaceFileSection() {
-    const checkbox = document.getElementById('replaceWhileApproving');
-    const section = document.getElementById('replaceFileSection');
-    const fileInput = document.getElementById('updatedPoFile');
-    const actionText = document.getElementById('approvalActionText');
-    const buttonText = document.getElementById('approveButtonText');
-    
-    if (checkbox.checked) {
-        section.classList.remove('hidden');
-        fileInput.setAttribute('required', 'required');
-        actionText.textContent = 'The file will be replaced with your upload and then approved.';
-        buttonText.textContent = 'Upload & Approve';
-    } else {
-        section.classList.add('hidden');
-        fileInput.removeAttribute('required');
-        fileInput.value = ''; // Clear the file input
-        actionText.textContent = 'The file will be approved as-is.';
-        buttonText.textContent = 'Approve File';
-    }
-}
-
 // Handle approve button clicks using data attributes
 function approveFileHandler(button) {
     const fileId = button.getAttribute('data-file-id');
@@ -736,14 +610,6 @@ function approveFileHandler(button) {
 }
 
 function approveFile(fileId, fileName, supplierName, fileSize, uploaderName, uploadDate) {
-    // Reset the checkbox and hide replacement section
-    document.getElementById('replaceWhileApproving').checked = false;
-    document.getElementById('replaceFileSection').classList.add('hidden');
-    document.getElementById('updatedPoFile').removeAttribute('required');
-    document.getElementById('updatedPoFile').value = '';
-    document.getElementById('approvalActionText').textContent = 'The file will be approved as-is.';
-    document.getElementById('approveButtonText').textContent = 'Approve File';
-    
     document.getElementById('approveFileId').value = fileId;
     document.getElementById('approveFileNameDisplay').textContent = fileName;
     
@@ -762,7 +628,7 @@ function approveFile(fileId, fileName, supplierName, fileSize, uploaderName, upl
         document.getElementById('approveFileUploader').innerHTML = '<i class="fas fa-user mr-1 text-gray-400"></i>Requested by: <span class="font-medium">' + escapeHtml(uploaderName) + '</span> on ' + escapeHtml(uploadDate);
     }
     
-    // Set download link
+    // Set PDF view link
     document.getElementById('approveFileDownloadLink').href = '?order_id=<?php echo $order_id; ?>&download=1&file_id=' + fileId;
     
     document.getElementById('approveModal').classList.remove('hidden');
@@ -775,7 +641,7 @@ function closeApproveModal() {
 function rejectFile(fileId, fileName) {
     document.getElementById('rejectFileId').value = fileId;
     document.getElementById('rejectFileName').textContent = fileName;
-    document.getElementById('rejectModal').classList.remove('hidden');
+    document.getElementById('rejectModal').classList.add('hidden');
 }
 
 function closeRejectModal() {

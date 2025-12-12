@@ -863,6 +863,7 @@ if ($replacementsReady): ?>
 
                                 <div class="flex flex-col items-center space-y-2 ml-4">
                                     <?php 
+
 // Check if all PO files are approved
 $allPOApprovedSql = "SELECT 
     COUNT(*) as total_pos,
@@ -878,20 +879,19 @@ $totalPOs = (int)$allPOApprovedResult['total_pos'];
 $approvedPOs = (int)$allPOApprovedResult['approved_pos'];
 $allPOsApproved = ($totalPOs > 0 && $totalPOs === $approvedPOs);
 
-// Show Manage P.O. only if: no PO files OR not all POs are approved
-if (!$hasPOFiles || !$allPOsApproved): ?>
-    <a href="warehouse_staff_po_management_A.php?order_id=<?php echo urlencode($order['id']); ?>" class="bg-primary-600 hover:bg-primary-700 text-white px-4 py-2 rounded-lg transition-colors duration-200 flex items-center space-x-2">
-        <i class="fas fa-cogs"></i><span>Manage P.O.</span>
+// Always show Manage P.O. button (for both generating new and managing existing)
+?>
+    <a href="warehouse_staff_po_management_A.php?order_id=<?php echo urlencode($order['id']); ?>" 
+       class="bg-primary-600 hover:bg-primary-700 text-white px-4 py-2 rounded-lg transition-colors duration-200 flex items-center space-x-2">
+        <i class="fas fa-cogs"></i>
+        <span><?php echo $hasPOFiles ? 'Manage P.O.' : 'Generate P.O.'; ?></span>
     </a>
-<?php endif; ?>
 
-                                    <?php if ($assignmentPercentage >= 100 && !$hasPOFiles): ?>
-                                        <button onclick="openAttachmentModal(<?php echo $order['id']; ?>)" class="bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-lg transition-colors duration-200 flex items-center space-x-2">
-                                            <i class="fas fa-paperclip"></i><span>Attach P.O.</span>
-                                        </button>
-                                    <?php elseif ($hasPOFiles): ?>
-                                        <a href="warehouse_head_staff_view_po_files_B.php?order_id=<?php echo urlencode($order['id']); ?>" class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg transition-colors duration-200 flex items-center space-x-2">
-                                            <i class="fas fa-eye"></i><span>View P.O.</span>
+                                    <?php if ($hasPOFiles): ?>
+                                        <a href="warehouse_head_staff_view_po_files_B.php?order_id=<?php echo urlencode($order['id']); ?>" 
+                                           class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg transition-colors duration-200 flex items-center space-x-2">
+                                            <i class="fas fa-eye"></i>
+                                            <span>View P.O. (<?php echo $po_attachment_count; ?>)</span>
                                         </a>
                                     <?php endif; ?>
 
@@ -964,288 +964,6 @@ if (in_array($order['status'], ['processing', 'Ready for Pickup', 'Picked Up', '
             </div>
         <?php endif; ?>
     </div>
-
-    <!-- P.O. Attachment Modal -->
-    <div id="attachmentModal" class="modal fixed inset-0 z-50 hidden overflow-auto">
-        <div class="modal-backdrop absolute inset-0"></div>
-        <div class="relative min-h-screen flex items-center justify-center p-4">
-            <div class="relative bg-white rounded-lg shadow-xl max-w-2xl w-full max-h-[90vh] overflow-auto">
-                <!-- Modal Header -->
-                <div class="flex items-center justify-between p-6 border-b border-gray-200">
-                    <h3 class="text-lg font-semibold text-gray-900">
-                        <i class="fas fa-paperclip mr-2 text-primary-600"></i>
-                        Attach P.O. Files
-                    </h3>
-                    <button onclick="closeAttachmentModal()" class="text-gray-400 hover:text-gray-600">
-                        <i class="fas fa-times text-xl"></i>
-                    </button>
-                </div>
-
-                <!-- Modal Content -->
-                <div class="p-6">
-                    <div id="modalContent">
-                        <div class="text-center py-8">
-                            <i class="fas fa-spinner fa-spin text-2xl text-primary-600"></i>
-                            <p class="mt-2 text-gray-600">Loading suppliers...</p>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </div>
-    </div>
-
-    <script>
-        let currentOrderId = null;
-        let suppliers = [];
-
-        function openAttachmentModal(orderId) {
-            currentOrderId = orderId;
-            document.getElementById('attachmentModal').classList.remove('hidden');
-            document.body.classList.add('overflow-hidden');
-
-            // Load suppliers for this order
-            fetch('po_attachment_modal.php', {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/x-www-form-urlencoded',
-                    },
-                    body: `order_id=${orderId}`
-                })
-                .then(response => response.json())
-                .then(data => {
-                    console.log('Full response from server:', data);
-                    if (data.success) {
-                        suppliers = data.suppliers;
-                        console.log('Suppliers loaded:', suppliers);
-                        renderModalContent();
-                    } else {
-                        showError('Failed to load suppliers: ' + (data.message || 'Unknown error'));
-                    }
-                })
-                .catch(error => {
-                    console.error('Error:', error);
-                    showError('Failed to load suppliers');
-                });
-        }
-
-        function closeAttachmentModal() {
-            document.getElementById('attachmentModal').classList.add('hidden');
-            document.body.classList.remove('overflow-hidden');
-            currentOrderId = null;
-            suppliers = [];
-        }
-
-        function renderModalContent() {
-            const content = document.getElementById('modalContent');
-
-            if (suppliers.length === 0) {
-                content.innerHTML = `
-            <div class="text-center py-8">
-                <i class="fas fa-exclamation-triangle text-3xl text-yellow-500 mb-3"></i>
-                <p class="text-gray-600">No suppliers found for this order</p>
-            </div>
-        `;
-                return;
-            }
-
-            let html = `
-        <form id="attachmentForm" enctype="multipart/form-data">
-            <input type="hidden" name="order_id" value="${currentOrderId}">
-            <div class="mb-4">
-                <p class="text-sm text-gray-600 mb-4">
-                    Please attach Excel files for each supplier. You can upload multiple files at once.
-                </p>
-            </div>
-            
-            <div class="space-y-4" id="fileInputs">
-    `;
-
-            suppliers.forEach((supplier, index) => {
-                const supplierName = supplier.supplier_name || 'Unknown Supplier';
-                const supplierKey = supplier.supplier_key || 'unknown';
-
-                html += `
-            <div class="border border-gray-200 rounded-lg p-4">
-                <div class="flex items-center justify-between mb-2">
-                    <label class="block text-sm font-medium text-gray-700">
-                        <i class="fas fa-building mr-1"></i>
-                        ${supplierName}
-                    </label>
-                    <span class="px-2 py-1 text-xs rounded-full ${supplier.supplier_type === 'manual' ? 'bg-blue-100 text-blue-800' : 'bg-green-100 text-green-800'}">
-                        ${supplier.supplier_type}
-                    </span>
-                </div>
-                <input type="hidden" name="supplier_keys[]" value="${supplierKey}">
-                <input type="file" 
-                    name="po_files[]" 
-                    accept=".xlsx,.xls"
-                    class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent"
-                    onchange="validateFile(this)">
-                <p class="text-xs text-gray-500 mt-1">Excel files only (.xlsx, .xls)</p>
-            </div>
-        `;
-            });
-
-            html += `
-            </div>
-            
-            <div class="flex justify-end space-x-3 mt-6 pt-4 border-t border-gray-200">
-                <button type="button" onclick="closeAttachmentModal()" 
-                        class="px-4 py-2 text-sm font-medium text-gray-700 bg-gray-100 rounded-md hover:bg-gray-200 transition-colors duration-200">
-                    Cancel
-                </button>
-                <button type="submit" 
-                        class="px-4 py-2 text-sm font-medium text-white bg-primary-600 rounded-md hover:bg-primary-700 transition-colors duration-200 flex items-center">
-                    <i class="fas fa-upload mr-2"></i>
-                    Upload Files
-                </button>
-            </div>
-        </form>
-        
-        <div id="uploadProgress" class="hidden mt-4">
-            <div class="bg-blue-50 border border-blue-200 rounded-md p-4">
-                <div class="flex items-center">
-                    <i class="fas fa-spinner fa-spin text-blue-600 mr-2"></i>
-                    <span class="text-blue-800">Uploading files...</span>
-                </div>
-            </div>
-        </div>
-        
-        <div id="uploadResults" class="hidden mt-4"></div>
-    `;
-
-            content.innerHTML = html;
-
-            // Setup form submission
-            document.getElementById('attachmentForm').addEventListener('submit', handleFormSubmission);
-        }
-
-        function validateFile(input) {
-            const file = input.files[0];
-            if (file) {
-                const extension = file.name.split('.').pop().toLowerCase();
-                if (!['xlsx', 'xls'].includes(extension)) {
-                    alert('Please select only Excel files (.xlsx or .xls)');
-                    input.value = '';
-                }
-            }
-        }
-
-        function handleFormSubmission(e) {
-            e.preventDefault();
-
-            const formData = new FormData(e.target);
-            const fileInputs = document.querySelectorAll('input[type="file"]');
-            let hasFiles = false;
-
-            // Check if at least one file is selected
-            fileInputs.forEach(input => {
-                if (input.files && input.files.length > 0) {
-                    hasFiles = true;
-                }
-            });
-
-            if (!hasFiles) {
-                alert('Please select at least one file to upload');
-                return;
-            }
-
-            // Show progress
-            document.getElementById('uploadProgress').classList.remove('hidden');
-            document.getElementById('uploadResults').classList.add('hidden');
-
-            fetch('po_attachment_modal.php', {
-                    method: 'POST',
-                    body: formData
-                })
-                .then(response => response.json())
-                .then(data => {
-                    console.log('Upload response:', data);
-                    document.getElementById('uploadProgress').classList.add('hidden');
-                    showUploadResults(data);
-
-                    if (data.success) {
-                        setTimeout(() => {
-                            closeAttachmentModal();
-                            // Refresh the page to show updated status
-                            location.reload();
-                        }, 2000);
-                    }
-                })
-                .catch(error => {
-                    console.error('Error:', error);
-                    document.getElementById('uploadProgress').classList.add('hidden');
-                    showError('Upload failed: ' + error.message);
-                });
-        }
-
-        function showUploadResults(data) {
-            const resultsDiv = document.getElementById('uploadResults');
-            let html = '';
-
-            if (data.success) {
-                html = `
-            <div class="bg-green-50 border border-green-200 rounded-md p-4">
-                <div class="flex items-center">
-                    <i class="fas fa-check-circle text-green-600 mr-2"></i>
-                    <span class="text-green-800 font-medium">${data.message}</span>
-                </div>
-        `;
-
-                if (data.files && data.files.length > 0) {
-                    html += '<ul class="mt-2 text-sm text-green-700 ml-6">';
-                    data.files.forEach(file => {
-                        html += `<li>• ${file.filename} → ${file.supplier}</li>`;
-                    });
-                    html += '</ul>';
-                }
-
-                html += '</div>';
-            } else {
-                html = `
-            <div class="bg-red-50 border border-red-200 rounded-md p-4">
-                <div class="flex items-center">
-                    <i class="fas fa-exclamation-circle text-red-600 mr-2"></i>
-                    <span class="text-red-800 font-medium">${data.message}</span>
-                </div>
-        `;
-
-                if (data.errors && data.errors.length > 0) {
-                    html += '<ul class="mt-2 text-sm text-red-700 ml-6">';
-                    data.errors.forEach(error => {
-                        html += `<li>• ${error}</li>`;
-                    });
-                    html += '</ul>';
-                }
-
-                html += '</div>';
-            }
-
-            resultsDiv.innerHTML = html;
-            resultsDiv.classList.remove('hidden');
-        }
-
-        function showError(message) {
-            const content = document.getElementById('modalContent');
-            content.innerHTML = `
-        <div class="text-center py-8">
-            <i class="fas fa-exclamation-triangle text-3xl text-red-500 mb-3"></i>
-            <p class="text-red-600">${message}</p>
-            <button onclick="closeAttachmentModal()" 
-                    class="mt-4 px-4 py-2 bg-gray-100 text-gray-700 rounded-md hover:bg-gray-200">
-                Close
-            </button>
-        </div>
-    `;
-        }
-
-        // Close modal when clicking outside
-        document.getElementById('attachmentModal').addEventListener('click', function(e) {
-            if (e.target === this) {
-                closeAttachmentModal();
-            }
-        });
-    </script>
 </body>
 
 </html>

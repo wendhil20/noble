@@ -8,18 +8,31 @@ session_start();
 header('Content-Type: application/json');
 
 try {
-    $json = file_get_contents('php://input');
-    $data = json_decode($json, true);
+    // Check if it's multipart form data (with files) or JSON
+    $isMultipart = strpos($_SERVER['CONTENT_TYPE'] ?? '', 'multipart/form-data') !== false;
     
-    if (!$data) {
-        throw new Exception('Invalid JSON or no data received');
+    if ($isMultipart) {
+        // Handle form data with files
+        $request_id = intval($_POST['request_id'] ?? 0);
+        $email = trim($_POST['email'] ?? '');
+        $full_name = trim($_POST['full_name'] ?? '');
+        $message = trim($_POST['message'] ?? '');
+    } else {
+        // Handle JSON data (legacy)
+        $json = file_get_contents('php://input');
+        $data = json_decode($json, true);
+        
+        if (!$data) {
+            throw new Exception('Invalid JSON or no data received');
+        }
+        
+        $request_id = intval($data['request_id'] ?? 0);
+        $email = trim($data['email'] ?? '');
+        $full_name = trim($data['full_name'] ?? '');
+        $message = trim($data['message'] ?? '');
     }
     
-    $request_id = intval($data['request_id'] ?? 0);
-    $email = trim($data['email'] ?? '');
-    $full_name = trim($data['full_name'] ?? '');
-    $message = trim($data['message'] ?? '');
-    
+    // Validation
     if (!$request_id) {
         throw new Exception('Invalid request ID');
     }
@@ -56,14 +69,67 @@ try {
         throw new Exception('Admin not logged in');
     }
     
-    $query = "INSERT INTO custom_quote_replies (request_id, admin_id, message, created_at) VALUES (?, ?, ?, NOW())";
+    // Handle file uploads
+    $uploadedFiles = [];
+    $fileError = null;
+    $filesJson = null;
+    
+    if (!empty($_FILES['reply_files'])) {
+        $uploadDir = '../../uploads/replies/';
+        if (!is_dir($uploadDir)) {
+            mkdir($uploadDir, 0755, true);
+        }
+        
+        $maxSize = 10 * 1024 * 1024; // 10MB
+        $allowedExtensions = ['pdf', 'doc', 'docx', 'xls', 'xlsx', 'ppt', 'pptx', 'jpg', 'jpeg', 'png', 'gif', 'zip'];
+        
+        foreach ($_FILES['reply_files']['tmp_name'] as $key => $tmpName) {
+            if ($_FILES['reply_files']['error'][$key] !== UPLOAD_ERR_OK) {
+                continue;
+            }
+            
+            $fileName = $_FILES['reply_files']['name'][$key];
+            $fileSize = $_FILES['reply_files']['size'][$key];
+            
+            // Validate file size
+            if ($fileSize > $maxSize) {
+                continue;
+            }
+            
+            // Validate file extension
+            $ext = strtolower(pathinfo($fileName, PATHINFO_EXTENSION));
+            if (!in_array($ext, $allowedExtensions)) {
+                continue;
+            }
+            
+            // Generate unique filename
+            $newFileName = time() . '_' . uniqid() . '_' . basename($fileName);
+            $filePath = $uploadDir . $newFileName;
+            
+            // Move uploaded file
+            if (move_uploaded_file($tmpName, $filePath)) {
+                $uploadedFiles[] = [
+                    'original_name' => $fileName,
+                    'stored_name' => $newFileName,
+                    'path' => $filePath
+                ];
+            }
+        }
+        
+        if (!empty($uploadedFiles)) {
+            $filesJson = json_encode($uploadedFiles);
+        }
+    }
+    
+    // Insert reply into database
+    $query = "INSERT INTO custom_quote_replies (request_id, admin_id, message, files, created_at) VALUES (?, ?, ?, ?, NOW())";
     
     $stmt = $conn->prepare($query);
     if (!$stmt) {
         throw new Exception('Prepare failed: ' . $conn->error);
     }
     
-    $stmt->bind_param("iis", $request_id, $admin_id, $message);
+    $stmt->bind_param("iiss", $request_id, $admin_id, $message, $filesJson);
     
     if (!$stmt->execute()) {
         throw new Exception('Execute failed: ' . $stmt->error);
@@ -89,6 +155,24 @@ try {
         $mail->addAddress($email, $full_name);
         $mail->isHTML(true);
         $mail->Subject = 'Re: Your Customize Request - Noble Home';
+        
+        // Build email body with attachments info
+        $attachmentsInfo = '';
+        if (!empty($uploadedFiles)) {
+            $attachmentsInfo = '
+            <div style="background-color: #f0fdf4; padding: 12px; border-radius: 6px; margin: 15px 0; border-left: 4px solid #22c55e;">
+                <strong style="color: #15803d;">📎 Attached Files:</strong>
+                <ul style="margin: 8px 0 0 20px; color: #166534;">
+            ';
+            foreach ($uploadedFiles as $file) {
+                $attachmentsInfo .= '<li>' . htmlspecialchars($file['original_name']) . '</li>';
+            }
+            $attachmentsInfo .= '
+                </ul>
+            </div>
+            ';
+        }
+        
         $mail->Body = "
         <html>
             <body style='font-family: Arial, sans-serif; color: #333;'>
@@ -98,6 +182,7 @@ try {
                 <div style='background-color: #f9fafb; padding: 16px; border-radius: 8px; margin: 20px 0; border-left: 4px solid #f97316;'>
                     " . nl2br(htmlspecialchars($message)) . "
                 </div>
+                " . $attachmentsInfo . "
                 <p>If you have any questions, feel free to reply to this email or contact us.</p>
                 <p>Best regards,<br><strong>Noble Home Construction Team</strong></p>
                 <hr style='border: none; border-top: 1px solid #ddd; margin: 20px 0;'>
@@ -109,17 +194,26 @@ try {
         </html>
         ";
         
+        // Attach files to email
+        foreach ($uploadedFiles as $file) {
+            if (file_exists($file['path'])) {
+                $mail->addAttachment($file['path'], $file['original_name']);
+            }
+        }
+        
         $mail->send();
         $emailSent = true;
         
     } catch (Exception $e) {
         // Email failed but reply was saved
+        error_log('Email error: ' . $e->getMessage());
     }
     
     echo json_encode([
         'success' => true,
-        'message' => $emailSent ? 'Reply sent successfully!' : 'Reply saved but email not sent',
-        'emailSent' => $emailSent
+        'message' => $emailSent ? 'Reply sent successfully' . (!empty($uploadedFiles) ? ' with ' . count($uploadedFiles) . ' file(s)' : '') . '!' : 'Reply saved but email not sent',
+        'emailSent' => $emailSent,
+        'filesUploaded' => count($uploadedFiles)
     ]);
     exit();
 

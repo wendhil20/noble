@@ -9,17 +9,24 @@ if (!isset($_SESSION['noble_user'])) {
     exit();
 }
 
-// Get all customize requests
+// Get all customize requests with ALL columns
 $query = "
     SELECT 
         ccr.id,
         ccr.product_id,
+        ccr.user_id,
+        ccr.custom_type,
+        ccr.specifications,
         ccr.full_name,
         ccr.email,
         ccr.phone,
-        ccr.custom_type,
+        ccr.message,
+        ccr.selected_color,
+        ccr.selected_variant,
+        ccr.agree_terms,
         ccr.status,
         ccr.created_at,
+        ccr.updated_at,
         p.product_name,
         p.codename
     FROM custom_quote_requests ccr
@@ -43,7 +50,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action'])) {
     
     if ($action === 'update_status') {
         $status = $_POST['status'];
-        $stmt = $conn->prepare("UPDATE custom_quote_requests SET status = ? WHERE id = ?");
+        $stmt = $conn->prepare("UPDATE custom_quote_requests SET status = ?, updated_at = NOW() WHERE id = ?");
         $stmt->bind_param("si", $status, $id);
         $stmt->execute();
         $stmt->close();
@@ -55,7 +62,21 @@ $selectedRequest = null;
 if ($selectedId) {
     $stmt = $conn->prepare("
         SELECT 
-            ccr.*,
+            ccr.id,
+            ccr.product_id,
+            ccr.user_id,
+            ccr.custom_type,
+            ccr.specifications,
+            ccr.full_name,
+            ccr.email,
+            ccr.phone,
+            ccr.message,
+            ccr.selected_color,
+            ccr.selected_variant,
+            ccr.agree_terms,
+            ccr.status,
+            ccr.created_at,
+            ccr.updated_at,
             p.product_name,
             p.codename
         FROM custom_quote_requests ccr
@@ -77,6 +98,8 @@ $total = count($requests);
 $pendingCount = count($pending);
 
 ?>
+
+
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -101,7 +124,7 @@ $pendingCount = count($pending);
 
         <!-- Stats -->
         <div class="grid grid-cols-1 md:grid-cols-4 gap-4 mb-8">
-            <div class="bg-white rounded-lg p-6 shadow">
+            <div class="bg-white rounded-lg p-6 shadow hover:shadow-lg transition cursor-pointer" onclick="showDashboard('all')">
                 <div class="flex items-center justify-between">
                     <div>
                         <p class="text-gray-600 text-sm font-medium">Total Requests</p>
@@ -111,7 +134,7 @@ $pendingCount = count($pending);
                 </div>
             </div>
 
-            <div class="bg-white rounded-lg p-6 shadow">
+            <div class="bg-white rounded-lg p-6 shadow hover:shadow-lg transition cursor-pointer" onclick="showDashboard('pending')">
                 <div class="flex items-center justify-between">
                     <div>
                         <p class="text-gray-600 text-sm font-medium">Pending</p>
@@ -121,7 +144,7 @@ $pendingCount = count($pending);
                 </div>
             </div>
 
-            <div class="bg-white rounded-lg p-6 shadow">
+            <div class="bg-white rounded-lg p-6 shadow hover:shadow-lg transition cursor-pointer" onclick="showDashboard('quoted')">
                 <div class="flex items-center justify-between">
                     <div>
                         <p class="text-gray-600 text-sm font-medium">Quoted</p>
@@ -131,13 +154,31 @@ $pendingCount = count($pending);
                 </div>
             </div>
 
-            <div class="bg-white rounded-lg p-6 shadow">
+            <div class="bg-white rounded-lg p-6 shadow hover:shadow-lg transition cursor-pointer" onclick="showDashboard('completed')">
                 <div class="flex items-center justify-between">
                     <div>
                         <p class="text-gray-600 text-sm font-medium">Completed</p>
                         <p class="text-3xl font-bold text-green-600"><?= count($completed) ?></p>
                     </div>
                     <i class="fas fa-check-circle text-4xl text-green-500 opacity-20"></i>
+                </div>
+            </div>
+        </div>
+
+        <!-- Dashboard Modal -->
+        <div id="dashboardModal" class="hidden fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center p-4">
+            <div class="bg-white rounded-lg shadow-2xl w-full max-w-4xl max-h-[90vh] overflow-hidden flex flex-col">
+                <!-- Modal Header -->
+                <div class="bg-gradient-to-r from-blue-500 to-blue-600 text-white p-6 flex justify-between items-center">
+                    <h2 class="text-2xl font-bold" id="dashboardTitle">Dashboard</h2>
+                    <button onclick="closeDashboard()" class="text-blue-100 hover:text-white text-2xl">
+                        <i class="fas fa-times"></i>
+                    </button>
+                </div>
+
+                <!-- Modal Content -->
+                <div class="overflow-y-auto flex-1 p-6">
+                    <div id="dashboardContent"></div>
                 </div>
             </div>
         </div>
@@ -212,7 +253,7 @@ $pendingCount = count($pending);
             <div class="flex-1 bg-white rounded-lg shadow overflow-hidden flex flex-col">
                 <?php if ($selectedRequest && isset($_GET['reply'])): ?>
                     <!-- REPLY FORM VIEW -->
-                    <div class="bg-gradient-to-r from-green-500 to-green-600 text-white p-6 border-b flex justify-between items-center">
+                    <div class="bg-gradient-to-r from-green-500 to-green-600 text-white p-3 border-b flex justify-between items-center">
                         <div>
                             <h2 class="text-2xl font-bold flex items-center">
                                 <i class="fas fa-paper-plane mr-2"></i>
@@ -225,7 +266,7 @@ $pendingCount = count($pending);
                         </a>
                     </div>
 
-                    <div class="overflow-y-auto flex-1 p-6">
+                    <div class="overflow-y-auto flex-1 p-4">
                         <form id="replyForm" class="space-y-6">
                             <input type="hidden" name="request_id" id="request_id" value="<?= $selectedRequest['id'] ?>">
                             <input type="hidden" id="reply_email" value="<?= htmlspecialchars($selectedRequest['email']) ?>">
@@ -248,15 +289,74 @@ $pendingCount = count($pending);
                                 </span>
                             </div>
 
+                            <!-- Customer Request Details -->
+                            <?php if (!empty($selectedRequest['specifications']) || !empty($selectedRequest['selected_color']) || !empty($selectedRequest['selected_variant'])): ?>
+                            <div class="bg-purple-50 p-4 rounded-lg border border-purple-200">
+                                <p class="text-sm font-semibold text-gray-700 mb-3">Request Details:</p>
+                                <?php if (!empty($selectedRequest['selected_color'])): ?>
+                                    <div class="mb-2">
+                                        <span class="text-xs font-semibold text-gray-600">Color:</span>
+                                        <p class="text-sm text-gray-900"><?= htmlspecialchars($selectedRequest['selected_color']) ?></p>
+                                    </div>
+                                <?php endif; ?>
+                                <?php if (!empty($selectedRequest['selected_variant'])): ?>
+                                    <div class="mb-2">
+                                        <span class="text-xs font-semibold text-gray-600">Variant:</span>
+                                        <p class="text-sm text-gray-900"><?= htmlspecialchars($selectedRequest['selected_variant']) ?></p>
+                                    </div>
+                                <?php endif; ?>
+                                <?php if (!empty($selectedRequest['specifications'])): ?>
+                                    <div>
+                                        <span class="text-xs font-semibold text-gray-600">Specifications:</span>
+                                        <p class="text-sm text-gray-900"><?= nl2br(htmlspecialchars($selectedRequest['specifications'])) ?></p>
+                                    </div>
+                                <?php endif; ?>
+                            </div>
+                            <?php endif; ?>
+
+                            <!-- Original Message -->
+                            <?php if (!empty($selectedRequest['message'])): ?>
+                            <div class="bg-gray-50 p-4 rounded-lg border border-gray-200">
+                                <p class="text-sm font-semibold text-gray-700 mb-2">Customer's Message:</p>
+                                <p class="text-sm text-gray-900"><?= nl2br(htmlspecialchars($selectedRequest['message'])) ?></p>
+                            </div>
+                            <?php endif; ?>
+
                             <!-- Reply Message -->
                             <div>
                                 <label class="block text-sm font-semibold text-gray-700 mb-3">Your Reply</label>
                                 <textarea 
                                     name="reply_message" 
                                     placeholder="Type your message, quote details, or response here..."
-                                    rows="10"
+                                    rows="8"
                                     class="w-full px-4 py-3 border-2 border-gray-300 rounded-lg focus:outline-none focus:border-green-500 resize-none text-sm"
                                     required></textarea>
+                            </div>
+
+                            <!-- File Upload Section -->
+                            <div>
+                                <label class="block text-sm font-semibold text-gray-700 mb-3">Attach Files (Optional)</label>
+                                <div class="border-2 border-dashed border-gray-300 rounded-lg p-6 text-center hover:border-green-500 transition cursor-pointer bg-gray-50" onclick="document.getElementById('fileInput').click()">
+                                    <input 
+                                        type="file" 
+                                        id="fileInput" 
+                                        name="reply_files[]" 
+                                        multiple 
+                                        accept=".pdf,.doc,.docx,.xls,.xlsx,.ppt,.pptx,.jpg,.jpeg,.png,.gif,.zip"
+                                        class="hidden">
+                                    <div id="uploadPrompt">
+                                        <i class="fas fa-cloud-upload-alt text-3xl text-gray-400 mb-2 block"></i>
+                                        <p class="font-semibold text-gray-700">Click to upload files</p>
+                                        <p class="text-xs text-gray-600 mt-1">or drag and drop</p>
+                                        <p class="text-xs text-gray-500 mt-2">Allowed: PDF, Documents, Images, Archives (Max 10MB each)</p>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Uploaded Files List -->
+                            <div id="filesList" class="hidden space-y-2">
+                                <p class="text-sm font-semibold text-gray-700">Attached Files:</p>
+                                <div id="filesContainer" class="space-y-2"></div>
                             </div>
 
                             <div id="replyStatus" class="hidden p-3 rounded-lg text-sm"></div>
@@ -330,7 +430,7 @@ $pendingCount = count($pending);
                 <div class="overflow-y-auto flex-1 p-4">
                     <?php if ($selectedRequest && isset($_GET['reply'])): ?>
                         <div class="space-y-3">
-                            <div class="bg-blue-50 p-3 rounded-lg border-l-4 border-l-blue-500">
+                            <div class=" p-3 rounded-lg ">
                                 <label class="flex items-start cursor-pointer">
                                     <input type="checkbox" class="todo-checkbox mt-1 w-4 h-4 text-blue-600 rounded" data-todo-id="1">
                                     <span class="ml-3">
@@ -340,7 +440,7 @@ $pendingCount = count($pending);
                                 </label>
                             </div>
 
-                            <div class="bg-yellow-50 p-3 rounded-lg border-l-4 border-l-yellow-500">
+                            <div class=" p-3 rounded-lg ">
                                 <label class="flex items-start cursor-pointer">
                                     <input type="checkbox" class="todo-checkbox mt-1 w-4 h-4 text-yellow-600 rounded" data-todo-id="2">
                                     <span class="ml-3">
@@ -350,7 +450,7 @@ $pendingCount = count($pending);
                                 </label>
                             </div>
 
-                            <div class="bg-purple-50 p-3 rounded-lg border-l-4 border-l-purple-500">
+                            <div class=" p-3 rounded-lg ">
                                 <label class="flex items-start cursor-pointer">
                                     <input type="checkbox" class="todo-checkbox mt-1 w-4 h-4 text-purple-600 rounded" data-todo-id="3">
                                     <span class="ml-3">
@@ -360,9 +460,9 @@ $pendingCount = count($pending);
                                 </label>
                             </div>
 
-                            <div class="bg-green-50 p-3 rounded-lg border-l-4 border-l-green-500">
+                            <div class=" p-3 rounded-lg ">
                                 <label class="flex items-start cursor-pointer">
-                                    <input type="checkbox" class="todo-checkbox mt-1 w-4 h-4 text-green-600 rounded" data-todo-id="4">
+                                    <input type="checkbox" class="todo-checkbox mt-1 w-4 h-4 text-green-600 rounded" data-todo-id="4" onclick="markAsCompleted()">
                                     <span class="ml-3">
                                         <p class="font-semibold text-sm text-gray-900">Mark Completed</p>
                                         <p class="text-xs text-gray-600 mt-1">Order finished and delivered</p>
@@ -385,6 +485,7 @@ $pendingCount = count($pending);
 
     <script>
         let sidebarOpen = false;
+        const uploadedFiles = new Map();
 
         function toggleSidebar() {
             const sidebar = document.getElementById('sidebar');
@@ -394,15 +495,13 @@ $pendingCount = count($pending);
             sidebarOpen = !sidebarOpen;
             
             if (sidebarOpen) {
-                // Open sidebar
                 sidebar.classList.remove('-translate-x-full');
                 overlay.classList.remove('hidden');
-                toggleBtn.style.display = 'none'; // Hide burger button
+                toggleBtn.style.display = 'none';
             } else {
-                // Close sidebar
                 sidebar.classList.add('-translate-x-full');
                 overlay.classList.add('hidden');
-                toggleBtn.style.display = 'flex'; // Show burger button
+                toggleBtn.style.display = 'flex';
             }
         }
 
@@ -423,44 +522,115 @@ $pendingCount = count($pending);
             });
         }
 
-        // Handle Todo Checkboxes with localStorage
-        const STORAGE_KEY = 'requestTodos_';
-        
-        function loadTodoStates() {
-            const selectedRequestId = new URLSearchParams(window.location.search).get('id');
-            if (!selectedRequestId) return;
+        function markAsCompleted() {
+            const requestId = document.getElementById('request_id').value;
             
-            const storageKey = STORAGE_KEY + selectedRequestId;
-            const savedStates = JSON.parse(localStorage.getItem(storageKey) || '{}');
-            
-            document.querySelectorAll('.todo-checkbox').forEach(checkbox => {
-                const todoId = checkbox.getAttribute('data-todo-id');
-                if (savedStates[todoId]) {
-                    checkbox.checked = true;
-                }
-            });
-        }
+            if (confirm('Mark this request as completed?')) {
+                const formData = new FormData();
+                formData.append('action', 'update_status');
+                formData.append('id', requestId);
+                formData.append('status', 'completed');
 
-        function initTodoListeners() {
-            const selectedRequestId = new URLSearchParams(window.location.search).get('id');
-            if (!selectedRequestId) return;
-            
-            document.querySelectorAll('.todo-checkbox').forEach(checkbox => {
-                checkbox.addEventListener('change', () => {
-                    const storageKey = STORAGE_KEY + selectedRequestId;
-                    const todoId = checkbox.getAttribute('data-todo-id');
-                    const states = JSON.parse(localStorage.getItem(storageKey) || '{}');
-                    states[todoId] = checkbox.checked;
-                    localStorage.setItem(storageKey, JSON.stringify(states));
+                fetch(window.location.href, {
+                    method: 'POST',
+                    body: formData
+                }).then(response => {
+                    alert('Request marked as completed!');
+                    window.location.href = '?quoted=1';
+                }).catch(error => {
+                    console.error('Error:', error);
+                    alert('Error updating status');
                 });
+            }
+        }
+
+        // File Upload Handling
+        const fileInput = document.getElementById('fileInput');
+        const uploadArea = fileInput?.parentElement;
+
+        if (fileInput && uploadArea) {
+            fileInput.addEventListener('change', handleFileSelect);
+
+            uploadArea.addEventListener('dragover', (e) => {
+                e.preventDefault();
+                uploadArea.classList.add('border-green-500', 'bg-green-50');
+            });
+
+            uploadArea.addEventListener('dragleave', () => {
+                uploadArea.classList.remove('border-green-500', 'bg-green-50');
+            });
+
+            uploadArea.addEventListener('drop', (e) => {
+                e.preventDefault();
+                uploadArea.classList.remove('border-green-500', 'bg-green-50');
+                handleFiles(e.dataTransfer.files);
             });
         }
 
-        // Initialize on page load
-        document.addEventListener('DOMContentLoaded', () => {
-            loadTodoStates();
-            initTodoListeners();
-        });
+        function handleFileSelect(e) {
+            handleFiles(e.target.files);
+        }
+
+        function handleFiles(files) {
+            const maxSize = 10 * 1024 * 1024;
+            const allowedTypes = ['application/pdf', 'application/msword', 'application/vnd.openxmlformats-officedocument.wordprocessingml.document', 'application/vnd.ms-excel', 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet', 'application/vnd.ms-powerpoint', 'application/vnd.openxmlformats-officedocument.presentationml.presentation', 'image/jpeg', 'image/png', 'image/gif', 'application/zip'];
+
+            for (let file of files) {
+                if (file.size > maxSize) {
+                    alert(`File "${file.name}" is too large. Maximum size is 10MB.`);
+                    continue;
+                }
+
+                if (!allowedTypes.includes(file.type) && !file.name.match(/\.(pdf|doc|docx|xls|xlsx|ppt|pptx|jpg|jpeg|png|gif|zip)$/i)) {
+                    alert(`File type "${file.name}" is not allowed.`);
+                    continue;
+                }
+
+                uploadedFiles.set(file.name, file);
+            }
+
+            updateFilesList();
+        }
+
+        function updateFilesList() {
+            const filesList = document.getElementById('filesList');
+            const filesContainer = document.getElementById('filesContainer');
+            const uploadPrompt = document.getElementById('uploadPrompt');
+
+            filesContainer.innerHTML = '';
+
+            if (uploadedFiles.size === 0) {
+                filesList.classList.add('hidden');
+                uploadPrompt.style.display = 'block';
+                return;
+            }
+
+            filesList.classList.remove('hidden');
+            uploadPrompt.style.display = 'none';
+
+            uploadedFiles.forEach((file, name) => {
+                const fileItem = document.createElement('div');
+                fileItem.className = 'flex items-center justify-between bg-gray-50 p-3 rounded-lg border border-gray-200';
+                fileItem.innerHTML = `
+                    <div class="flex items-center flex-1">
+                        <i class="fas fa-file text-gray-400 mr-3"></i>
+                        <div class="flex-1">
+                            <p class="text-sm font-medium text-gray-900">${name}</p>
+                            <p class="text-xs text-gray-500">${(file.size / 1024).toFixed(2)} KB</p>
+                        </div>
+                    </div>
+                    <button type="button" onclick="removeFile('${name}')" class="text-red-500 hover:text-red-700 ml-2">
+                        <i class="fas fa-trash"></i>
+                    </button>
+                `;
+                filesContainer.appendChild(fileItem);
+            });
+        }
+
+        function removeFile(fileName) {
+            uploadedFiles.delete(fileName);
+            updateFilesList();
+        }
 
         // Handle reply form submission
         const replyForm = document.getElementById('replyForm');
@@ -474,19 +644,21 @@ $pendingCount = count($pending);
                 const fullName = document.getElementById('reply_name').value;
                 const message = form.querySelector('textarea[name="reply_message"]').value;
                 const status = document.getElementById('replyStatus');
-                
+
+                const formData = new FormData();
+                formData.append('request_id', requestId);
+                formData.append('email', email);
+                formData.append('full_name', fullName);
+                formData.append('message', message);
+
+                uploadedFiles.forEach((file) => {
+                    formData.append('reply_files[]', file);
+                });
+
                 try {
                     const response = await fetch('main-send-reply-page-1-A.php', {
                         method: 'POST',
-                        headers: {
-                            'Content-Type': 'application/json'
-                        },
-                        body: JSON.stringify({
-                            request_id: requestId,
-                            email: email,
-                            full_name: fullName,
-                            message: message
-                        })
+                        body: formData
                     });
                     
                     const data = await response.json();
@@ -496,6 +668,8 @@ $pendingCount = count($pending);
                         status.className = 'p-3 rounded-lg text-sm bg-green-100 text-green-800 border border-green-300';
                         status.innerHTML = '<i class="fas fa-check-circle mr-2"></i>' + (data.message || 'Reply sent successfully!');
                         form.reset();
+                        uploadedFiles.clear();
+                        updateFilesList();
                         
                         setTimeout(() => {
                             window.location.href = '?quoted=1';
@@ -510,6 +684,179 @@ $pendingCount = count($pending);
                 }
             });
         }
+
+   // Todo Checkboxes with localStorage and status update
+const STORAGE_KEY = 'requestTodos_';
+
+function loadTodoStates() {
+    const selectedRequestId = new URLSearchParams(window.location.search).get('id');
+    if (!selectedRequestId) return;
+    
+    const storageKey = STORAGE_KEY + selectedRequestId;
+    const savedStates = JSON.parse(localStorage.getItem(storageKey) || '{}');
+    
+    document.querySelectorAll('.todo-checkbox').forEach(checkbox => {
+        const todoId = checkbox.getAttribute('data-todo-id');
+        if (savedStates[todoId]) {
+            checkbox.checked = true;
+        }
+    });
+}
+
+function initTodoListeners() {
+    const selectedRequestId = new URLSearchParams(window.location.search).get('id');
+    if (!selectedRequestId) return;
+    
+    document.querySelectorAll('.todo-checkbox').forEach(checkbox => {
+        checkbox.addEventListener('change', async () => {
+            const storageKey = STORAGE_KEY + selectedRequestId;
+            const todoId = checkbox.getAttribute('data-todo-id');
+            const states = JSON.parse(localStorage.getItem(storageKey) || '{}');
+            
+            // If this is the "Mark Completed" checkbox (id = 4)
+            if (todoId === '4') {
+                if (!checkbox.checked) {
+                    // Uncheck - revert to quoted status
+                    states[todoId] = false;
+                    localStorage.setItem(storageKey, JSON.stringify(states));
+                    
+                    // Update status to quoted in database
+                    const formData = new FormData();
+                    formData.append('action', 'update_status');
+                    formData.append('id', selectedRequestId);
+                    formData.append('status', 'quoted');
+
+                    try {
+                        await fetch(window.location.href, {
+                            method: 'POST',
+                            body: formData
+                        });
+                        
+                        alert('Status reverted to quoted');
+                        window.location.reload();
+                    } catch (error) {
+                        console.error('Error:', error);
+                        alert('Error updating status');
+                        checkbox.checked = true;
+                    }
+                } else {
+                    // Just save the state when checked
+                    states[todoId] = true;
+                    localStorage.setItem(storageKey, JSON.stringify(states));
+                }
+            } else {
+                // For other checkboxes, just save the state
+                states[todoId] = checkbox.checked;
+                localStorage.setItem(storageKey, JSON.stringify(states));
+            }
+        });
+    });
+}
+
+document.addEventListener('DOMContentLoaded', () => {
+    loadTodoStates();
+    initTodoListeners();
+});
+        // Dashboard Functions
+        function showDashboard(type) {
+            const modal = document.getElementById('dashboardModal');
+            const title = document.getElementById('dashboardTitle');
+            const content = document.getElementById('dashboardContent');
+            
+            let requests = [];
+            let titleText = '';
+            let icon = '';
+            let color = '';
+
+            const allRequests = <?= json_encode($requests) ?>;
+
+            if (type === 'all') {
+                requests = allRequests;
+                titleText = 'All Requests';
+                icon = 'fa-inbox';
+                color = 'blue';
+            } else if (type === 'pending') {
+                requests = allRequests.filter(r => r.status === 'pending');
+                titleText = 'Pending Requests';
+                icon = 'fa-clock';
+                color = 'orange';
+            } else if (type === 'quoted') {
+                requests = allRequests.filter(r => r.status === 'quoted');
+                titleText = 'Quoted Requests';
+                icon = 'fa-file-invoice';
+                color = 'yellow';
+            } else if (type === 'completed') {
+                requests = allRequests.filter(r => r.status === 'completed');
+                titleText = 'Completed Requests';
+                icon = 'fa-check-circle';
+                color = 'green';
+            }
+
+            title.innerHTML = `<i class="fas ${icon} mr-2"></i>${titleText}`;
+            
+            if (requests.length === 0) {
+                content.innerHTML = `
+                    <div class="text-center py-12">
+                        <i class="fas ${icon} text-6xl text-gray-300 mb-4 block"></i>
+                        <p class="text-gray-500 text-lg">No requests found</p>
+                    </div>
+                `;
+            } else {
+                content.innerHTML = `
+                    <div class="space-y-3">
+                        ${requests.map((req, idx) => `
+                            <div class="p-4 border-l-4 border-l-${color}-500 bg-${color}-50 rounded-lg hover:shadow-md transition">
+                                <div class="flex justify-between items-start mb-2">
+                                    <div>
+                                        <p class="font-bold text-gray-900">${req.full_name}</p>
+                                        <p class="text-xs text-gray-600">${req.email}</p>
+                                        <p class="text-xs text-gray-600">${req.phone}</p>
+                                    </div>
+                                    <span class="text-xs px-2 py-1 rounded font-semibold ${
+                                        req.status === 'pending' ? 'bg-orange-200 text-orange-800' :
+                                        req.status === 'quoted' ? 'bg-yellow-200 text-yellow-800' :
+                                        'bg-green-200 text-green-800'
+                                    }">
+                                        ${req.status.toUpperCase()}
+                                    </span>
+                                </div>
+                                <div class="grid grid-cols-2 gap-2 text-sm mb-2">
+                                    <div>
+                                        <span class="text-gray-600">Product:</span>
+                                        <p class="font-semibold text-gray-900">${req.product_name || 'N/A'}</p>
+                                    </div>
+                                    <div>
+                                        <span class="text-gray-600">Type:</span>
+                                        <p class="font-semibold text-gray-900">${req.custom_type}</p>
+                                    </div>
+                                </div>
+                                ${req.selected_color ? `<p class="text-xs text-gray-600"><strong>Color:</strong> ${req.selected_color}</p>` : ''}
+                                ${req.selected_variant ? `<p class="text-xs text-gray-600"><strong>Variant:</strong> ${req.selected_variant}</p>` : ''}
+                                <div class="flex justify-between items-center mt-3 pt-3 border-t border-gray-200">
+                                    <span class="text-xs text-gray-500">${new Date(req.created_at).toLocaleDateString()}</span>
+                                    <a href="?id=${req.id}&reply=1" class="text-xs bg-${color}-500 hover:bg-${color}-600 text-white px-3 py-1 rounded font-semibold transition">
+                                        <i class="fas fa-eye mr-1"></i>View Details
+                                    </a>
+                                </div>
+                            </div>
+                        `).join('')}
+                    </div>
+                `;
+            }
+
+            modal.classList.remove('hidden');
+        }
+
+        function closeDashboard() {
+            document.getElementById('dashboardModal').classList.add('hidden');
+        }
+
+        // Close modal when clicking outside
+        document.getElementById('dashboardModal')?.addEventListener('click', (e) => {
+            if (e.target.id === 'dashboardModal') {
+                closeDashboard();
+            }
+        });
     </script>
 </body>
 </html>

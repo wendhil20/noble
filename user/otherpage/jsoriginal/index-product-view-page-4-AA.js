@@ -2238,7 +2238,8 @@ function escapeHtml(text) {
   return div.innerHTML;
 }
 
-// ===== CALCULATOR FUNCTIONS =====
+// ===== CALCULATOR FUNCTIONS (FIXED) =====
+
 function updateCalculatorFromVariant(button) {
   const width = parseFloat(button.dataset.width) || 0;
   const height = parseFloat(button.dataset.height) || 0;
@@ -2286,17 +2287,21 @@ function updateCalculatorFromVariant(button) {
   if (resultsSection) resultsSection.classList.add("hidden");
 }
 
+// ===== FIXED: calculateFromArea() =====
 function calculateFromArea() {
   const areaInput = document.getElementById("userArea");
   const piecesDisplay = document.getElementById("piecesFromArea");
   const resultsSection = document.getElementById("userCalculationResults");
-  const adhesiveEl = document.getElementById("userAdhesiveNeeded");
+  const adhesiveKgEl = document.getElementById("userAdhesiveNeededKg");
+  const adhesiveBagsEl = document.getElementById("userAdhesiveBags");
+  const adhesiveWholeBagsEl = document.getElementById("userAdhesiveWholeBags");
   const bracketsEl = document.getElementById("userBracketsNeeded");
 
   if (!areaInput || !piecesDisplay) return;
 
   const area = parseFloat(areaInput.value);
 
+  // Validation
   if (!area || area <= 0) {
     piecesDisplay.textContent = "0";
     if (resultsSection) resultsSection.classList.add("hidden");
@@ -2313,17 +2318,48 @@ function calculateFromArea() {
     return;
   }
 
+  // ===== CALCULATE PIECES =====
   const piecesNeeded = Math.ceil(
     area / window.selectedVariantDimensions.areaPerPiece
   );
-  const adhesiveNeeded = (area * 0.3).toFixed(2);
-  const bracketsNeeded = Math.ceil(piecesNeeded * 0.25);
 
+  // ===== ADHESIVE CALCULATION =====
+  // For AAC blocks: 3 kg per sqm
+  const adhesiveRateKgPerSqm = 3.0;
+  // Bag weight: 25 kg
+  const bagWeightKg = 25.0;
+
+  const adhesiveKgNeeded = area * adhesiveRateKgPerSqm;
+  const adhesiveBagsNeededFloat = adhesiveKgNeeded / bagWeightKg;
+  const adhesiveWholeBags = Math.ceil(adhesiveBagsNeededFloat);
+
+  // ===== BRACKETS CALCULATION =====
+  // 6 brackets per sqm (based on area, not pieces)
+  const bracketRatePerSqm = 6;
+  const bracketsNeeded = Math.round(area * bracketRatePerSqm);
+
+  // ===== UPDATE DISPLAY =====
   piecesDisplay.textContent = piecesNeeded.toLocaleString();
 
-  if (adhesiveEl) adhesiveEl.textContent = adhesiveNeeded;
-  if (bracketsEl) bracketsEl.textContent = bracketsNeeded.toLocaleString();
-  if (resultsSection) resultsSection.classList.remove("hidden");
+  if (adhesiveKgEl) {
+    adhesiveKgEl.textContent = adhesiveKgNeeded.toFixed(2);
+  }
+
+  if (adhesiveBagsEl) {
+    adhesiveBagsEl.textContent = adhesiveBagsNeededFloat.toFixed(2);
+  }
+
+  if (adhesiveWholeBagsEl) {
+    adhesiveWholeBagsEl.textContent = adhesiveWholeBags;
+  }
+
+  if (bracketsEl) {
+    bracketsEl.textContent = bracketsNeeded.toLocaleString();
+  }
+
+  if (resultsSection) {
+    resultsSection.classList.remove("hidden");
+  }
 }
 
 function clearCalculator() {
@@ -2331,11 +2367,20 @@ function clearCalculator() {
   const areaInput = document.getElementById("userArea");
   const piecesDisplay = document.getElementById("piecesFromArea");
   const resultsSection = document.getElementById("userCalculationResults");
+  const adhesiveKgEl = document.getElementById("userAdhesiveNeededKg");
+  const adhesiveBagsEl = document.getElementById("userAdhesiveBags");
+  const adhesiveWholeBagsEl = document.getElementById("userAdhesiveWholeBags");
+  const bracketsEl = document.getElementById("userBracketsNeeded");
 
   if (calcSection) calcSection.classList.add("hidden");
   if (areaInput) areaInput.value = "";
   if (piecesDisplay) piecesDisplay.textContent = "0";
   if (resultsSection) resultsSection.classList.add("hidden");
+
+  if (adhesiveKgEl) adhesiveKgEl.textContent = "0";
+  if (adhesiveBagsEl) adhesiveBagsEl.textContent = "0";
+  if (adhesiveWholeBagsEl) adhesiveWholeBagsEl.textContent = "0";
+  if (bracketsEl) bracketsEl.textContent = "0";
 
   window.selectedVariantDimensions = {
     width: 0,
@@ -2345,6 +2390,7 @@ function clearCalculator() {
     areaPerPiece: 0,
   };
 }
+
 
 // ===== KEYBOARD SHORTCUTS =====
 document.addEventListener("keydown", function (e) {

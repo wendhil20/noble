@@ -1466,278 +1466,306 @@ $is_guest = !isset($_SESSION['user_id']);
             </script>
 
 
-            <!-- Calculator Guide Display -->
-            <?php if (isset($product['guide_enabled']) && $product['guide_enabled'] == 1): ?>
-              <div id="calculatorSection" class="mt-4 bg-white rounded p-3 lg:p-4 border border-gray-200 hidden">
-                <div class="flex items-center gap-2 mb-4">
-                  <div>
-                    <h3 class="text-base text-gray-900 font-semibold">Area</h3>
-                    <p class="text-xs text-gray-600">Calculate coverage based on selected size</p>
-                  </div>
-                </div>
+         <!-- Calculator Guide Display -->
+<?php if (isset($product['guide_enabled']) && $product['guide_enabled'] == 1): ?>
+  <div id="calculatorSection" class="mt-4 bg-white rounded p-3 lg:p-4 border border-gray-200 hidden">
+    <div class="flex items-center gap-2 mb-4">
+      <div>
+        <h3 class="text-base text-gray-900 font-semibold">Area</h3>
+        <p class="text-xs text-gray-600">Calculate coverage based on selected size</p>
+      </div>
+    </div>
 
-                <!-- Selected Size Display -->
-                <div class="mb-4 bg-gray-100 border border-gray-300 rounded p-3">
-                  <div class="flex items-center justify-between">
-                    <div>
-                      <label class="block text-xs text-gray-600 mb-1">Selected Size</label>
-                      <div id="selectedSizeDisplay" class="text-sm font-medium text-gray-900">-</div>
-                    </div>
-                    <div class="text-xs text-gray-600">
-                      <i class="fas fa-check-circle"></i>
-                    </div>
-                  </div>
-                </div>
+    <!-- Selected Size Display -->
+    <div class="mb-4 bg-gray-100 border border-gray-300 rounded p-3">
+      <div class="flex items-center justify-between">
+        <div>
+          <label class="block text-xs text-gray-600 mb-1">Selected Size</label>
+          <div id="selectedSizeDisplay" class="text-sm font-medium text-gray-900">-</div>
+        </div>
+        <div class="text-xs text-gray-600">
+          <i class="fas fa-check-circle"></i>
+        </div>
+      </div>
+    </div>
 
-                <!-- Dimensions Display -->
-                <div id="calculatorDimensionsDisplay" class="mb-4">
-                  <div class="grid grid-cols-4 gap-2">
-                    <div class="text-center">
-                      <label class="block text-xs text-gray-600 mb-1">Length (mm)</label>
-                      <div class="bg-gray-50 rounded px-2 py-2">
-                        <div id="calcLength" class="text-xs font-semibold text-gray-900">-</div>
-                      </div>
-                    </div>
-                    <div class="text-center">
-                      <label class="block text-xs text-gray-600 mb-1">Height (mm)</label>
-                      <div class="bg-gray-50 rounded px-2 py-2">
-                        <div id="calcHeight" class="text-xs font-semibold text-gray-900">-</div>
-                      </div>
-                    </div>
-                    <div class="text-center">
-                      <label class="block text-xs text-gray-600 mb-1">Width (mm)</label>
-                      <div class="bg-gray-50 rounded px-2 py-2">
-                        <div id="calcWidth" class="text-xs font-semibold text-gray-900">-</div>
-                      </div>
-                    </div>
-                    <div class="text-center">
-                      <label class="block text-xs text-gray-600 mb-1">Per Piece</label>
-                      <div class="bg-gray-200 rounded px-2 py-2">
-                        <div id="calcAreaPerPiece" class="text-xs font-bold text-gray-900"></div>
-                      </div>
-                    </div>
-                  </div>
-                </div>
+    <!-- Dimensions Display -->
+    <div id="calculatorDimensionsDisplay" class="mb-4">
+      <div class="grid grid-cols-4 gap-2">
+        <div class="text-center">
+          <label class="block text-xs text-gray-600 mb-1">Length (mm)</label>
+          <div class="bg-gray-50 rounded px-2 py-2">
+            <div id="calcLength" class="text-xs font-semibold text-gray-900">-</div>
+          </div>
+        </div>
+        <div class="text-center">
+          <label class="block text-xs text-gray-600 mb-1">Height (mm)</label>
+          <div class="bg-gray-50 rounded px-2 py-2">
+            <div id="calcHeight" class="text-xs font-semibold text-gray-900">-</div>
+          </div>
+        </div>
+        <div class="text-center">
+          <label class="block text-xs text-gray-600 mb-1">Width (mm)</label>
+          <div class="bg-gray-50 rounded px-2 py-2">
+            <div id="calcWidth" class="text-xs font-semibold text-gray-900">-</div>
+          </div>
+        </div>
+        <div class="text-center">
+          <label class="block text-xs text-gray-600 mb-1">Per Piece</label>
+          <div class="bg-gray-200 rounded px-2 py-2">
+            <div id="calcAreaPerPiece" class="text-xs font-bold text-gray-900"></div>
+          </div>
+        </div>
+      </div>
+    </div>
 
-                <!-- Calculator Input -->
-                <div class="mb-4">
-                  <div class="flex items-center gap-3">
-                    <div class="flex-1">
-                      <label class="block text-xs font-semibold text-gray-900 mb-1">
-                        <i class="fas fa-ruler-combined text-gray-700 mr-1"></i>
-                        Area
-                      </label>
-                      <div class="bg-gray-50 rounded">
-                        <input type="number" id="userArea" step="0.01" placeholder="Enter area"
-                          oninput="calculateFromArea()"
-                          class="w-full px-3 py-2 bg-transparent text-center text-sm text-gray-900 outline-none border border-gray-200 rounded">
-                      </div>
-                    </div>
-                    <div class="text-gray-700 text-xl pt-5">
-                      <i class="fas fa-arrow-right"></i>
-                    </div>
-                    <div class="flex-1">
-                      <label class="block text-xs font-semibold text-gray-900 mb-1">
-                        <i class="fas fa-box text-gray-700 mr-1"></i>
-                        Pieces
-                      </label>
-                      <div class="bg-gray-100 rounded border border-gray-300">
-                        <div id="piecesFromArea" class="px-3 py-2 text-center text-sm font-bold text-gray-900">0</div>
-                      </div>
-                    </div>
-                  </div>
-                </div>
+    <!-- Calculator Input -->
+    <div class="mb-4">
+      <div class="flex items-center gap-3">
+        <div class="flex-1">
+          <label class="block text-xs font-semibold text-gray-900 mb-1">
+            <i class="fas fa-ruler-combined text-gray-700 mr-1"></i>
+            Area (sqm)
+          </label>
+          <div class="bg-gray-50 rounded">
+            <input type="number" id="userArea" step="0.01" placeholder="Enter area"
+              oninput="calculateFromArea()"
+              class="w-full px-3 py-2 bg-transparent text-center text-sm text-gray-900 outline-none border border-gray-200 rounded">
+          </div>
+        </div>
+        <div class="text-gray-700 text-xl pt-5">
+          <i class="fas fa-arrow-right"></i>
+        </div>
+        <div class="flex-1">
+          <label class="block text-xs font-semibold text-gray-900 mb-1">
+            <i class="fas fa-box text-gray-700 mr-1"></i>
+            Pieces
+          </label>
+          <div class="bg-gray-100 rounded border border-gray-300">
+            <div id="piecesFromArea" class="px-3 py-2 text-center text-sm font-bold text-gray-900">0</div>
+          </div>
+        </div>
+      </div>
+    </div>
 
-                <!-- Additional Results -->
-                <div id="userCalculationResults" class="hidden">
-                  <div class="bg-gray-100 rounded-lg p-3 border border-gray-300">
-                    <h4 class="text-xs font-semibold text-gray-900 mb-2">
-                      <i class="fas fa-tools text-gray-700 mr-1"></i>
-                      Additional Materials Needed
-                    </h4>
-                    <div class="grid grid-cols-2 gap-3">
-                      <div class="bg-white rounded px-3 py-2 text-center border border-gray-200">
-                        <label class="block text-xs text-gray-600 mb-1">Adhesive</label>
-                        <div class="text-sm font-bold text-gray-900">
-                          <span id="userAdhesiveNeeded">0</span> pcs
-                        </div>
-                      </div>
-                      <div class="bg-white rounded px-3 py-2 text-center border border-gray-200">
-                        <label class="block text-xs text-gray-600 mb-1">Brackets</label>
-                        <div class="text-sm font-bold text-gray-900">
-                          <span id="userBracketsNeeded">0</span> pcs
-                        </div>
-                      </div>
-                    </div>
-                  </div>
-                </div>
-              </div>
+    <!-- Additional Results -->
+    <div id="userCalculationResults" class="hidden">
+      <div class="bg-gray-100 rounded-lg p-3 border border-gray-300">
+        <h4 class="text-xs font-semibold text-gray-900 mb-2">
+          <i class="fas fa-tools text-gray-700 mr-1"></i>
+          Additional Materials Needed
+        </h4>
+        <div class="grid grid-cols-2 gap-3">
+          <div class="bg-white rounded px-3 py-2 text-center border border-gray-200">
+            <label class="block text-xs text-gray-600 mb-1">Adhesive</label>
+            <div class="text-sm font-bold text-gray-900">
+              <span id="userAdhesiveNeededKg">0</span> kg
+              <div class="text-xs text-gray-600 mt-1" id="userAdhesiveBagsDisplay">(<span id="userAdhesiveBags">0</span> bags, buy <span id="userAdhesiveWholeBags">0</span>)</div>
+            </div>
+          </div>
+          <div class="bg-white rounded px-3 py-2 text-center border border-gray-200">
+            <label class="block text-xs text-gray-600 mb-1">Brackets</label>
+            <div class="text-sm font-bold text-gray-900">
+              <span id="userBracketsNeeded">0</span> pcs
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
 
-              <script>
-                let selectedVariantDimensions = {
-                  width: 0,
-                  height: 0,
-                  length: 0,
-                  size: '',
-                  areaPerPiece: 0
-                };
+  <script>
+    let selectedVariantDimensions = {
+      width: 0,
+      height: 0,
+      length: 0,
+      size: '',
+      areaPerPiece: 0
+    };
 
-                function updateCalculatorFromVariant(button) {
-                  const width = parseFloat(button.dataset.width) || 0;
-                  const height = parseFloat(button.dataset.height) || 0;
-                  const length = parseFloat(button.dataset.length) || 0;
-                  const size = button.querySelector('.text-gray-700').textContent.trim();
+    function updateCalculatorFromVariant(button) {
+      const width = parseFloat(button.dataset.width) || 0;
+      const height = parseFloat(button.dataset.height) || 0;
+      const length = parseFloat(button.dataset.length) || 0;
+      // prefer data-size if available, otherwise fallback to inner text
+      const size = button.dataset.size || (button.querySelector('.text-gray-700') ? button.querySelector('.text-gray-700').textContent.trim() : '');
 
-                  // Convert mm to meters
-                  const widthM = width / 1000;
-                  const heightM = height / 1000;
-                  const areaPerPiece = widthM * heightM;
+      // Convert mm to meters
+      const widthM = width / 1000;
+      const heightM = height / 1000;
+      const areaPerPiece = widthM * heightM;
 
-                  // Store dimensions
-                  selectedVariantDimensions = {
-                    width,
-                    height,
-                    length,
-                    size,
-                    areaPerPiece
-                  };
+      // Store dimensions
+      selectedVariantDimensions = {
+        width,
+        height,
+        length,
+        size,
+        areaPerPiece
+      };
 
-                  // Show calculator section
-                  const calcSection = document.getElementById('calculatorSection');
-                  if (calcSection) {
-                    calcSection.classList.remove('hidden');
-                  }
+      // Show calculator section
+      const calcSection = document.getElementById('calculatorSection');
+      if (calcSection) {
+        calcSection.classList.remove('hidden');
+      }
 
-                  // SET SIZE ONCE - THIS WILL NOT CHANGE
-                  const sizeDisplay = document.getElementById('selectedSizeDisplay');
-                  if (sizeDisplay) {
-                    sizeDisplay.textContent = size;
-                  }
+      // SET SIZE ONCE - THIS WILL NOT CHANGE
+      const sizeDisplay = document.getElementById('selectedSizeDisplay');
+      if (sizeDisplay) {
+        sizeDisplay.textContent = size || `${width}×${height}`;
+      }
 
-                  // Update dimension displays
-                  const widthEl = document.getElementById('calcWidth');
-                  const heightEl = document.getElementById('calcHeight');
-                  const lengthEl = document.getElementById('calcLength');
-                  const areaEl = document.getElementById('calcAreaPerPiece');
+      // Update dimension displays
+      const widthEl = document.getElementById('calcWidth');
+      const heightEl = document.getElementById('calcHeight');
+      const lengthEl = document.getElementById('calcLength');
+      const areaEl = document.getElementById('calcAreaPerPiece');
 
-                  if (widthEl) widthEl.textContent = width;
-                  if (heightEl) heightEl.textContent = height;
-                  if (lengthEl) lengthEl.textContent = length;
-                  if (areaEl) areaEl.textContent = areaPerPiece.toFixed(4) + ' m²';
+      if (widthEl) widthEl.textContent = width || '-';
+      if (heightEl) heightEl.textContent = height || '-';
+      if (lengthEl) lengthEl.textContent = length || '-';
+      if (areaEl) areaEl.textContent = areaPerPiece > 0 ? areaPerPiece.toFixed(4) + ' m²' : '-';
 
-                  // Clear previous calculations
-                  const areaInput = document.getElementById('userArea');
-                  const piecesDisplay = document.getElementById('piecesFromArea');
-                  const resultsSection = document.getElementById('userCalculationResults');
+      // Clear previous calculations
+      const areaInput = document.getElementById('userArea');
+      const piecesDisplay = document.getElementById('piecesFromArea');
+      const resultsSection = document.getElementById('userCalculationResults');
 
-                  if (areaInput) areaInput.value = '';
-                  if (piecesDisplay) piecesDisplay.textContent = '0';
-                  if (resultsSection) resultsSection.classList.add('hidden');
-                }
+      if (areaInput) areaInput.value = '';
+      if (piecesDisplay) piecesDisplay.textContent = '0';
+      if (resultsSection) resultsSection.classList.add('hidden');
+    }
 
-                function calculateFromArea() {
-                  const areaInput = document.getElementById('userArea');
-                  const piecesDisplay = document.getElementById('piecesFromArea');
-                  const resultsSection = document.getElementById('userCalculationResults');
-                  const adhesiveEl = document.getElementById('userAdhesiveNeeded');
-                  const bracketsEl = document.getElementById('userBracketsNeeded');
+    function calculateFromArea() {
+      const areaInput = document.getElementById('userArea');
+      const piecesDisplay = document.getElementById('piecesFromArea');
+      const resultsSection = document.getElementById('userCalculationResults');
+      const adhesiveKgEl = document.getElementById('userAdhesiveNeededKg');
+      const adhesiveBagsEl = document.getElementById('userAdhesiveBags');
+      const adhesiveWholeBagsEl = document.getElementById('userAdhesiveWholeBags');
+      const bracketsEl = document.getElementById('userBracketsNeeded');
 
-                  if (!areaInput || !piecesDisplay) return;
+      if (!areaInput || !piecesDisplay) return;
 
-                  const area = parseFloat(areaInput.value);
+      const area = parseFloat(areaInput.value);
 
-                  // Validation
-                  if (!area || area <= 0) {
-                    piecesDisplay.textContent = '0';
-                    if (resultsSection) resultsSection.classList.add('hidden');
-                    return;
-                  }
+      // Validation
+      if (!area || area <= 0) {
+        piecesDisplay.textContent = '0';
+        if (resultsSection) resultsSection.classList.add('hidden');
+        return;
+      }
 
-                  if (!selectedVariantDimensions.areaPerPiece || selectedVariantDimensions.areaPerPiece <= 0) {
-                    piecesDisplay.textContent = '0';
-                    if (resultsSection) resultsSection.classList.add('hidden');
-                    return;
-                  }
+      if (!selectedVariantDimensions.areaPerPiece || selectedVariantDimensions.areaPerPiece <= 0) {
+        piecesDisplay.textContent = '0';
+        if (resultsSection) resultsSection.classList.add('hidden');
+        return;
+      }
 
-                  // CALCULATE PIECES NEEDED (SIZE STAYS THE SAME)
-                  const piecesNeeded = Math.ceil(area / selectedVariantDimensions.areaPerPiece);
+      // CALCULATE PIECES NEEDED (SIZE STAYS THE SAME)
+      const piecesNeeded = Math.ceil(area / selectedVariantDimensions.areaPerPiece);
 
-                  // CALCULATE ADDITIONAL MATERIALS
-                  const adhesiveNeeded = (area * 0.30).toFixed(2);
-                  const bracketsNeeded = Math.ceil(piecesNeeded * 0.25);
+      // ---------- ADHESIVE CALC (explicit units) ----------
+      // Default adhesive consumption in kg per sqm (adjustable)
+      const adhesiveRateKgPerSqm = 3.0; // default: 3 kg per sqm (changeable)
+      const bagWeightKg = 20.0; // default: 20 kg per bag (change if your product uses 25kg bags)
 
-                  // UPDATE DISPLAY - SIZE DOES NOT CHANGE
-                  piecesDisplay.textContent = piecesNeeded.toLocaleString();
+      // adhesive in kilograms required
+      const adhesiveKgNeeded = +(area * adhesiveRateKgPerSqm).toFixed(2);
 
-                  if (adhesiveEl) adhesiveEl.textContent = adhesiveNeeded;
-                  if (bracketsEl) bracketsEl.textContent = bracketsNeeded.toLocaleString();
-                  if (resultsSection) resultsSection.classList.remove('hidden');
-                }
+      // adhesive in sacks/bags (float). Round up to get whole bags if you buy by bag.
+      const adhesiveBagsNeededFloat = +(adhesiveKgNeeded / bagWeightKg).toFixed(3);
+      const adhesiveWholeBags = Math.ceil(adhesiveBagsNeededFloat);
 
-                // ✅ ✅ ✅ FINAL FIX - DISABLE KEYBOARD SHORTCUTS COMPLETELY WHEN IN INPUT
-                document.addEventListener('keydown', function(e) {
-                  // ✅ GET ACTIVE ELEMENT
-                  const activeElement = document.activeElement;
+      // ---------- BRACKETS ----------
+      // Rate: 0.25 means 1 bracket per 4 pieces (adjustable)
+      const bracketRatePerPiece = 0.25;
+      const bracketsNeeded = Math.ceil(piecesNeeded * bracketRatePerPiece);
 
-                  // ✅ ✅ ✅ CRITICAL FIX: CHECK IF ANY INPUT/TEXTAREA IS FOCUSED
-                  if (activeElement &&
-                    (activeElement.tagName === 'INPUT' ||
-                      activeElement.tagName === 'TEXTAREA' ||
-                      activeElement.isContentEditable)) {
-                    // ❌ ❌ ❌ DO NOTHING - LET THE USER TYPE FREELY
-                    return;
-                  }
+      // UPDATE DISPLAY - SIZE DOES NOT CHANGE
+      piecesDisplay.textContent = piecesNeeded.toLocaleString();
 
-                  // ESC key to close modals (only when NOT typing)
-                  if (e.key === 'Escape') {
-                    if (typeof closeContactModal === 'function') {
-                      closeContactModal();
-                    }
-                  }
+      if (adhesiveKgEl) adhesiveKgEl.textContent = adhesiveKgNeeded.toLocaleString(undefined, {minimumFractionDigits:2, maximumFractionDigits:2});
+      if (adhesiveBagsEl) adhesiveBagsEl.textContent = adhesiveBagsNeededFloat;
+      if (adhesiveWholeBagsEl) adhesiveWholeBagsEl.textContent = adhesiveWholeBags;
+      if (bracketsEl) bracketsEl.textContent = bracketsNeeded.toLocaleString();
+      if (resultsSection) resultsSection.classList.remove('hidden');
+    }
 
-                  // ✅ Number keys to select variants (ONLY when NOT in ANY input field)
-                  if (e.key >= '1' && e.key <= '9' && !e.ctrlKey && !e.altKey && !e.metaKey) {
-                    const variantButtons = document.querySelectorAll('.variant-btn:not([disabled])');
-                    const index = parseInt(e.key) - 1;
-                    if (variantButtons[index]) {
-                      e.preventDefault(); // Prevent default number input behavior
-                      e.stopPropagation(); // Stop event from bubbling
-                      variantButtons[index].click();
-                    }
-                  }
-                });
+    // DISABLE KEYBOARD SHORTCUTS COMPLETELY WHEN IN INPUTS
+    document.addEventListener('keydown', function(e) {
+      const activeElement = document.activeElement;
 
-                // ✅ ADDITIONAL FIX: Prevent keydown on area input from triggering shortcuts
-                const areaInput = document.getElementById('userArea');
-                if (areaInput) {
-                  areaInput.addEventListener('keydown', function(e) {
-                    // Stop the event from propagating to document level
-                    e.stopPropagation();
-                  });
-                }
+      if (activeElement &&
+        (activeElement.tagName === 'INPUT' ||
+          activeElement.tagName === 'TEXTAREA' ||
+          activeElement.isContentEditable)) {
+        // Let the user type freely
+        return;
+      }
 
-                // CLEAR CALCULATOR FUNCTION
-                function clearCalculator() {
-                  const calcSection = document.getElementById('calculatorSection');
-                  const areaInput = document.getElementById('userArea');
-                  const piecesDisplay = document.getElementById('piecesFromArea');
-                  const resultsSection = document.getElementById('userCalculationResults');
+      // ESC key to close modals (only when NOT typing)
+      if (e.key === 'Escape') {
+        if (typeof closeContactModal === 'function') {
+          closeContactModal();
+        }
+      }
 
-                  if (calcSection) calcSection.classList.add('hidden');
-                  if (areaInput) areaInput.value = '';
-                  if (piecesDisplay) piecesDisplay.textContent = '0';
-                  if (resultsSection) resultsSection.classList.add('hidden');
+      // Number keys to select variants (ONLY when NOT in ANY input field)
+      if (e.key >= '1' && e.key <= '9' && !e.ctrlKey && !e.altKey && !e.metaKey) {
+        const variantButtons = document.querySelectorAll('.variant-btn:not([disabled])');
+        const index = parseInt(e.key) - 1;
+        if (variantButtons[index]) {
+          e.preventDefault();
+          e.stopPropagation();
+          variantButtons[index].click();
+        }
+      }
+    });
 
-                  selectedVariantDimensions = {
-                    width: 0,
-                    height: 0,
-                    length: 0,
-                    size: '',
-                    areaPerPiece: 0
-                  };
-                }
-              </script>
-            <?php endif; ?>
+    // Prevent keydown on area input from triggering shortcuts
+    document.addEventListener('DOMContentLoaded', function() {
+      const areaInput = document.getElementById('userArea');
+      if (areaInput) {
+        areaInput.addEventListener('keydown', function(e) {
+          e.stopPropagation();
+        });
+      }
+    });
+
+    // CLEAR CALCULATOR FUNCTION
+    function clearCalculator() {
+      const calcSection = document.getElementById('calculatorSection');
+      const areaInput = document.getElementById('userArea');
+      const piecesDisplay = document.getElementById('piecesFromArea');
+      const resultsSection = document.getElementById('userCalculationResults');
+      const adhesiveKgEl = document.getElementById('userAdhesiveNeededKg');
+      const adhesiveBagsEl = document.getElementById('userAdhesiveBags');
+      const adhesiveWholeBagsEl = document.getElementById('userAdhesiveWholeBags');
+      const bracketsEl = document.getElementById('userBracketsNeeded');
+
+      if (calcSection) calcSection.classList.add('hidden');
+      if (areaInput) areaInput.value = '';
+      if (piecesDisplay) piecesDisplay.textContent = '0';
+      if (resultsSection) resultsSection.classList.add('hidden');
+
+      if (adhesiveKgEl) adhesiveKgEl.textContent = '0';
+      if (adhesiveBagsEl) adhesiveBagsEl.textContent = '0';
+      if (adhesiveWholeBagsEl) adhesiveWholeBagsEl.textContent = '0';
+      if (bracketsEl) bracketsEl.textContent = '0';
+
+      selectedVariantDimensions = {
+        width: 0,
+        height: 0,
+        length: 0,
+        size: '',
+        areaPerPiece: 0
+      };
+    }
+  </script>
+<?php endif; ?>
+
 
             <!-- SKU Info Display Section -->
             <div id="sku-info-display" class="hidden mt-4 p-2 lg:p-4 bg-gray-50 border border-gray-200 rounded-lg">

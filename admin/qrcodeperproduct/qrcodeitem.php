@@ -197,7 +197,7 @@ $totalProducts = $displayResult->num_rows;
                                 <th class="px-6 py-4 text-left text-sm font-semibold">Codename</th>
                                 <th class="px-6 py-4 text-center text-sm font-semibold">Variants</th>
                                 <th class="px-6 py-4 text-center text-sm font-semibold">Quantity</th>
-                                <th class="px-6 py-4 text-center text-sm font-semibold">Price</th>
+                       
                                 <th class="px-6 py-4 text-center text-sm font-semibold">QR Code</th>
                                 <th class="px-6 py-4 text-center text-sm font-semibold">Actions</th>
                             </tr>
@@ -222,9 +222,7 @@ $totalProducts = $displayResult->num_rows;
                                     <td class="px-6 py-4 text-center font-medium text-gray-900">
                                         <?= $product['quantity'] ?>
                                     </td>
-                                    <td class="px-6 py-4 text-center font-semibold text-orange-600">
-                                        ₱<?= number_format($product['price'], 2) ?>
-                                    </td>
+                        
                                     <td class="px-6 py-4 text-center">
                                         <?php if (!empty($product['qr_code'])): ?>
                                             <div class="flex flex-col items-center gap-1">

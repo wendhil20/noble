@@ -10,7 +10,7 @@ header('Content-Type: application/json');
 try {
     // Check if connection file exists
     if (!file_exists('../../connection/connect.php')) {
-        throw new Exception('Connection file not found at: ' . realpath('../../connection/connect.php'));
+        throw new Exception('Connection file not found');
     }
     
     include '../../connection/connect.php';
@@ -20,8 +20,28 @@ try {
         throw new Exception('Database connection error: ' . ($conn->connect_error ?? 'Unknown'));
     }
 
-    $id = intval($_GET['id'] ?? 0);
+    $action = $_GET['action'] ?? '';
 
+    // Get notification count for pending requests
+    if ($action === 'get-notification-count') {
+        $countQuery = "SELECT COUNT(*) as pending_count FROM custom_quote_requests WHERE status = 'pending'";
+        $countResult = $conn->query($countQuery);
+        
+        if (!$countResult) {
+            throw new Exception('Count query failed: ' . $conn->error);
+        }
+        
+        $countRow = $countResult->fetch_assoc();
+        echo json_encode([
+            'success' => true,
+            'pending_count' => intval($countRow['pending_count'])
+        ]);
+        exit;
+    }
+
+    // Get specific request by ID
+    $id = intval($_GET['id'] ?? 0);
+    
     if (!$id) {
         throw new Exception('Invalid request ID');
     }
@@ -70,7 +90,6 @@ try {
         throw new Exception('Request not found with ID: ' . $id);
     }
 
-    // Return success
     echo json_encode($request);
 
 } catch (Exception $e) {

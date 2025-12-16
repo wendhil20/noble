@@ -46,65 +46,56 @@ $categoryResult = mysqli_query($conn, $categoryQuery);
 
   <?php include '../navbar/top.php'; ?>
 
-  <div class=" bg-white p-6 rounded-lg shadow mt-5">
-    <h2 class="text-2xl font-bold mb-4 text-orange-600">Add Product</h2>
+  <div class="max-w-4xl mx-auto bg-white p-8 rounded-lg">
+    <h2 class="text-3xl font-bold mb-8 text-gray-800">Upload Product</h2>
 
-    <!-- CSV Import Section - NO VALIDATION -->
-    <div class="bg-white p-6 rounded-lg shadow mt-5">
-      <h2 class="text-2xl font-bold mb-4 text-orange-600">Import Products via CSV</h2>
+    <!-- CSV Import Section -->
+    <div class="bg-blue-50 p-6 rounded-lg border-l-4 border-blue-600 mb-8">
+      <h3 class="text-lg font-semibold text-blue-900 mb-3">Quick Import via CSV</h3>
       <form id="csv-import-form" action="import_csv.php" method="POST" enctype="multipart/form-data">
-        <div class="mb-4">
-          <label class="block font-semibold mb-1">CSV File</label>
-          <input type="file" name="csv_file" accept=".csv" class="w-full border p-2 rounded">
+        <div class="flex gap-3">
+          <input type="file" name="csv_file" accept=".csv" class="flex-1 border border-gray-300 p-3 rounded focus:outline-none focus:ring-2 focus:ring-blue-500" required />
+          <button type="submit" class="bg-blue-600 text-white px-8 py-3 rounded font-semibold hover:bg-blue-700 transition whitespace-nowrap">Import CSV</button>
         </div>
-        <button type="submit" class="bg-green-600 text-white px-4 py-2 rounded hover:bg-green-700">Import CSV</button>
+        <p class="text-sm text-gray-600 mt-2">Upload multiple products at once using a CSV file</p>
       </form>
     </div>
 
     <!-- Product Upload Form -->
-    <form id="product-upload-form" action="upload_process-page-1-A.php" method="POST" enctype="multipart/form-data" class="mt-5">
+    <form id="product-upload-form" action="upload_process-page-1-A.php" method="POST" enctype="multipart/form-data" class="space-y-6">
 
       <!-- Product Name -->
-      <div class="mb-4">
-        <label class="block font-semibold mb-1">Product Name</label>
-        <input type="text" name="product_name" class="w-full border p-2 rounded" />
+      <div>
+        <label class="block font-semibold text-gray-700 mb-2">Product Name <span class="text-red-500">*</span></label>
+        <input type="text" name="product_name" class="w-full border border-gray-300 p-3 rounded focus:outline-none focus:ring-2 focus:ring-orange-500" placeholder="Enter product name" required />
       </div>
 
       <!-- Main Image -->
-      <div class="mb-4">
-        <label class="block font-semibold mb-1">Main Image</label>
-        <input type="file" name="main_image" accept="image/*" class="w-full border p-2 rounded" onchange="previewMainImage(this)" />
-        <div id="main-image-preview" class="mt-2"></div>
+      <div>
+        <label class="block font-semibold text-gray-700 mb-2">Main Image <span class="text-red-500">*</span></label>
+        <input type="file" name="main_image" accept="image/*" class="w-full border border-gray-300 p-3 rounded focus:outline-none focus:ring-2 focus:ring-orange-500" onchange="previewMainImage(this)" required />
+        <div id="main-image-preview" class="mt-3"></div>
       </div>
 
-      <!-- Sub Images Section -->
-      <div class="mb-4">
-        <label class="block font-semibold mb-2">Sub Images (Optional)</label>
-        <div class="bg-gray-50 p-4 rounded border">
-          <div id="sub-images-section">
-            <!-- Initial sub image input -->
-            <div class="sub-image-item flex gap-2 mb-3 items-start p-3 bg-white rounded border">
-              <div class="flex-1">
-                <input type="file" name="sub_images[]" accept="image/*" class="w-full border p-2 rounded" onchange="previewSubImage(this)" />
-                <div class="sub-image-preview mt-2"></div>
-              </div>
-              <button type="button" onclick="addSubImage()" class="bg-green-500 text-white px-3 py-2 rounded hover:bg-green-600 whitespace-nowrap ml-2">
-                + Add More
-              </button>
+      <!-- Sub Images -->
+      <div>
+        <label class="block font-semibold text-gray-700 mb-2">Sub Images <span class="text-gray-500 text-sm font-normal">(Optional)</span></label>
+        <div class="bg-gray-50 p-4 rounded border border-gray-200 space-y-3">
+          <div id="sub-images-section" class="space-y-3">
+            <div class="sub-image-item flex gap-3 items-start bg-white p-3 rounded border border-gray-200">
+              <input type="file" name="sub_images[]" accept="image/*" class="flex-1 border border-gray-300 p-2 rounded focus:outline-none focus:ring-2 focus:ring-orange-500" onchange="previewSubImage(this)" />
+              <div class="sub-image-preview"></div>
             </div>
           </div>
-          <div class="mt-2 text-sm text-gray-600">
-            <p>• You can add unlimited sub images</p>
-            <p>• Supported formats: JPG, PNG, GIF, WebP</p>
-            <p>• Recommended size: 800x800px or higher</p>
-          </div>
+          <button type="button" onclick="addSubImage()" class="w-full bg-green-600 text-white p-2 rounded font-semibold hover:bg-green-700 transition text-sm">+ Add Sub Image</button>
+          <p class="text-xs text-gray-600">Supported: JPG, PNG, GIF, WebP | Recommended: 800x800px</p>
         </div>
       </div>
 
       <!-- Category -->
-      <div class="mb-4">
-        <label class="block font-semibold mb-1">Category</label>
-        <select name="codename" class="w-full border p-2 rounded">
+      <div>
+        <label class="block font-semibold text-gray-700 mb-2">Category <span class="text-red-500">*</span></label>
+        <select name="codename" class="w-full border border-gray-300 p-3 rounded focus:outline-none focus:ring-2 focus:ring-orange-500" required>
           <option value="">-- Select Category --</option>
           <?php while ($row = mysqli_fetch_assoc($categoryResult)): ?>
             <option value="<?= htmlspecialchars($row['name']) ?>">
@@ -115,46 +106,35 @@ $categoryResult = mysqli_query($conn, $categoryQuery);
       </div>
 
       <!-- Quantity -->
-      <div class="mb-4">
-        <label class="block font-semibold mb-1">Quantity</label>
-        <input type="number" name="quantity" class="w-full border p-2 rounded" min="0" />
+      <div>
+        <label class="block font-semibold text-gray-700 mb-2">Quantity <span class="text-red-500">*</span></label>
+        <input type="number" name="quantity" class="w-full border border-gray-300 p-3 rounded focus:outline-none focus:ring-2 focus:ring-orange-500" min="0" placeholder="0" required />
       </div>
 
       <!-- Description -->
-      <div class="mb-4">
-        <label class="block font-semibold mb-1">Description</label>
-        <textarea name="description" rows="4" class="w-full border p-2 rounded resize-none" placeholder="Write product description here..."></textarea>
+      <div>
+        <label class="block font-semibold text-gray-700 mb-2">Description</label>
+        <textarea name="description" rows="4" class="w-full border border-gray-300 p-3 rounded resize-none focus:outline-none focus:ring-2 focus:ring-orange-500" placeholder="Write product description here..."></textarea>
       </div>
 
-      <!-- Dynamic Types + Variants -->
-      <div id="types-section" class="mb-4">
-        <h3 class="text-lg font-semibold mb-2 text-gray-700">Product Types & Variants</h3>
-        <div class="text-sm text-gray-600 mb-3">
-          Add different types of this product (e.g., different materials, styles, etc.) with their own colors and variants.
-        </div>
-        <!-- Dynamic product types will appear here -->
+      <!-- Product Types & Variants -->
+      <div id="types-section">
+        <h3 class="text-lg font-semibold text-gray-700 mb-2">Product Types & Variants</h3>
+        <p class="text-sm text-gray-600 mb-3">Add different types of this product with colors and variants</p>
       </div>
 
-      <button type="button" onclick="addType()" class="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700 mb-4">+ Add Product Type</button>
+      <button type="button" onclick="addType()" class="w-full bg-indigo-600 text-white p-3 rounded font-semibold hover:bg-indigo-700 transition mb-6">+ Add Product Type</button>
 
-      <!-- Submit Buttons -->
-      <div class="mt-6 flex gap-4">
-        <button type="submit" class="bg-orange-600 text-white px-6 py-3 rounded hover:bg-orange-700 font-semibold">
-          Upload Product
-        </button>
-        <button type="reset" class="bg-gray-500 text-white px-6 py-3 rounded hover:bg-gray-600 font-semibold" onclick="resetForm()">
-          Reset Form
-        </button>
+      <!-- Buttons -->
+      <div class="flex gap-3">
+        <button type="submit" class="flex-1 bg-orange-600 text-white p-3 rounded font-semibold hover:bg-orange-700 transition">Upload Product</button>
+        <button type="reset" class="flex-1 bg-gray-400 text-white p-3 rounded font-semibold hover:bg-gray-500 transition" onclick="resetForm()">Reset</button>
       </div>
 
-      <!-- Update Product Link -->
-      <div class="mt-4">
-        <a href="main-adminupdateshop-page-2.php" class="inline-block bg-orange-600 text-white px-6 py-3 rounded hover:bg-orange-700 font-semibold text-decoration-none">
-          Update Existing Product
-        </a>
-      </div>
+      <a href="main-adminupdateshop-page-2.php" class="block text-center bg-gray-600 text-white p-3 rounded font-semibold hover:bg-gray-700 transition no-underline mt-3">Update Existing Product</a>
     </form>
   </div>
+
 
   <script>
     let typeIndex = 0;

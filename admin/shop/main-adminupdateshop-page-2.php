@@ -162,13 +162,7 @@ $products = $conn->query("
     .table-row-hover:hover {
       background-color: #faf8f6;
     }
-    .stock-badge {
-      animation: pulse 2s infinite;
-    }
-    @keyframes pulse {
-      0%, 100% { opacity: 1; }
-      50% { opacity: 0.8; }
-    }
+
     .sticky-header {
       position: sticky;
       top: 0;

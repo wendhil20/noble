@@ -169,6 +169,7 @@ $projects_result = $conn->query($projects_sql);
     </style>
 </head>
 <body class="bg-gray-50">
+    <?php include '../navbar/top.php'; ?>
     <div class="container mx-auto px-4 py-8 max-w-7xl">
         
         <!-- Header -->

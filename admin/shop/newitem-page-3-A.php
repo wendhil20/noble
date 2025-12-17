@@ -763,7 +763,7 @@ while ($subsub = $sub_subcategory_result->fetch_assoc()) {
         </div>
       </div>
 
-      <table class="w-full border-collapse bg-white">
+    <table class="w-full border-collapse bg-white">
         <thead class="bg-gray-100 sticky top-0">
           <tr class="border-b-2 border-gray-300">
             <th class="p-3 text-left text-xs font-semibold text-gray-700 w-12">
@@ -781,6 +781,7 @@ while ($subsub = $sub_subcategory_result->fetch_assoc()) {
             <th class="p-3 text-left text-xs font-semibold text-gray-700">Delivery Size</th>
             <th class="p-3 text-left text-xs font-semibold text-gray-700">Lead Time</th>
             <th class="p-3 text-left text-xs font-semibold text-gray-700">Origin</th>
+            <th class="p-3 text-left text-xs font-semibold text-gray-700">Item Status</th>
           </tr>
         </thead>
         <tbody>
@@ -953,6 +954,13 @@ while ($subsub = $sub_subcategory_result->fetch_assoc()) {
                 <span class="inline-block px-2 py-1 rounded font-medium
             <?= $row['origin'] === 'international' ? 'bg-blue-100 text-blue-700' : 'bg-yellow-100 text-yellow-800' ?>">
                   <?= ucfirst($row['origin']) ?>
+                </span>
+              </td>
+
+              <td class="p-3 text-xs text-center">
+                <span class="inline-block px-3 py-1 rounded font-medium
+            <?= $row['status'] === 'new' ? 'bg-green-100 text-green-700' : 'bg-gray-100 text-gray-700' ?>">
+                  <?= ucfirst($row['status']) ?>
                 </span>
               </td>
             </tr>

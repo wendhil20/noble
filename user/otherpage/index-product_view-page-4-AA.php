@@ -394,14 +394,15 @@ $is_guest = !isset($_SESSION['user_id']);
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <meta name="server-time" content="<?= $server_time ?>">
   <?php if ($is_logged_in): ?>
-  <meta name="user-email" content="<?= htmlspecialchars($_SESSION['user_email'] ?? '') ?>">
-  <meta name="user-name" content="<?= htmlspecialchars($_SESSION['user_name'] ?? '') ?>">
-<?php endif; ?>
+    <meta name="user-email" content="<?= htmlspecialchars($_SESSION['user_email'] ?? '') ?>">
+    <meta name="user-name" content="<?= htmlspecialchars($_SESSION['user_name'] ?? '') ?>">
+  <?php endif; ?>
   <link rel="icon" type="image/png" sizes="96x96" href="../img/favicon.ico">
   <title><?= htmlspecialchars($product['product_name']) ?> - Noble Home</title>
   <script src="https://cdn.jsdelivr.net/npm/swiper@11/swiper-bundle.min.js"></script>
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/swiper@11/swiper-bundle.min.css" />
-  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+
   <script src="https://cdn.tailwindcss.com"></script>
   <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
   <style>
@@ -947,6 +948,69 @@ $is_guest = !isset($_SESSION['user_id']);
       background: #c4c4c4;
       border-radius: 4px;
     }
+
+    /* ===== FIX: ADD TO CART BUTTON OVERLAY ISSUE ===== */
+
+    /* Ensure button is ALWAYS on top */
+    #addToCartBtn {
+      position: relative !important;
+      z-index: 20 !important;
+      pointer-events: auto !important;
+    }
+
+    /* Purchase section - make sure it's clickable */
+    .sticky.bottom-0 {
+      position: relative;
+      z-index: 15;
+      pointer-events: auto !important;
+    }
+
+    /* Form inside sidebar */
+    #productForm {
+      position: relative;
+      z-index: 10;
+      pointer-events: auto !important;
+    }
+
+    /* Sidebar container - allow clicks to pass through */
+    #productOptionsContainer {
+      pointer-events: auto;
+
+    }
+
+    #productOptionsContainer.sidebar-open {
+      pointer-events: auto;
+      z-index: 101;
+      transform: translateX(0) !important;
+    }
+
+    /* Overlay - should NOT block button clicks */
+    #sidebarOverlay {
+      z-index: 100;
+      pointer-events: auto;
+    }
+
+    /* Remove any blocking elements */
+    #productOptionsContainer::after {
+      pointer-events: none !important;
+    }
+
+    /* On mobile, ensure button is accessible */
+    @media (max-width: 1024px) {
+      #addToCartBtn {
+        z-index: 20 !important;
+        pointer-events: auto !important;
+      }
+
+      .sticky.bottom-0 {
+        z-index: 15;
+        pointer-events: auto !important;
+      }
+
+      #productForm {
+        pointer-events: auto !important;
+      }
+    }
   </style>
 </head>
 
@@ -955,14 +1019,14 @@ $is_guest = !isset($_SESSION['user_id']);
   <!-- Breadcrumb -->
   <nav class="bg-white border-b border-gray-200 px-4 py-3">
     <div class="container mx-auto">
-      <div class="flex items-center space-x-2 text-sm">
-        <a href="index-page-1-A-B-C-D-E" class="text-orange-500 hover:text-orange-700 transition duration-200 flex items-center">
+      <div class="flex items-center space-x-2 text-sm" style="font-family: 'Montserrat', sans-serif; color: #2f1200">
+        <a href="index-page-1-A-B-C-D-E" class=" hover:text-orange-700 transition duration-200 flex items-center">
           <i class="fas fa-home mr-1"></i>Home
         </a>
         <i class="fas fa-chevron-right text-gray-400"></i>
-        <span class="text-gray-600 font-medium">Products</span>
+        <span class=" font-medium">Products</span>
         <i class="fas fa-chevron-right text-gray-400"></i>
-        <span class="text-gray-800 font-semibold">
+        <span class=" font-semibold">
           <?= htmlspecialchars($product['product_name'] ?? $display_name ?? 'Product') ?>
         </span>
       </div>
@@ -1054,8 +1118,8 @@ $is_guest = !isset($_SESSION['user_id']);
          z-[101] lg:z-auto bg-white lg:bg-white shadow-xl lg:shadow-none overflow-y-auto">
 
           <!-- Mobile Sidebar Header -->
-          <div class="lg:hidden sticky top-0 bg-white border-b border-gray-200 p-4 flex items-center justify-between z-20 shadow-sm bg-orange-500">
-            <h2 class="text-lg text-black">Product Options</h2>
+          <div class="lg:hidden sticky top-0 bg-white border-b border-gray-200 p-4 flex items-center justify-between z-20 shadow-sm " style="font-family: 'Montserrat', sans-serif; color: #2f1200">
+            <h2 class="text-lg">Product Options</h2>
             <button id="closeSidebar" class="text-black hover:text-white p-1">
               <i class="fas fa-times text-xl"></i>
             </button>
@@ -1071,7 +1135,7 @@ $is_guest = !isset($_SESSION['user_id']);
                 <div class="flex items-center justify-between gap-4">
 
                   <!-- PRODUCT NAME -->
-                  <h1 class="text-xl sm:text-2xl lg:text-3xl text-black font-bold">
+                  <h1 class="text-xl sm:text-2xl lg:text-3xl font-bold " style="font-family: 'Montserrat', sans-serif; color: #2f1200">
                     <?php
                     $safe_product = isset($ORIGINAL_PRODUCT) ? $ORIGINAL_PRODUCT : $product;
                     echo htmlspecialchars($display_name ?? $safe_product['product_name'] ?? 'Product');
@@ -1085,14 +1149,14 @@ $is_guest = !isset($_SESSION['user_id']);
                     <button onclick="shareProduct()"
                       class="flex items-center gap-2 bg-gray-100 px-3 py-2 rounded-xl hover:bg-gray-200 transition">
                       <i class="fas fa-share-alt text-lg text-black"></i>
-                      <span class="hidden sm:inline text-sm font-medium">Share</span>
+                      <span class="hidden sm:inline text-sm font-medium" style="font-family: 'Montserrat', sans-serif; color: #2f1200">Share</span>
                     </button>
 
                     <!-- Customer Service -->
                     <button onclick="window.location.href='#contact'"
                       class="flex items-center gap-2 bg-gray-100 px-3 py-2 rounded-xl hover:bg-gray-200 transition">
                       <i class="fas fa-headset text-lg text-black"></i>
-                      <span class="hidden sm:inline text-sm font-medium">Customer Service</span>
+                      <span class="hidden sm:inline text-sm font-medium" style="font-family: 'Montserrat', sans-serif; color: #2f1200">Customer Service</span>
                     </button>
 
                   </div>
@@ -1100,7 +1164,7 @@ $is_guest = !isset($_SESSION['user_id']);
 
 
                 <div class="flex flex-wrap gap-2 mb-3 mt-2">
-                  <span class="bg-orange-100 text-orange-800 px-3 py-1 rounded-full text-xs font-medium uppercase">
+                  <span class="bg-orange-100  px-3 py-1 rounded-full text-xs font-medium uppercase" style="font-family: 'Montserrat', sans-serif; color: #2f1200">
                     <?php
                     $safe_product = isset($ORIGINAL_PRODUCT) ? $ORIGINAL_PRODUCT : $product;
                     echo htmlspecialchars($safe_product['codename']);
@@ -1111,7 +1175,7 @@ $is_guest = !isset($_SESSION['user_id']);
 
               <!-- Product Description -->
               <div>
-                <p class="text-gray-700 leading-relaxed text-sm lg:text-base">
+                <p class=" leading-relaxed text-sm lg:text-base" style="font-family: 'Montserrat', sans-serif; color: #2f1200">
                   <?= htmlspecialchars($safe_product['description'] ?? 'No description available.') ?>
                 </p>
               </div>
@@ -1120,11 +1184,11 @@ $is_guest = !isset($_SESSION['user_id']);
             <?php if (!empty($types_data)): ?>
               <div class="step-section">
                 <div class="flex items-center justify-between mb-4">
-                  <h3 class="text-base lg:text-xl font-semibold text-gray-800">
+                  <h3 class="text-base lg:text-xl font-semibold text-gray-800" style="font-family: 'Montserrat', sans-serif; color: #2f1200">
 
                     Click Item Type
                   </h3>
-                  <div class="text-xs lg:text-sm text-orange-600 font-medium">Required</div>
+                  <div class="text-xs lg:text-sm text-orange-600 font-medium" style="font-family: 'Montserrat', sans-serif; color: #2f1200">Required</div>
                 </div>
 
                 <div class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-2">
@@ -1169,10 +1233,10 @@ $is_guest = !isset($_SESSION['user_id']);
             <?php if (!empty($product_colors)): ?>
               <div class="step-section">
                 <div class="flex items-center justify-between mb-4">
-                  <h3 class="text-base lg:text-xl font-semibold text-gray-800">
+                  <h3 class="text-base lg:text-xl font-semibold " style="font-family: 'Montserrat', sans-serif; color: #2f1200">
                     Choose Color
                   </h3>
-                  <div class="text-xs lg:text-sm text-orange-600 font-medium">Required</div>
+                  <div class="text-xs lg:text-sm  font-medium" style="font-family: 'Montserrat', sans-serif; color: #2f1200">Required</div>
                 </div>
 
                 <!-- Product Image - Mobile Sidebar Only -->
@@ -1184,7 +1248,7 @@ $is_guest = !isset($_SESSION['user_id']);
                       class="w-full h-full object-contain"
                       alt="<?= htmlspecialchars($product['product_name']) ?>">
                   </div>
-                  <h3 class="text-center mt-2 font-semibold text-gray-800 text-xs line-clamp-2">
+                  <h3 class="text-center mt-2 font-semibold text-gray-800 text-xs line-clamp-2" style="font-family: 'Montserrat', sans-serif; color: #2f1200">
                     <?= htmlspecialchars($product['product_name']) ?>
                   </h3>
                 </div>
@@ -1202,11 +1266,11 @@ $is_guest = !isset($_SESSION['user_id']);
                           data-price="<?= $color['price'] ?>"
                           data-color-code="<?= htmlspecialchars($color['color_code']) ?>"
                           data-image="<?= !empty($color['image']) ? htmlspecialchars($color['image']) : '' ?>">
-                          <span class="text-gray-700 block truncate text-[10px] lg:text-[11px] leading-tight font-medium">
+                          <span class="text-gray-700 block truncate text-[10px] lg:text-[11px] leading-tight font-medium" style="font-family: 'Montserrat', sans-serif; color: #2f1200">
                             <?= htmlspecialchars($color['color_name']) ?>
                           </span>
                           <!-- Stock indicator - Shows total stock for this color across ALL sizes -->
-                          <span class="color-stock-display text-[8px] lg:text-[9px] text-gray-500 font-semibold block mt-1">
+                          <span class="color-stock-display text-[8px] lg:text-[9px]  font-semibold block mt-1" style="font-family: 'Montserrat', sans-serif; color: #2f1200">
                             -
                           </span>
                         </button>
@@ -1225,10 +1289,10 @@ $is_guest = !isset($_SESSION['user_id']);
             <!-- STEP 3: SIZE/VARIANT SELECTION -->
             <div class="step-section">
               <div class="flex items-center justify-between mb-4">
-                <h3 class="text-base lg:text-xl font-semibold text-gray-800">
+                <h3 class="text-base lg:text-xl font-semibold " style="font-family: 'Montserrat', sans-serif; color: #2f1200">
                   Choose Size
                 </h3>
-                <div class="text-xs lg:text-sm text-orange-600 font-medium">Required</div>
+                <div class="text-xs lg:text-sm  font-medium" style="font-family: 'Montserrat', sans-serif; color: #2f1200">Required</div>
               </div>
 
               <div id="variant-container" class="text-gray-500 p-4 lg:p-6 bg-gray-50 text-center rounded-lg border-2 border-dashed border-gray-300">
@@ -1289,7 +1353,7 @@ $is_guest = !isset($_SESSION['user_id']);
                             <?php endif; ?>
 
                             <!-- Size Text -->
-                            <div class="text-gray-700 text-[11px] font-medium leading-tight">
+                            <div class="text-gray-700 text-[11px] leading-tight">
                               <?= htmlspecialchars($variant['size']) ?>
                             </div>
 
@@ -1466,305 +1530,308 @@ $is_guest = !isset($_SESSION['user_id']);
             </script>
 
 
-         <!-- Calculator Guide Display -->
-<?php if (isset($product['guide_enabled']) && $product['guide_enabled'] == 1): ?>
-  <div id="calculatorSection" class="mt-4 bg-white rounded p-3 lg:p-4 border border-gray-200 hidden">
-    <div class="flex items-center gap-2 mb-4">
-      <div>
-        <h3 class="text-base text-gray-900 font-semibold">Area</h3>
-        <p class="text-xs text-gray-600">Calculate coverage based on selected size</p>
-      </div>
-    </div>
+            <!-- Calculator Guide Display -->
+            <?php if (isset($product['guide_enabled']) && $product['guide_enabled'] == 1): ?>
+              <div id="calculatorSection" class="mt-4 bg-white rounded p-3 lg:p-4 border border-gray-200 hidden">
+                <div class="flex items-center gap-2 mb-4">
+                  <div>
+                    <h3 class="text-base text-gray-900 font-semibold">Area</h3>
+                    <p class="text-xs text-gray-600">Calculate coverage based on selected size</p>
+                  </div>
+                </div>
 
-    <!-- Selected Size Display -->
-    <div class="mb-4 bg-gray-100 border border-gray-300 rounded p-3">
-      <div class="flex items-center justify-between">
-        <div>
-          <label class="block text-xs text-gray-600 mb-1">Selected Size</label>
-          <div id="selectedSizeDisplay" class="text-sm font-medium text-gray-900">-</div>
-        </div>
-        <div class="text-xs text-gray-600">
-          <i class="fas fa-check-circle"></i>
-        </div>
-      </div>
-    </div>
+                <!-- Selected Size Display -->
+                <div class="mb-4 bg-gray-100 border border-gray-300 rounded p-3">
+                  <div class="flex items-center justify-between">
+                    <div>
+                      <label class="block text-xs text-gray-600 mb-1">Selected Size</label>
+                      <div id="selectedSizeDisplay" class="text-sm font-medium text-gray-900">-</div>
+                    </div>
+                    <div class="text-xs text-gray-600">
+                      <i class="fas fa-check-circle"></i>
+                    </div>
+                  </div>
+                </div>
 
-    <!-- Dimensions Display -->
-    <div id="calculatorDimensionsDisplay" class="mb-4">
-      <div class="grid grid-cols-4 gap-2">
-        <div class="text-center">
-          <label class="block text-xs text-gray-600 mb-1">Length (mm)</label>
-          <div class="bg-gray-50 rounded px-2 py-2">
-            <div id="calcLength" class="text-xs font-semibold text-gray-900">-</div>
-          </div>
-        </div>
-        <div class="text-center">
-          <label class="block text-xs text-gray-600 mb-1">Height (mm)</label>
-          <div class="bg-gray-50 rounded px-2 py-2">
-            <div id="calcHeight" class="text-xs font-semibold text-gray-900">-</div>
-          </div>
-        </div>
-        <div class="text-center">
-          <label class="block text-xs text-gray-600 mb-1">Width (mm)</label>
-          <div class="bg-gray-50 rounded px-2 py-2">
-            <div id="calcWidth" class="text-xs font-semibold text-gray-900">-</div>
-          </div>
-        </div>
-        <div class="text-center">
-          <label class="block text-xs text-gray-600 mb-1">Per Piece</label>
-          <div class="bg-gray-200 rounded px-2 py-2">
-            <div id="calcAreaPerPiece" class="text-xs font-bold text-gray-900"></div>
-          </div>
-        </div>
-      </div>
-    </div>
+                <!-- Dimensions Display -->
+                <div id="calculatorDimensionsDisplay" class="mb-4">
+                  <div class="grid grid-cols-4 gap-2">
+                    <div class="text-center">
+                      <label class="block text-xs text-gray-600 mb-1">Length (mm)</label>
+                      <div class="bg-gray-50 rounded px-2 py-2">
+                        <div id="calcLength" class="text-xs font-semibold text-gray-900">-</div>
+                      </div>
+                    </div>
+                    <div class="text-center">
+                      <label class="block text-xs text-gray-600 mb-1">Height (mm)</label>
+                      <div class="bg-gray-50 rounded px-2 py-2">
+                        <div id="calcHeight" class="text-xs font-semibold text-gray-900">-</div>
+                      </div>
+                    </div>
+                    <div class="text-center">
+                      <label class="block text-xs text-gray-600 mb-1">Width (mm)</label>
+                      <div class="bg-gray-50 rounded px-2 py-2">
+                        <div id="calcWidth" class="text-xs font-semibold text-gray-900">-</div>
+                      </div>
+                    </div>
+                    <div class="text-center">
+                      <label class="block text-xs text-gray-600 mb-1">Per Piece</label>
+                      <div class="bg-gray-200 rounded px-2 py-2">
+                        <div id="calcAreaPerPiece" class="text-xs font-bold text-gray-900"></div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
 
-    <!-- Calculator Input -->
-    <div class="mb-4">
-      <div class="flex items-center gap-3">
-        <div class="flex-1">
-          <label class="block text-xs font-semibold text-gray-900 mb-1">
-            <i class="fas fa-ruler-combined text-gray-700 mr-1"></i>
-            Area (sqm)
-          </label>
-          <div class="bg-gray-50 rounded">
-            <input type="number" id="userArea" step="0.01" placeholder="Enter area"
-              oninput="calculateFromArea()"
-              class="w-full px-3 py-2 bg-transparent text-center text-sm text-gray-900 outline-none border border-gray-200 rounded">
-          </div>
-        </div>
-        <div class="text-gray-700 text-xl pt-5">
-          <i class="fas fa-arrow-right"></i>
-        </div>
-        <div class="flex-1">
-          <label class="block text-xs font-semibold text-gray-900 mb-1">
-            <i class="fas fa-box text-gray-700 mr-1"></i>
-            Pieces
-          </label>
-          <div class="bg-gray-100 rounded border border-gray-300">
-            <div id="piecesFromArea" class="px-3 py-2 text-center text-sm font-bold text-gray-900">0</div>
-          </div>
-        </div>
-      </div>
-    </div>
+                <!-- Calculator Input -->
+                <div class="mb-4">
+                  <div class="flex items-center gap-3">
+                    <div class="flex-1">
+                      <label class="block text-xs font-semibold text-gray-900 mb-1">
+                        <i class="fas fa-ruler-combined text-gray-700 mr-1"></i>
+                        Area (sqm)
+                      </label>
+                      <div class="bg-gray-50 rounded">
+                        <input type="number" id="userArea" step="0.01" placeholder="Enter area"
+                          oninput="calculateFromArea()"
+                          class="w-full px-3 py-2 bg-transparent text-center text-sm text-gray-900 outline-none border border-gray-200 rounded">
+                      </div>
+                    </div>
+                    <div class="text-gray-700 text-xl pt-5">
+                      <i class="fas fa-arrow-right"></i>
+                    </div>
+                    <div class="flex-1">
+                      <label class="block text-xs font-semibold text-gray-900 mb-1">
+                        <i class="fas fa-box text-gray-700 mr-1"></i>
+                        Pieces
+                      </label>
+                      <div class="bg-gray-100 rounded border border-gray-300">
+                        <div id="piecesFromArea" class="px-3 py-2 text-center text-sm font-bold text-gray-900">0</div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
 
-    <!-- Additional Results -->
-    <div id="userCalculationResults" class="hidden">
-      <div class="bg-gray-100 rounded-lg p-3 border border-gray-300">
-        <h4 class="text-xs font-semibold text-gray-900 mb-2">
-          <i class="fas fa-tools text-gray-700 mr-1"></i>
-          Additional Materials Needed
-        </h4>
-        <div class="grid grid-cols-2 gap-3">
-          <div class="bg-white rounded px-3 py-2 text-center border border-gray-200">
-            <label class="block text-xs text-gray-600 mb-1">Adhesive</label>
-            <div class="text-sm font-bold text-gray-900">
-              <span id="userAdhesiveNeededKg">0</span> kg
-              <div class="text-xs text-gray-600 mt-1" id="userAdhesiveBagsDisplay">(<span id="userAdhesiveBags">0</span> bags, buy <span id="userAdhesiveWholeBags">0</span>)</div>
-            </div>
-          </div>
-          <div class="bg-white rounded px-3 py-2 text-center border border-gray-200">
-            <label class="block text-xs text-gray-600 mb-1">Brackets</label>
-            <div class="text-sm font-bold text-gray-900">
-              <span id="userBracketsNeeded">0</span> pcs
-            </div>
-          </div>
-        </div>
-      </div>
-    </div>
-  </div>
+                <!-- Additional Results -->
+                <div id="userCalculationResults" class="hidden">
+                  <div class="bg-gray-100 rounded-lg p-3 border border-gray-300">
+                    <h4 class="text-xs font-semibold text-gray-900 mb-2">
+                      <i class="fas fa-tools text-gray-700 mr-1"></i>
+                      Additional Materials Needed
+                    </h4>
+                    <div class="grid grid-cols-2 gap-3">
+                      <div class="bg-white rounded px-3 py-2 text-center border border-gray-200">
+                        <label class="block text-xs text-gray-600 mb-1">Adhesive</label>
+                        <div class="text-sm font-bold text-gray-900">
+                          <span id="userAdhesiveNeededKg">0</span> kg
+                          <div class="text-xs text-gray-600 mt-1" id="userAdhesiveBagsDisplay">(<span id="userAdhesiveBags">0</span> bags, buy <span id="userAdhesiveWholeBags">0</span>)</div>
+                        </div>
+                      </div>
+                      <div class="bg-white rounded px-3 py-2 text-center border border-gray-200">
+                        <label class="block text-xs text-gray-600 mb-1">Brackets</label>
+                        <div class="text-sm font-bold text-gray-900">
+                          <span id="userBracketsNeeded">0</span> pcs
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
 
-  <script>
-    let selectedVariantDimensions = {
-      width: 0,
-      height: 0,
-      length: 0,
-      size: '',
-      areaPerPiece: 0
-    };
+              <script>
+                let selectedVariantDimensions = {
+                  width: 0,
+                  height: 0,
+                  length: 0,
+                  size: '',
+                  areaPerPiece: 0
+                };
 
-    function updateCalculatorFromVariant(button) {
-      const width = parseFloat(button.dataset.width) || 0;
-      const height = parseFloat(button.dataset.height) || 0;
-      const length = parseFloat(button.dataset.length) || 0;
-      // prefer data-size if available, otherwise fallback to inner text
-      const size = button.dataset.size || (button.querySelector('.text-gray-700') ? button.querySelector('.text-gray-700').textContent.trim() : '');
+                function updateCalculatorFromVariant(button) {
+                  const width = parseFloat(button.dataset.width) || 0;
+                  const height = parseFloat(button.dataset.height) || 0;
+                  const length = parseFloat(button.dataset.length) || 0;
+                  // prefer data-size if available, otherwise fallback to inner text
+                  const size = button.dataset.size || (button.querySelector('.text-gray-700') ? button.querySelector('.text-gray-700').textContent.trim() : '');
 
-      // Convert mm to meters
-      const widthM = width / 1000;
-      const heightM = height / 1000;
-      const areaPerPiece = widthM * heightM;
+                  // Convert mm to meters
+                  const widthM = width / 1000;
+                  const heightM = height / 1000;
+                  const areaPerPiece = widthM * heightM;
 
-      // Store dimensions
-      selectedVariantDimensions = {
-        width,
-        height,
-        length,
-        size,
-        areaPerPiece
-      };
+                  // Store dimensions
+                  selectedVariantDimensions = {
+                    width,
+                    height,
+                    length,
+                    size,
+                    areaPerPiece
+                  };
 
-      // Show calculator section
-      const calcSection = document.getElementById('calculatorSection');
-      if (calcSection) {
-        calcSection.classList.remove('hidden');
-      }
+                  // Show calculator section
+                  const calcSection = document.getElementById('calculatorSection');
+                  if (calcSection) {
+                    calcSection.classList.remove('hidden');
+                  }
 
-      // SET SIZE ONCE - THIS WILL NOT CHANGE
-      const sizeDisplay = document.getElementById('selectedSizeDisplay');
-      if (sizeDisplay) {
-        sizeDisplay.textContent = size || `${width}×${height}`;
-      }
+                  // SET SIZE ONCE - THIS WILL NOT CHANGE
+                  const sizeDisplay = document.getElementById('selectedSizeDisplay');
+                  if (sizeDisplay) {
+                    sizeDisplay.textContent = size || `${width}×${height}`;
+                  }
 
-      // Update dimension displays
-      const widthEl = document.getElementById('calcWidth');
-      const heightEl = document.getElementById('calcHeight');
-      const lengthEl = document.getElementById('calcLength');
-      const areaEl = document.getElementById('calcAreaPerPiece');
+                  // Update dimension displays
+                  const widthEl = document.getElementById('calcWidth');
+                  const heightEl = document.getElementById('calcHeight');
+                  const lengthEl = document.getElementById('calcLength');
+                  const areaEl = document.getElementById('calcAreaPerPiece');
 
-      if (widthEl) widthEl.textContent = width || '-';
-      if (heightEl) heightEl.textContent = height || '-';
-      if (lengthEl) lengthEl.textContent = length || '-';
-      if (areaEl) areaEl.textContent = areaPerPiece > 0 ? areaPerPiece.toFixed(4) + ' m²' : '-';
+                  if (widthEl) widthEl.textContent = width || '-';
+                  if (heightEl) heightEl.textContent = height || '-';
+                  if (lengthEl) lengthEl.textContent = length || '-';
+                  if (areaEl) areaEl.textContent = areaPerPiece > 0 ? areaPerPiece.toFixed(4) + ' m²' : '-';
 
-      // Clear previous calculations
-      const areaInput = document.getElementById('userArea');
-      const piecesDisplay = document.getElementById('piecesFromArea');
-      const resultsSection = document.getElementById('userCalculationResults');
+                  // Clear previous calculations
+                  const areaInput = document.getElementById('userArea');
+                  const piecesDisplay = document.getElementById('piecesFromArea');
+                  const resultsSection = document.getElementById('userCalculationResults');
 
-      if (areaInput) areaInput.value = '';
-      if (piecesDisplay) piecesDisplay.textContent = '0';
-      if (resultsSection) resultsSection.classList.add('hidden');
-    }
+                  if (areaInput) areaInput.value = '';
+                  if (piecesDisplay) piecesDisplay.textContent = '0';
+                  if (resultsSection) resultsSection.classList.add('hidden');
+                }
 
-    function calculateFromArea() {
-      const areaInput = document.getElementById('userArea');
-      const piecesDisplay = document.getElementById('piecesFromArea');
-      const resultsSection = document.getElementById('userCalculationResults');
-      const adhesiveKgEl = document.getElementById('userAdhesiveNeededKg');
-      const adhesiveBagsEl = document.getElementById('userAdhesiveBags');
-      const adhesiveWholeBagsEl = document.getElementById('userAdhesiveWholeBags');
-      const bracketsEl = document.getElementById('userBracketsNeeded');
+                function calculateFromArea() {
+                  const areaInput = document.getElementById('userArea');
+                  const piecesDisplay = document.getElementById('piecesFromArea');
+                  const resultsSection = document.getElementById('userCalculationResults');
+                  const adhesiveKgEl = document.getElementById('userAdhesiveNeededKg');
+                  const adhesiveBagsEl = document.getElementById('userAdhesiveBags');
+                  const adhesiveWholeBagsEl = document.getElementById('userAdhesiveWholeBags');
+                  const bracketsEl = document.getElementById('userBracketsNeeded');
 
-      if (!areaInput || !piecesDisplay) return;
+                  if (!areaInput || !piecesDisplay) return;
 
-      const area = parseFloat(areaInput.value);
+                  const area = parseFloat(areaInput.value);
 
-      // Validation
-      if (!area || area <= 0) {
-        piecesDisplay.textContent = '0';
-        if (resultsSection) resultsSection.classList.add('hidden');
-        return;
-      }
+                  // Validation
+                  if (!area || area <= 0) {
+                    piecesDisplay.textContent = '0';
+                    if (resultsSection) resultsSection.classList.add('hidden');
+                    return;
+                  }
 
-      if (!selectedVariantDimensions.areaPerPiece || selectedVariantDimensions.areaPerPiece <= 0) {
-        piecesDisplay.textContent = '0';
-        if (resultsSection) resultsSection.classList.add('hidden');
-        return;
-      }
+                  if (!selectedVariantDimensions.areaPerPiece || selectedVariantDimensions.areaPerPiece <= 0) {
+                    piecesDisplay.textContent = '0';
+                    if (resultsSection) resultsSection.classList.add('hidden');
+                    return;
+                  }
 
-      // CALCULATE PIECES NEEDED (SIZE STAYS THE SAME)
-      const piecesNeeded = Math.ceil(area / selectedVariantDimensions.areaPerPiece);
+                  // CALCULATE PIECES NEEDED (SIZE STAYS THE SAME)
+                  const piecesNeeded = Math.ceil(area / selectedVariantDimensions.areaPerPiece);
 
-      // ---------- ADHESIVE CALC (explicit units) ----------
-      // Default adhesive consumption in kg per sqm (adjustable)
-      const adhesiveRateKgPerSqm = 3.0; // default: 3 kg per sqm (changeable)
-      const bagWeightKg = 20.0; // default: 20 kg per bag (change if your product uses 25kg bags)
+                  // ---------- ADHESIVE CALC (explicit units) ----------
+                  // Default adhesive consumption in kg per sqm (adjustable)
+                  const adhesiveRateKgPerSqm = 3.0; // default: 3 kg per sqm (changeable)
+                  const bagWeightKg = 20.0; // default: 20 kg per bag (change if your product uses 25kg bags)
 
-      // adhesive in kilograms required
-      const adhesiveKgNeeded = +(area * adhesiveRateKgPerSqm).toFixed(2);
+                  // adhesive in kilograms required
+                  const adhesiveKgNeeded = +(area * adhesiveRateKgPerSqm).toFixed(2);
 
-      // adhesive in sacks/bags (float). Round up to get whole bags if you buy by bag.
-      const adhesiveBagsNeededFloat = +(adhesiveKgNeeded / bagWeightKg).toFixed(3);
-      const adhesiveWholeBags = Math.ceil(adhesiveBagsNeededFloat);
+                  // adhesive in sacks/bags (float). Round up to get whole bags if you buy by bag.
+                  const adhesiveBagsNeededFloat = +(adhesiveKgNeeded / bagWeightKg).toFixed(3);
+                  const adhesiveWholeBags = Math.ceil(adhesiveBagsNeededFloat);
 
-      // ---------- BRACKETS ----------
-      // Rate: 0.25 means 1 bracket per 4 pieces (adjustable)
-      const bracketRatePerPiece = 0.25;
-      const bracketsNeeded = Math.ceil(piecesNeeded * bracketRatePerPiece);
+                  // ---------- BRACKETS ----------
+                  // Rate: 0.25 means 1 bracket per 4 pieces (adjustable)
+                  const bracketRatePerPiece = 0.25;
+                  const bracketsNeeded = Math.ceil(piecesNeeded * bracketRatePerPiece);
 
-      // UPDATE DISPLAY - SIZE DOES NOT CHANGE
-      piecesDisplay.textContent = piecesNeeded.toLocaleString();
+                  // UPDATE DISPLAY - SIZE DOES NOT CHANGE
+                  piecesDisplay.textContent = piecesNeeded.toLocaleString();
 
-      if (adhesiveKgEl) adhesiveKgEl.textContent = adhesiveKgNeeded.toLocaleString(undefined, {minimumFractionDigits:2, maximumFractionDigits:2});
-      if (adhesiveBagsEl) adhesiveBagsEl.textContent = adhesiveBagsNeededFloat;
-      if (adhesiveWholeBagsEl) adhesiveWholeBagsEl.textContent = adhesiveWholeBags;
-      if (bracketsEl) bracketsEl.textContent = bracketsNeeded.toLocaleString();
-      if (resultsSection) resultsSection.classList.remove('hidden');
-    }
+                  if (adhesiveKgEl) adhesiveKgEl.textContent = adhesiveKgNeeded.toLocaleString(undefined, {
+                    minimumFractionDigits: 2,
+                    maximumFractionDigits: 2
+                  });
+                  if (adhesiveBagsEl) adhesiveBagsEl.textContent = adhesiveBagsNeededFloat;
+                  if (adhesiveWholeBagsEl) adhesiveWholeBagsEl.textContent = adhesiveWholeBags;
+                  if (bracketsEl) bracketsEl.textContent = bracketsNeeded.toLocaleString();
+                  if (resultsSection) resultsSection.classList.remove('hidden');
+                }
 
-    // DISABLE KEYBOARD SHORTCUTS COMPLETELY WHEN IN INPUTS
-    document.addEventListener('keydown', function(e) {
-      const activeElement = document.activeElement;
+                // DISABLE KEYBOARD SHORTCUTS COMPLETELY WHEN IN INPUTS
+                document.addEventListener('keydown', function(e) {
+                  const activeElement = document.activeElement;
 
-      if (activeElement &&
-        (activeElement.tagName === 'INPUT' ||
-          activeElement.tagName === 'TEXTAREA' ||
-          activeElement.isContentEditable)) {
-        // Let the user type freely
-        return;
-      }
+                  if (activeElement &&
+                    (activeElement.tagName === 'INPUT' ||
+                      activeElement.tagName === 'TEXTAREA' ||
+                      activeElement.isContentEditable)) {
+                    // Let the user type freely
+                    return;
+                  }
 
-      // ESC key to close modals (only when NOT typing)
-      if (e.key === 'Escape') {
-        if (typeof closeContactModal === 'function') {
-          closeContactModal();
-        }
-      }
+                  // ESC key to close modals (only when NOT typing)
+                  if (e.key === 'Escape') {
+                    if (typeof closeContactModal === 'function') {
+                      closeContactModal();
+                    }
+                  }
 
-      // Number keys to select variants (ONLY when NOT in ANY input field)
-      if (e.key >= '1' && e.key <= '9' && !e.ctrlKey && !e.altKey && !e.metaKey) {
-        const variantButtons = document.querySelectorAll('.variant-btn:not([disabled])');
-        const index = parseInt(e.key) - 1;
-        if (variantButtons[index]) {
-          e.preventDefault();
-          e.stopPropagation();
-          variantButtons[index].click();
-        }
-      }
-    });
+                  // Number keys to select variants (ONLY when NOT in ANY input field)
+                  if (e.key >= '1' && e.key <= '9' && !e.ctrlKey && !e.altKey && !e.metaKey) {
+                    const variantButtons = document.querySelectorAll('.variant-btn:not([disabled])');
+                    const index = parseInt(e.key) - 1;
+                    if (variantButtons[index]) {
+                      e.preventDefault();
+                      e.stopPropagation();
+                      variantButtons[index].click();
+                    }
+                  }
+                });
 
-    // Prevent keydown on area input from triggering shortcuts
-    document.addEventListener('DOMContentLoaded', function() {
-      const areaInput = document.getElementById('userArea');
-      if (areaInput) {
-        areaInput.addEventListener('keydown', function(e) {
-          e.stopPropagation();
-        });
-      }
-    });
+                // Prevent keydown on area input from triggering shortcuts
+                document.addEventListener('DOMContentLoaded', function() {
+                  const areaInput = document.getElementById('userArea');
+                  if (areaInput) {
+                    areaInput.addEventListener('keydown', function(e) {
+                      e.stopPropagation();
+                    });
+                  }
+                });
 
-    // CLEAR CALCULATOR FUNCTION
-    function clearCalculator() {
-      const calcSection = document.getElementById('calculatorSection');
-      const areaInput = document.getElementById('userArea');
-      const piecesDisplay = document.getElementById('piecesFromArea');
-      const resultsSection = document.getElementById('userCalculationResults');
-      const adhesiveKgEl = document.getElementById('userAdhesiveNeededKg');
-      const adhesiveBagsEl = document.getElementById('userAdhesiveBags');
-      const adhesiveWholeBagsEl = document.getElementById('userAdhesiveWholeBags');
-      const bracketsEl = document.getElementById('userBracketsNeeded');
+                // CLEAR CALCULATOR FUNCTION
+                function clearCalculator() {
+                  const calcSection = document.getElementById('calculatorSection');
+                  const areaInput = document.getElementById('userArea');
+                  const piecesDisplay = document.getElementById('piecesFromArea');
+                  const resultsSection = document.getElementById('userCalculationResults');
+                  const adhesiveKgEl = document.getElementById('userAdhesiveNeededKg');
+                  const adhesiveBagsEl = document.getElementById('userAdhesiveBags');
+                  const adhesiveWholeBagsEl = document.getElementById('userAdhesiveWholeBags');
+                  const bracketsEl = document.getElementById('userBracketsNeeded');
 
-      if (calcSection) calcSection.classList.add('hidden');
-      if (areaInput) areaInput.value = '';
-      if (piecesDisplay) piecesDisplay.textContent = '0';
-      if (resultsSection) resultsSection.classList.add('hidden');
+                  if (calcSection) calcSection.classList.add('hidden');
+                  if (areaInput) areaInput.value = '';
+                  if (piecesDisplay) piecesDisplay.textContent = '0';
+                  if (resultsSection) resultsSection.classList.add('hidden');
 
-      if (adhesiveKgEl) adhesiveKgEl.textContent = '0';
-      if (adhesiveBagsEl) adhesiveBagsEl.textContent = '0';
-      if (adhesiveWholeBagsEl) adhesiveWholeBagsEl.textContent = '0';
-      if (bracketsEl) bracketsEl.textContent = '0';
+                  if (adhesiveKgEl) adhesiveKgEl.textContent = '0';
+                  if (adhesiveBagsEl) adhesiveBagsEl.textContent = '0';
+                  if (adhesiveWholeBagsEl) adhesiveWholeBagsEl.textContent = '0';
+                  if (bracketsEl) bracketsEl.textContent = '0';
 
-      selectedVariantDimensions = {
-        width: 0,
-        height: 0,
-        length: 0,
-        size: '',
-        areaPerPiece: 0
-      };
-    }
-  </script>
-<?php endif; ?>
+                  selectedVariantDimensions = {
+                    width: 0,
+                    height: 0,
+                    length: 0,
+                    size: '',
+                    areaPerPiece: 0
+                  };
+                }
+              </script>
+            <?php endif; ?>
 
 
             <!-- SKU Info Display Section -->
@@ -1794,7 +1861,7 @@ $is_guest = !isset($_SESSION['user_id']);
           </div>
 
           <!-- STEP 4: QUANTITY SELECTION -->
-          <div class="step-section">
+          <div class="step-section p-2">
             <div class="flex items-start justify-start mb-2">
               <h3 class="text-base lg:text-lg font-semibold text-gray-900">
                 Quantity
@@ -1854,7 +1921,7 @@ $is_guest = !isset($_SESSION['user_id']);
               <input type="hidden" name="selected_type" id="selected_type">
               <input type="hidden" name="selected_variant" id="selected_variant">
               <input type="hidden" name="variant_id" id="variant_id">
-             <input type="hidden" name="is_windows" value="0" />
+              <input type="hidden" name="is_windows" value="0" />
 
 
 
@@ -1872,36 +1939,36 @@ $is_guest = !isset($_SESSION['user_id']);
               </div>
 
               <!-- CUSTOMIZE BUTTON - Shows only for Windows products -->
-<?php if ($is_windows_category): ?>
-<div id="customizeButtonContainer">
-  <button type="button" 
-    onclick="openCustomizeModal()"
-    class="w-full py-3 lg:py-4 text-sm lg:text-lg font-semibold transition-all duration-300 bg-black text-white hover:bg-orange-500 ">
-    <span class="flex items-center justify-center gap-2">
-     Quote Customize 
-    </span>
-  </button>
-</div>
-<?php endif; ?>
-                <div class="flex gap-2 lg:gap-3 w-full">
-                  <button type="submit" id="addToCartBtn"
-                    disabled
-                    class="flex-1 py-3 lg:py-4 text-sm lg:text-lg font-semibold transition-all duration-300 bg-gray-400 text-white disabled:cursor-not-allowed disabled:opacity-75 ">
-                    <span id="btnText" class="flex items-center justify-center gap-2">
-                      <i class="fas fa-shopping-cart text-sm lg:text-base"></i>
-                      Add to Cart
-                    </span>
-                  </button>
-
-                  <button type="button" onclick="window.location.href='index-cart_view-page-8.php'"
-                    class="flex-1 py-3 lg:py-4 text-sm lg:text-lg font-semibold transition-all duration-300 bg-black hover:bg-orange-500 text-white ">
+              <?php if ($is_windows_category): ?>
+                <div id="customizeButtonContainer">
+                  <button type="button"
+                    onclick="openCustomizeModal()"
+                    class="w-full py-3 lg:py-4 text-sm lg:text-lg font-semibold transition-all duration-300 bg-black text-white hover:bg-orange-500 ">
                     <span class="flex items-center justify-center gap-2">
-                      <i class="fas fa-shopping-cart text-sm lg:text-base"></i>
-                      View Cart
+                      Quote Customize
                     </span>
                   </button>
                 </div>
-          
+              <?php endif; ?>
+              <div class="flex gap-2 lg:gap-3 w-full">
+                <button type="submit" id="addToCartBtn"
+                  disabled
+                  class="flex-1 py-3 lg:py-4 text-sm lg:text-lg font-semibold transition-all duration-300 bg-gray-400 text-white disabled:cursor-not-allowed disabled:opacity-75 " style="font-family: 'Montserrat', sans-serif; ">
+                  <span id="btnText" class="flex items-center justify-center gap-2">
+                    <i class="fas fa-shopping-cart text-sm lg:text-base"></i>
+                    Add to Cart
+                  </span>
+                </button>
+
+                <button type="button" onclick="window.location.href='index-cart_view-page-8.php'"
+                  class="flex-1 py-3 lg:py-4 text-sm lg:text-lg font-semibold transition-all duration-300 bg-black hover:bg-orange-500 text-white" style="font-family: 'Montserrat', sans-serif;">
+                  <span class="flex items-center justify-center gap-2">
+                    <i class="fas fa-shopping-cart text-sm lg:text-base"></i>
+                    View Cart
+                  </span>
+                </button>
+              </div>
+
             </form>
           </div>
         </div>
@@ -2016,277 +2083,279 @@ $is_guest = !isset($_SESSION['user_id']);
 
 
 
-<!-- CUSTOMIZE MODAL -->
-<div id="customizeModal" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-[9999] hidden">
-  <div class="bg-white rounded-2xl p-6 lg:p-8 max-w-2xl w-full mx-4 relative max-h-[90vh] overflow-y-auto">
-    
-    <!-- Close Button -->
-    <button onclick="closeCustomizeModal()" class="absolute top-4 right-4 text-gray-400 hover:text-gray-600 transition-colors">
-      <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
-      </svg>
-    </button>
+  <!-- CUSTOMIZE MODAL -->
+  <div id="customizeModal" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-[9999] hidden">
+    <div class="bg-white rounded-2xl p-6 lg:p-8 max-w-2xl w-full mx-4 relative max-h-[90vh] overflow-y-auto">
 
-    <!-- Modal Header -->
-    <div class="mb-6">
-      <div class="flex items-center gap-3 mb-2">
-      
-        <div>
-          <h3 class="text-2xl lg:text-3xl font-bold text-gray-900">Customize Your Windows</h3>
-          <p class="text-sm text-gray-600 mt-1">Get a personalized quote for your custom specifications</p>
-        </div>
-      </div>
-    </div>
+      <!-- Close Button -->
+      <button onclick="closeCustomizeModal()" class="absolute top-4 right-4 text-gray-400 hover:text-gray-600 transition-colors">
+        <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+        </svg>
+      </button>
 
-    <!-- Product Summary -->
-    <div class="bg-gradient-to-r from-blue-50 to-purple-50 p-4 rounded-lg mb-6 border border-blue-200">
-      <h4 class="font-semibold text-gray-900 mb-2">Product Details</h4>
-      <p id="customizeProductName" class="text-gray-700 font-medium mb-1"></p>
-      <p id="customizeProductInfo" class="text-sm text-gray-600"></p>
-    </div>
+      <!-- Modal Header -->
+      <div class="mb-6">
+        <div class="flex items-center gap-3 mb-2">
 
-    <!-- Customize Form -->
-    <form id="customizeForm" class="space-y-5" onsubmit="submitCustomizeForm(event)">
-      
-      <!-- Customization Type -->
-      <div>
-        <label class="block text-sm font-semibold text-gray-900 mb-3">What would you like to customize?</label>
-        <div class="space-y-2">
-          <label class="flex items-center p-3 border-2 border-gray-200 rounded-lg cursor-pointer hover:border-purple-400 hover:bg-purple-50 transition">
-            <input type="radio" name="customType" value="size" checked class="w-4 h-4 text-purple-600">
-            <span class="ml-3 font-medium text-gray-700">Custom Size</span>
-          </label>
-          <label class="flex items-center p-3 border-2 border-gray-200 rounded-lg cursor-pointer hover:border-purple-400 hover:bg-purple-50 transition">
-            <input type="radio" name="customType" value="color" class="w-4 h-4 text-purple-600">
-            <span class="ml-3 font-medium text-gray-700">Custom Color/Design</span>
-          </label>
-          <label class="flex items-center p-3 border-2 border-gray-200 rounded-lg cursor-pointer hover:border-purple-400 hover:bg-purple-50 transition">
-            <input type="radio" name="customType" value="material" class="w-4 h-4 text-purple-600">
-            <span class="ml-3 font-medium text-gray-700">Different Material</span>
-          </label>
-          <label class="flex items-center p-3 border-2 border-gray-200 rounded-lg cursor-pointer hover:border-purple-400 hover:bg-purple-50 transition">
-            <input type="radio" name="customType" value="other" class="w-4 h-4 text-purple-600">
-            <span class="ml-3 font-medium text-gray-700">Other</span>
-          </label>
+          <div>
+            <h3 class="text-2xl lg:text-3xl font-bold text-gray-900">Customize Your Windows</h3>
+            <p class="text-sm text-gray-600 mt-1">Get a personalized quote for your custom specifications</p>
+          </div>
         </div>
       </div>
 
-      <!-- Specifications -->
-      <div>
-        <label class="block text-sm font-semibold text-gray-900 mb-2">Your Specifications</label>
-        <textarea 
-          name="specifications" 
-          placeholder="Describe your custom requirements in detail (dimensions, colors, materials, quantity, etc.)"
-          class="w-full px-4 py-3 border-2 border-gray-300 rounded-lg focus:outline-none focus:border-purple-500 resize-none"
-          rows="4"
-          required></textarea>
+      <!-- Product Summary -->
+      <div class="bg-gradient-to-r from-blue-50 to-purple-50 p-4 rounded-lg mb-6 border border-blue-200">
+        <h4 class="font-semibold text-gray-900 mb-2">Product Details</h4>
+        <p id="customizeProductName" class="text-gray-700 font-medium mb-1"></p>
+        <p id="customizeProductInfo" class="text-sm text-gray-600"></p>
       </div>
 
-      <!-- Contact Information -->
-      <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+      <!-- Customize Form -->
+      <form id="customizeForm" class="space-y-5" onsubmit="submitCustomizeForm(event)">
+
+        <!-- Customization Type -->
         <div>
-          <label class="block text-sm font-semibold text-gray-900 mb-2">Full Name</label>
-          <input 
-            type="text" 
-            name="fullName"
-            id="customizeFullName"
-            placeholder="Your name"
-            class="w-full px-4 py-2 border-2 border-gray-300 rounded-lg focus:outline-none focus:border-purple-500 bg-gray-100 cursor-not-allowed"
-            readonly
+          <label class="block text-sm font-semibold text-gray-900 mb-3">What would you like to customize?</label>
+          <div class="space-y-2">
+            <label class="flex items-center p-3 border-2 border-gray-200 rounded-lg cursor-pointer hover:border-purple-400 hover:bg-purple-50 transition">
+              <input type="radio" name="customType" value="size" checked class="w-4 h-4 text-purple-600">
+              <span class="ml-3 font-medium text-gray-700">Custom Size</span>
+            </label>
+            <label class="flex items-center p-3 border-2 border-gray-200 rounded-lg cursor-pointer hover:border-purple-400 hover:bg-purple-50 transition">
+              <input type="radio" name="customType" value="color" class="w-4 h-4 text-purple-600">
+              <span class="ml-3 font-medium text-gray-700">Custom Color/Design</span>
+            </label>
+            <label class="flex items-center p-3 border-2 border-gray-200 rounded-lg cursor-pointer hover:border-purple-400 hover:bg-purple-50 transition">
+              <input type="radio" name="customType" value="material" class="w-4 h-4 text-purple-600">
+              <span class="ml-3 font-medium text-gray-700">Different Material</span>
+            </label>
+            <label class="flex items-center p-3 border-2 border-gray-200 rounded-lg cursor-pointer hover:border-purple-400 hover:bg-purple-50 transition">
+              <input type="radio" name="customType" value="other" class="w-4 h-4 text-purple-600">
+              <span class="ml-3 font-medium text-gray-700">Other</span>
+            </label>
+          </div>
+        </div>
+
+        <!-- Specifications -->
+        <div>
+          <label class="block text-sm font-semibold text-gray-900 mb-2">Your Specifications</label>
+          <textarea
+            name="specifications"
+            placeholder="Describe your custom requirements in detail (dimensions, colors, materials, quantity, etc.)"
+            class="w-full px-4 py-3 border-2 border-gray-300 rounded-lg focus:outline-none focus:border-purple-500 resize-none"
+            rows="4"
+            required></textarea>
+        </div>
+
+        <!-- Contact Information -->
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+          <div>
+            <label class="block text-sm font-semibold text-gray-900 mb-2">Full Name</label>
+            <input
+              type="text"
+              name="fullName"
+              id="customizeFullName"
+              placeholder="Your name"
+              class="w-full px-4 py-2 border-2 border-gray-300 rounded-lg focus:outline-none focus:border-purple-500 bg-gray-100 cursor-not-allowed"
+              readonly
+              required>
+            <p class="text-xs text-gray-500 mt-1">From your account</p>
+          </div>
+          <div>
+            <label class="block text-sm font-semibold text-gray-900 mb-2">Email</label>
+            <input
+              type="email"
+              name="email"
+              id="customizeEmail"
+              placeholder="your@email.com"
+              class="w-full px-4 py-2 border-2 border-gray-300 rounded-lg focus:outline-none focus:border-purple-500 bg-gray-100 cursor-not-allowed"
+              readonly
+              required>
+            <p class="text-xs text-gray-500 mt-1">From your account</p>
+          </div>
+        </div>
+
+        <div>
+          <label class="block text-sm font-semibold text-gray-900 mb-2">Phone Number</label>
+          <input
+            type="tel"
+            name="phone"
+            placeholder="+63 9XX XXX XXXX"
+            class="w-full px-4 py-2 border-2 border-gray-300 rounded-lg focus:outline-none focus:border-purple-500"
             required>
-          <p class="text-xs text-gray-500 mt-1">From your account</p>
         </div>
+
+        <!-- Message (Optional) -->
         <div>
-          <label class="block text-sm font-semibold text-gray-900 mb-2">Email</label>
-          <input 
-            type="email" 
-            name="email"
-            id="customizeEmail"
-            placeholder="your@email.com"
-            class="w-full px-4 py-2 border-2 border-gray-300 rounded-lg focus:outline-none focus:border-purple-500 bg-gray-100 cursor-not-allowed"
-            readonly
-            required>
-          <p class="text-xs text-gray-500 mt-1">From your account</p>
+          <label class="block text-sm font-semibold text-gray-900 mb-2">Additional Message (Optional)</label>
+          <textarea
+            name="message"
+            placeholder="Any additional information you'd like to share..."
+            class="w-full px-4 py-3 border-2 border-gray-300 rounded-lg focus:outline-none focus:border-purple-500 resize-none"
+            rows="3"></textarea>
         </div>
-      </div>
 
-      <div>
-        <label class="block text-sm font-semibold text-gray-900 mb-2">Phone Number</label>
-        <input 
-          type="tel" 
-          name="phone"
-          placeholder="+63 9XX XXX XXXX"
-          class="w-full px-4 py-2 border-2 border-gray-300 rounded-lg focus:outline-none focus:border-purple-500"
-          required>
-      </div>
+        <!-- Checkbox -->
+        <label class="flex items-start p-3 border-2 border-gray-200 rounded-lg cursor-pointer hover:bg-gray-50 transition">
+          <input type="checkbox" name="agreeTerms" class="w-4 h-4 mt-1 text-purple-600" required>
+          <span class="ml-3 text-sm text-gray-700">
+            I agree to receive updates and quote details from Noble Home Construction
+          </span>
+        </label>
 
-      <!-- Message (Optional) -->
-      <div>
-        <label class="block text-sm font-semibold text-gray-900 mb-2">Additional Message (Optional)</label>
-        <textarea 
-          name="message" 
-          placeholder="Any additional information you'd like to share..."
-          class="w-full px-4 py-3 border-2 border-gray-300 rounded-lg focus:outline-none focus:border-purple-500 resize-none"
-          rows="3"></textarea>
-      </div>
+        <!-- Submit Buttons -->
+        <div class="grid grid-cols-2 gap-3 pt-4">
+          <button type="button"
+            onclick="closeCustomizeModal()"
+            class="py-3 bg-gray-200 hover:bg-gray-300 text-gray-900 font-semibold rounded-lg transition-colors">
+            Cancel
+          </button>
+          <button type="submit"
+            class="py-3 bg-black hover:bg-orange-500 text-white font-semibold ">
+            <i class="fas fa-paper-plane mr-2"></i>Send Request
+          </button>
+        </div>
+      </form>
 
-      <!-- Checkbox -->
-      <label class="flex items-start p-3 border-2 border-gray-200 rounded-lg cursor-pointer hover:bg-gray-50 transition">
-        <input type="checkbox" name="agreeTerms" class="w-4 h-4 mt-1 text-purple-600" required>
-        <span class="ml-3 text-sm text-gray-700">
-          I agree to receive updates and quote details from Noble Home Construction
-        </span>
-      </label>
-
-      <!-- Submit Buttons -->
-      <div class="grid grid-cols-2 gap-3 pt-4">
-        <button type="button" 
-          onclick="closeCustomizeModal()"
-          class="py-3 bg-gray-200 hover:bg-gray-300 text-gray-900 font-semibold rounded-lg transition-colors">
-          Cancel
-        </button>
-        <button type="submit"
-          class="py-3 bg-black hover:bg-orange-500 text-white font-semibold ">
-          <i class="fas fa-paper-plane mr-2"></i>Send Request
-        </button>
-      </div>
-    </form>
-
-    <!-- Contact Info -->
-    <div class="mt-6 pt-6 border-t border-gray-200">
-      <p class="text-xs text-gray-600 text-center mb-3">Or contact us directly:</p>
-      <div class="flex gap-2 justify-center">
-        <a href="tel:+639922394563" class="flex items-center gap-2 px-4 py-2 bg-blue-100 hover:bg-blue-200 text-blue-700 rounded-lg text-sm font-medium transition">
-          <i class="fas fa-phone"></i> Call
-        </a>
-        <a href="https://wa.me/639922394563" target="_blank" class="flex items-center gap-2 px-4 py-2 bg-green-100 hover:bg-green-200 text-green-700 rounded-lg text-sm font-medium transition">
-          <i class="fab fa-whatsapp"></i> WhatsApp
-        </a>
-        <a href="mailto:noblehomeconst.ph@gmail.com" class="flex items-center gap-2 px-4 py-2 bg-orange-100 hover:bg-orange-200 text-orange-700 rounded-lg text-sm font-medium transition">
-          <i class="fas fa-envelope"></i> Email
-        </a>
+      <!-- Contact Info -->
+      <div class="mt-6 pt-6 border-t border-gray-200">
+        <p class="text-xs text-gray-600 text-center mb-3">Or contact us directly:</p>
+        <div class="flex gap-2 justify-center">
+          <a href="tel:+639922394563" class="flex items-center gap-2 px-4 py-2 bg-blue-100 hover:bg-blue-200 text-blue-700 rounded-lg text-sm font-medium transition">
+            <i class="fas fa-phone"></i> Call
+          </a>
+          <a href="https://wa.me/639922394563" target="_blank" class="flex items-center gap-2 px-4 py-2 bg-green-100 hover:bg-green-200 text-green-700 rounded-lg text-sm font-medium transition">
+            <i class="fab fa-whatsapp"></i> WhatsApp
+          </a>
+          <a href="mailto:noblehomeconst.ph@gmail.com" class="flex items-center gap-2 px-4 py-2 bg-orange-100 hover:bg-orange-200 text-orange-700 rounded-lg text-sm font-medium transition">
+            <i class="fas fa-envelope"></i> Email
+          </a>
+        </div>
       </div>
     </div>
   </div>
-</div>
 
-<style>
-  /* Modal animations */
-  #customizeModal {
-    animation: modalFadeIn 0.3s ease-out;
-  }
-
-  @keyframes modalFadeIn {
-    from {
-      opacity: 0;
-      transform: scale(0.95);
+  <style>
+    /* Modal animations */
+    #customizeModal {
+      animation: modalFadeIn 0.3s ease-out;
     }
-    to {
-      opacity: 1;
-      transform: scale(1);
-    }
-  }
 
-  #customizeModal > div {
-    animation: slideUp 0.3s ease-out;
-  }
-
-  @keyframes slideUp {
-    from {
-      transform: translateY(30px);
-      opacity: 0;
-    }
-    to {
-      transform: translateY(0);
-      opacity: 1;
-    }
-  }
-
-  /* Form styling */
-  #customizeForm input:focus,
-  #customizeForm textarea:focus {
-    box-shadow: 0 0 0 3px rgba(147, 51, 234, 0.1);
-  }
-
-  #customizeForm textarea {
-    font-family: inherit;
-  }
-</style>
-
-<script>
-  // Open customize modal
-  function openCustomizeModal() {
-    const modal = document.getElementById('customizeModal');
-    const productName = document.querySelector('h1.text-xl')?.textContent || 'Product';
-    const selectedColor = document.getElementById('selected_color')?.value || 'Not selected';
-    const selectedSize = document.querySelector('.variant-btn.selected')?.textContent || 'Not selected';
-
-    // Populate product info
-    document.getElementById('customizeProductName').textContent = productName;
-    document.getElementById('customizeProductInfo').textContent = 
-      `Color: ${selectedColor} | Size: ${selectedSize}`;
-
-    // Pre-fill user info from PHP session data
-    const userEmail = document.querySelector('meta[name="user-email"]')?.getAttribute('content') || '';
-    const userName = document.querySelector('meta[name="user-name"]')?.getAttribute('content') || '';
-    
-    if (userName) document.getElementById('customizeFullName').value = userName;
-    if (userEmail) document.getElementById('customizeEmail').value = userEmail;
-
-    modal.classList.remove('hidden');
-    document.body.style.overflow = 'hidden';
-  }
-
-  // Close customize modal
-  function closeCustomizeModal() {
-    const modal = document.getElementById('customizeModal');
-    modal.classList.add('hidden');
-    document.body.style.overflow = 'auto';
-  }
-
-  // Submit customize form
-  function submitCustomizeForm(event) {
-    event.preventDefault();
-
-    const form = document.getElementById('customizeForm');
-    const formData = new FormData(form);
-    const productId = document.querySelector('input[name="product_id"]').value;
-    const selectedColor = document.getElementById('selected_color')?.value || '';
-    const selectedVariant = document.getElementById('selected_variant')?.value || '';
-
-    // Add product details
-    formData.append('product_id', productId);
-    formData.append('selected_color', selectedColor);
-    formData.append('selected_variant', selectedVariant);
-
-    // Send to server
-    fetch('index-customize_quote_handler-page-4-AA.php', {
-      method: 'POST',
-      body: formData
-    })
-    .then(response => response.json())
-    .then(data => {
-      if (data.success) {
-        alert('✅ Your customization request has been sent! We will contact you shortly.');
-        closeCustomizeModal();
-        form.reset();
-      } else {
-        alert('❌ Error: ' + (data.message || 'Something went wrong'));
+    @keyframes modalFadeIn {
+      from {
+        opacity: 0;
+        transform: scale(0.95);
       }
-    })
-    .catch(error => {
-      console.error('Error:', error);
-      alert('❌ Error sending request. Please try again or contact us directly.');
-    });
-  }
 
-  // Close modal with Escape key
-  document.addEventListener('keydown', function(e) {
-    if (e.key === 'Escape') {
-      closeCustomizeModal();
+      to {
+        opacity: 1;
+        transform: scale(1);
+      }
     }
-  });
-</script>
+
+    #customizeModal>div {
+      animation: slideUp 0.3s ease-out;
+    }
+
+    @keyframes slideUp {
+      from {
+        transform: translateY(30px);
+        opacity: 0;
+      }
+
+      to {
+        transform: translateY(0);
+        opacity: 1;
+      }
+    }
+
+    /* Form styling */
+    #customizeForm input:focus,
+    #customizeForm textarea:focus {
+      box-shadow: 0 0 0 3px rgba(147, 51, 234, 0.1);
+    }
+
+    #customizeForm textarea {
+      font-family: inherit;
+    }
+  </style>
+
+  <script>
+    // Open customize modal
+    function openCustomizeModal() {
+      const modal = document.getElementById('customizeModal');
+      const productName = document.querySelector('h1.text-xl')?.textContent || 'Product';
+      const selectedColor = document.getElementById('selected_color')?.value || 'Not selected';
+      const selectedSize = document.querySelector('.variant-btn.selected')?.textContent || 'Not selected';
+
+      // Populate product info
+      document.getElementById('customizeProductName').textContent = productName;
+      document.getElementById('customizeProductInfo').textContent =
+        `Color: ${selectedColor} | Size: ${selectedSize}`;
+
+      // Pre-fill user info from PHP session data
+      const userEmail = document.querySelector('meta[name="user-email"]')?.getAttribute('content') || '';
+      const userName = document.querySelector('meta[name="user-name"]')?.getAttribute('content') || '';
+
+      if (userName) document.getElementById('customizeFullName').value = userName;
+      if (userEmail) document.getElementById('customizeEmail').value = userEmail;
+
+      modal.classList.remove('hidden');
+      document.body.style.overflow = 'hidden';
+    }
+
+    // Close customize modal
+    function closeCustomizeModal() {
+      const modal = document.getElementById('customizeModal');
+      modal.classList.add('hidden');
+      document.body.style.overflow = 'auto';
+    }
+
+    // Submit customize form
+    function submitCustomizeForm(event) {
+      event.preventDefault();
+
+      const form = document.getElementById('customizeForm');
+      const formData = new FormData(form);
+      const productId = document.querySelector('input[name="product_id"]').value;
+      const selectedColor = document.getElementById('selected_color')?.value || '';
+      const selectedVariant = document.getElementById('selected_variant')?.value || '';
+
+      // Add product details
+      formData.append('product_id', productId);
+      formData.append('selected_color', selectedColor);
+      formData.append('selected_variant', selectedVariant);
+
+      // Send to server
+      fetch('index-customize_quote_handler-page-4-AA.php', {
+          method: 'POST',
+          body: formData
+        })
+        .then(response => response.json())
+        .then(data => {
+          if (data.success) {
+            alert('✅ Your customization request has been sent! We will contact you shortly.');
+            closeCustomizeModal();
+            form.reset();
+          } else {
+            alert('❌ Error: ' + (data.message || 'Something went wrong'));
+          }
+        })
+        .catch(error => {
+          console.error('Error:', error);
+          alert('❌ Error sending request. Please try again or contact us directly.');
+        });
+    }
+
+    // Close modal with Escape key
+    document.addEventListener('keydown', function(e) {
+      if (e.key === 'Escape') {
+        closeCustomizeModal();
+      }
+    });
+  </script>
 
   <?php if ($related_products->num_rows > 0): ?>
     <!-- RELATED PRODUCTS SECTION - MOBILE SIDEBAR & DESKTOP CAROUSEL -->
@@ -2312,8 +2381,8 @@ $is_guest = !isset($_SESSION['user_id']);
        lg:hidden">
 
       <!-- Header -->
-      <div class="sticky top-0 bg-black text-white px-4 py-3 flex items-center justify-between z-20 shadow-md">
-        <div>
+      <div class="sticky top-0 bg-black text-white px-4 py-3 flex items-center justify-between z-20 shadow-md" style="font-family: 'Montserrat', sans-serif;">
+        <div >
           <h2 class="text-base">Related Products</h2>
           <p class="text-xs text-white">Similar items you may like</p>
         </div>
@@ -2360,33 +2429,33 @@ $is_guest = !isset($_SESSION['user_id']);
 
               <!-- Product Information -->
               <div class="p-2.5">
-                <h3 class="text-gray-800 text-xs mb-1.5 line-clamp-2 leading-tight font-medium">
+                <h3 class=" text-xs mb-1.5 line-clamp-2 leading-tight font-semibold" style="font-family: 'Montserrat', sans-serif; color: #2f1200">
                   <?= htmlspecialchars($row['product_name']) ?>
                 </h3>
 
-                <div class="mb-2">
-                  <p class="text-gray-600 text-xs line-clamp-1 mb-1">
+                <div class="mb-2" style="font-family: 'Montserrat', sans-serif; color: #2f1200">
+                  <p class=" text-xs line-clamp-1 mb-1">
                     <?= htmlspecialchars($row['description']) ?>
                   </p>
                   <?php if (!empty($row['descrip6'])): ?>
-                    <p class="text-gray-500 text-xs line-clamp-1">
+                    <p class=" text-xs line-clamp-1">
                       • <?= htmlspecialchars($row['descrip6']) ?>
                     </p>
                   <?php endif; ?>
                 </div>
 
                 <!-- 🔥 SMART PRICE DISPLAY (exactly like Document 4) -->
-                <div class="flex items-baseline gap-1 flex-wrap mb-2">
+                <div class="flex items-baseline gap-1 flex-wrap mb-2" style="font-family: 'Montserrat', sans-serif; color: #2f1200"> 
                   <?php if ($discount > 0): ?>
-                    <p class="text-[11px] font-bold text-gray-900"><?= $priceData['display_price'] ?></p>
+                    <p class="text-[11px] font-bold "><?= $priceData['display_price'] ?></p>
                     <span class="text-[8px] font-semibold text-red-600 bg-red-50 px-1 py-0.5 rounded">-<?= number_format($discount, 0) ?>%</span>
                   <?php else: ?>
-                    <p class="text-[11px] font-bold text-gray-900"><?= $priceData['display_price'] ?></p>
+                    <p class="text-[11px] font-bold"><?= $priceData['display_price'] ?></p>
                   <?php endif; ?>
                 </div>
 
                 <!-- View count + Sold count (styled like Document 4) -->
-                <div class="flex items-center gap-2 text-[9px] text-gray-500 mb-2">
+                <div class="flex items-center gap-2 text-[9px] mb-2" style="font-family: 'Montserrat', sans-serif; color: #2f1200">
                   <?php if ($view_count > 0): ?>
                     <div class="flex items-center gap-1 bg-blue-50 px-2 py-1 rounded">
                       viewing
@@ -2395,20 +2464,11 @@ $is_guest = !isset($_SESSION['user_id']);
                   <?php endif; ?>
 
                   <?php if ($total_sold > 0): ?>
-                    <div class="flex items-center gap-1 bg-green-50 px-2 py-1 rounded">
+                    <div class="flex items-center gap-1  px-2 py-1 rounded">
                       sold
                       <span class="font-medium"><?= number_format($total_sold) ?></span>
                     </div>
                   <?php endif; ?>
-                </div>
-
-                <div class="flex items-center justify-between">
-                  <span class="text-xs px-2 py-0.5 bg-black text-white rounded">
-                    <?= htmlspecialchars($row['codename']) ?>
-                  </span>
-                  <span class="text-xs text-gray-400">
-                    <i class="fas fa-arrow-right"></i>
-                  </span>
                 </div>
               </div>
             </a>
@@ -2423,10 +2483,10 @@ $is_guest = !isset($_SESSION['user_id']);
 
         <!-- Header -->
         <div class="px-6 py-6 border-b border-gray-200">
-          <div class="flex items-center justify-between">
+          <div class="flex items-center justify-between" style="font-family: 'Montserrat', sans-serif; color: #2f1200">
             <div>
-              <h2 class="text-2xl font-bold text-gray-900 mb-1">Related Products</h2>
-              <p class="text-sm text-gray-600">Similar items you might like</p>
+              <h2 class="text-2xl font-bold mb-1">Related Products</h2>
+              <p class="text-sm ">Similar items you might like</p>
             </div>
           </div>
         </div>
@@ -2471,34 +2531,34 @@ $is_guest = !isset($_SESSION['user_id']);
                       <!-- Product Info -->
                       <div class="p-4 flex-1 flex flex-col">
                         <!-- Product Name -->
-                        <h3 class="text-gray-900 font-semibold text-[15px] mb-2 line-clamp-2 leading-tight">
+                        <h3 class=" font-semibold text-[15px] mb-2 line-clamp-2 leading-tight" style="font-family: 'Montserrat', sans-serif; color: #2f1200">
                           <?= htmlspecialchars($row['product_name']) ?>
                         </h3>
 
                         <!-- Product Description -->
                         <div class="mb-3 flex-1">
-                          <p class="text-gray-600 text-xs line-clamp-2 mb-1 text-[13px]">
+                          <p class=" text-xs line-clamp-2 mb-1 text-[13px]" style="font-family: 'Montserrat', sans-serif; color: #2f1200">
                             <?= htmlspecialchars($row['description']) ?>
                           </p>
                           <?php if (!empty($row['descrip6'])): ?>
-                            <p class="text-gray-500 text-xs line-clamp-1">
+                            <p class=" text-xs line-clamp-1">
                               <?= htmlspecialchars($row['descrip6']) ?>
                             </p>
                           <?php endif; ?>
                         </div>
 
                         <!-- 🔥 SMART PRICE DISPLAY (exactly like Document 4) -->
-                        <div class="flex items-baseline gap-1 flex-wrap mb-3">
+                        <div class="flex items-baseline gap-1 flex-wrap mb-3" style="font-family: 'Montserrat', sans-serif; color: #2f1200">
                           <?php if ($discount > 0): ?>
-                            <p class="text-[13px] font-bold text-gray-900"><?= $priceData['display_price'] ?></p>
+                            <p class="text-[13px] font-bold "><?= $priceData['display_price'] ?></p>
                             <span class="text-[8px] font-semibold text-red-600 bg-red-50 px-1 py-0.5 rounded">-<?= number_format($discount, 0) ?>%</span>
                           <?php else: ?>
-                            <p class="text-[13px] font-bold text-gray-900"><?= $priceData['display_price'] ?></p>
+                            <p class="text-[13px] font-bold "><?= $priceData['display_price'] ?></p>
                           <?php endif; ?>
                         </div>
 
                         <!-- View count + Sold count (styled like Document 4) -->
-                        <div class="flex items-center gap-2 text-[9px] text-gray-500 mb-3">
+                        <div class="flex items-center gap-2 text-[9px] text-gray-500 mb-3" style="font-family: 'Montserrat', sans-serif; color: #2f1200">
                           <?php if ($view_count > 0): ?>
                             <div class="flex items-center gap-1 bg-blue-50 px-2 py-1 rounded">
                               viewing
@@ -2513,17 +2573,8 @@ $is_guest = !isset($_SESSION['user_id']);
                             </div>
                           <?php endif; ?>
                         </div>
-
-                        <!-- Product Code & Arrow -->
-                        <div class="flex items-center justify-between pt-3 border-t border-gray-200">
-                          <span class="text-xs px-2 py-1 bg-gray-100 text-gray-700 rounded font-medium uppercase">
-                            <?= htmlspecialchars($row['codename']) ?>
-                          </span>
-                          <span class="text-orange-500 group-hover:text-orange-600 font-medium text-xs transition-colors inline-flex items-center gap-1">
-                            view <i class="fas fa-arrow-right text-xs group-hover:translate-x-0.5 transition-transform inline-block"></i>
-                          </span>
-                        </div>
                       </div>
+
                     </a>
                   </div>
                 <?php endwhile; ?>
@@ -2745,14 +2796,14 @@ $is_guest = !isset($_SESSION['user_id']);
           <div class="flex">
             <button onclick="switchTab('specifications')"
               id="tab-specifications"
-              class="product-tab flex-1 px-4 lg:px-6 py-3 lg:py-4 text-sm lg:text-base font-semibold text-gray-600 hover:text-orange-600 border-b-2 border-transparent transition-all duration-200 active">
+              class="product-tab flex-1 px-4 lg:px-6 py-3 lg:py-4 text-sm lg:text-base font-semibold  hover:text-orange-600 border-b-2 border-transparent transition-all duration-200 active" style="font-family: 'Montserrat', sans-serif; color: #2f1200">
               <i class="fas fa-list-alt mr-2"></i>
               Product Specifications
             </button>
 
             <button onclick="switchTab('reviews')"
               id="tab-reviews"
-              class="product-tab flex-1 px-4 lg:px-6 py-3 lg:py-4 text-sm lg:text-base font-semibold text-gray-600 hover:text-orange-600 border-b-2 border-transparent transition-all duration-200">
+              class="product-tab flex-1 px-4 lg:px-6 py-3 lg:py-4 text-sm lg:text-base font-semibold  hover:text-orange-600 border-b-2 border-transparent transition-all duration-200" style="font-family: 'Montserrat', sans-serif; color: #2f1200">
               <i class="fas fa-star mr-2"></i>
               Reviews
               <?php if ($total_raters > 0): ?>
@@ -2762,7 +2813,7 @@ $is_guest = !isset($_SESSION['user_id']);
 
             <button onclick="switchTab('productinfo')"
               id="tab-productinfo"
-              class="product-tab flex-1 px-4 lg:px-6 py-3 lg:py-4 text-sm lg:text-base font-semibold text-gray-600 hover:text-orange-600 border-b-2 border-transparent transition-all duration-200">
+              class="product-tab flex-1 px-4 lg:px-6 py-3 lg:py-4 text-sm lg:text-base font-semibold  hover:text-orange-600 border-b-2 border-transparent transition-all duration-200" style="font-family: 'Montserrat', sans-serif; color: #2f1200">
               <i class="fas fa-info-circle mr-2"></i>
               Product Information
             </button>
@@ -2923,12 +2974,12 @@ $is_guest = !isset($_SESSION['user_id']);
                               </div>
                             </div>
                           </div>
-   <!-- Review Title/Comment -->
-            <?php if (!empty($review['comment'])): ?>
-              <h5 class="font-semibold text-gray-700 text-sm mb-2">
-                <?= htmlspecialchars($review['comment']) ?>
-              </h5>
-            <?php endif; ?>
+                          <!-- Review Title/Comment -->
+                          <?php if (!empty($review['comment'])): ?>
+                            <h5 class="font-semibold text-gray-700 text-sm mb-2">
+                              <?= htmlspecialchars($review['comment']) ?>
+                            </h5>
+                          <?php endif; ?>
                           <?php if (!empty($review['review'])): ?>
                             <p class="text-gray-700 text-sm leading-relaxed">
                               <?= nl2br(htmlspecialchars($review['review'])) ?>

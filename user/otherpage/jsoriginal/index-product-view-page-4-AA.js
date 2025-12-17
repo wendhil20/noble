@@ -489,8 +489,8 @@ class ProductSelector {
     }
 
     container.innerHTML = `
-      <div class="text-sm text-gray-700">
-        <strong>Selected: </strong> <span class="text-orange-600 ">${typeName}</span>
+      <div class="text-sm ">
+        <strong>Selected: </strong> <span class="" style="font-family: 'Montserrat', sans-serif; color: #2f1200">${typeName}</span>
       </div>
     `;
   }
@@ -512,8 +512,8 @@ class ProductSelector {
     }
 
     container.innerHTML = `
-      <div class="text-sm text-gray-700 ">
-        <strong>Color:</strong> <span class="text-orange-600 ">${colorName}</span>
+      <div class="text-sm ">
+        <strong>Color:</strong> <span class="" style="font-family: 'Montserrat', sans-serif; color: #2f1200">${colorName}</span>
       </div>
     `;
   }
@@ -601,7 +601,7 @@ class ProductSelector {
             <div class="flex items-center justify-between mb-2">
               <div class="flex items-center gap-2">
                 <i class="fas fa-fire-alt text-yellow-300 animate-pulse"></i>
-                <span class="font-bold text-sm">FLASH SALE ACTIVE</span>
+                <span class="font-bold text-sm text-white" style="font-family: 'Montserrat', sans-serif;">FLASH SALE ACTIVE</span>
               </div>
               <span class="timer-display font-mono tracking-wider text-xs bg-black/30 px-2 py-1 rounded" 
                     id="timer-hidden-${timerVariantId}">
@@ -638,7 +638,7 @@ class ProductSelector {
               <div class="border-t border-white/20 pt-1 mt-1"></div>
               
               <div class="flex justify-between items-center">
-                <span class="text-yellow-300 font-bold">Flash Sale (-${Math.round(
+                <span class="text-white font-bold" style="font-family: 'Montserrat', sans-serif; ">Flash Sale (-${Math.round(
                   timerDiscount
                 )}%):</span>
                
@@ -646,7 +646,7 @@ class ProductSelector {
             </div>
 
             <!-- Savings Display -->
-            <div class="mt-2 text-center bg-yellow-400 text-red-700 font-black text-xs px-2 py-1 rounded">
+            <div class="mt-2 text-center bg-yellow-400  font-black text-xs px-2 py-1 rounded" style="font-family: 'Montserrat', sans-serif; color: #2f1200">
               YOU SAVE ₱${(
                 afterRegularDiscount - afterTimerDiscount
               ).toLocaleString("en-PH", { minimumFractionDigits: 2 })}!
@@ -700,10 +700,10 @@ class ProductSelector {
     }
 
     container.innerHTML = `
-    <div class="text-sm text-gray-700">
-      <div class="flex flex-wrap items-center gap-2 mb-2">
+    <div class="text-sm">
+      <div class="flex flex-wrap items-center gap-2 mb-2" style="font-family: 'Montserrat', sans-serif; color: #2f1200">
         <strong>Size Selected:</strong> 
-        <span class="text-orange-600 font-semibold">${size}</span>
+        <span class="font-semibold">${size}</span>
         ${discountDisplay}
         ${stockDisplay}
       </div>
@@ -1263,7 +1263,7 @@ class ProductSelector {
             "flex-1 py-3 lg:py-4 text-lg transition-all duration-300 bg-gray-400 text-white disabled:cursor-not-allowed";
           const msg = isOutOfStock
             ? "Out of Stock"
-            : "Select all options first";
+            : "Select first";
           btnText.innerHTML = `<i class="fas fa-shopping-cart mr-2"></i> ${msg}`;
         }
       }
@@ -2115,7 +2115,7 @@ function updatePurchaseButton() {
           "w-full py-3 lg:py-4 text-lg transition-all duration-300 bg-gray-400 text-white disabled:cursor-not-allowed";
         const msg = isOutOfStock
           ? "Selected option is out of stock"
-          : "Select all options first";
+          : "Select first";
         contactBtnText.innerHTML = `<i class="fas fa-phone mr-2"></i>${msg}`;
       }
     }
@@ -2134,7 +2134,7 @@ function updatePurchaseButton() {
         addToCartBtn.disabled = true;
         addToCartBtn.className =
           "flex-1 py-3 lg:py-4 text-lg transition-all duration-300 bg-gray-400 text-white disabled:cursor-not-allowed";
-        const msg = isOutOfStock ? "Out of Stock" : "Select all options first";
+        const msg = isOutOfStock ? "Out of Stock" : "Select first";
         btnText.innerHTML = `<i class="fas fa-shopping-cart mr-2"></i> ${msg}`;
       }
     }
@@ -2444,3 +2444,4 @@ document.addEventListener("DOMContentLoaded", function () {
     });
   }
 });
+

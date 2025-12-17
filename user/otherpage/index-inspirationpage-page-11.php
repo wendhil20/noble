@@ -107,7 +107,7 @@ if (!$viewing_inspiration) {
     </style>
 </head>
 
-<body class="bg-white text-black min-h-screen">
+<body class="bg-white  min-h-screen" style="font-family: 'Montserrat', sans-serif; color: #2f1200">
     <?php include '../navbar/top.php' ?>
 
     <?php if ($viewing_inspiration && $inspiration): ?>
@@ -279,14 +279,14 @@ if (!$viewing_inspiration) {
         <!-- LIST VIEW -->
         <div class="py-3 px-2 sm:px-4 lg:px-6">
             <div class="w-full mx-auto">
-                <div class="mb-20 border-b-4 border-black pb-10">
+                <div class="mb-20  pb-10">
                     <h1 class="text-5xl font-semibold mb-4 tracking-tight leading-none">Inspirations</h1>
                     <p class="text-gray-700 text-xl font-medium">Curated design ideas and creative concepts</p>
                 </div>
 
                 <!-- FEATURED SECTION -->
-                <div class="mb-15">
-                    <h2 class="text-4xl mb-5 tracking-tight leading-none">FEATURED</h2>
+                <div class="mb-4">
+                    <h2 class="text-4xl mb-2 tracking-tight leading-none">FEATURED</h2>
                     <?php if (!empty($featured_inspirations)): ?>
                         <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
                             <?php foreach ($featured_inspirations as $featured): ?>
@@ -312,7 +312,7 @@ if (!$viewing_inspiration) {
                                         <h3 class="text-4xl md:text-5xl tracking-tight group-hover:underline mb-2 uppercase">
                                             <?php echo htmlspecialchars($featured['name']); ?>
                                         </h3>
-                                        <p class="text-lg font-semibold text-gray-700 uppercase"><?php echo htmlspecialchars($featured['type']); ?> Learn more</p>
+                                        <p class="text-lg font-semibold  uppercase"><?php echo htmlspecialchars($featured['type']); ?> Learn more</p>
                                     </div>
                                 </a>
                             <?php endforeach; ?>
@@ -358,7 +358,6 @@ if (!$viewing_inspiration) {
 
                                 <!-- Content -->
                                 <div class="p-3 border-t-2 border-black">
-                                   
                                     <h3 class="text-2xl  text-gray-900 tracking-tight group-hover:underline">
                                         <?php echo htmlspecialchars($insp['name']); ?>
                                     </h3>

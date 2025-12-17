@@ -198,7 +198,7 @@ $edit_size_id = isset($_GET['size_id']) ? $_GET['size_id'] : null;
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Delivery Zones Management - Noble Admin</title>
-    
+     <script src="https://cdn.tailwindcss.com"></script>
     <!-- Leaflet CSS -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.css" />
     
@@ -206,13 +206,30 @@ $edit_size_id = isset($_GET['size_id']) ? $_GET['size_id'] : null;
     <link href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.0/css/bootstrap.min.css" rel="stylesheet">
     
     <style>
-        #map {
-            height: 400px;
-            width: 100%;
-            border: 1px solid #ddd;
-            border-radius: 5px;
-            margin-bottom: 15px;
-        }
+#map {
+    height: 400px !important;
+    width: 100% !important;
+    border: 1px solid #ddd;
+    border-radius: 5px;
+    margin-bottom: 15px;
+    position: relative;
+    z-index: 1;
+}
+
+#view-map {
+    height: 300px !important;
+    width: 100% !important;
+    position: relative;
+    z-index: 1;
+}
+
+.leaflet-control {
+    z-index: 500 !important;
+}
+
+.leaflet-marker-icon {
+    z-index: 600 !important;
+}
         
         .search-container {
             position: relative;
@@ -480,69 +497,7 @@ $edit_size_id = isset($_GET['size_id']) ? $_GET['size_id'] : null;
     </div>
 
     <?php elseif (!$is_edit_mode && !$is_add_mode): ?>
-    <!-- View Mode - Show all zones -->
-    <div class="row mb-4">
-        <div class="col-12">
-            <div class="d-flex justify-content-between align-items-center mb-3">
-                <h4>🚚 Current Delivery Zones</h4>
-                <a href="?add=1" class="btn btn-success">
-                    <i class="fas fa-plus"></i> Add New Zone
-                </a>
-            </div>
-            
-            <?php 
-            mysqli_data_seek($zones_result, 0);
-            if (mysqli_num_rows($zones_result) == 0): ?>
-                <div class="alert alert-info">
-                    <i class="fas fa-info-circle"></i> No delivery zones found. <a href="?add=1">Add your first zone</a>
-                </div>
-            <?php else: ?>
-                <?php while ($zone = mysqli_fetch_assoc($zones_result)): ?>
-                <div class="zone-card <?php echo $zone['is_free_delivery'] ? 'free-delivery' : ''; ?>">
-                    <div class="d-flex justify-content-between align-items-center mb-2">
-                        <h5><?php echo htmlspecialchars($zone['zone_name']); ?> (<?php echo htmlspecialchars($zone['zone_code']); ?>)</h5>
-                        <div class="action-buttons">
-                            <a href="?edit=1&zone_id=<?php echo $zone['id']; ?>" class="btn btn-light btn-sm">
-                                <i class="fas fa-edit"></i> Edit
-                            </a>
-                            <button type="button" class="btn btn-sm delete-btn" 
-                                    onclick="confirmDelete(<?php echo $zone['id']; ?>, '<?php echo htmlspecialchars($zone['zone_name']); ?>')">
-                                <i class="fas fa-trash"></i> Delete
-                            </button>
-                        </div>
-                    </div>
-                    
-                    <?php if ($zone['is_free_delivery']): ?>
-                        <div class="zone-details">
-                            <h6>🆓 FREE DELIVERY</h6>
-                        </div>
-                    <?php else: ?>
-                        <div class="row">
-                            <div class="col-md-4">
-                                <div class="zone-details">
-                                    <small>Base Fee</small>
-                                    <h6>₱<?php echo number_format($zone['base_fee'], 2); ?></h6>
-                                </div>
-                            </div>
-                            <div class="col-md-4">
-                                <div class="zone-details">
-                                    <small>Included KM</small>
-                                    <h6><?php echo $zone['included_km']; ?> KM</h6>
-                                </div>
-                            </div>
-                            <div class="col-md-4">
-                                <div class="zone-details">
-                                    <small>Per KM Rate</small>
-                                    <h6>₱<?php echo number_format($zone['per_km_rate'], 2); ?></h6>
-                                </div>
-                            </div>
-                        </div>
-                    <?php endif; ?>
-                </div>
-                <?php endwhile; ?>
-            <?php endif; ?>
-        </div>
-    </div>
+    
 
     <?php if ($existing_location): ?>
     <!-- Location Display -->

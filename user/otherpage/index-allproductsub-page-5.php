@@ -185,13 +185,13 @@ try {
                 </div>
 
                 <div class="absolute inset-0 flex flex-col items-center justify-center text-center bg-gradient-to-br from-black/50 to-black/20 p-6 z-10">
-                    <div class="inline-block bg-gradient-to-r from-red-500 to-red-600 text-white text-xs font-black px-4 py-2 rounded-full mb-4 uppercase tracking-wide shadow-lg sale-badge">
+                    <div class="inline-block bg-gradient-to-r from-red-500 to-red-600 text-white text-xs font-black px-4 py-2 rounded-full mb-4 uppercase tracking-wide shadow-lg sale-badge" style="font-family: 'Montserrat', sans-serif;">
                         OFFER
                     </div>
-                    <h1 class="text-white text-4xl md:text-5xl font-bold mb-2">
+                    <h1 class="text-white text-4xl md:text-5xl font-bold mb-2" style="font-family: 'Montserrat', sans-serif; ">
                         SALE
                     </h1>
-                    <p class="text-gray-200 text-sm md:text-base">
+                    <p class="text-gray-200 text-sm md:text-base" style="font-family: 'Montserrat', sans-serif; ">
                         Up to 10% OFF on Selected Items
                     </p>
                 </div>
@@ -246,11 +246,11 @@ try {
     <!-- Main Content -->
     <div class="container mx-auto px-4 max-w-7xl pb-10">
         <!-- Header -->
-        <div class="mb-12 text-center">
-            <h1 class="text-4xl md:text-5xl font-bold text-black mb-3">
+        <div class="mb-12 text-center" style="font-family: 'Montserrat', sans-serif; color: #2f1200">
+            <h1 class="text-4xl md:text-5xl font-semibold mb-3">
                 Sale Collection
             </h1>
-            <p class="text-gray-600 text-sm md:text-base mb-6">
+            <p class=" text-sm md:text-base mb-6">
                 Discover amazing discounts on your favorite products
             </p>
             <button onclick="openSidebar()" class="md:hidden bg-black text-white px-4 py-2.5 rounded-lg text-sm font-medium hover:bg-gray-900 transition-colors">
@@ -262,7 +262,7 @@ try {
 
         <!-- Desktop Categories Grid -->
         <div class="hidden md:block mb-16">
-            <h2 class="text-2xl font-bold text-black mb-8">Categories</h2>
+            <h2 class="text-2xl font-bold  mb-8" style="font-family: 'Montserrat', sans-serif; color: #2f1200">Categories</h2>
             <div class="grid grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
                 <?php
                 if ($categories_result) {
@@ -281,8 +281,8 @@ try {
                         <?php endif; ?>
                         
                         <div class="p-4 text-center">
-                            <div class="inline-block bg-red-500 text-white text-xs font-bold px-3 py-1 rounded-full mb-2">SALE</div>
-                            <h3 class="text-gray-900 text-sm font-semibold uppercase tracking-wide"><?= htmlspecialchars($category['name']) ?></h3>
+                            <div class="inline-block bg-red-500  text-xs font-bold px-3 py-1 rounded-full mb-2 text-white" style="font-family: 'Montserrat', sans-serif;">SALE</div>
+                            <h3 class=" text-sm font-semibold uppercase tracking-wide" style="font-family: 'Montserrat', sans-serif; color: #2f1200"><?= htmlspecialchars($category['name']) ?></h3>
                         </div>
                     </button>
                 <?php 
@@ -297,7 +297,7 @@ try {
             <div class="bg-white rounded-xl shadow-sm p-8 mb-8 border border-gray-200">
                 <div class="flex items-center justify-between mb-8 pb-6 border-b border-gray-200">
                     <div>
-                        <h2 class="text-2xl font-bold text-black">
+                        <h2 class="text-2xl font-bold text-black" style="font-family: 'Montserrat', sans-serif;"> 
                             <span id="category-title">Subcategories</span>
                         </h2>
                     </div>

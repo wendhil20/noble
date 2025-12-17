@@ -721,12 +721,17 @@ function checkQuoteNotifications() {
                                                             <span>Project Approval</span>
                                                         </a>
                                                     <?php endif; ?>
-                                                    <a href="../accountant/accountant_view_orders"
-                                                        class="quick-action-item flex items-center space-x-3 px-3 py-2.5 text-sm text-gray-700 
-                  hover:bg-orange-50 hover:text-orange-600 rounded-lg transition-all duration-150">
-                                                        <i class="ri-money-dollar-circle-line text-lg"></i>
-                                                        <span>Dashboard</span>
-                                                    </a>
+                                                  
+                                                   <!-- HIDDEN: Only show for superadmin -->
+        <?php if (hasAnyRole(['superadmin'])): ?>
+            <a href="../accountant/accountant_view_orders"
+                class="quick-action-item flex items-center space-x-3 px-3 py-2.5 text-sm text-gray-700 
+              hover:bg-orange-50 hover:text-orange-600 rounded-lg transition-all duration-150">
+                <i class="ri-money-dollar-circle-line text-lg"></i>
+                <span>Dashboard</span>
+            </a>
+        <?php endif; ?>
+
                                                     <a href="../accountant/document_controller_view_orders"
                                                         class="quick-action-item flex items-center space-x-3 px-3 py-2.5 text-sm text-gray-700 
            hover:bg-orange-50 hover:text-orange-600 rounded-lg transition-all duration-150">

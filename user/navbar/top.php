@@ -163,6 +163,7 @@ $hidden_pages = ['help.php', 'about.php'];
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/swiper@11/swiper-bundle.min.css" />
 <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;500;700&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700;800&display=swap" rel="stylesheet">
 <script defer src="https://cdn.jsdelivr.net/npm/@alpinejs/collapse@3.x.x/dist/cdn.min.js"></script>
 <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js"></script>
 
@@ -439,7 +440,7 @@ $hidden_pages = ['help.php', 'about.php'];
     selectedCategory: null,
     newProductsModal: false,
     newProductsSidebarMobile: false
-}" class="bg-white shadow-lg sticky top-0 z-50 text-black">
+}" class="bg-white shadow-lg sticky top-0 z-50 text-black" style="font-family: 'Montserrat', sans-serif; color: #2f1200;">
 
   <div class="max-w-full mx-auto px-3 sm:px-4 lg:px-6">
     <div class="flex justify-between items-center py-3 sm:py-4">
@@ -455,13 +456,20 @@ $hidden_pages = ['help.php', 'about.php'];
         </a>
 
 
-        <!-- Search Bar with History - Underline Style -->
+<!-- Search Bar with History - With localStorage -->
 <div x-data="{
   search: '',
   results: [],
   searchHistory: [],
   showHistory: false,
   showDropdown: false,
+  init() {
+      // Load from localStorage on init
+      const saved = localStorage.getItem('searchHistory');
+      if (saved) {
+          this.searchHistory = JSON.parse(saved);
+      }
+  },
   fetchResults() {
       if (this.search.trim().length < 1) {
           this.results = [];
@@ -482,12 +490,16 @@ $hidden_pages = ['help.php', 'about.php'];
   saveSearch(query) {
       if (!query.trim()) return;
       this.searchHistory = [query, ...this.searchHistory.filter(h => h !== query)].slice(0, 10);
+      // Save to localStorage
+      localStorage.setItem('searchHistory', JSON.stringify(this.searchHistory));
   },
   clearHistory() {
       this.searchHistory = [];
+      localStorage.removeItem('searchHistory');
   },
   removeHistoryItem(query) {
       this.searchHistory = this.searchHistory.filter(h => h !== query);
+      localStorage.setItem('searchHistory', JSON.stringify(this.searchHistory));
   },
   performSearch(query) {
       if (!query.trim()) return;
@@ -521,7 +533,7 @@ $hidden_pages = ['help.php', 'about.php'];
             <!-- Button -->
             <button
               @click="performSearch(search)"
-              class="bg-black text-white px-4 py-1.5 rounded-full text-sm hover:bg-gray-800 transition shadow-sm">
+              class=" px-4 py-1.5 text-white rounded-full text-sm hover:bg-gray-800 transition shadow-sm" style="font-family: 'Montserrat', sans-serif; background-color: #2f1200;">
               Search
             </button>
           </div>
@@ -594,12 +606,12 @@ $hidden_pages = ['help.php', 'about.php'];
     
 
         <a href="../otherpage/index-inspirationpage-page-11.php"
-          class="hidden xl:block text-md text-black hover:text-orange-500 transition duration-200 font-roboto  ">
+          class="hidden xl:block text-md  hover:text-orange-500 transition duration-200 " style="font-family: 'Montserrat', sans-serif; color: #2f1200;">
           Inspiration
         </a>
 
         <a href="../otherpage/index-findpropage-page-10.php"
-          class="hidden xl:block text-md text-black hover:text-orange-500 transition duration-200 font-roboto  px-5">
+          class="hidden xl:block text-md  hover:text-orange-500 transition duration-200  px-5" style="font-family: 'Montserrat', sans-serif; color: #2f1200;">
           Find Professional
         </a>
 
@@ -1099,7 +1111,7 @@ $hidden_pages = ['help.php', 'about.php'];
         searchTerm = '';
       }, 200);
     "
-            class="<?= basename($_SERVER['PHP_SELF']) == 'index-shop-page-2.php' ? 'text-orange-600 underline ' : 'text-black' ?> hover:text-orange-500 transition inline-flex items-center gap-3 text-md font-roboto relative">
+            class="<?= basename($_SERVER['PHP_SELF']) == 'index-shop-page-2.php' ? 'text-orange-600 underline ' : 'text-black' ?> hover:text-orange-500 transition inline-flex items-center gap-3 text-md font-roboto relative" style="font-family: 'Montserrat', sans-serif; color: #2f1200;">
 
             <svg class="w-4 h-4 transition-transform" :class="productsOpen ? 'rotate-180' : ''" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" />
@@ -1145,9 +1157,9 @@ $hidden_pages = ['help.php', 'about.php'];
                 @wheel.stop>
 
                 <div class="flex items-center justify-between mb-2 px-1 sticky top-0 bg-gray-50 pb-1 z-10">
-                  <h3 class="font-roboto text-xs text-black uppercase">Categories</h3>
+                  <h3 class="text-xs uppercase" style="font-family: 'Montserrat', sans-serif; color: #2f1200;">Categories</h3>
                   <a href="../otherpage/index-shop-page-2.php"
-                    class="text-[11px] text-orange-500 hover:text-orange-600 font-medium transition-all">
+                    class="text-[11px] hover:text-orange-600 font-medium transition-all" style="font-family: 'Montserrat', sans-serif; color: #2f1200;">
                     View All →
                   </a>
                 </div>
@@ -1181,7 +1193,7 @@ $hidden_pages = ['help.php', 'about.php'];
                         <?php endif; ?>
 
                         <div class="flex-1 min-w-0">
-                          <div class="font-roboto text-sm group-hover:text-orange-500 truncate uppercase"
+                          <div class="font-roboto text-sm group-hover:text-orange-500 truncate uppercase" style="font-family: 'Montserrat', sans-serif; color: #2f1200;"
                             :class="selectedCategory === 'cat_<?= $category['id'] ?>' ? 'text-orange-500 font-medium' : 'text-gray-800'">
                             <?= htmlspecialchars($category['name']) ?>
                           </div>
@@ -1230,7 +1242,7 @@ $hidden_pages = ['help.php', 'about.php'];
                       x-cloak>
 
                       <div class="mb-2 sticky top-0 bg-gray-50 pb-1 z-10">
-                        <h4 class="text-xs text-black uppercase font-medium">
+                        <h4 class="text-xs uppercase font-medium" style="font-family: 'Montserrat', sans-serif; color: #2f1200;">
                           <?= htmlspecialchars($category['name']) ?> Types
                         </h4>
                       </div>
@@ -1247,7 +1259,7 @@ $hidden_pages = ['help.php', 'about.php'];
                         }
                       });
                     "
-                            class="w-full flex items-center gap-2 p-1.5 rounded hover:bg-white transition-all duration-200 group text-left"
+                            class="w-full flex items-center gap-2 p-1.5 rounded hover:bg-white transition-all duration-200 group text-left" style="font-family: 'Montserrat', sans-serif; color: #2f1200;"
                             :class="selectedSubcategory === 'sub_<?= $sub['id'] ?>' ? 'bg-white border-l-2 border-orange-500 shadow-sm' : ''">
 
                             <?php if (!empty($sub['image_path'])): ?>
@@ -1262,7 +1274,7 @@ $hidden_pages = ['help.php', 'about.php'];
                             <?php endif; ?>
 
                             <div class="flex-1 min-w-0">
-                              <div class="text-sm group-hover:text-orange-500 transition truncate"
+                              <div class="text-sm group-hover:text-orange-500 transition truncate uppercase" style="font-family: 'Montserrat', sans-serif; color: #2f1200;"
                                 :class="selectedSubcategory === 'sub_<?= $sub['id'] ?>' ? 'text-orange-500 font-medium' : 'text-gray-800'">
                                 <?= htmlspecialchars($sub['name']) ?>
                               </div>
@@ -1315,7 +1327,7 @@ $hidden_pages = ['help.php', 'about.php'];
                           x-cloak>
 
                           <div class="mb-2 sticky top-0 bg-white pb-1 z-10">
-                            <h4 class="text-xs text-black uppercase font-medium">
+                            <h4 class="text-xs uppercase font-medium" style="font-family: 'Montserrat', sans-serif; color: #2f1200;">
                               <?= htmlspecialchars($sub['name']) ?> Collections
                             </h4>
                           </div>
@@ -1338,7 +1350,7 @@ $hidden_pages = ['help.php', 'about.php'];
                                 <?php endif; ?>
 
                                 <div class="flex-1 min-w-0">
-                                  <div class="text-sm group-hover:text-orange-600 transition font-medium text-gray-800 truncate">
+                                  <div class="text-sm group-hover:text-orange-600 transition font-medium text-gray-800 truncate uppercase" style="font-family: 'Montserrat', sans-serif; color: #2f1200;">
                                     <?= htmlspecialchars($subsub['name']) ?>
                                   </div>
 
@@ -1397,7 +1409,7 @@ $hidden_pages = ['help.php', 'about.php'];
           <?php if (!in_array($current_page, $hidden_pages)): ?>
             <a href="javascript:void(0)"
               onclick="navigateWithLoading('../otherpage/index-cart_view-page-8')"
-              class="<?= $current_page == 'index-cart_view-page-8.php' ? 'text-orange-600 underline ' : 'text-black' ?> hover:text-orange-500 transition inline-flex items-center gap-2 relative font-mont p-2 rounded-lg hover:bg-orange-50"
+              class="<?= $current_page == 'index-cart_view-page-8.php' ? 'text-orange-600 underline ' : 'text-black' ?>  transition inline-flex items-center gap-2 relative font-mont p-2 rounded-lg hover:bg-orange-50" style="font-family: 'Montserrat', sans-serif; color: #2f1200;"
               id="cart-link">
               <i class="fas fa-shopping-cart fa-md"></i>
               Cart
@@ -1412,7 +1424,7 @@ $hidden_pages = ['help.php', 'about.php'];
             <!-- Modal Header -->
             <div class="bg-black text-white p-4 rounded-t-xl">
               <div class="flex items-center justify-between">
-                <h3 class=" text-lg flex items-center gap-2">
+                <h3 class=" text-lg flex items-center gap-2" style="font-family: 'Montserrat', sans-serif;">
                   <i class="fas fa-shopping-cart"></i>
                   Your Cart
                 </h3>
@@ -1890,7 +1902,7 @@ $hidden_pages = ['help.php', 'about.php'];
 
         <!-- Example using Lucide -->
         <a href="javascript:void(0)" onclick="navigateWithLoading('../otherpage/index-profile-page-6')"
-          class="<?= strpos($_SERVER['REQUEST_URI'], 'index-profile-page-6') !== false ? 'text-orange-600 underline ' : 'text-black' ?> hover:text-orange-500 transition text-md flex items-center gap-3">
+          class="<?= strpos($_SERVER['REQUEST_URI'], 'index-profile-page-6') !== false ? 'text-orange-600 underline ' : 'text-black' ?> hover:text-orange-500 transition text-md flex items-center gap-3" style="font-family: 'Montserrat', sans-serif; color: #2f1200;">
           <i data-lucide="shopping-bag" class="w-4 h-4"></i>
           Orders
         </a>
@@ -1923,7 +1935,7 @@ $hidden_pages = ['help.php', 'about.php'];
               x-transition:leave-end="opacity-0 translate-y-1"
               @click.outside="notifOpen = false"
               class="absolute right-0 mt-2 w-72 bg-white rounded-lg shadow-lg border z-50">
-              <div class="flex justify-between items-center p-3 border-b text-black">
+              <div class="flex justify-between items-center p-3 border-b " style="font-family: 'Montserrat', sans-serif; color: #2f1200;">
                 <span>Notifications</span>
                 <button
                   class="text-xs text-red-500 hover:text-red-700"

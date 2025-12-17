@@ -132,7 +132,7 @@ $is_guest = !isset($_SESSION['user_id']);
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://unpkg.com/aos@2.3.4/dist/aos.css" rel="stylesheet">
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" rel="stylesheet">
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=Playfair+Display:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700;800&display=swap" rel="stylesheet">
     <script src="https://cdn.jsdelivr.net/gh/studio-freight/lenis@1.0.19/bundled/lenis.min.js"></script>
     <style>
         .line-clamp-2 {
@@ -166,7 +166,7 @@ $is_guest = !isset($_SESSION['user_id']);
         .pagination-btn.active {
             background: linear-gradient(135deg, #000000ff 0%, #000000ff 100%);
             color: white;
-          
+
         }
 
         .pagination-btn.disabled {
@@ -460,52 +460,52 @@ $is_guest = !isset($_SESSION['user_id']);
 
 <body class="font-roboto">
     <?php include '../navbar/top.php'; ?>
-<section class="bg-white relative mb-12">
-    <div class="w-full px-4 sm:px-6 lg:px-8 py-2">
-        <!-- Two Container Buttons with Background Images -->
-        <div class="grid grid-cols-1 md:grid-cols-2 gap-3 sm:gap-4">
-            <!-- Explore Products Container -->
-            <a href="index-allproduct-page-3" class="group relative overflow-hidden h-40 sm:h-52 lg:h-64 shadow-lg hover:shadow-2xl transition-all duration-300 transform hover:scale-[1.02]">
-                <!-- Background Image with Overlay -->
-                <div class="absolute inset-0 bg-cover bg-center" style="background-image: url('../img/saleandexplore/a.png');">
-                    <div class="absolute inset-0 bg-gradient-to-b from-black/40 via-black/50 to-black/70 group-hover:from-black/50 group-hover:via-black/60 group-hover:to-black/80 transition-all duration-300"></div>
-                </div>
+    <section class="bg-white relative mb-12">
+        <div class="w-full px-4 sm:px-6 lg:px-8 py-2">
+            <!-- Two Container Buttons with Background Images -->
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-3 sm:gap-4">
+                <!-- Explore Products Container -->
+                <a href="index-allproduct-page-3" class="group relative overflow-hidden h-40 sm:h-52 lg:h-64 shadow-lg hover:shadow-2xl transition-all duration-300 transform hover:scale-[1.02]">
+                    <!-- Background Image with Overlay -->
+                    <div class="absolute inset-0 bg-cover bg-center" style="background-image: url('../img/saleandexplore/a.png');">
+                        <div class="absolute inset-0 bg-gradient-to-b from-black/40 via-black/50 to-black/70 group-hover:from-black/50 group-hover:via-black/60 group-hover:to-black/80 transition-all duration-300"></div>
+                    </div>
 
-                <!-- Content -->
-                <div class="relative h-full flex flex-col items-center justify-center p-4 sm:p-6 text-white">
-                    <h3 class="text-lg sm:text-xl lg:text-3xl uppercase mb-1 sm:mb-2 tracking-wide font-semibold">Explore Products</h3>
-                    <p class="text-white/90 text-xs sm:text-sm mb-2 sm:mb-4">Browse our complete collection</p>
-                    <span class="inline-flex items-center gap-1 sm:gap-2 text-[10px] sm:text-xs bg-white/10 backdrop-blur-sm px-3 sm:px-4 py-1.5 sm:py-2 rounded-full border border-white/20 group-hover:bg-white/20 transition-all duration-300">
-                        View Collection
-                        <svg class="w-3 h-3 sm:w-4 sm:h-4 transform group-hover:translate-x-1 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 8l4 4m0 0l-4 4m4-4H3" />
-                        </svg>
-                    </span>
-                </div>
-            </a>
+                    <!-- Content -->
+                    <div class="relative h-full flex flex-col items-center justify-center p-4 sm:p-6 text-white">
+                        <h3 class="text-lg sm:text-xl lg:text-3xl uppercase mb-1 sm:mb-2 tracking-wide font-semibold" style="font-family: 'Montserrat', sans-serif;">Explore Products</h3>
+                        <p class="text-white/90 text-xs sm:text-sm mb-2 sm:mb-4" style="font-family: 'Montserrat', sans-serif;">Browse our complete collection</p>
+                        <span class="inline-flex items-center gap-1 sm:gap-2 text-[10px] sm:text-xs bg-white/10 backdrop-blur-sm px-3 sm:px-4 py-1.5 sm:py-2 rounded-full border border-white/20 group-hover:bg-white/20 transition-all duration-300">
+                            View Collection
+                            <svg class="w-3 h-3 sm:w-4 sm:h-4 transform group-hover:translate-x-1 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 8l4 4m0 0l-4 4m4-4H3" />
+                            </svg>
+                        </span>
+                    </div>
+                </a>
 
-            <!-- On Sale Products Container -->
-            <a href="index-allproductsub-page-5" class="group relative overflow-hidden h-40 sm:h-52 lg:h-64 shadow-lg hover:shadow-2xl transition-all duration-300 transform hover:scale-[1.02]">
-                <!-- Background Image with Overlay -->
-                <div class="absolute inset-0 bg-cover bg-center" style="background-image: url('../img/saleandexplore/b.png');">
-                    <div class="absolute inset-0 bg-gradient-to-b from-black/40 via-black/50 to-black/70 group-hover:from-black/50 group-hover:via-black/60 group-hover:to-black/80 transition-all duration-300"></div>
-                </div>
+                <!-- On Sale Products Container -->
+                <a href="index-allproductsub-page-5" class="group relative overflow-hidden h-40 sm:h-52 lg:h-64 shadow-lg hover:shadow-2xl transition-all duration-300 transform hover:scale-[1.02]">
+                    <!-- Background Image with Overlay -->
+                    <div class="absolute inset-0 bg-cover bg-center" style="background-image: url('../img/saleandexplore/b.png');">
+                        <div class="absolute inset-0 bg-gradient-to-b from-black/40 via-black/50 to-black/70 group-hover:from-black/50 group-hover:via-black/60 group-hover:to-black/80 transition-all duration-300"></div>
+                    </div>
 
-                <!-- Content -->
-                <div class="relative h-full flex flex-col items-center justify-center p-4 sm:p-6 text-white">
-                    <h3 class="text-lg sm:text-xl lg:text-3xl uppercase mb-1 sm:mb-2 tracking-wide font-semibold">On Sale Products</h3>
-                    <p class="text-white/90 text-xs sm:text-sm mb-2 sm:mb-4">Limited time offers</p>
-                    <span class="inline-flex items-center gap-1 sm:gap-2 text-[10px] sm:text-xs bg-white/10 backdrop-blur-sm px-3 sm:px-4 py-1.5 sm:py-2 rounded-full border border-white/20 group-hover:bg-white/20 transition-all duration-300">
-                        Shop Deals
-                        <svg class="w-3 h-3 sm:w-4 sm:h-4 transform group-hover:translate-x-1 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 8l4 4m0 0l-4 4m4-4H3" />
-                        </svg>
-                    </span>
-                </div>
-            </a>
+                    <!-- Content -->
+                    <div class="relative h-full flex flex-col items-center justify-center p-4 sm:p-6 text-white">
+                        <h3 class="text-lg sm:text-xl lg:text-3xl uppercase mb-1 sm:mb-2 tracking-wide font-semibold" style="font-family: 'Montserrat', sans-serif;">On Sale Products</h3>
+                        <p class="text-white/90 text-xs sm:text-sm mb-2 sm:mb-4" style="font-family: 'Montserrat', sans-serif;">Limited time offers</p>
+                        <span class="inline-flex items-center gap-1 sm:gap-2 text-[10px] sm:text-xs bg-white/10 backdrop-blur-sm px-3 sm:px-4 py-1.5 sm:py-2 rounded-full border border-white/20 group-hover:bg-white/20 transition-all duration-300">
+                            Shop Deals
+                            <svg class="w-3 h-3 sm:w-4 sm:h-4 transform group-hover:translate-x-1 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 8l4 4m0 0l-4 4m4-4H3" />
+                            </svg>
+                        </span>
+                    </div>
+                </a>
+            </div>
         </div>
-    </div>
-</section>
+    </section>
 
     <!-- Mobile Filter Overlay -->
     <div id="mobileFilterOverlay" class="mobile-filter-overlay"></div>
@@ -515,12 +515,12 @@ $is_guest = !isset($_SESSION['user_id']);
         <div class="sidebar-header">
             <div class="flex items-center justify-between">
                 <div>
-                    <h2 class="text-xl flex items-center">
+                    <h2 class="text-xl flex items-center text-white" style="font-family: 'Montserrat', sans-serif; ">
                         <i class="fas fa-sliders-h mr-2"></i>
                         Filter Products
                     </h2>
                     <?php if ($active_filters > 0): ?>
-                        <span class="filter-badge mt-2">
+                        <span class="filter-badge mt-2" style="font-family: 'Montserrat', sans-serif; color: #2f1200;">
                             <?= $active_filters ?> active filter<?= $active_filters > 1 ? 's' : '' ?>
                         </span>
                     <?php endif; ?>
@@ -536,9 +536,9 @@ $is_guest = !isset($_SESSION['user_id']);
                 <!-- Search Section -->
                 <div class="mb-4">
                     <div class="filter-section-header" onclick="toggleMobileSection('search')">
-                        <div class="flex items-center">
-                            <i class="fas fa-search text-gray-600 mr-2"></i>
-                            <span class="font-semibold text-gray-900">Search Products</span>
+                        <div class="flex items-center" style="font-family: 'Montserrat', sans-serif; color: #2f1200;">
+                            <i class="fas fa-search  mr-2"></i>
+                            <span class="font-semibold">Search Products</span>
                         </div>
                         <i class="fas fa-chevron-down text-gray-400 transition-transform" id="mobile-search-chevron"></i>
                     </div>
@@ -557,9 +557,9 @@ $is_guest = !isset($_SESSION['user_id']);
                 <!-- Categories Section -->
                 <div class="mb-4">
                     <div class="filter-section-header" onclick="toggleMobileSection('categories')">
-                        <div class="flex items-center">
-                            <i class="fas fa-th-large text-gray-600 mr-2"></i>
-                            <span class="font-semibold text-gray-900">Categories</span>
+                        <div class="flex items-center" style="font-family: 'Montserrat', sans-serif; color: #2f1200;">
+                            <i class="fas fa-th-large  mr-2"></i>
+                            <span class="font-semibold ">Categories</span>
                             <span class="ml-2 text-xs bg-gray-200 text-gray-600 px-2 py-1 rounded-full"><?= count($all_categories) ?></span>
                         </div>
                         <i class="fas fa-chevron-down text-gray-400 transition-transform" id="mobile-categories-chevron"></i>
@@ -573,7 +573,7 @@ $is_guest = !isset($_SESSION['user_id']);
                                             <?= in_array($cat_key, $selected_categories) ? 'checked' : '' ?>
                                             <?= ($category_counts[$cat_key] ?? 0) == 0 ? 'disabled' : '' ?>
                                             class="mr-3 text-primary border-gray-300 rounded focus:ring-primary w-4 h-4">
-                                        <span class="category-label text-sm text-gray-700"><?= htmlspecialchars($cat_name) ?></span>
+                                        <span class="category-label text-sm" style="font-family: 'Montserrat', sans-serif; color: #2f1200;"><?= htmlspecialchars($cat_name) ?></span>
                                     </div>
                                     <span class="text-xs bg-gray-100 text-gray-600 px-2.5 py-1 rounded-full font-semibold">
                                         <?= $category_counts[$cat_key] ?? 0 ?>
@@ -585,13 +585,13 @@ $is_guest = !isset($_SESSION['user_id']);
                 </div>
 
                 <!-- Sort Section -->
-                <div class="mb-4">
+                <div class="mb-4" style="font-family: 'Montserrat', sans-serif; color: #2f1200;">
                     <div class="filter-section-header" onclick="toggleMobileSection('sort')">
                         <div class="flex items-center">
-                            <i class="fas fa-sort text-gray-600 mr-2"></i>
-                            <span class="font-semibold text-gray-900">Sort By</span>
+                            <i class="fas fa-sort  mr-2"></i>
+                            <span class="font-semibold ">Sort By</span>
                         </div>
-                        <i class="fas fa-chevron-down text-gray-400 transition-transform" id="mobile-sort-chevron"></i>
+                        <i class="fas fa-chevron-down  transition-transform" id="mobile-sort-chevron"></i>
                     </div>
                     <div class="filter-section-content expanded" id="mobile-sort-content">
                         <div class="px-1">
@@ -609,17 +609,17 @@ $is_guest = !isset($_SESSION['user_id']);
 
         <div class="sidebar-footer">
             <div class="space-y-3">
-                <button type="submit" form="mobileFilterForm" class="w-full bg-primary text-white px-6 py-3.5 rounded-lg hover:bg-primary-dark font-semibold shadow-lg transition-all">
+                <button type="submit" form="mobileFilterForm" class="w-full bg-primary text-white px-6 py-3.5 rounded-lg hover:bg-primary-dark font-semibold shadow-lg transition-all" style="font-family: 'Montserrat', sans-serif; ">
                     <i class="fas fa-check mr-2"></i>Apply Filters
                 </button>
-                <button type="button" onclick="clearAllFilters()" class="w-full bg-gray-100 text-gray-700 px-6 py-3.5 rounded-lg hover:bg-gray-200 font-semibold transition-all">
+                <button type="button" onclick="clearAllFilters()" class="w-full bg-gray-100 text-gray-700 px-6 py-3.5 rounded-lg hover:bg-gray-200 font-semibold transition-all" style="font-family: 'Montserrat', sans-serif; ">
                     <i class="fas fa-times mr-2"></i>Clear All
                 </button>
             </div>
         </div>
     </div>
 
-<!-- Mobile Filter Toggle Button -->
+    <!-- Mobile Filter Toggle Button -->
     <div class="mobile-filter-toggle">
         <button id="mobileFilterToggle" class="bg-primary hover:bg-primary-dark text-white px-4 py-2.5 rounded-full font-semibold flex items-center shadow-lg transition-all hover:scale-105 text-sm">
             <i class="fas fa-sliders-h mr-1.5 text-xs"></i>
@@ -631,86 +631,86 @@ $is_guest = !isset($_SESSION['user_id']);
             <?php endif; ?>
         </button>
     </div>
-    
+
     <!-- Main Content -->
     <main class="max-w-full mx-auto px-4 sm:px-6 lg:px-8">
         <div class="flex flex-col lg:flex-row gap-8">
             <!-- Products Section -->
             <div class="flex-1 lg:order-1">
 
-<?php if (!empty($selected_categories)): ?>
-    <div class="mb-8">
-        <!-- Filter Bar Container -->
-        <div class=" p-4 shadow-sm ">
-            <!-- Header with Count and Clear All -->
-            <div class="flex items-center justify-between mb-3">
-                <div class="flex items-center gap-2">
-                    <div class="w-8 h-8 bg-black rounded-lg flex items-center justify-center">
-                        <i class="fas fa-filter text-white text-sm"></i>
-                    </div>
-                    <div>
-                        <h3 class="text-sm font-semibold text-gray-900">Active Filters</h3>
-                        <p class="text-xs text-gray-500"><?= count($selected_categories) ?> selected</p>
-                    </div>
-                </div>
-                
-                <button onclick="clearAllFilters()" 
-                        class="flex items-center gap-1.5 bg-red-500 hover:bg-red-600 text-white px-3 py-1.5 rounded-lg text-xs font-medium transition-all shadow-sm hover:shadow">
-                    <i class="fas fa-trash-alt"></i>
-                    <span class="hidden sm:inline">Clear All</span>
-                </button>
-            </div>
+                <?php if (!empty($selected_categories)): ?>
+                    <div class="mb-8">
+                        <!-- Filter Bar Container -->
+                        <div class=" p-4 shadow-sm ">
+                            <!-- Header with Count and Clear All -->
+                            <div class="flex items-center justify-between mb-3">
+                                <div class="flex items-center gap-2">
+                                    <div class="w-8 h-8 bg-black rounded-lg flex items-center justify-center">
+                                        <i class="fas fa-filter text-white text-sm"></i>
+                                    </div>
+                                    <div>
+                                        <h3 class="text-sm font-semibold " style="font-family: 'Montserrat', sans-serif; color: #2f1200;">Active Filters</h3>
+                                        <p class="text-xs text-gray-500"><?= count($selected_categories) ?> selected</p>
+                                    </div>
+                                </div>
 
-            <!-- Pills Container with Scroll -->
-            <div class="overflow-x-auto scrollbar-hide -mx-2 px-2">
-                <div class="flex gap-2 min-w-max sm:flex-wrap sm:min-w-0">
-                    <?php foreach ($selected_categories as $cat_key): ?>
-                        <?php if (isset($all_categories[$cat_key])): ?>
-                            <div class="inline-flex items-center gap-2 bg-white border-2 border-gray-300 hover:border-black px-4 py-2 rounded-xl text-sm font-medium text-gray-900 shadow-sm hover:shadow transition-all group whitespace-nowrap">
-                                <i class="fas fa-tag text-xs text-gray-400 group-hover:text-black transition-colors"></i>
-                                <span class="uppercase"><?= htmlspecialchars($all_categories[$cat_key]) ?></span>
-                                <a href="?<?= http_build_query(array_merge($_GET, ['category' => array_diff($selected_categories, [$cat_key]), 'page' => 1])) ?>" 
-                                   class="flex items-center justify-center w-5 h-5 bg-gray-100 hover:bg-black rounded-full transition-colors group-hover:bg-red-500">
-                                    <i class="fas fa-times text-[10px] text-gray-600 group-hover:text-white"></i>
-                                </a>
+                                <button onclick="clearAllFilters()"
+                                    class="flex items-center gap-1.5 bg-red-500 hover:bg-red-600 text-white px-3 py-1.5 rounded-lg text-xs font-medium transition-all shadow-sm hover:shadow">
+                                    <i class="fas fa-trash-alt"></i>
+                                    <span class="hidden sm:inline">Clear All</span>
+                                </button>
                             </div>
-                        <?php endif; ?>
-                    <?php endforeach; ?>
-                </div>
-            </div>
-        </div>
-    </div>
-<?php endif; ?>
 
-<style>
-/* Hide scrollbar pero functional pa rin */
-.scrollbar-hide {
-    -ms-overflow-style: none;
-    scrollbar-width: none;
-}
+                            <!-- Pills Container with Scroll -->
+                            <div class="overflow-x-auto scrollbar-hide -mx-2 px-2">
+                                <div class="flex gap-2 min-w-max sm:flex-wrap sm:min-w-0">
+                                    <?php foreach ($selected_categories as $cat_key): ?>
+                                        <?php if (isset($all_categories[$cat_key])): ?>
+                                            <div class="inline-flex items-center gap-2 bg-white border-2 border-gray-300 hover:border-black px-4 py-2 rounded-xl text-sm font-medium text-gray-900 shadow-sm hover:shadow transition-all group whitespace-nowrap">
+                                                <i class="fas fa-tag text-xs text-gray-400 group-hover:text-black transition-colors"></i>
+                                                <span class="uppercase"><?= htmlspecialchars($all_categories[$cat_key]) ?></span>
+                                                <a href="?<?= http_build_query(array_merge($_GET, ['category' => array_diff($selected_categories, [$cat_key]), 'page' => 1])) ?>"
+                                                    class="flex items-center justify-center w-5 h-5 bg-gray-100 hover:bg-black rounded-full transition-colors group-hover:bg-red-500">
+                                                    <i class="fas fa-times text-[10px] text-gray-600 group-hover:text-white"></i>
+                                                </a>
+                                            </div>
+                                        <?php endif; ?>
+                                    <?php endforeach; ?>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                <?php endif; ?>
 
-.scrollbar-hide::-webkit-scrollbar {
-    display: none;
-}
+                <style>
+                    /* Hide scrollbar pero functional pa rin */
+                    .scrollbar-hide {
+                        -ms-overflow-style: none;
+                        scrollbar-width: none;
+                    }
 
-/* Smooth transitions */
-.transition-all {
-    transition: all 0.2s ease;
-}
+                    .scrollbar-hide::-webkit-scrollbar {
+                        display: none;
+                    }
 
-/* Mobile adjustments */
-@media (max-width: 640px) {
-    .inline-flex {
-        padding: 0.5rem 0.75rem;
-        font-size: 0.75rem;
-    }
-    
-    .w-8.h-8 {
-        width: 1.75rem;
-        height: 1.75rem;
-    }
-}
-</style>
+                    /* Smooth transitions */
+                    .transition-all {
+                        transition: all 0.2s ease;
+                    }
+
+                    /* Mobile adjustments */
+                    @media (max-width: 640px) {
+                        .inline-flex {
+                            padding: 0.5rem 0.75rem;
+                            font-size: 0.75rem;
+                        }
+
+                        .w-8.h-8 {
+                            width: 1.75rem;
+                            height: 1.75rem;
+                        }
+                    }
+                </style>
 
                 <!-- Controls -->
                 <div class="p-4 sm:p-6 mb-8 shadow-sm">
@@ -726,159 +726,159 @@ $is_guest = !isset($_SESSION['user_id']);
                             </select>
                         </div>
 
-                        
+
                     </div>
                 </div>
 
-<!-- Product Grid -->
-<div class="grid grid-cols-2 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-3 xl:grid-cols-4 gap-2 sm:gap-6 mb-12">
-    <?php while ($row = $products->fetch_assoc()): ?>
-        <?php
-        $product_id = (int)$row['id'];
-        
-        // Get variant count
-        $variant_stmt = $conn->prepare("SELECT COUNT(*) as total FROM product_variants pv JOIN product_types pt ON pv.type_id = pt.id WHERE pt.product_id = ?");
-        $variant_stmt->bind_param("i", $product_id);
-        $variant_stmt->execute();
-        $variant_count = $variant_stmt->get_result()->fetch_assoc()['total'] ?? 0;
-        $variant_stmt->close();
+                <!-- Product Grid -->
+                <div class="grid grid-cols-2 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-3 xl:grid-cols-4 gap-2 sm:gap-6 mb-12">
+                    <?php while ($row = $products->fetch_assoc()): ?>
+                        <?php
+                        $product_id = (int)$row['id'];
 
-        // Get view count
-        $view_stmt = $conn->prepare("SELECT view_count FROM products WHERE id = ?");
-        $view_stmt->bind_param("i", $product_id);
-        $view_stmt->execute();
-        $view_result = $view_stmt->get_result()->fetch_assoc();
-        $view_count = (int)($view_result['view_count'] ?? 0);
-        $view_stmt->close();
+                        // Get variant count
+                        $variant_stmt = $conn->prepare("SELECT COUNT(*) as total FROM product_variants pv JOIN product_types pt ON pv.type_id = pt.id WHERE pt.product_id = ?");
+                        $variant_stmt->bind_param("i", $product_id);
+                        $variant_stmt->execute();
+                        $variant_count = $variant_stmt->get_result()->fetch_assoc()['total'] ?? 0;
+                        $variant_stmt->close();
 
-        // Get sold count
-        $sold_stmt = $conn->prepare("SELECT SUM(quantity) as total_sold FROM sold_items WHERE product_id = ?");
-        $sold_stmt->bind_param("i", $product_id);
-        $sold_stmt->execute();
-        $sold_result = $sold_stmt->get_result()->fetch_assoc();
-        $total_sold = (int)($sold_result['total_sold'] ?? 0);
-        $sold_stmt->close();
+                        // Get view count
+                        $view_stmt = $conn->prepare("SELECT view_count FROM products WHERE id = ?");
+                        $view_stmt->bind_param("i", $product_id);
+                        $view_stmt->execute();
+                        $view_result = $view_stmt->get_result()->fetch_assoc();
+                        $view_count = (int)($view_result['view_count'] ?? 0);
+                        $view_stmt->close();
 
-        // Get rating
-        $rating_stmt = $conn->prepare("SELECT ROUND(AVG(rating), 1) AS avg_rating, COUNT(*) AS total_raters FROM product_ratings WHERE product_id = ?");
-        $rating_stmt->bind_param("i", $product_id);
-        $rating_stmt->execute();
-        $rating_result = $rating_stmt->get_result()->fetch_assoc();
-        $avg_rating = $rating_result['avg_rating'] ?? 0;
-        $total_raters = $rating_result['total_raters'] ?? 0;
-        $rating_stmt->close();
+                        // Get sold count
+                        $sold_stmt = $conn->prepare("SELECT SUM(quantity) as total_sold FROM sold_items WHERE product_id = ?");
+                        $sold_stmt->bind_param("i", $product_id);
+                        $sold_stmt->execute();
+                        $sold_result = $sold_stmt->get_result()->fetch_assoc();
+                        $total_sold = (int)($sold_result['total_sold'] ?? 0);
+                        $sold_stmt->close();
 
-        // Calculate stars
-        $full_stars = floor($avg_rating);
-        $half_star = ($avg_rating - $full_stars >= 0.5) ? 1 : 0;
-        $empty_stars = 5 - $full_stars - $half_star;
-        ?>
+                        // Get rating
+                        $rating_stmt = $conn->prepare("SELECT ROUND(AVG(rating), 1) AS avg_rating, COUNT(*) AS total_raters FROM product_ratings WHERE product_id = ?");
+                        $rating_stmt->bind_param("i", $product_id);
+                        $rating_stmt->execute();
+                        $rating_result = $rating_stmt->get_result()->fetch_assoc();
+                        $avg_rating = $rating_result['avg_rating'] ?? 0;
+                        $total_raters = $rating_result['total_raters'] ?? 0;
+                        $rating_stmt->close();
 
-        <div class="card-hover bg-white overflow-hidden flex flex-col group rounded-lg hover:shadow-xl transition-all duration-300">
-            <a href="index-product_view-page-4-AA.php?id=<?= $product_id ?>" class="flex flex-col h-full">
-                <!-- Image Container - Fixed Square -->
-                <div class="relative w-full " style="padding-bottom: 100%;">
-                    <div class="absolute inset-0 p-2 sm:p-4">
-                        <?php if (!empty($row['main_image'])): ?>
-                            <img src="../../<?= htmlspecialchars($row['main_image']) ?>"
-                                alt="<?= htmlspecialchars($row['product_name']) ?>"
-                                class="w-full h-full object-contain group-hover:scale-105 transition-transform duration-500"
-                                loading="lazy">
-                        <?php else: ?>
-                            <div class="w-full h-full flex items-center justify-center text-gray-400">
-                                <i class="fas fa-image text-2xl sm:text-4xl"></i>
-                            </div>
-                        <?php endif; ?>
-                    </div>
+                        // Calculate stars
+                        $full_stars = floor($avg_rating);
+                        $half_star = ($avg_rating - $full_stars >= 0.5) ? 1 : 0;
+                        $empty_stars = 5 - $full_stars - $half_star;
+                        ?>
 
-                    <!-- Hover Overlay (Desktop Only) -->
-                    <div class="hidden sm:flex absolute inset-0 bg-black bg-opacity-0 group-hover:bg-opacity-20 transition-all items-center justify-center">
-                        <div class="opacity-0 group-hover:opacity-100 transition-opacity">
-                            <span class="bg-white text-gray-900 px-4 py-2 rounded-full font-semibold shadow-lg text-sm">
-                                <i class="fas fa-eye mr-2"></i>View Details
-                            </span>
+                        <div class="card-hover bg-white overflow-hidden flex flex-col group rounded-lg hover:shadow-xl transition-all duration-300">
+                            <a href="index-product_view-page-4-AA.php?id=<?= $product_id ?>" class="flex flex-col h-full">
+                                <!-- Image Container - Fixed Square -->
+                                <div class="relative w-full " style="padding-bottom: 100%;">
+                                    <div class="absolute inset-0 p-2 sm:p-4">
+                                        <?php if (!empty($row['main_image'])): ?>
+                                            <img src="../../<?= htmlspecialchars($row['main_image']) ?>"
+                                                alt="<?= htmlspecialchars($row['product_name']) ?>"
+                                                class="w-full h-full object-contain group-hover:scale-105 transition-transform duration-500"
+                                                loading="lazy">
+                                        <?php else: ?>
+                                            <div class="w-full h-full flex items-center justify-center text-gray-400">
+                                                <i class="fas fa-image text-2xl sm:text-4xl"></i>
+                                            </div>
+                                        <?php endif; ?>
+                                    </div>
+
+                                    <!-- Hover Overlay (Desktop Only) -->
+                                    <div class="hidden sm:flex absolute inset-0 bg-black bg-opacity-0 group-hover:bg-opacity-20 transition-all items-center justify-center">
+                                        <div class="opacity-0 group-hover:opacity-100 transition-opacity">
+                                            <span class="bg-white text-gray-900 px-4 py-2 rounded-full font-semibold shadow-lg text-sm">
+                                                <i class="fas fa-eye mr-2"></i>View Details
+                                            </span>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <!-- Content Container -->
+                                <div class="flex-1 flex flex-col p-2 sm:p-4">
+                                    <!-- Product Name - Fixed 2 lines -->
+                                    <h3 class="text-[15px] sm:text-sm text-black mb-1 sm:mb-2 line-clamp-2 uppercase font-semibold leading-tight" style="min-height: 2rem; font-family: 'Montserrat', sans-serif; color: #2f1200;">
+                                        <?= htmlspecialchars($row['product_name']) ?>
+                                    </h3>
+
+                                    <!-- Description - Fixed 2 lines -->
+                                    <p class="text-[13px] sm:text-xs text-gray-600 line-clamp-2 mb-1.5 sm:mb-2" style="min-height: 1.5rem; font-family: 'Montserrat', sans-serif; color: #2f1200;">
+                                        <?= htmlspecialchars($row['description'] ?? 'No description available.') ?>
+                                    </p>
+
+                                    <!-- Rating -->
+                                    <div class="flex items-center gap-1 mb-1.5 sm:mb-2" style="font-family: 'Montserrat', sans-serif; color: #2f1200;">
+                                        <?php if ($total_raters > 0): ?>
+                                            <div class="flex text-[9px] sm:text-[11px]">
+                                                <?php for ($i = 0; $i < $full_stars; $i++): ?>
+                                                    <i class="fas fa-star"></i>
+                                                <?php endfor; ?>
+                                                <?php if ($half_star): ?>
+                                                    <i class="fas fa-star-half-alt"></i>
+                                                <?php endif; ?>
+                                                <?php for ($i = 0; $i < $empty_stars; $i++): ?>
+                                                    <i class="far fa-star "></i>
+                                                <?php endfor; ?>
+                                            </div>
+                                            <span class="text-[8px] sm:text-[10px] text-gray-500 font-medium">(<?= $total_raters ?>)</span>
+                                        <?php else: ?>
+                                            <div class="flex text-gray-300 text-[9px] sm:text-[11px]">
+                                                <?php for ($i = 0; $i < 5; $i++): ?>
+                                                    <i class="far fa-star"></i>
+                                                <?php endfor; ?>
+                                            </div>
+                                            <span class="text-[8px] sm:text-[10px] text-gray-400">No rating</span>
+                                        <?php endif; ?>
+                                    </div>
+
+                                    <!-- Bottom Section -->
+                                    <div class="mt-auto space-y-1 sm:space-y-2" style="font-family: 'Montserrat', sans-serif; color: #2f1200;">
+                                        <!-- View Count + Sold Count -->
+                                        <?php if ($view_count > 0 || $total_sold > 0): ?>
+                                            <div class="text-[8px] sm:text-[10px] font-medium">
+                                                <?php if ($view_count > 0): ?>
+                                                    <?= number_format($view_count); ?> viewing
+                                                <?php endif; ?>
+                                                <?php if ($view_count > 0 && $total_sold > 0): ?> | <?php endif; ?>
+                                                <?php if ($total_sold > 0): ?>
+                                                    <i class="fas fa-shopping-bag mr-0.5"></i>
+                                                    <?= number_format($total_sold); ?> sold
+                                                <?php endif; ?>
+                                            </div>
+                                        <?php endif; ?>
+                                    </div>
+                                </div>
+                            </a>
                         </div>
-                    </div>
+                    <?php endwhile; ?>
                 </div>
 
-                <!-- Content Container -->
-                <div class="flex-1 flex flex-col p-2 sm:p-4">
-                    <!-- Product Name - Fixed 2 lines -->
-                    <h3 class="text-[15px] sm:text-sm text-black mb-1 sm:mb-2 line-clamp-2 uppercase font-semibold leading-tight" style="min-height: 2rem;">
-                        <?= htmlspecialchars($row['product_name']) ?>
-                    </h3>
+                <style>
+                    .line-clamp-2 {
+                        display: -webkit-box;
+                        -webkit-line-clamp: 2;
+                        line-clamp: 2;
+                        -webkit-box-orient: vertical;
+                        overflow: hidden;
+                    }
 
-                    <!-- Description - Fixed 2 lines -->
-                    <p class="text-[13px] sm:text-xs text-gray-600 line-clamp-2 mb-1.5 sm:mb-2" style="min-height: 1.5rem;">
-                        <?= htmlspecialchars($row['description'] ?? 'No description available.') ?>
-                    </p>
+                    .card-hover {
+                        transition: all 0.3s ease;
+                    }
 
-                    <!-- Rating -->
-                    <div class="flex items-center gap-1 mb-1.5 sm:mb-2">
-                        <?php if ($total_raters > 0): ?>
-                            <div class="flex text-yellow-400 text-[9px] sm:text-[11px]">
-                                <?php for ($i = 0; $i < $full_stars; $i++): ?>
-                                    <i class="fas fa-star"></i>
-                                <?php endfor; ?>
-                                <?php if ($half_star): ?>
-                                    <i class="fas fa-star-half-alt"></i>
-                                <?php endif; ?>
-                                <?php for ($i = 0; $i < $empty_stars; $i++): ?>
-                                    <i class="far fa-star text-gray-300"></i>
-                                <?php endfor; ?>
-                            </div>
-                            <span class="text-[8px] sm:text-[10px] text-gray-500 font-medium">(<?= $total_raters ?>)</span>
-                        <?php else: ?>
-                            <div class="flex text-gray-300 text-[9px] sm:text-[11px]">
-                                <?php for ($i = 0; $i < 5; $i++): ?>
-                                    <i class="far fa-star"></i>
-                                <?php endfor; ?>
-                            </div>
-                            <span class="text-[8px] sm:text-[10px] text-gray-400">No rating</span>
-                        <?php endif; ?>
-                    </div>
+                    .card-hover:hover {
+                        transform: translateY(-4px);
+                    }
+                </style>
 
-                    <!-- Bottom Section -->
-                    <div class="mt-auto space-y-1 sm:space-y-2">
-                    <!-- View Count + Sold Count -->
-                        <?php if ($view_count > 0 || $total_sold > 0): ?>
-                            <div class="text-[8px] sm:text-[10px] text-gray-500 font-medium">
-                                <?php if ($view_count > 0): ?>
-                                    <?= number_format($view_count); ?> viewing
-                                <?php endif; ?>
-                                <?php if ($view_count > 0 && $total_sold > 0): ?> | <?php endif; ?>
-                                <?php if ($total_sold > 0): ?>
-                                    <i class="fas fa-shopping-bag mr-0.5"></i>
-                                    <?= number_format($total_sold); ?> sold
-                                <?php endif; ?>
-                            </div>
-                        <?php endif; ?>
-                    </div>
-                </div>
-            </a>
-        </div>
-    <?php endwhile; ?>
-</div>
-
-<style>
-.line-clamp-2 {
-    display: -webkit-box;
-    -webkit-line-clamp: 2;
-    line-clamp: 2;
-    -webkit-box-orient: vertical;
-    overflow: hidden;
-}
-
-.card-hover {
-    transition: all 0.3s ease;
-}
-
-.card-hover:hover {
-    transform: translateY(-4px);
-}
-</style>
-
-         <!-- Pagination -->
+                <!-- Pagination -->
                 <?php if ($total_pages > 1): ?>
                     <div class="p-4 sm:p-8" data-aos="fade-up">
                         <!-- Navigation Buttons -->
@@ -921,8 +921,8 @@ $is_guest = !isset($_SESSION['user_id']);
             <aside class="desktop-sidebar-filter w-80 lg:order-2">
                 <div class="sticky-filter p-6 ">
                     <div class="mb-6">
-                        <h2 class="text-2xl  text-gray-900 mb-2 flex items-center">
-                            <i class="fas fa-sliders-h text-primary mr-3"></i>
+                        <h2 class="text-2xl mb-2 flex items-center" style="font-family: 'Montserrat', sans-serif; color: #2f1200;">
+                            <i class="fas fa-sliders-h  mr-3"></i>
                             Filters
                         </h2>
                         <?php if ($active_filters > 0): ?>
@@ -938,8 +938,8 @@ $is_guest = !isset($_SESSION['user_id']);
                     <form method="GET" class="space-y-6">
                         <!-- Search -->
                         <div>
-                            <label class="block text-sm font-semibold text-gray-900 mb-3 flex items-center">
-                                <i class="fas fa-search text-gray-500 mr-2"></i>
+                            <label class="block text-sm font-semibold  mb-3 flex items-center" style="font-family: 'Montserrat', sans-serif; color: #2f1200;">
+                                <i class="fas fa-search mr-2"></i>
                                 Search Products
                             </label>
                             <div class="relative">
@@ -952,9 +952,9 @@ $is_guest = !isset($_SESSION['user_id']);
 
                         <!-- Categories -->
                         <div>
-                            <label class="block text-sm font-semibold text-gray-900 mb-3 flex items-center justify-between">
+                            <label class="block text-sm font-semibold  mb-3 flex items-center justify-between" style="font-family: 'Montserrat', sans-serif; color: #2f1200;">
                                 <span class="flex items-center">
-                                    <i class="fas fa-th-large text-gray-500 mr-2"></i>
+                                    <i class="fas fa-th-large  mr-2"></i>
                                     Categories
                                 </span>
                                 <span class="text-xs bg-gray-200 text-gray-600 px-2 py-1 rounded-full"><?= count($all_categories) ?></span>
@@ -962,12 +962,12 @@ $is_guest = !isset($_SESSION['user_id']);
                             <div class="space-y-2 max-h-80 overflow-y-auto pr-2">
                                 <?php foreach ($all_categories as $cat_key => $cat_name): ?>
                                     <label class="flex items-center justify-between p-3 rounded-lg border border-gray-200 hover:border-primary hover:bg-orange-50 transition-all cursor-pointer <?= ($category_counts[$cat_key] ?? 0) == 0 ? 'opacity-50' : '' ?>">
-                                        <div class="flex items-center flex-1">
+                                        <div class="flex items-center flex-1" style="font-family: 'Montserrat', sans-serif; color: #2f1200;">
                                             <input type="checkbox" name="category[]" value="<?= $cat_key ?>"
                                                 <?= in_array($cat_key, $selected_categories) ? 'checked' : '' ?>
                                                 <?= ($category_counts[$cat_key] ?? 0) == 0 ? 'disabled' : '' ?>
                                                 class="mr-3 text-primary border-gray-300 rounded focus:ring-primary">
-                                            <span class="text-sm text-gray-700"><?= htmlspecialchars($cat_name) ?></span>
+                                            <span class="text-sm "><?= htmlspecialchars($cat_name) ?></span>
                                         </div>
                                         <span class="text-xs bg-gray-100 text-gray-600 px-2.5 py-1 rounded-full font-semibold">
                                             <?= $category_counts[$cat_key] ?? 0 ?>
@@ -979,8 +979,8 @@ $is_guest = !isset($_SESSION['user_id']);
 
                         <!-- Sort -->
                         <div>
-                            <label class="block text-sm font-semibold text-gray-900 mb-3 flex items-center">
-                                <i class="fas fa-sort text-gray-500 mr-2"></i>
+                            <label class="block text-sm font-semibold  mb-3 flex items-center" style="font-family: 'Montserrat', sans-serif; color: #2f1200;">
+                                <i class="fas fa-sort  mr-2"></i>
                                 Sort By
                             </label>
                             <select name="sort" class="w-full py-3 px-4 border border-gray-300  focus:ring-2 focus:ring-primary bg-white">
@@ -992,7 +992,7 @@ $is_guest = !isset($_SESSION['user_id']);
                         </div>
 
                         <!-- Actions -->
-                        <div class="pt-4 border-t border-gray-200 space-y-3">
+                        <div class="pt-4 border-t border-gray-200 space-y-3" style="font-family: 'Montserrat', sans-serif; ">
                             <button type="submit" class="w-full bg-black text-white px-6 py-3.5  hover:bg-primary-dark  transition-all shadow-md hover:shadow-lg">
                                 <i class="fas fa-check mr-2"></i>Apply Filters
                             </button>
@@ -1010,7 +1010,7 @@ $is_guest = !isset($_SESSION['user_id']);
 
     <script src="https://unpkg.com/aos@2.3.4/dist/aos.js"></script>
     <script>
-           // Initialize Lenis
+        // Initialize Lenis
         const lenis = new Lenis({
             duration: 3,
             easing: (t) => Math.min(1, 1.001 - Math.pow(2, -10 * t)),

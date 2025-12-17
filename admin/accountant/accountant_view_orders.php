@@ -8,7 +8,7 @@ ini_set('display_errors', 1);
 include '../../connection/connect.php';
 require_once '../role/roleaccount.php';
 require_role(['accountant', 'superadmin']);
-require_subrole(['document_controller']);
+require_subrole(['document_controller','']);
 
 if (!isset($_SESSION['noble_user'])) {
     header("Location: ../../loginpage/index.php");

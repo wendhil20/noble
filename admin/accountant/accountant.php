@@ -614,74 +614,6 @@ $orders_result = $conn->query($orders_query);
             </div>
         <?php endif; ?>
 
-        <!-- Statistics Cards -->
-        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-6 mb-8">
-            <div class="bg-white rounded-xl shadow-sm p-6 border-l-4 border-yellow-500 transform hover:scale-105 transition-transform">
-                <div class="flex items-center">
-                    <div class="w-12 h-12 bg-yellow-100 rounded-lg flex items-center justify-center">
-                        <i class="fas fa-clock text-yellow-600 text-xl"></i>
-                    </div>
-                    <div class="ml-4">
-                        <p class="text-sm font-medium text-gray-600">Pending Payments</p>
-                        <p class="text-2xl font-bold text-gray-900"><?php echo number_format($pending_payments); ?></p>
-                        <p class="text-xs text-yellow-600 mt-1">Awaiting review</p>
-                    </div>
-                </div>
-            </div>
-
-            <div class="bg-white rounded-xl shadow-sm p-6 border-l-4 border-green-500 transform hover:scale-105 transition-transform">
-                <div class="flex items-center">
-                    <div class="w-12 h-12 bg-green-100 rounded-lg flex items-center justify-center">
-                        <i class="fas fa-check-circle text-green-600 text-xl"></i>
-                    </div>
-                    <div class="ml-4">
-                        <p class="text-sm font-medium text-gray-600">Verified Today</p>
-                        <p class="text-2xl font-bold text-gray-900"><?php echo number_format($verified_today); ?></p>
-                        <p class="text-xs text-green-600 mt-1"><?php echo date('M d, Y'); ?></p>
-                    </div>
-                </div>
-            </div>
-
-            <div class="bg-white rounded-xl shadow-sm p-6 border-l-4 border-noble-orange transform hover:scale-105 transition-transform">
-                <div class="flex items-center">
-                    <div class="w-12 h-12 bg-orange-100 rounded-lg flex items-center justify-center">
-                        <i class="fas fa-peso-sign text-noble-orange text-xl"></i>
-                    </div>
-                    <div class="ml-4">
-                        <p class="text-sm font-medium text-gray-600">Revenue Today</p>
-                        <p class="text-2xl font-bold text-gray-900">₱<?php echo number_format($total_revenue_today, 2); ?></p>
-                        <p class="text-xs text-noble-orange mt-1">Verified payments</p>
-                    </div>
-                </div>
-            </div>
-
-            <div class="bg-white rounded-xl shadow-sm p-6 border-l-4 border-red-500 transform hover:scale-105 transition-transform">
-                <div class="flex items-center">
-                    <div class="w-12 h-12 bg-red-100 rounded-lg flex items-center justify-center">
-                        <i class="fas fa-times-circle text-red-600 text-xl"></i>
-                    </div>
-                    <div class="ml-4">
-                        <p class="text-sm font-medium text-gray-600">Rejected</p>
-                        <p class="text-2xl font-bold text-gray-900"><?php echo number_format($rejected_payments); ?></p>
-                        <p class="text-xs text-red-600 mt-1">Total rejected</p>
-                    </div>
-                </div>
-            </div>
-
-            <!-- Add this after the existing 4 cards -->
-            <div class="bg-white rounded-xl shadow-sm p-6 border-l-4 border-blue-500 transform hover:scale-105 transition-transform">
-                <div class="flex items-center">
-                    <div class="w-12 h-12 flex items-center justify-center">
-                        <i class="fab fa-paypal text-blue-600 text-xl"></i>
-                    </div>
-                    <div class="ml-4">
-                        <p class="text-sm font-medium text-gray-600">PayPal Today</p>
-                        <p class="text-2xl font-bold text-gray-900">₱<?php echo number_format($paypal_revenue_today, 2); ?></p>
-                        <p class="text-xs text-blue-600 mt-1"><?php echo $paypal_transaction_count; ?> transactions</p>
-                    </div>
-                </div>
-            </div>
-        </div>
 
         <!-- Filter Tabs -->
 <div class="bg-white rounded-xl shadow-sm mb-6">
@@ -1093,10 +1025,69 @@ $orders_result = $conn->query($orders_query);
 
         <!-- Orders Table -->
         <div class="bg-white rounded-xl shadow-sm overflow-hidden">
-            <div class="px-6 py-4 border-b border-gray-200">
-                <h2 class="text-lg font-semibold text-gray-900">Payment Verification Queue</h2>
-                <p class="text-sm text-gray-600">Review and verify customer payments</p>
+<!-- Payment Verification Queue Header with Statistics Cards -->
+<div class="flex flex-col lg:flex-row gap-6 mb-8">
+    <!-- Header Section -->
+    <div class="lg:w-1/4  p-6 flex flex-col justify-center">
+        <h2 class="text-lg font-semibold text-gray-900">Payment Verification Queue</h2>
+        <p class="text-sm text-gray-600 mt-2">Review and verify customer payments</p>
+    </div>
+
+    <!-- Statistics Cards -->
+    <div class="lg:w-3/4 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+        <div class=" p-6  transform hover:scale-105 transition-transform">
+            <div class="flex items-center">
+                <div class="w-12 h-12 bg-yellow-100 rounded-lg flex items-center justify-center">
+                    <i class="fas fa-clock text-yellow-600 text-xl"></i>
+                </div>
+                <div class="ml-4">
+                    <p class="text-sm font-medium text-gray-600">Pending Payments</p>
+                    <p class="text-2xl font-bold text-gray-900"><?php echo number_format($pending_payments); ?></p>
+                    <p class="text-xs text-yellow-600 mt-1">Awaiting review</p>
+                </div>
             </div>
+        </div>
+
+        <div class="p-6  transform hover:scale-105 transition-transform">
+            <div class="flex items-center">
+                <div class="w-12 h-12 bg-green-100 rounded-lg flex items-center justify-center">
+                    <i class="fas fa-check-circle text-green-600 text-xl"></i>
+                </div>
+                <div class="ml-4">
+                    <p class="text-sm font-medium text-gray-600">Verified Today</p>
+                    <p class="text-2xl font-bold text-gray-900"><?php echo number_format($verified_today); ?></p>
+                    <p class="text-xs text-green-600 mt-1"><?php echo date('M d, Y'); ?></p>
+                </div>
+            </div>
+        </div>
+
+        <div class="p-6  transform hover:scale-105 transition-transform">
+            <div class="flex items-center">
+                <div class="w-12 h-12 bg-orange-100 rounded-lg flex items-center justify-center">
+                    <i class="fas fa-peso-sign text-noble-orange text-xl"></i>
+                </div>
+                <div class="ml-4">
+                    <p class="text-sm font-medium text-gray-600">Revenue Today</p>
+                    <p class="text-2xl font-bold text-gray-900">₱<?php echo number_format($total_revenue_today, 2); ?></p>
+                    <p class="text-xs text-noble-orange mt-1">Verified payments</p>
+                </div>
+            </div>
+        </div>
+
+        <div class="p-6  transform hover:scale-105 transition-transform">
+            <div class="flex items-center">
+                <div class="w-12 h-12 bg-red-100 rounded-lg flex items-center justify-center">
+                    <i class="fas fa-times-circle text-red-600 text-xl"></i>
+                </div>
+                <div class="ml-4">
+                    <p class="text-sm font-medium text-gray-600">Rejected</p>
+                    <p class="text-2xl font-bold text-gray-900"><?php echo number_format($rejected_payments); ?></p>
+                    <p class="text-xs text-red-600 mt-1">Total rejected</p>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
             <?php if ($filter !== 'paypal' && $filter !== 'paymongo'): ?>
                 <div class="overflow-x-auto">
                     <table class="min-w-full divide-y divide-gray-200">

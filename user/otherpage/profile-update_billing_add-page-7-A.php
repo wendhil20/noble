@@ -346,7 +346,7 @@ if ($_POST && isset($_POST['add_address'])) {
     </style>
 </head>
 
-<body class="bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-100 min-h-screen">
+<body class="bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-100 min-h-screen" style="font-family: 'Montserrat', sans-serif; color: #2f1200">
 
     <?php include '../navbar/top.php'; ?>
 

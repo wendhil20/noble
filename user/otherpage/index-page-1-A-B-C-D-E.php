@@ -458,6 +458,7 @@ while ($row = $banners_result->fetch_assoc()) {
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/swiper@11/swiper-bundle.min.css" />
     <link href="https://unpkg.com/aos@next/dist/aos.css" rel="stylesheet" />
     <link href="https://unpkg.com/aos@2.3.4/dist/aos.css" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700;800&display=swap" rel="stylesheet">
     <script src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js" defer></script>
     <script src="https://cdn.tailwindcss.com?plugins=aspect-ratio"></script>
     <script src="https://unpkg.com/aos@2.3.4/dist/aos.js" defer></script>
@@ -761,7 +762,7 @@ while ($row = $banners_result->fetch_assoc()) {
                             class="w-full h-full object-cover mix-blend-overlay group-hover:scale-105 transition-transform duration-300" />
                     </div>
                     <div class="relative h-full flex flex-col justify-end p-4 bg-gradient-to-t from-black/70 via-black/30 to-transparent">
-                        <div class="text-white text-sm font-semibold group-hover:text-orange-400 transition-colors">
+                        <div class="text-white text-sm  group-hover:text-orange-400 transition-colors" style="font-family: 'Montserrat', sans-serif;">
                             Flash Discount ➜
                         </div>
                     </div>
@@ -781,7 +782,7 @@ while ($row = $banners_result->fetch_assoc()) {
                         <?php endif; ?>
                     </div>
                     <div class="relative h-full flex flex-col justify-end p-4 bg-gradient-to-t from-black/70 via-black/30 to-transparent">
-                        <div class="text-white text-sm font-semibold group-hover:text-orange-400 transition-colors">
+                        <div class="text-white text-sm group-hover:text-orange-400 transition-colors" style="font-family: 'Montserrat', sans-serif;">
                             <?php
                             $label = !empty($banners) ? $banners[0]['category_name'] : 'Holiday Deals';
                             echo ucfirst(htmlspecialchars($label));
@@ -801,7 +802,7 @@ while ($row = $banners_result->fetch_assoc()) {
                         class="w-full h-full object-cover mix-blend-overlay group-hover:scale-105 transition-transform duration-300" />
                 </div>
                 <div class="relative h-full flex flex-col justify-end p-3 bg-gradient-to-t from-black/70 to-transparent">
-                    <div class="text-white text-xs font-semibold group-hover:text-orange-400 transition-colors">
+                    <div class="text-white text-xs  group-hover:text-orange-400 transition-colors" style="font-family: 'Montserrat', sans-serif;">
                         Flash Discount ➜
                     </div>
                 </div>
@@ -820,7 +821,7 @@ while ($row = $banners_result->fetch_assoc()) {
                     <?php endif; ?>
                 </div>
                 <div class="relative h-full flex flex-col justify-end p-3 bg-gradient-to-t from-black/70 to-transparent">
-                    <div class="text-white text-xs font-semibold group-hover:text-orange-400 transition-colors">
+                    <div class="text-white text-xs  group-hover:text-orange-400 transition-colors" style="font-family: 'Montserrat', sans-serif;">
                         <?php
                         $label = !empty($banners) ? $banners[0]['category_name'] : 'Deals';
                         echo ucfirst(htmlspecialchars($label));
@@ -867,8 +868,8 @@ while ($row = $banners_result->fetch_assoc()) {
                     <path stroke-linecap="round" stroke-linejoin="round" d="M13 10V3L4 14h7v7l9-11h-7z" />
                 </svg>
                 <div>
-                    <h3 class="text-base text-black font-bold">Fast Delivery</h3>
-                    <p class="text-sm text-gray-500">Quick and reliable shipping</p>
+                    <h3 class="text-base font-bold" style="font-family: 'Montserrat', sans-serif; color: #2f1200">Fast Delivery</h3>
+                    <p class="text-sm text-gray-500" style="font-family: 'Montserrat', sans-serif; color: #2f1200">Quick and reliable shipping</p>
                 </div>
             </div>
 
@@ -878,8 +879,8 @@ while ($row = $banners_result->fetch_assoc()) {
                     <path stroke-linecap="round" stroke-linejoin="round" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
                 </svg>
                 <div>
-                    <h3 class="text-base text-black font-bold ">High Quality</h3>
-                    <p class="text-sm text-gray-500">Products you can trust</p>
+                    <h3 class="text-base font-bold" style="font-family: 'Montserrat', sans-serif; color: #2f1200">High Quality</h3>
+                    <p class="text-sm text-gray-500" style="font-family: 'Montserrat', sans-serif; color: #2f1200">Products you can trust</p>
                 </div>
             </div>
 
@@ -889,8 +890,8 @@ while ($row = $banners_result->fetch_assoc()) {
                     <path stroke-linecap="round" stroke-linejoin="round" d="M7 7h.01M7 3h5c.512 0 1.024.195 1.414.586l7 7a2 2 0 010 2.828l-7 7a2 2 0 01-2.828 0l-7-7A1.994 1.994 0 013 12V7a4 4 0 014-4z" />
                 </svg>
                 <div>
-                    <h3 class="text-base text-black font-bold">Affordable Prices</h3>
-                    <p class="text-sm text-gray-500">Great value for your money</p>
+                    <h3 class="text-base font-bold" style="font-family: 'Montserrat', sans-serif; color: #2f1200">Affordable Prices</h3>
+                    <p class="text-sm text-gray-500" style="font-family: 'Montserrat', sans-serif; color: #2f1200">Great value for your money</p>
                 </div>
             </div>
 
@@ -900,8 +901,8 @@ while ($row = $banners_result->fetch_assoc()) {
                     <path stroke-linecap="round" stroke-linejoin="round" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
                 </svg>
                 <div>
-                    <h3 class="text-base text-black font-bold">Secure Checkout</h3>
-                    <p class="text-sm text-gray-500">Safe and easy payments</p>
+                    <h3 class="text-base font-bold" style="font-family: 'Montserrat', sans-serif; color: #2f1200">Secure Checkout</h3>
+                    <p class="text-sm text-gray-500" style="font-family: 'Montserrat', sans-serif; color: #2f1200">Safe and easy payments</p>
                 </div>
             </div>
         </div>
@@ -982,7 +983,7 @@ while ($row = $banners_result->fetch_assoc()) {
 
                 <div class="px-0.5 flex flex-col h-full">
                     <!-- Product name -->
-                    <h3 class="text-[13px] font-medium text-gray-900 group-hover:text-blue-600 transition-colors mb-1.5 line-clamp-2">
+                    <h3 class="text-[13px] group-hover:text-blue-600 transition-colors mb-1.5 line-clamp-2 font-semibold" style="font-family: 'Montserrat', sans-serif; color: #2f1200">
                         <?= htmlspecialchars($row['product_name']) ?>
                         <?php if (!empty($row['size'])): ?> <?= htmlspecialchars($row['size']) ?><?php endif; ?>
                             <?php if ($firstColor): ?> <?= htmlspecialchars($firstColor) ?><?php endif; ?>
@@ -1006,16 +1007,16 @@ while ($row = $banners_result->fetch_assoc()) {
                     </div>
 
                     <!-- 🔥 CORRECT PRICE DISPLAY (NO DISCOUNT DEDUCTION) -->
-                    <div class="flex items-baseline gap-1 flex-wrap mb-1 mt-auto">
+                    <div class="flex items-baseline gap-1 flex-wrap mb-1 mt-auto" style="font-family: 'Montserrat', sans-serif; color: #2f1200">
                         <?php if ($discount > 0): ?>
                             <!-- With Discount Badge (display only) -->
-                            <p class="text-md font-bold text-gray-900">
+                            <p class="text-md font-semibold">
                                 <?= $displayPrice ?>
                             </p>
                             <span class="text-[9px] font-semibold text-red-600 bg-red-50 px-1 py-0.5 rounded">-<?= number_format($discount, 0) ?>%</span>
                         <?php else: ?>
                             <!-- No Discount Badge -->
-                            <p class="text-xs font-bold text-gray-900">
+                            <p class="text-xs font-semibold">
                                 <?= $displayPrice ?>
                             </p>
                         <?php endif; ?>
@@ -1023,7 +1024,7 @@ while ($row = $banners_result->fetch_assoc()) {
 
                     <!-- View count + Sold count -->
                     <?php if (!empty($row['view_count']) || $total_sold > 0): ?>
-                        <div class="text-[9px] text-gray-500 font-medium">
+                        <div class="text-[9px] font-medium" style="font-family: 'Montserrat', sans-serif; color: #2f1200">
                             <?php if (!empty($row['view_count']) && $row['view_count'] > 0): ?>
                                 <?= formatViewCount($row['view_count']) ?> viewing
                             <?php endif; ?>
@@ -1050,7 +1051,7 @@ while ($row = $banners_result->fetch_assoc()) {
                     <div class="flex items-center justify-between mb-4">
                         <div class="flex items-center gap-2.5">
 
-                            <h2 class="text-base sm:text-xl font-bold text-neutral-900">Recently Viewed ➜</h2>
+                            <h2 class="text-base sm:text-xl " style="font-family: 'Montserrat', sans-serif; color: #2f1200">Recently Viewed ➜</h2>
                         </div>
                         <?php if ($recent_count > 0): ?>
                             <div class="flex gap-1.5">
@@ -1089,7 +1090,7 @@ while ($row = $banners_result->fetch_assoc()) {
                         <div class="flex items-center justify-between mb-4">
                             <div class="flex items-center gap-2.5">
 
-                                <h2 class="text-base sm:text-xl font-bold text-neutral-900">Recommended for You ➜</h2>
+                                <h2 class="text-base sm:text-xl" style="font-family: 'Montserrat', sans-serif; color: #2f1200">Recommended for You ➜</h2>
                             </div>
                             <div class="flex gap-1.5">
                                 <button class="swiper-button-prev-recommended w-8 h-8 rounded-full bg-gray-100 hover:bg-gray-200 flex items-center justify-center transition-colors">
@@ -1189,7 +1190,7 @@ while ($row = $banners_result->fetch_assoc()) {
                             alt="Promo 1"
                             class="w-full h-[300px] object-cover transition-transform duration-500 group-hover:scale-105">
                     </div>
-                    <h3 class="text-lg font-semibold text-neutral-900">Style to Modern your house! </h3>
+                    <h3 class="text-lg font-semibold " style="font-family: 'Montserrat', sans-serif; color: #2f1200">Style to Modern your house! </h3>
                 </a>
 
                 <!-- Box 2 -->
@@ -1199,7 +1200,7 @@ while ($row = $banners_result->fetch_assoc()) {
                             alt="Promo 2"
                             class="w-full h-[300px] object-cover transition-transform duration-500 group-hover:scale-105">
                     </div>
-                    <h3 class="text-lg font-semibold text-neutral-900">Chair furniture deals below ₱5,000</h3>
+                    <h3 class="text-lg font-semibold " style="font-family: 'Montserrat', sans-serif; color: #2f1200">Chair furniture deals below ₱5,000</h3>
                 </a>
 
 
@@ -1354,10 +1355,10 @@ while ($row = $banners_result->fetch_assoc()) {
         <div class="mb-4 md:mb-6 lg:mb-8 px-4 sm:px-6 lg:px-8">
             <div class="flex items-center justify-center">
                 <div class="text-center">
-                    <h2 class="text-lg md:text-2xl lg:text-3xl text-black">
+                    <h2 class="text-lg md:text-2xl lg:text-3xl font-bold" style="font-family: 'Montserrat', sans-serif; color: #2f1200">
                         Shop by Department
                     </h2>
-                    <p class="text-gray-600 text-xs md:text-sm mt-1">
+                    <p class="text-xs md:text-sm mt-1" style="font-family: 'Montserrat', sans-serif; color: #2f1200">
                         Explore our complete range of products
                     </p>
                 </div>
@@ -1403,7 +1404,7 @@ while ($row = $banners_result->fetch_assoc()) {
 
                             <!-- Text -->
                             <div class="py-2 md:py-3 px-2 md:px-4 bg-white">
-                                <h3 class="text-xs sm:text-sm md:text-base font-light text-gray-900 text-center group-hover:text-blue-600 transition-colors uppercase">
+                                <h3 class="text-xs sm:text-sm md:text-base text-center transition-colors uppercase font-semibold" style="font-family: 'Montserrat', sans-serif; color: #2f1200">
                                     <?php echo htmlspecialchars($displayName); ?>
                                 </h3>
                             </div>
@@ -1418,7 +1419,7 @@ while ($row = $banners_result->fetch_assoc()) {
                             <div class="w-16 h-16 sm:w-20 sm:h-20 md:w-24 md:h-24 bg-black rounded-full flex items-center justify-center group-hover:bg-gray-800 transition-colors mb-2 md:mb-4">
                                 <i class="fas fa-arrow-right text-lg sm:text-xl md:text-2xl text-white"></i>
                             </div>
-                            <h3 class="text-xs sm:text-sm md:text-base font-light text-gray-900 text-center group-hover:text-blue-600 transition-colors uppercase">
+                            <h3 class="text-xs sm:text-sm md:text-base  text-center group-hover:text-blue-600 transition-colors uppercase font-semibold" style="font-family: 'Montserrat', sans-serif; color: #2f1200">
                                 See More
                             </h3>
                         </div>
@@ -1443,7 +1444,7 @@ while ($row = $banners_result->fetch_assoc()) {
                             <div class="w-12 h-px bg-black"></div>
 
                             <div class="text-center">
-                                <h2 class="text-xl sm:text-2xl lg:text-3xl font-light text-black tracking-tight">
+                                <h2 class="text-xl sm:text-2xl lg:text-3xl tracking-tight font-semibold" style="font-family: 'Montserrat', sans-serif; color: #2f1200">
                                     Furniture
                                 </h2>
                             </div>
@@ -1487,7 +1488,7 @@ while ($row = $banners_result->fetch_assoc()) {
                             type="button"
                             id="filterMenuBtn"
                             onclick="toggleFilterMenu()"
-                            class="inline-flex items-center gap-2 px-2 py-2.5 text-sm text-gray-800 bg-white hover:bg-gray-50 transition-all duration-300 hover:shadow-md uppercase">
+                            class="inline-flex items-center gap-2 px-2 py-2.5 text-sm bg-white hover:bg-gray-50 transition-all duration-300 hover:shadow-md uppercase" style="font-family: 'Montserrat', sans-serif; color: #2f1200">
 
                             <span>Suggestions for you ➜</span>
                         </button>
@@ -1607,7 +1608,7 @@ while ($row = $banners_result->fetch_assoc()) {
                                             <div class="p-1.5 sm:p-2 lg:p-2.5 flex flex-col justify-between h-[130px] sm:h-[150px] lg:h-[160px]">
                                                 <div class="space-y-0.5 sm:space-y-1">
                                                     <div class="relative w-full max-w-xs">
-                                                        <h3 class="text-[13px] sm:text-[13px] line-clamp-1 font-bold text-gray-800 leading-tight group-hover:text-orange-600 transition-colors duration-300 line-clamp-2 sm:truncate pr-4">
+                                                        <h3 class="text-[13px] sm:text-[13px] line-clamp-1 font-semibold leading-tight group-hover:text-orange-600 transition-colors duration-300 line-clamp-2 sm:truncate pr-4" style="font-family: 'Montserrat', sans-serif; color: #2f1200">
                                                             <?= htmlspecialchars($row['product_name']) ?>
                                                         </h3>
                                                         <div class="hidden sm:block absolute top-0 right-0 h-full w-4 bg-gradient-to-l from-white to-transparent"></div>
@@ -1637,7 +1638,7 @@ while ($row = $banners_result->fetch_assoc()) {
                                                     </div>
 
                                                     <?php if (!empty($row['description'])): ?>
-                                                        <p class="text-[13px] sm:text-[13px] text-gray-600 leading-relaxed line-clamp-1 sm:line-clamp-2">
+                                                        <p class="text-[13px] sm:text-[13px] leading-relaxed line-clamp-1 sm:line-clamp-2" style="font-family: 'Montserrat', sans-serif; color: #2f1200">
                                                             <?= htmlspecialchars($row['description']) ?>
                                                         </p>
                                                     <?php else: ?>
@@ -1647,10 +1648,10 @@ while ($row = $banners_result->fetch_assoc()) {
                                                     <div class="flex items-baseline gap-1 flex-wrap">
                                                         <!-- AFTER (use this) -->
                                                         <?php if ($discount > 0): ?>
-                                                            <p class="text-[11px] font-bold text-gray-900"><?= $priceDisplay ?></p>
+                                                            <p class="text-[11px] font-semibold " style="font-family: 'Montserrat', sans-serif; color: #2f1200"><?= $priceDisplay ?></p>
                                                             <span class="text-[8px] font-semibold text-red-600 bg-red-50 px-1 py-0.5 rounded">-<?= number_format($discount, 0) ?>%</span>
                                                         <?php else: ?>
-                                                            <p class="text-[11px] font-bold text-gray-900"><?= $priceDisplay ?></p>
+                                                            <p class="text-[11px] font-semibold " style="font-family: 'Montserrat', sans-serif; color: #2f1200"><?= $priceDisplay ?></p>
                                                         <?php endif; ?>
                                                     </div>
                                                 </div>
@@ -1666,14 +1667,14 @@ while ($row = $banners_result->fetch_assoc()) {
 
                                                     <div class="flex items-center gap-2 text-[9px] text-gray-500">
                                                         <?php if ($view_count > 0): ?>
-                                                            <div class="flex items-center gap-1 bg-blue-50 px-2 py-1 rounded">
+                                                            <div class="flex items-center gap-1 px-2 py-1 rounded" style="font-family: 'Montserrat', sans-serif; color: #2f1200">
                                                                 viewing
                                                                 <span class="font-medium"><?= formatViewCount($view_count) ?></span>
                                                             </div>
                                                         <?php endif; ?>
 
                                                         <?php if ($total_sold > 0): ?>
-                                                            <div class="flex items-center gap-1 bg-green-50 px-2 py-1 rounded">
+                                                            <div class="flex items-center gap-1 bg-green-50 px-2 py-1 rounded" style="font-family: 'Montserrat', sans-serif; color: #2f1200">
                                                                 Sold
                                                                 <span class="font-medium"><?= number_format($total_sold) ?></span>
                                                             </div>
@@ -1699,7 +1700,7 @@ while ($row = $banners_result->fetch_assoc()) {
                             <div class="w-12 h-px bg-black"></div>
 
                             <div class="text-center">
-                                <h2 class="text-xl sm:text-2xl lg:text-3xl font-light text-black tracking-tight">
+                                <h2 class="text-xl sm:text-2xl lg:text-3xl font-semibold tracking-tight" style="font-family: 'Montserrat', sans-serif; color: #2f1200">
                                     Tiles
                                 </h2>
                             </div>
@@ -1748,7 +1749,7 @@ while ($row = $banners_result->fetch_assoc()) {
                             type="button"
                             id="tilesFilterMenuBtn"
                             onclick="toggleTilesFilterMenu()"
-                            class="inline-flex items-center gap-2 px-2 py-2.5 text-sm text-gray-800 bg-white hover:bg-gray-50 transition-all duration-300 hover:shadow-md uppercase">
+                            class="inline-flex items-center gap-2 px-2 py-2.5 text-sm bg-white hover:bg-gray-50 transition-all duration-300 hover:shadow-md uppercase" style="font-family: 'Montserrat', sans-serif; color: #2f1200">
 
                             <span>Suggestions for you ➜</span>
                         </button>
@@ -1865,7 +1866,7 @@ while ($row = $banners_result->fetch_assoc()) {
                                                 <div class="p-1.5 sm:p-2 lg:p-2.5 flex flex-col justify-between h-[130px] sm:h-[150px] lg:h-[160px]">
                                                     <div class="space-y-0.5 sm:space-y-1">
                                                         <div class="relative w-full max-w-xs">
-                                                            <h3 class="text-[13px] sm:text-[13px] line-clamp-1 font-bold  text-gray-800 leading-tight group-hover:text-orange-600 transition-colors duration-300 line-clamp-2 sm:truncate pr-4">
+                                                            <h3 class="text-[13px] sm:text-[13px] line-clamp-1 font-bold leading-tight group-hover:text-orange-600 transition-colors duration-300 line-clamp-2 sm:truncate pr-4" style="font-family: 'Montserrat', sans-serif; color: #2f1200">
                                                                 <?= htmlspecialchars($row['product_name']) ?>
                                                             </h3>
                                                             <div class="hidden sm:block absolute top-0 right-0 h-full w-4 bg-gradient-to-l from-white to-transparent"></div>
@@ -1895,7 +1896,7 @@ while ($row = $banners_result->fetch_assoc()) {
                                                         </div>
 
                                                         <?php if (!empty($row['description'])): ?>
-                                                            <p class="text-[13px] sm:text-[13px] text-gray-600 leading-relaxed line-clamp-1 sm:line-clamp-2">
+                                                            <p class="text-[13px] sm:text-[13px] text-gray-600 leading-relaxed line-clamp-1 sm:line-clamp-2" style="font-family: 'Montserrat', sans-serif; color: #2f1200">
                                                                 <?= htmlspecialchars($row['description']) ?>
                                                             </p>
                                                         <?php else: ?>
@@ -1905,10 +1906,11 @@ while ($row = $banners_result->fetch_assoc()) {
                                                         <div class="flex items-baseline gap-1 flex-wrap">
                                                             <!-- AFTER (use this) -->
                                                             <?php if ($discount > 0): ?>
-                                                                <p class="text-[11px] font-bold text-gray-900"><?= $priceDisplay ?></p>
+                                                                <p class="text-[11px] font-bold " style="font-family: 'Montserrat', sans-serif; color: #2f1200"><?= $priceDisplay ?></p>
                                                                 <span class="text-[8px] font-semibold text-red-600 bg-red-50 px-1 py-0.5 rounded">-<?= number_format($discount, 0) ?>%</span>
                                                             <?php else: ?>
-                                                                <p class="text-[11px] font-bold text-gray-900"><?= $priceDisplay ?></p>
+                                                                <p class="text-[11px] font-bold " style="font-family: 'Montserrat', sans-serif; color: #2f1200"><?= $priceDisplay ?></p>
+                                                                <p class="text-[11px] font-bold "><?= $priceDisplay ?></p>
                                                             <?php endif; ?>
                                                         </div>
                                                     </div>
@@ -1916,7 +1918,7 @@ while ($row = $banners_result->fetch_assoc()) {
                                                     <div class="mt-2 flex items-center justify-between gap-2 border-t border-gray-100 pt-2">
                                                         <form action="index-product_view-page-4-AA" method="GET" class="pointer-events-auto hidden sm:block" onclick="event.stopPropagation()">
                                                             <input type="hidden" name="id" value="<?= $product_id ?>">
-                                                            <button type="submit" class="flex items-center gap-1 text-black hover:text-orange-500 transition font-medium text-[11px] px-2 py-1 border border-gray-300 rounded hover:border-orange-500">
+                                                            <button type="submit" class="flex items-center gap-1 hover:text-orange-500 transition font-medium text-[11px] px-2 py-1 border border-gray-300 rounded hover:border-orange-500" style="font-family: 'Montserrat', sans-serif; color: #2f1200">
                                                                 <i class="fa-solid fa-bag-shopping text-[11px]"></i>
                                                                 <span>View</span>
                                                             </button>
@@ -1924,14 +1926,14 @@ while ($row = $banners_result->fetch_assoc()) {
 
                                                         <div class="flex items-center gap-2 text-[9px] text-gray-500">
                                                             <?php if ($view_count > 0): ?>
-                                                                <div class="flex items-center gap-1 bg-blue-50 px-2 py-1 rounded">
+                                                                <div class="flex items-center gap-1  px-2 py-1 rounded" style="font-family: 'Montserrat', sans-serif; color: #2f1200">
                                                                     viewing
                                                                     <span class="font-medium"><?= formatViewCount($view_count) ?></span>
                                                                 </div>
                                                             <?php endif; ?>
 
                                                             <?php if ($total_sold > 0): ?>
-                                                                <div class="flex items-center gap-1 bg-green-50 px-2 py-1 rounded">
+                                                                <div class="flex items-center gap-1 bg-green-50 px-2 py-1 rounded" style="font-family: 'Montserrat', sans-serif; color: #2f1200">
                                                                     sold
                                                                     <span class="font-medium"><?= number_format($total_sold) ?></span>
                                                                 </div>
@@ -2261,10 +2263,10 @@ while ($row = $banners_result->fetch_assoc()) {
 
             <!-- Section Header -->
             <div class="mb-8 md:mb-12 lg:mb-16">
-                <h2 class="text-2xl sm:text-3xl md:text-4xl lg:text-5xl font-bold text-black mb-2">
+                <h2 class="text-2xl sm:text-3xl md:text-4xl lg:text-5xl font-bold  mb-2" style="font-family: 'Montserrat', sans-serif; color: #2f1200">
                     Best Sellers
                 </h2>
-                <p class="text-gray-600 text-xs sm:text-sm md:text-base">
+                <p class=" text-xs sm:text-sm md:text-base" style="font-family: 'Montserrat', sans-serif; color: #2f1200">
                     Top quality products at unbeatable prices
                 </p>
             </div>
@@ -2290,12 +2292,12 @@ while ($row = $banners_result->fetch_assoc()) {
                         <div class="space-y-4 md:space-y-6 lg:space-y-8 w-full">
                             <div>
                                 <div class="flex items-center gap-2 sm:gap-3 flex-wrap mb-3">
-                                    <span class="inline-block bg-red-600 text-white px-3 py-1 rounded-md text-xs font-bold">
+                                    <span class="inline-block bg-red-600 text-white px-3 py-1 rounded-md text-xs" style="font-family: 'Montserrat', sans-serif;">
                                         BESTSELLER
                                     </span>
                                     <!-- CTA Button - Next to BESTSELLER -->
                                     <a href="index-bestseller-detail-B.php?slug=<?= htmlspecialchars($item['slug']) ?>"
-                                        class="inline-block bg-black text-white px-4 sm:px-6 py-1.5 sm:py-2 rounded-lg font-semibold text-xs sm:text-sm hover:bg-red-600 transition-colors duration-300">
+                                        class="inline-block bg-black text-white px-3 py-1 rounded-lg text-xs sm:text-sm hover:bg-red-600 transition-colors duration-300" style="font-family: 'Montserrat', sans-serif;">
                                         Learn More
                                     </a>
                                     <!-- Navigation Arrows - Always visible next to BESTSELLER -->
@@ -2313,13 +2315,13 @@ while ($row = $banners_result->fetch_assoc()) {
                                     </div>
                                 </div>
 
-                                <h3 class="text-xl sm:text-2xl md:text-3xl lg:text-4xl font-bold text-gray-900 mb-3 uppercase leading-tight">
+                                <h3 class="text-xl sm:text-2xl md:text-3xl lg:text-4xl mb-3 uppercase leading-tight" style="font-family: 'Montserrat', sans-serif; color: #2f1200">
                                     <?= htmlspecialchars($item['title']) ?>
                                 </h3>
                                 <div class="w-12 h-1 bg-red-600 rounded-full"></div>
                             </div>
 
-                            <p class="text-gray-600 text-xs sm:text-sm md:text-base leading-relaxed line-clamp-6 sm:line-clamp-8">
+                            <p class="text-xs sm:text-sm md:text-base leading-relaxed line-clamp-6 sm:line-clamp-8" style="font-family: 'Montserrat', sans-serif; color: #2f1200">
                                 <?= nl2br(htmlspecialchars($item['description'])) ?>
                             </p>
 
@@ -2435,9 +2437,9 @@ while ($row = $banners_result->fetch_assoc()) {
                 <div class="p-1 rounded-lg">
                     <!-- Header -->
                     <div class="text-center mb-6">
-                        <h2 class="text-2xl lg:text-3xl text-black mb-1 tracking-tight" data-aos="fade-up">Top Sales</h2>
+                        <h2 class="text-2xl lg:text-3xl mb-1 tracking-tight" style="font-family: 'Montserrat', sans-serif; color: #2f1200" data-aos="fade-up">Top Sales</h2>
                         <h3 class="text-base lg:text-lg text-black mb-2" data-aos="fade-up">
-                            Up to <span class="text-red-500">10% OFF ➜</span>
+                            Up to <span class="text-red-500" style="font-family: 'Montserrat', sans-serif;">10% OFF ➜</span>
                         </h3>
                         <div class="mx-auto w-24 h-0.5 bg-gradient-to-r from-orange-500 to-transparent rounded-full"></div>
                     </div>
@@ -2482,13 +2484,13 @@ while ($row = $banners_result->fetch_assoc()) {
                                         <!-- Product Info -->
                                         <div>
                                             <div class="px-1 text-left">
-                                                <p class="text-xs text-black leading-relaxed text-left">
-                                                    <span class="font-medium group-hover:text-orange-600 transition-colors duration-300"><?= htmlspecialchars($row['product_name']) ?></span>
-                                                    <span class="text-black"><?= !empty($row['size']) ? ' ' . htmlspecialchars($row['size']) : '' ?></span>
+                                                <p class="text-xs leading-relaxed text-left">
+                                                    <span class="font-medium group-hover:text-orange-600 transition-colors duration-300" style="font-family: 'Montserrat', sans-serif; color: #2f1200"><?= htmlspecialchars($row['product_name']) ?></span>
+                                                    <span class="" style="font-family: 'Montserrat', sans-serif; color: #2f1200"><?= !empty($row['size']) ? ' ' . htmlspecialchars($row['size']) : '' ?></span>
                                                     <span class="">
                                                         <?php if (!empty($row['color'])): ?>
                                                             <?php if (!empty($row['color_code'])): ?>
-                                                                <span class="inline-block w-2.5 h-2.5 rounded-full border border-gray-300 ml-1 mr-0.5 align-middle" style="background-color: <?= htmlspecialchars($row['color_code']) ?>"></span>
+                                                                <span class="inline-block w-2.5 h-2.5 rounded-full border border-gray-300 ml-1 mr-0.5 align-middle" style="background-color: <?= htmlspecialchars($row['color_code']) ?>  font-family: 'Montserrat', sans-serif;"></span>
                                                             <?php endif; ?>
                                                             <?= htmlspecialchars($row['color']) ?>
                                                         <?php endif; ?>
@@ -2497,7 +2499,7 @@ while ($row = $banners_result->fetch_assoc()) {
                                             </div>
 
                                             <!-- Stats -->
-                                            <div class="flex items-center justify-start gap-1 mt-1 text-xs text-gray-600 px-1">
+                                            <div class="flex items-center justify-start gap-1 mt-1 text-xs px-1" style="font-family: 'Montserrat', sans-serif; color: #2f1200">
                                                 <span><?= number_format($viewCount) ?> viewing</span>
                                                 <span>|</span>
                                                 <span><?= number_format($soldCount) ?> sold</span>
@@ -2511,10 +2513,9 @@ while ($row = $banners_result->fetch_assoc()) {
                                             </div>
 
                                             <!-- Price -->
-                                            <div class="my-1 text-left px-1">
+                                            <div class="my-1 text-left px-1" style="font-family: 'Montserrat', sans-serif; color: #2f1200">
                                                 <?php if ($discount > 0): ?>
-
-                                                    <p class="text-sm text-black font-bold">
+                                                    <p class="text-sm font-semibold">
                                                         ₱<?= number_format($finalPrice, 2) ?>
                                                         <span class="text-xs text-red-500">-<?= number_format($discount, 0) ?>%</span>
                                                     </p>
@@ -2527,7 +2528,7 @@ while ($row = $banners_result->fetch_assoc()) {
                                             <div class="flex gap-2 mt-2 px-1">
                                                 <form action="index-product_view-page-4-AA" method="GET" class="flex-1">
                                                     <input type="hidden" name="id" value="<?= (int)$row['product_id'] ?>">
-                                                    <button type="submit" class="w-full text-black hover:text-orange-500 transition font-medium text-xs py-2 border border-gray-300 rounded hover:border-orange-500">
+                                                    <button type="submit" class="w-full text-black hover:text-orange-500 transition font-medium text-xs py-2 border border-gray-300 rounded hover:border-orange-500" style="font-family: 'Montserrat', sans-serif; color: #2f1200">
                                                         View
                                                     </button>
                                                 </form>
@@ -2543,7 +2544,7 @@ while ($row = $banners_result->fetch_assoc()) {
                                                     <input type="hidden" name="variant_price" value="<?= floatval($row['price'] ?? 0) ?>">
                                                     <input type="hidden" name="total_price" value="<?= floatval($finalPrice) ?>">
                                                     <input type="hidden" name="return_url" value="index">
-                                                    <button type="submit" class="w-full bg-black hover:bg-gray-800 text-white text-xs py-2 rounded transition-all">
+                                                    <button type="submit" class="w-full bg-black hover:bg-gray-800 text-white text-xs py-2 rounded transition-all" style="font-family: 'Montserrat', sans-serif; ">
                                                         Add to Cart
                                                     </button>
                                                 </form>
@@ -2562,8 +2563,8 @@ while ($row = $banners_result->fetch_assoc()) {
                 <div class="p-1 rounded-lg">
                     <!-- Header -->
                     <div class="text-center mb-6">
-                        <h2 class="text-2xl lg:text-3xl text-black mb-1 tracking-tight" data-aos="fade-up">Discounted Minimal</h2>
-                        <h3 class="text-base lg:text-lg text-black mb-2" data-aos="fade-up">
+                        <h2 class="text-2xl lg:text-3xl mb-1 tracking-tight" style="font-family: 'Montserrat', sans-serif; color: #2f1200" data-aos="fade-up">Discounted Minimal</h2>
+                        <h3 class="text-base lg:text-lg text-black mb-2" style="font-family: 'Montserrat', sans-serif; color: #2f1200" data-aos="fade-up">
                             Up to <span class="text-red-500">5% OFF ➜</span>
                         </h3>
                         <div class="mx-auto w-24 h-0.5 bg-gradient-to-r from-orange-500 to-transparent rounded-full"></div>
@@ -2610,9 +2611,9 @@ while ($row = $banners_result->fetch_assoc()) {
                                         <div>
                                             <div class="px-1 text-left">
                                                 <p class="text-xs text-black leading-relaxed text-left">
-                                                    <span class="font-medium group-hover:text-orange-600 transition-colors duration-300"><?= htmlspecialchars($row['product_name']) ?></span>
-                                                    <span class="text-black"><?= !empty($row['size']) ? ' ' . htmlspecialchars($row['size']) : '' ?></span>
-                                                    <span class="">
+                                                    <span class="font-medium group-hover:text-orange-600 transition-colors duration-300" style="font-family: 'Montserrat', sans-serif; color: #2f1200"><?= htmlspecialchars($row['product_name']) ?></span>
+                                                    <span class="" style="font-family: 'Montserrat', sans-serif; color: #2f1200"><?= !empty($row['size']) ? ' ' . htmlspecialchars($row['size']) : '' ?></span>
+                                                    <span class="" style="font-family: 'Montserrat', sans-serif; color: #2f1200">
                                                         <?php if (!empty($row['color'])): ?>
                                                             <?php if (!empty($row['color_code'])): ?>
                                                                 <span class="inline-block w-2.5 h-2.5 rounded-full border border-gray-300 ml-1 mr-0.5 align-middle" style="background-color: <?= htmlspecialchars($row['color_code']) ?>"></span>
@@ -2624,7 +2625,7 @@ while ($row = $banners_result->fetch_assoc()) {
                                             </div>
 
                                             <!-- Stats -->
-                                            <div class="flex items-center justify-start gap-1 mt-1 text-xs text-gray-600 px-1">
+                                            <div class="flex items-center justify-start gap-1 mt-1 text-xs px-1" style="font-family: 'Montserrat', sans-serif; color: #2f1200">
                                                 <span><?= number_format($viewCount) ?> viewing</span>
                                                 <span>|</span>
                                                 <span><?= number_format($soldCount) ?> sold</span>
@@ -2638,10 +2639,10 @@ while ($row = $banners_result->fetch_assoc()) {
                                             </div>
 
                                             <!-- Price -->
-                                            <div class="my-1 text-left px-1">
+                                            <div class="my-1 text-left px-1" style="font-family: 'Montserrat', sans-serif; color: #2f1200">
                                                 <?php if ($discount > 0): ?>
 
-                                                    <p class="text-sm text-black font-bold">
+                                                    <p class="text-sm  font-semibold">
                                                         ₱<?= number_format($finalPrice, 2) ?>
                                                         <span class="text-xs text-red-500">-<?= number_format($discount, 0) ?>%</span>
                                                     </p>
@@ -2814,7 +2815,7 @@ while ($row = $banners_result->fetch_assoc()) {
             <section class="px-4 py-10">
                 <!-- Header -->
                 <div class="text-center mb-10 relative">
-                    <h2 class="text-4xl text-black mb-2 tracking-tight" data-aos="fade-up">New Arrival</h2>
+                    <h2 class="text-4xl mb-2 tracking-tight" style="font-family: 'Montserrat', sans-serif; color: #2f1200" data-aos="fade-up">New Arrival</h2>
 
                     <div class="mx-auto w-32 h-1 bg-gradient-to-r from-orange-500 to-transparent rounded-full"></div>
                 </div>
@@ -2828,8 +2829,9 @@ while ($row = $banners_result->fetch_assoc()) {
                     <!-- Swiper Container -->
                     <div class="swiper mySwiper-products w-full">
                         <div class="swiper-wrapper" data-aos="fade-up" data-aos-delay="300">
-                            <?php while ($row = mysqli_fetch_assoc($material_resultstwo)) : ?>
-                                <?php
+                             <?php
+                            mysqli_data_seek($material_results, 0);
+                            while ($row = mysqli_fetch_assoc($material_results)) :
                                 // ✅ DIRECT CALCULATION - size_price + color_price
                                 $variantPrice = (float)($row['price'] ?? 0);
                                 $colorPrice = (float)($row['color_price'] ?? 0);
@@ -2838,152 +2840,73 @@ while ($row = $banners_result->fetch_assoc()) {
                                 // 🔥 SIMPLE FORMULA: variant + color (no markup deduction)
                                 $finalPrice = $variantPrice + $colorPrice;
 
-                                // Get stats
                                 $viewCount = (int)($row['view_count'] ?? 0);
                                 $soldCount = (int)($row['total_sold'] ?? 0);
                                 $avgRating = (float)($row['avg_rating'] ?? 0);
                                 $ratingCount = (int)($row['rating_count'] ?? 0);
-                                ?>
-                                <div class="swiper-slide p-2">
-                                    <div class="bg-white p-2 lg:p-3 group hover:shadow-xl transition duration-300 flex flex-col justify-between h-[380px] sm:h-[420px] lg:h-[480px] text-center relative">
-                                        <!-- Triangle Badge -->
-                                        <div class="absolute top-0 left-0 z-10">
-                                            <div class="w-8 h-8 lg:w-12 lg:h-12 relative">
-                                                <img src="../img/icon/d.png" alt="Icon" class="absolute top-1 left-1 w-6 h-6 lg:w-9 lg:h-9 object-contain" />
-                                            </div>
-                                        </div>
+                            ?>
+                                <div class="swiper-slide p-1">
+                                    <div class="bg-white p-2 lg:p-3 group hover:shadow-lg transition duration-300 flex flex-col justify-between h-[320px] text-center relative rounded-md">
+                          
 
                                         <!-- Product Image -->
-                                        <div class="aspect-square w-full rounded-lg overflow-hidden mb-2 lg:mb-4">
+                                        <div class="w-32 h-32 mx-auto rounded-lg overflow-hidden mb-2">
                                             <?php if (!empty($row['type_image'])): ?>
-                                                <img src="../../<?= $row['type_image'] ?>" loading="lazy" alt="<?= htmlspecialchars($row['namevariant']) ?>"
-                                                    class="w-full h-full object-cover lg:object-contain transition-transform duration-300 " />
+                                                <img src="../../<?= $row['type_image'] ?>" loading="lazy" alt="<?= htmlspecialchars($row['size']) ?>" class="w-full h-full object-cover transition-transform duration-300" />
                                             <?php else: ?>
                                                 <div class="w-full h-full flex items-center justify-center text-gray-400 text-xs">No Image</div>
                                             <?php endif; ?>
                                         </div>
 
                                         <!-- Product Info -->
-                                        <div class="">
-                                            <div class="relative w-full">
-                                                <h3 class="text-xs lg:text-sm font-light text-gray-800 leading-tight group-hover:text-orange-600 transition-colors duration-300 line-clamp-2 text-center lg:text-left px-2 lg:pr-2">
-                                                    <?= htmlspecialchars($row['product_name']) ?>
-                                                </h3>
-                                            </div>
-
-                                            <!-- Description - Desktop Only -->
-                                            <div class="hidden lg:block relative w-full mt-1">
-                                                <p class="text-xs text-gray-500 leading-tight line-clamp-2 px-2 text-center lg:text-left">
-                                                    <?= htmlspecialchars($row['description'] ?? 'No description available') ?>
+                                        <div>
+                                            <div class="px-1 text-left">
+                                                <p class="text-xs leading-relaxed text-left">
+                                                    <span class="font-medium group-hover:text-orange-600 transition-colors duration-300" style="font-family: 'Montserrat', sans-serif; color: #2f1200"><?= htmlspecialchars($row['product_name']) ?></span>
+                                                    <span class="" style="font-family: 'Montserrat', sans-serif; color: #2f1200"><?= !empty($row['size']) ? ' ' . htmlspecialchars($row['size']) : '' ?></span>
+                                                    <span class="">
+                                                        <?php if (!empty($row['color'])): ?>
+                                                            <?php if (!empty($row['color_code'])): ?>
+                                                                <span class="inline-block w-2.5 h-2.5 rounded-full border border-gray-300 ml-1 mr-0.5 align-middle" style="background-color: <?= htmlspecialchars($row['color_code']) ?>  font-family: 'Montserrat', sans-serif;"></span>
+                                                            <?php endif; ?>
+                                                            <?= htmlspecialchars($row['color']) ?>
+                                                        <?php endif; ?>
+                                                    </span>
                                                 </p>
                                             </div>
 
-                                            <!-- Stats Row (Views, Sold, Rating) -->
-                                            <div class="flex items-center justify-center lg:justify-start gap-1 mt-2 px-2 text-xs text-gray-600">
-                                                <!-- Views -->
+                                            <!-- Stats -->
+                                            <div class="flex items-center justify-start gap-1 mt-1 text-xs px-1" style="font-family: 'Montserrat', sans-serif; color: #2f1200">
                                                 <span><?= number_format($viewCount) ?> viewing</span>
                                                 <span>|</span>
-
-                                                <!-- Sold -->
                                                 <span><?= number_format($soldCount) ?> sold</span>
-
-                                                <!-- Rating -->
                                                 <?php if ($ratingCount > 0): ?>
                                                     <span>|</span>
-                                                    <div class="flex items-center gap-1">
-                                                        <i class="fa-solid fa-star text-yellow-500"></i>
+                                                    <div class="flex items-center gap-0.5">
+                                                        <i class="fa-solid fa-star text-yellow-500 text-xs"></i>
                                                         <span><?= number_format($avgRating, 1) ?></span>
-                                                        <span class="text-gray-400">(<?= $ratingCount ?>)</span>
                                                     </div>
                                                 <?php endif; ?>
                                             </div>
 
-                                            <!-- Price + View Button Row - Desktop Only -->
-                                            <div class="hidden lg:flex items-center justify-between mt-2 px-2">
-                                                <!-- Pricing -->
-                                                <div>
-                                                    <?php if ($discount > 0): ?>
-                                                        <p class="text-xs text-gray-400 line-through">₱<?= number_format($variantPrice, 2) ?></p>
-                                                        <p class="text-sm text-black font-bold">
-                                                            ₱<?= number_format($finalPrice, 2) ?>
-                                                            <span class="text-xs text-red-500">-<?= number_format($discount, 0) ?>%</span>
-                                                        </p>
-                                                    <?php else: ?>
-                                                        <p class="text-sm text-green-600 font-bold">₱<?= number_format($finalPrice, 2) ?></p>
-                                                    <?php endif; ?>
-                                                </div>
+                                            <!-- Price -->
+                                            <div class="my-1 text-left px-1" style="font-family: 'Montserrat', sans-serif; color: #2f1200">
+                                                <?php if ($discount > 0): ?>
+                                                    <p class="text-sm font-semibold">
+                                                        ₱<?= number_format($finalPrice, 2) ?>
+                                                        <span class="text-xs text-red-500">-<?= number_format($discount, 0) ?>%</span>
+                                                    </p>
+                                                <?php else: ?>
+                                                    <p class="text-sm text-green-600 font-bold">₱<?= number_format($finalPrice, 2) ?></p>
+                                                <?php endif; ?>
+                                            </div>
 
-                                                <!-- View Button -->
-                                                <form action="index-product_view-page-4-AA" method="GET">
+                                            <!-- Buttons -->
+                                            <div class="flex gap-2 mt-2 px-1">
+                                                <form action="index-product_view-page-4-AA" method="GET" class="flex-1">
                                                     <input type="hidden" name="id" value="<?= (int)$row['product_id'] ?>">
-                                                    <button type="submit" class="flex items-center gap-1 text-black hover:text-orange-500 transition font-medium text-xs">
-                                                        <i class="fa-solid fa-bag-shopping"></i>
-                                                        <span>View</span>
-                                                    </button>
-                                                </form>
-                                            </div>
-
-                                            <!-- Mobile Layout (Original) -->
-                                            <div class="lg:hidden">
-                                                <!-- Pricing -->
-                                                <div class="my-1">
-                                                    <?php if ($discount > 0): ?>
-
-                                                        <p class="text-sm text-black font-bold">
-                                                            ₱<?= number_format($finalPrice, 2) ?>
-                                                            <span class="text-xs text-red-500">-<?= number_format($discount, 0) ?>%</span>
-                                                        </p>
-                                                    <?php else: ?>
-                                                        <p class="text-sm text-green-600 font-bold">₱<?= number_format($finalPrice, 2) ?></p>
-                                                    <?php endif; ?>
-                                                </div>
-
-                                                <!-- Buttons -->
-                                                <div class="flex flex-col gap-1.5 mt-1.5">
-                                                    <form action="index-product_view-page-4-AA" method="GET" class="w-full flex justify-center">
-                                                        <input type="hidden" name="id" value="<?= (int)$row['product_id'] ?>">
-                                                        <button type="submit" class="flex items-center gap-2 text-black hover:text-orange-500 transition font-medium text-sm">
-                                                            <i class="fa-solid fa-bag-shopping"></i>
-                                                            <span>View</span>
-                                                        </button>
-                                                    </form>
-
-                                                    <!-- Add to Cart Button -->
-                                                    <form class="productForm" data-product-id="<?= (int)$row['product_id'] ?>">
-                                                        <input type="hidden" name="product_id" value="<?= (int)$row['product_id'] ?>">
-                                                        <input type="hidden" name="selected_type" value="<?= htmlspecialchars($row['type_name'] ?? '') ?>">
-                                                        <input type="hidden" name="selected_variant" value="<?= htmlspecialchars($row['namevariant'] ?? '') ?>">
-                                                        <input type="hidden" name="variant_id" value="<?= (int)($row['id'] ?? 0) ?>">
-                                                        <input type="hidden" name="selected_color_id" value="<?= (int)($row['color_id'] ?? 0) ?>">
-                                                        <input type="hidden" name="selected_color_name" value="<?= htmlspecialchars($row['color_name'] ?? '') ?>">
-                                                        <input type="hidden" name="color_price" value="<?= floatval($row['color_price'] ?? 0) ?>">
-                                                        <input type="hidden" name="variant_price" value="<?= floatval($row['price'] ?? 0) ?>">
-                                                        <input type="hidden" name="total_price" value="<?= floatval($finalPrice) ?>">
-                                                        <input type="hidden" name="return_url" value="index">
-                                                        <button type="submit" class="w-full bg-black hover:bg-gray-800 text-white text-xs px-4 py-2 flex items-center justify-center gap-2 font-semibold transition-all duration-300 transform hover:scale-105" aria-label="Add to cart">
-                                                            <img src="../img/icon/cart.png" alt="" class="w-4 h-4" aria-hidden="true" />
-                                                            Add to Cart
-                                                        </button>
-                                                    </form>
-                                                </div>
-                                            </div>
-
-                                            <!-- Add to Cart Button - Desktop -->
-                                            <div class="hidden lg:block mt-2">
-                                                <form class="productForm" data-product-id="<?= (int)$row['product_id'] ?>">
-                                                    <input type="hidden" name="product_id" value="<?= (int)$row['product_id'] ?>">
-                                                    <input type="hidden" name="selected_type" value="<?= htmlspecialchars($row['type_name'] ?? '') ?>">
-                                                    <input type="hidden" name="selected_variant" value="<?= htmlspecialchars($row['namevariant'] ?? '') ?>">
-                                                    <input type="hidden" name="variant_id" value="<?= (int)($row['id'] ?? 0) ?>">
-                                                    <input type="hidden" name="selected_color_id" value="<?= (int)($row['color_id'] ?? 0) ?>">
-                                                    <input type="hidden" name="selected_color_name" value="<?= htmlspecialchars($row['color_name'] ?? '') ?>">
-                                                    <input type="hidden" name="color_price" value="<?= floatval($row['color_price'] ?? 0) ?>">
-                                                    <input type="hidden" name="variant_price" value="<?= floatval($row['price'] ?? 0) ?>">
-                                                    <input type="hidden" name="total_price" value="<?= floatval($finalPrice) ?>">
-                                                    <input type="hidden" name="return_url" value="index">
-                                                    <button type="submit" class="w-full bg-black hover:bg-gray-800 text-white text-sm px-6 py-3 flex items-center justify-center gap-2 font-semibold transition-all duration-300 transform hover:scale-105" aria-label="Add to cart">
-                                                        <img src="../img/icon/cart.png" alt="" class="w-6 h-6" aria-hidden="true" />
-                                                        Add to Cart
+                                                    <button type="submit" class="w-full text-black hover:text-orange-500 transition font-medium text-xs py-2 border border-gray-300 rounded hover:border-orange-500" style="font-family: 'Montserrat', sans-serif; color: #2f1200">
+                                                        View
                                                     </button>
                                                 </form>
                                             </div>
@@ -3479,7 +3402,7 @@ while ($row = $banners_result->fetch_assoc()) {
                             alt="Promo 3"
                             class="w-full h-[300px] object-cover transition-transform duration-500 group-hover:scale-105">
                     </div>
-                    <h3 class="text-lg font-semibold text-neutral-900">Keep Shopping For Holiday ➜</h3>
+                    <h3 class="text-lg font-semibold " style="font-family: 'Montserrat', sans-serif; color: #2f1200">Keep Shopping For Holiday ➜</h3>
                 </a>
 
                 <!-- Box 4 -->
@@ -3489,7 +3412,7 @@ while ($row = $banners_result->fetch_assoc()) {
                             alt="Promo 4"
                             class="w-full h-[300px] object-cover transition-transform duration-500 group-hover:scale-105">
                     </div>
-                    <h3 class="text-lg font-semibold text-neutral-900">Upgrade Your Living Space Today! ➜</h3>
+                    <h3 class="text-lg font-semibold " style="font-family: 'Montserrat', sans-serif; color: #2f1200">Upgrade Your Living Space Today! ➜</h3>
                 </a>
             </div>
         </div>
@@ -3801,12 +3724,12 @@ while ($row = $banners_result->fetch_assoc()) {
                             loop: productSlideCount >= 4
                         },
                         768: {
-                            slidesPerView: 5,
+                            slidesPerView: 3,
                             spaceBetween: 15,
                             loop: productSlideCount >= 6
                         },
                         1024: {
-                            slidesPerView: 5,
+                            slidesPerView: 4,
                             spaceBetween: 18,
                             loop: productSlideCount >= 10
                         },

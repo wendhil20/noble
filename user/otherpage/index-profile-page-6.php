@@ -240,7 +240,7 @@ function getLatestOrderStatus($conn, $order_id)
     </style>
 </head>
 
-<body class="min-h-screen bg-gray-50 font-roboto">
+<body class="min-h-screen bg-gray-50 " style="font-family: 'Montserrat', sans-serif; color: #2f1200">
     <?php include '../navbar/top.php'; ?>
 
     <!-- Professional Header -->

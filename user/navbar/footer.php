@@ -19,21 +19,15 @@
                           </div>
 
                       </div>
-
-                      <!-- Text Branding -->
-                      <div>
-                          <h2 class="text-black ">NobleHome Depot</h2>
-
-                      </div>
                   </div>
 
 
-                  <p class="text-black leading-relaxed mb-6 max-w-md">
+                  <p class="text-black leading-relaxed mb-6 max-w-md" style="font-family: 'Montserrat', sans-serif; color: #2f1200">
                       Crafting exceptional living spaces with unmatched quality and attention to detail. Your dream home awaits with our expert construction and design services.
                   </p>
 
                   <!-- Contact Info -->
-                  <div class="space-y-3">
+                  <div class="space-y-3" style="font-family: 'Montserrat', sans-serif; color: #2f1200">
                       <div class="flex items-center space-x-3 text-sm">
                           <div class="w-8 h-8 bg-orange-500/20 rounded-lg flex items-center justify-center">
                               <svg class="w-4 h-4 text-orange-400" fill="currentColor" viewBox="0 0 24 24">
@@ -56,15 +50,15 @@
 
               <!-- Quick Links -->
               <div>
-                  <h3 class="text-xl  mb-6 text-black relative">
+                  <h3 class="text-xl mb-6  relative" style="font-family: 'Montserrat', sans-serif; color: #2f1200"> 
                       Quick Links
                       <div class="absolute -bottom-2 left-0 w-12 h-1 bg-gradient-to-r from-orange-500 to-transparent rounded-full"></div>
                   </h3>
-                  <nav class="space-y-3">
-                      <a href="index-page-1-A-B-C-D-E" class="block text-black hover:text-red-500 link-hover transition-all duration-300 font-medium">Home</a>
-                      <a href="../rules/terms.php" class="block text-black hover:text-red-500 link-hover transition-all duration-300 font-medium">Terms of use</a>
-                      <a href="../rules/policy.php" class="block text-black hover:text-red-500 link-hover transition-all duration-300 font-medium">Policy</a>
-                      <a href="../about/about.php" class="block text-black hover:text-red-500 link-hover transition-all duration-300 font-medium">About</a>
+                  <nav class="space-y-3" style="font-family: 'Montserrat', sans-serif; color: #2f1200">
+                      <a href="index-page-1-A-B-C-D-E" class="block  hover:text-red-500 link-hover transition-all duration-300 font-medium">Home</a>
+                      <a href="../rules/terms.php" class="block  hover:text-red-500 link-hover transition-all duration-300 font-medium">Terms of use</a>
+                      <a href="../rules/policy.php" class="block hover:text-red-500 link-hover transition-all duration-300 font-medium">Policy</a>
+                      <a href="../about/about.php" class="block  hover:text-red-500 link-hover transition-all duration-300 font-medium">About</a>
                   </nav>
               </div>
 

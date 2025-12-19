@@ -229,12 +229,12 @@ $statsStmt->close();
                 
                 <!-- Action Buttons -->
                 <div class="flex items-center space-x-3">
-                    <a href="delivery_detailed_view.php?date=<?php echo $selected_date; ?>" 
+                    <a href="logistic-delivery-detailed-view-page-14.php?date=<?php echo $selected_date; ?>" 
                        class="bg-blue-100 text-blue-700 px-4 py-2 rounded-lg hover:bg-blue-200 transition-colors flex items-center">
                         <i class="fas fa-clipboard-list mr-2"></i>
                         Assign Deliveries
                     </a>
-                    <a href="main_dashboard.php" 
+                    <a href="logistic-main-dashboard-page-1.php" 
                        class="bg-gray-100 text-gray-700 px-4 py-2 rounded-lg hover:bg-gray-200 transition-colors flex items-center">
                         <i class="fas fa-arrow-left mr-2"></i>
                         Back to Dashboard

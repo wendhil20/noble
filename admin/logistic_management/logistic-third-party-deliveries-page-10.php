@@ -17,7 +17,7 @@ $selected_date = $_GET['date'] ?? null;
 
 // Validate date format
 if (!$selected_date || !preg_match('/^\d{4}-\d{2}-\d{2}$/', $selected_date)) {
-    header("Location: logistics_dashboard_view.php");
+    header("Location: logistic-main-dashboard-page-1.php");
     exit();
 }
 
@@ -324,12 +324,12 @@ $statsStmt->close();
                 
                 <!-- Action Buttons -->
                 <div class="flex items-center space-x-3">
-                    <a href="delivery_detailed_view.php?date=<?php echo $selected_date; ?>" 
+                    <a href="logistic-delivery-detailed-view-page-14.php?date=<?php echo $selected_date; ?>" 
                        class="bg-blue-100 text-blue-700 px-4 py-2 rounded-lg hover:bg-blue-200 transition-colors flex items-center">
                         <i class="fas fa-truck mr-2"></i>
                         Back to Assignments
                     </a>
-                    <a href="main_dashboard.php" 
+                    <a href="logistic-main-dashboard-page-1.php" 
                        class="bg-gray-100 text-gray-700 px-4 py-2 rounded-lg hover:bg-gray-200 transition-colors flex items-center">
                         <i class="fas fa-arrow-left mr-2"></i>
                         Dashboard

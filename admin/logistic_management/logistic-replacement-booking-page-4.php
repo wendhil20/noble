@@ -17,7 +17,7 @@ $schedule_id = isset($_GET['schedule_id']) ? intval($_GET['schedule_id']) : 0;
 $order_id = isset($_GET['order_id']) ? intval($_GET['order_id']) : 0;
 
 if (!$schedule_id || !$order_id) {
-    header("Location: logistics_dashboard_view.php");
+    header("Location: logistic-main-dashboard-page-1.php");
     exit();
 }
 
@@ -40,7 +40,7 @@ $schedule = $scheduleStmt->get_result()->fetch_assoc();
 $scheduleStmt->close();
 
 if (!$schedule) {
-    header("Location: logistics_dashboard_view.php");
+    header("Location: logistic-main-dashboard-page-1.php");
     exit();
 }
 
@@ -65,7 +65,7 @@ $replacements = $replacementsStmt->get_result()->fetch_all(MYSQLI_ASSOC);
 $replacementsStmt->close();
 
 if (empty($replacements)) {
-    header("Location: logistics_dashboard_view.php");
+    header("Location: logistic-main-dashboard-page-1.php");
     exit();
 }
 
@@ -84,7 +84,7 @@ $existingBooking = $checkBooking->get_result()->fetch_assoc();
 $checkBooking->close();
 
 if ($existingBooking) {
-    header("Location: delivery_tracking.php?booking_id=" . $existingBooking['id']);
+    header("Location: logistic-delivery-tracking-page-5.php?booking_id=" . $existingBooking['id']);
     exit();
 }
 
@@ -265,7 +265,7 @@ $updateReplacement->bind_param("ii", $schedule_id, $order_id);
         $conn->commit();
         
         $_SESSION['success_message'] = "Replacement booking created successfully!";
-        header("Location: delivery_tracking.php?booking_id=" . $booking_id);
+        header("Location: logistic-delivery-tracking-page-5.php?booking_id=" . $booking_id);
         exit();
         
     } catch (Exception $e) {
@@ -299,7 +299,7 @@ $updateReplacement->bind_param("ii", $schedule_id, $order_id);
         
         <!-- Header -->
         <div class="mb-6">
-            <a href="delivery_date_orders.php?date=<?php echo $schedule['delivery_date']; ?>" 
+            <a href="logistic-delivery-date-orders-page-2.php?date=<?php echo $schedule['delivery_date']; ?>" 
                class="inline-flex items-center text-blue-600 hover:text-blue-700 mb-3 text-sm font-medium transition-colors">
                 <i class="fas fa-arrow-left mr-2"></i>
                 Back to Orders
@@ -601,7 +601,7 @@ $updateReplacement->bind_param("ii", $schedule_id, $order_id);
                     </div>
                     
                     <div class="flex gap-3 mt-8 pt-6 border-t-2 border-gray-200">
-                        <a href="delivery_date_orders.php?date=<?php echo $schedule['delivery_date']; ?>" 
+                        <a href="logistic-delivery-date-orders-page-2.php?date=<?php echo $schedule['delivery_date']; ?>" 
                            class="flex-1 px-6 py-4 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 transition-colors font-semibold text-center flex items-center justify-center gap-2">
                             <i class="fas fa-times"></i>
                             <span>Cancel</span>

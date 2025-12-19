@@ -15,7 +15,7 @@
     // Check if user is a dispatcher
     $user_subrole = $_SESSION['noble_subrole'] ?? '';
     if ($user_subrole !== 'dispatcher') {
-        header("Location: logistics_dashboard_view.php");
+        header("Location: logistic-main-dashboard-page-1.php");
         exit();
     }
 
@@ -23,7 +23,7 @@
     $booking_id = isset($_GET['booking_id']) ? intval($_GET['booking_id']) : 0;
 
     if (!$booking_id) {
-        header("Location: dispatcher_dashboard.php");
+        header("Location:  logistic-dispatcher-dashboard-page-13.php");
         exit();
     }
 
@@ -135,7 +135,7 @@ if ($isReplacement) {
 
     if (!$booking) {
         $_SESSION['error_message'] = "Booking not found or not assigned to you";
-        header("Location: dispatcher_dashboard.php");
+        header("Location: logistic-dispatcher-dashboard-page-13.php");
         exit();
     }
 
@@ -214,7 +214,7 @@ if ($isReplacement) {
                 $updateItem->close();
             }
 
-            header("Location: dispatcher_view_booking.php?booking_id=" . $booking_id);
+            header("Location: logistic-dispatcher-view-booking-page-12.php?booking_id=" . $booking_id);
             exit();
         }
 
@@ -243,7 +243,7 @@ if ($isReplacement) {
             }
             $updateAll->close();
 
-            header("Location: dispatcher_view_booking.php?booking_id=" . $booking_id);
+            header("Location: logistic-dispatcher-view-booking-page-12.php?booking_id=" . $booking_id);
             exit();
         }
 
@@ -301,7 +301,7 @@ if ($booking['item_type'] === 'replacement') {
                 $_SESSION['error_message'] = "Error: " . $e->getMessage();
             }
 
-            header("Location: dispatcher_view_booking.php?booking_id=" . $booking_id);
+            header("Location: logistic-dispatcher-view-booking-page-12.php?booking_id=" . $booking_id);
             exit();
         }
     }
@@ -378,7 +378,7 @@ if ($booking['item_type'] === 'replacement') {
 
             <!-- Header -->
             <div class="mb-4">
-                <a href="dispatcher_dashboard.php"
+                <a href="logistic-dispatcher-dashboard-page-13.php"
                     class="inline-flex items-center text-blue-600 hover:text-blue-800 mb-3">
                     <i class="fas fa-arrow-left mr-2"></i>
                     Back to My Deliveries
@@ -495,7 +495,7 @@ if ($booking['item_type'] === 'replacement') {
                                                 </span>
                                             </div>
                                             <?php if ($otherBooking['id'] != $booking_id): ?>
-                                                <a href="dispatcher_view_booking.php?booking_id=<?php echo $otherBooking['id']; ?>"
+                                                <a href="logistic-dispatcher-view-booking-page-12.php?booking_id=<?php echo $otherBooking['id']; ?>"
                                                     class="bg-blue-500 text-white px-3 py-1 rounded-lg hover:bg-blue-600 transition-colors text-xs font-semibold">
                                                     <i class="fas fa-external-link-alt mr-1"></i>
                                                     View

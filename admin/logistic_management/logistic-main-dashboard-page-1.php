@@ -9,7 +9,7 @@ require_role(['productspecialist', 'superadmin', 'sales', 'warehouse', 'logistic
 
 // Redirect dispatchers to their own dashboard
 if (isset($_SESSION['noble_subrole']) && $_SESSION['noble_subrole'] === 'dispatcher') {
-    header("Location: dispatcher_dashboard.php");
+    header("Location: logistic-dispatcher-dashboard-page-13.php");
     exit();
 }
 
@@ -126,6 +126,7 @@ $statsStmt->close();
 
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -138,9 +139,16 @@ $statsStmt->close();
                 extend: {
                     colors: {
                         primary: {
-                            50: '#fff7ed', 100: '#ffedd5', 200: '#fed7aa', 300: '#fdba74',
-                            400: '#fb923c', 500: '#f97316', 600: '#ea580c', 700: '#c2410c',
-                            800: '#9a3412', 900: '#7c2d12',
+                            50: '#fff7ed',
+                            100: '#ffedd5',
+                            200: '#fed7aa',
+                            300: '#fdba74',
+                            400: '#fb923c',
+                            500: '#f97316',
+                            600: '#ea580c',
+                            700: '#c2410c',
+                            800: '#9a3412',
+                            900: '#7c2d12',
                         }
                     }
                 }
@@ -153,30 +161,37 @@ $statsStmt->close();
             cursor: pointer;
             min-height: 60px;
         }
+
         .calendar-day:hover {
             background-color: #e0f2fe;
             transform: scale(1.02);
         }
+
         .calendar-day.selected {
             background-color: #1976d2 !important;
             color: white;
         }
+
         .calendar-day.has-deliveries {
             background-color: #fff3e0;
             border: 2px solid #ff9800;
         }
+
         .calendar-day.has-overdue {
             background-color: #ffebee;
             border: 2px solid #f44336;
         }
+
         .calendar-day.busy {
             background-color: #f3e5f5;
             border: 2px solid #9c27b0;
         }
+
         .calendar-day.past-date {
             background-color: #f5f5f5;
             color: #666;
         }
+
         .delivery-badges {
             position: absolute;
             bottom: 2px;
@@ -187,6 +202,7 @@ $statsStmt->close();
             gap: 1px;
             justify-content: center;
         }
+
         .delivery-badge {
             font-size: 0.6rem;
             padding: 1px 3px;
@@ -196,22 +212,25 @@ $statsStmt->close();
             text-align: center;
             line-height: 1.2;
         }
+
         .item-card {
             transition: all 0.3s ease;
         }
+
         .item-card:hover {
             transform: translateY(-2px);
-            box-shadow: 0 8px 25px rgba(0,0,0,0.1);
+            box-shadow: 0 8px 25px rgba(0, 0, 0, 0.1);
         }
     </style>
 </head>
+
 <body class="bg-gradient-to-br from-gray-50 to-blue-50 min-h-screen">
     <?php include '../navbar/top.php'; ?>
-    
+
     <!-- Header -->
-<div class="bg-transparent">
-    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div class="flex flex-col sm:flex-row sm:justify-between sm:items-center py-4 space-y-4 sm:space-y-0">
+    <div class="bg-transparent">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="flex flex-col sm:flex-row sm:justify-between sm:items-center py-4 space-y-4 sm:space-y-0">
                 <div class="flex items-center space-x-4">
                     <div class="bg-blue-500 p-3 rounded-lg">
                         <i class="fas fa-eye text-white text-2xl"></i>
@@ -221,27 +240,27 @@ $statsStmt->close();
                         <p class="text-gray-600 mt-1">View and monitor all delivery schedules</p>
                     </div>
                 </div>
-                
+
                 <!-- Quick Filter Buttons -->
                 <div class="flex flex-wrap gap-2">
-                    <button type="button" onclick="filterDeliveries('all')" 
-                            class="filter-btn bg-gray-100 text-gray-700 px-4 py-2 rounded-lg hover:bg-gray-200 transition-colors active">
+                    <button type="button" onclick="filterDeliveries('all')"
+                        class="filter-btn bg-gray-100 text-gray-700 px-4 py-2 rounded-lg hover:bg-gray-200 transition-colors active">
                         <i class="fas fa-list mr-1"></i>All
                     </button>
-                    <button type="button" onclick="filterDeliveries('overdue')" 
-                            class="filter-btn bg-red-100 text-red-700 px-4 py-2 rounded-lg hover:bg-red-200 transition-colors">
+                    <button type="button" onclick="filterDeliveries('overdue')"
+                        class="filter-btn bg-red-100 text-red-700 px-4 py-2 rounded-lg hover:bg-red-200 transition-colors">
                         <i class="fas fa-exclamation-triangle mr-1"></i>Overdue
                     </button>
-                    <button type="button" onclick="filterDeliveries('today')" 
-                            class="filter-btn bg-blue-100 text-blue-700 px-4 py-2 rounded-lg hover:bg-blue-200 transition-colors">
+                    <button type="button" onclick="filterDeliveries('today')"
+                        class="filter-btn bg-blue-100 text-blue-700 px-4 py-2 rounded-lg hover:bg-blue-200 transition-colors">
                         <i class="fas fa-calendar-day mr-1"></i>Today
                     </button>
-                    <button type="button" onclick="filterDeliveries('upcoming')" 
-                            class="filter-btn bg-green-100 text-green-700 px-4 py-2 rounded-lg hover:bg-green-200 transition-colors">
+                    <button type="button" onclick="filterDeliveries('upcoming')"
+                        class="filter-btn bg-green-100 text-green-700 px-4 py-2 rounded-lg hover:bg-green-200 transition-colors">
                         <i class="fas fa-clock mr-1"></i>Upcoming
                     </button>
-                    <button type="button" onclick="filterDeliveries('replacement')" 
-                            class="filter-btn bg-orange-100 text-orange-700 px-4 py-2 rounded-lg hover:bg-orange-200 transition-colors">
+                    <button type="button" onclick="filterDeliveries('replacement')"
+                        class="filter-btn bg-orange-100 text-orange-700 px-4 py-2 rounded-lg hover:bg-orange-200 transition-colors">
                         <i class="fas fa-exchange-alt mr-1"></i>Replacements
                     </button>
                 </div>
@@ -250,67 +269,67 @@ $statsStmt->close();
     </div>
 
     <div class="max-w-[95%] mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        
+
         <!-- Statistics Cards -->
-<div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6 gap-4 mb-8">
-    <!-- Total Scheduled -->
-    <div class="bg-white rounded-lg border border-gray-200 p-4 hover:border-blue-300 transition-colors">
-        <div class="flex items-center justify-between mb-2">
-            <i class="fas fa-calendar text-blue-500 text-lg"></i>
-            <p class="text-2xl font-bold text-gray-900"><?php echo $stats['total_scheduled']; ?></p>
+        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6 gap-4 mb-8">
+            <!-- Total Scheduled -->
+            <div class="bg-white rounded-lg border border-gray-200 p-4 hover:border-blue-300 transition-colors">
+                <div class="flex items-center justify-between mb-2">
+                    <i class="fas fa-calendar text-blue-500 text-lg"></i>
+                    <p class="text-2xl font-bold text-gray-900"><?php echo $stats['total_scheduled']; ?></p>
+                </div>
+                <p class="text-xs text-gray-600">Total Scheduled</p>
+            </div>
+
+            <!-- Overdue -->
+            <div class="bg-white rounded-lg border border-gray-200 p-4 hover:border-red-300 transition-colors">
+                <div class="flex items-center justify-between mb-2">
+                    <i class="fas fa-exclamation-triangle text-red-500 text-lg"></i>
+                    <p class="text-2xl font-bold text-gray-900"><?php echo $stats['overdue_deliveries']; ?></p>
+                </div>
+                <p class="text-xs text-gray-600">Overdue</p>
+            </div>
+
+            <!-- Pending -->
+            <div class="bg-white rounded-lg border border-gray-200 p-4 hover:border-yellow-300 transition-colors">
+                <div class="flex items-center justify-between mb-2">
+                    <i class="fas fa-clock text-yellow-500 text-lg"></i>
+                    <p class="text-2xl font-bold text-gray-900"><?php echo $stats['pending_deliveries']; ?></p>
+                </div>
+                <p class="text-xs text-gray-600">Pending</p>
+            </div>
+
+            <!-- Completed -->
+            <div class="bg-white rounded-lg border border-gray-200 p-4 hover:border-green-300 transition-colors">
+                <div class="flex items-center justify-between mb-2">
+                    <i class="fas fa-check-circle text-green-500 text-lg"></i>
+                    <p class="text-2xl font-bold text-gray-900"><?php echo $stats['completed_deliveries']; ?></p>
+                </div>
+                <p class="text-xs text-gray-600">Completed</p>
+            </div>
+
+            <!-- Today's Deliveries -->
+            <div class="bg-white rounded-lg border border-gray-200 p-4 hover:border-purple-300 transition-colors">
+                <div class="flex items-center justify-between mb-2">
+                    <i class="fas fa-truck-fast text-purple-500 text-lg"></i>
+                    <p class="text-2xl font-bold text-gray-900"><?php echo $stats['today_deliveries']; ?></p>
+                </div>
+                <p class="text-xs text-gray-600">Today's Deliveries</p>
+            </div>
+
+            <!-- Replacements -->
+            <div class="bg-white rounded-lg border border-gray-200 p-4 hover:border-orange-300 transition-colors">
+                <div class="flex items-center justify-between mb-2">
+                    <i class="fas fa-exchange-alt text-orange-500 text-lg"></i>
+                    <p class="text-2xl font-bold text-gray-900"><?php echo $stats['replacement_deliveries']; ?></p>
+                </div>
+                <p class="text-xs text-gray-600">Replacements</p>
+            </div>
         </div>
-        <p class="text-xs text-gray-600">Total Scheduled</p>
-    </div>
-    
-    <!-- Overdue -->
-    <div class="bg-white rounded-lg border border-gray-200 p-4 hover:border-red-300 transition-colors">
-        <div class="flex items-center justify-between mb-2">
-            <i class="fas fa-exclamation-triangle text-red-500 text-lg"></i>
-            <p class="text-2xl font-bold text-gray-900"><?php echo $stats['overdue_deliveries']; ?></p>
-        </div>
-        <p class="text-xs text-gray-600">Overdue</p>
-    </div>
-    
-    <!-- Pending -->
-    <div class="bg-white rounded-lg border border-gray-200 p-4 hover:border-yellow-300 transition-colors">
-        <div class="flex items-center justify-between mb-2">
-            <i class="fas fa-clock text-yellow-500 text-lg"></i>
-            <p class="text-2xl font-bold text-gray-900"><?php echo $stats['pending_deliveries']; ?></p>
-        </div>
-        <p class="text-xs text-gray-600">Pending</p>
-    </div>
-    
-    <!-- Completed -->
-    <div class="bg-white rounded-lg border border-gray-200 p-4 hover:border-green-300 transition-colors">
-        <div class="flex items-center justify-between mb-2">
-            <i class="fas fa-check-circle text-green-500 text-lg"></i>
-            <p class="text-2xl font-bold text-gray-900"><?php echo $stats['completed_deliveries']; ?></p>
-        </div>
-        <p class="text-xs text-gray-600">Completed</p>
-    </div>
-    
-    <!-- Today's Deliveries -->
-    <div class="bg-white rounded-lg border border-gray-200 p-4 hover:border-purple-300 transition-colors">
-        <div class="flex items-center justify-between mb-2">
-            <i class="fas fa-truck-fast text-purple-500 text-lg"></i>
-            <p class="text-2xl font-bold text-gray-900"><?php echo $stats['today_deliveries']; ?></p>
-        </div>
-        <p class="text-xs text-gray-600">Today's Deliveries</p>
-    </div>
-    
-    <!-- Replacements -->
-    <div class="bg-white rounded-lg border border-gray-200 p-4 hover:border-orange-300 transition-colors">
-        <div class="flex items-center justify-between mb-2">
-            <i class="fas fa-exchange-alt text-orange-500 text-lg"></i>
-            <p class="text-2xl font-bold text-gray-900"><?php echo $stats['replacement_deliveries']; ?></p>
-        </div>
-        <p class="text-xs text-gray-600">Replacements</p>
-    </div>
-</div>
-        
+
 
         <div class="grid grid-cols-1 xl:grid-cols-5 gap-6">
-            
+
             <!-- Calendar Section -->
             <div class="xl:col-span-3">
                 <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
@@ -318,7 +337,7 @@ $statsStmt->close();
                         <i class="fas fa-calendar text-blue-600 mr-3"></i>
                         Delivery Calendar
                     </h3>
-                    
+
                     <!-- Calendar Navigation -->
                     <div class="flex items-center justify-between mb-4">
                         <button type="button" id="prevMonth" class="p-2 hover:bg-gray-100 rounded-lg">
@@ -329,7 +348,7 @@ $statsStmt->close();
                             <i class="fas fa-chevron-right text-gray-600"></i>
                         </button>
                     </div>
-                    
+
                     <!-- Calendar Grid -->
                     <div class="grid grid-cols-7 gap-1 mb-2">
                         <div class="text-center text-sm font-medium text-gray-500 p-2">Sun</div>
@@ -340,9 +359,9 @@ $statsStmt->close();
                         <div class="text-center text-sm font-medium text-gray-500 p-2">Fri</div>
                         <div class="text-center text-sm font-medium text-gray-500 p-2">Sat</div>
                     </div>
-                    
+
                     <div id="calendar-grid" class="grid grid-cols-7 gap-1"></div>
-                    
+
                     <!-- Legend -->
                     <div class="mt-6 grid grid-cols-2 gap-4 text-sm">
                         <div class="flex items-center">
@@ -376,8 +395,8 @@ $statsStmt->close();
                                 <span id="details-title">All Deliveries</span>
                             </h3>
                             <!-- Navigation button - only shows when a date is selected -->
-                            <button type="button" id="navigateBtn" onclick="navigateToDetailedView()" 
-                                    class="hidden bg-gradient-to-r from-blue-500 to-blue-600 text-white px-4 py-2 rounded-lg hover:from-blue-600 hover:to-blue-700 transition-all shadow-md hover:shadow-lg transform hover:scale-105">
+                            <button type="button" id="navigateBtn" onclick="navigateToDetailedView()"
+                                class="hidden bg-gradient-to-r from-blue-500 to-blue-600 text-white px-4 py-2 rounded-lg hover:from-blue-600 hover:to-blue-700 transition-all shadow-md hover:shadow-lg transform hover:scale-105">
                                 <i class="fas fa-external-link-alt mr-2"></i>
                                 View Details
                             </button>
@@ -389,7 +408,7 @@ $statsStmt->close();
                             <span id="filter-status" class="text-sm text-gray-500"></span>
                         </div>
                     </div>
-                    
+
                     <div id="delivery-details-container" class="max-h-[800px] overflow-y-auto">
                         <!-- This will be populated by JavaScript -->
                     </div>
@@ -402,94 +421,100 @@ $statsStmt->close();
         // Calendar and scheduling data
         const deliveryCounts = <?php echo json_encode($deliveryCountsByDate); ?>;
         const schedules = <?php echo json_encode($schedules); ?>;
-        
+
         let currentDate = new Date();
         let selectedDate = null;
         let currentFilter = 'all';
-        
+
         // **NEW CODE 1: Add helper functions for current month filtering**
         function getCurrentMonthRange() {
             const now = new Date();
             const year = now.getFullYear();
             const month = now.getMonth();
-            
+
             const startOfMonth = new Date(year, month, 1);
             const endOfMonth = new Date(year, month + 1, 0);
-            
-            const startDateString = year + '-' + 
+
+            const startDateString = year + '-' +
                 String(month + 1).padStart(2, '0') + '-01';
-            const endDateString = year + '-' + 
-                String(month + 1).padStart(2, '0') + '-' + 
+            const endDateString = year + '-' +
+                String(month + 1).padStart(2, '0') + '-' +
                 String(endOfMonth.getDate()).padStart(2, '0');
-                
-            return { startDateString, endDateString };
+
+            return {
+                startDateString,
+                endDateString
+            };
         }
-        
+
         function filterSchedulesByCurrentMonth(schedules) {
-            const { startDateString, endDateString } = getCurrentMonthRange();
-            return schedules.filter(schedule => 
-                schedule.delivery_date >= startDateString && 
+            const {
+                startDateString,
+                endDateString
+            } = getCurrentMonthRange();
+            return schedules.filter(schedule =>
+                schedule.delivery_date >= startDateString &&
                 schedule.delivery_date <= endDateString
             );
         }
         // **END OF NEW CODE 1**
-        
+
         function generateCalendar(year, month) {
             const firstDay = new Date(year, month, 1);
             const lastDay = new Date(year, month + 1, 0);
             const daysInMonth = lastDay.getDate();
             const startingDayOfWeek = firstDay.getDay();
-            
+
             const calendarGrid = document.getElementById('calendar-grid');
             calendarGrid.innerHTML = '';
-            
+
             // Add empty cells for days before the first day of the month
             for (let i = 0; i < startingDayOfWeek; i++) {
                 const emptyDay = document.createElement('div');
                 emptyDay.className = 'p-3';
                 calendarGrid.appendChild(emptyDay);
             }
-            
+
             // Add days of the month
             const today = new Date();
             today.setHours(0, 0, 0, 0);
-            
+
             for (let day = 1; day <= daysInMonth; day++) {
                 const date = new Date(year, month, day);
-                const dateString = year + '-' + 
-                    String(month + 1).padStart(2, '0') + '-' + 
+                const dateString = year + '-' +
+                    String(month + 1).padStart(2, '0') + '-' +
                     String(day).padStart(2, '0');
-                    
+
                 const dayElement = document.createElement('div');
                 dayElement.className = 'calendar-day relative p-3 text-center rounded-lg border border-gray-200 bg-white flex flex-col justify-center items-center';
-                
+
                 const dayNumber = document.createElement('div');
                 dayNumber.textContent = day;
                 dayNumber.className = 'font-semibold';
                 dayElement.appendChild(dayNumber);
-                
+
                 dayElement.dataset.date = dateString;
-                
+
                 const currentDateOnly = new Date(year, month, day);
                 currentDateOnly.setHours(0, 0, 0, 0);
-                
+
                 // Check if this date has deliveries
                 const deliveryData = deliveryCounts[dateString];
-                
+
                 if (currentDateOnly < today) {
                     dayElement.className += ' past-date';
                 }
-                
+
                 if (deliveryData) {
                     const totalCount = deliveryData.count;
                     const overdueCount = deliveryData.overdue_count;
                     const completedCount = deliveryData.completed_count;
                     const pendingCount = deliveryData.pending_count;
-                    
+
                     // Create badges container
                     const badgesContainer = document.createElement('div');
                     badgesContainer.className = 'delivery-badges';
-                    
+
                     // Only show overdue badge if there are actually overdue items (not delivered and past due date)
                     if (overdueCount > 0) {
                         dayElement.className += ' has-overdue';
@@ -499,7 +524,7 @@ $statsStmt->close();
                         overdueBadge.title = `${overdueCount} overdue`;
                         badgesContainer.appendChild(overdueBadge);
                     }
-                    
+
                     if (pendingCount > 0) {
                         const pendingBadge = document.createElement('div');
                         pendingBadge.className = 'delivery-badge bg-yellow-500 text-white';
@@ -507,7 +532,7 @@ $statsStmt->close();
                         pendingBadge.title = `${pendingCount} pending`;
                         badgesContainer.appendChild(pendingBadge);
                     }
-                    
+
                     if (completedCount > 0) {
                         const completedBadge = document.createElement('div');
                         completedBadge.className = 'delivery-badge bg-green-500 text-white';
@@ -515,16 +540,16 @@ $statsStmt->close();
                         completedBadge.title = `${completedCount} completed`;
                         badgesContainer.appendChild(completedBadge);
                     }
-                    
+
                     // Calendar day styling priority: overdue > busy > has deliveries
                     if (totalCount >= 10) {
                         dayElement.className += ' busy';
                     } else if (overdueCount === 0 && (pendingCount > 0 || completedCount > 0)) {
                         dayElement.className += ' has-deliveries';
                     }
-                    
+
                     dayElement.appendChild(badgesContainer);
-                    
+
                     // Add click event
                     dayElement.addEventListener('click', function() {
                         selectDate(dateString, dayElement);
@@ -535,78 +560,78 @@ $statsStmt->close();
                         selectDate(dateString, dayElement);
                     });
                 }
-                
+
                 calendarGrid.appendChild(dayElement);
             }
         }
-        
+
         function selectDate(dateString, element) {
             // Remove previous selection
             const previousSelected = document.querySelector('.calendar-day.selected');
             if (previousSelected) {
                 previousSelected.classList.remove('selected');
             }
-            
+
             // Add selection to clicked element
             element.classList.add('selected');
             selectedDate = dateString;
-            
+
             // Show navigation button when a date is selected
             const navigateBtn = document.getElementById('navigateBtn');
             const dateSchedules = schedules.filter(s => s.delivery_date === dateString);
-            
+
             if (dateSchedules.length > 0) {
                 navigateBtn.classList.remove('hidden');
             } else {
                 navigateBtn.classList.add('hidden');
             }
-            
+
             // Update delivery details for selected date
             updateDeliveryDetails(dateString);
         }
-        
+
         function navigateToDetailedView() {
-    if (selectedDate) {
-        const targetPage = 'delivery_date_orders.php';
-        const url = `${targetPage}?date=${selectedDate}`;
-        window.location.href = url;
-    }
-}
-        
+            if (selectedDate) {
+                const targetPage = 'logistic-delivery-date-orders-page-2.php';
+                const url = `${targetPage}?date=${selectedDate}`;
+                window.location.href = url;
+            }
+        }
+
         function filterDeliveries(filterType) {
             currentFilter = filterType;
-            
+
             // Update active filter button
             document.querySelectorAll('.filter-btn').forEach(btn => {
                 btn.classList.remove('active', 'bg-blue-500', 'text-white');
                 btn.classList.add('bg-gray-100', 'text-gray-700');
             });
-            
+
             const activeBtn = event.target.closest('button');
             activeBtn.classList.remove('bg-gray-100', 'text-gray-700');
             activeBtn.classList.add('active', 'bg-blue-500', 'text-white');
-            
+
             // Clear calendar selection and update details
             const previousSelected = document.querySelector('.calendar-day.selected');
             if (previousSelected) {
                 previousSelected.classList.remove('selected');
             }
             selectedDate = null;
-            
+
             // Hide navigation button when filtering
             document.getElementById('navigateBtn').classList.add('hidden');
-            
+
             updateDeliveryDetails();
         }
-        
+
         function updateDeliveryDetails(selectedDate = null) {
             const detailsContainer = document.getElementById('delivery-details-container');
             const itemsCountSpan = document.getElementById('items-count');
             const detailsTitle = document.getElementById('details-title');
             const filterStatus = document.getElementById('filter-status');
-            
+
             let filteredSchedules = schedules;
-            
+
             // Apply date filter first
             if (selectedDate) {
                 filteredSchedules = schedules.filter(s => s.delivery_date === selectedDate);
@@ -615,35 +640,38 @@ $statsStmt->close();
             } else {
                 // Apply status filter
                 if (currentFilter === 'overdue') {
-    filteredSchedules = schedules.filter(s => 
-        s.delivery_status === 'overdue'
-    );
-    detailsTitle.textContent = 'Overdue Deliveries';
-    filterStatus.textContent = 'Showing overdue items only';
-} else if (currentFilter === 'today') {
-    filteredSchedules = schedules.filter(s => s.delivery_status === 'today_pending' || 
-        (s.delivery_date === getTodayString() && s.delivery_status === 'completed'));
-    detailsTitle.textContent = "Today's Deliveries";
-    filterStatus.textContent = "Showing today's deliveries only";
-} else if (currentFilter === 'upcoming') {
-    filteredSchedules = schedules.filter(s => s.delivery_status === 'upcoming');
-    detailsTitle.textContent = 'Upcoming Deliveries';
-    filterStatus.textContent = 'Showing upcoming deliveries only';
-} else if (currentFilter === 'replacement') {
-    filteredSchedules = schedules.filter(s => s.item_type === 'replacement');
-    detailsTitle.textContent = 'Replacement Deliveries';
-    filterStatus.textContent = 'Showing replacement deliveries only';
-} else {
-    // Filter by current month when showing "all" deliveries
-    filteredSchedules = filterSchedulesByCurrentMonth(schedules);
-    const currentMonthName = new Date().toLocaleString('en-US', { month: 'long', year: 'numeric' });
-    detailsTitle.textContent = `All Deliveries - ${currentMonthName}`;
-    filterStatus.textContent = 'Showing current month deliveries only';
-}
+                    filteredSchedules = schedules.filter(s =>
+                        s.delivery_status === 'overdue'
+                    );
+                    detailsTitle.textContent = 'Overdue Deliveries';
+                    filterStatus.textContent = 'Showing overdue items only';
+                } else if (currentFilter === 'today') {
+                    filteredSchedules = schedules.filter(s => s.delivery_status === 'today_pending' ||
+                        (s.delivery_date === getTodayString() && s.delivery_status === 'completed'));
+                    detailsTitle.textContent = "Today's Deliveries";
+                    filterStatus.textContent = "Showing today's deliveries only";
+                } else if (currentFilter === 'upcoming') {
+                    filteredSchedules = schedules.filter(s => s.delivery_status === 'upcoming');
+                    detailsTitle.textContent = 'Upcoming Deliveries';
+                    filterStatus.textContent = 'Showing upcoming deliveries only';
+                } else if (currentFilter === 'replacement') {
+                    filteredSchedules = schedules.filter(s => s.item_type === 'replacement');
+                    detailsTitle.textContent = 'Replacement Deliveries';
+                    filterStatus.textContent = 'Showing replacement deliveries only';
+                } else {
+                    // Filter by current month when showing "all" deliveries
+                    filteredSchedules = filterSchedulesByCurrentMonth(schedules);
+                    const currentMonthName = new Date().toLocaleString('en-US', {
+                        month: 'long',
+                        year: 'numeric'
+                    });
+                    detailsTitle.textContent = `All Deliveries - ${currentMonthName}`;
+                    filterStatus.textContent = 'Showing current month deliveries only';
+                }
             }
-            
+
             itemsCountSpan.textContent = `${filteredSchedules.length} items`;
-            
+
             if (filteredSchedules.length === 0) {
                 let emptyMessage = 'No deliveries found';
                 if (selectedDate) {
@@ -654,16 +682,18 @@ $statsStmt->close();
                     emptyMessage = 'No deliveries scheduled for today';
                 } else if (currentFilter === 'upcoming') {
                     emptyMessage = 'No upcoming deliveries';
-                } else if (currentFilter === 'all') {
-                } else if (currentFilter === 'replacement') {
+                } else if (currentFilter === 'all') {} else if (currentFilter === 'replacement') {
                     emptyMessage = 'No replacement deliveries';
                 } else if (currentFilter === 'all') {
                     // **NEW CODE 2: Add current month empty message**
-                    const currentMonthName = new Date().toLocaleString('en-US', { month: 'long', year: 'numeric' });
+                    const currentMonthName = new Date().toLocaleString('en-US', {
+                        month: 'long',
+                        year: 'numeric'
+                    });
                     emptyMessage = `No deliveries scheduled for ${currentMonthName}`;
                     // **END OF NEW CODE 2**
                 }
-                
+
                 detailsContainer.innerHTML = `
                     <div class="p-8 text-center">
                         <div class="text-gray-400 mb-4">
@@ -681,7 +711,7 @@ $statsStmt->close();
                 `;
                 return;
             }
-            
+
             // Group schedules by date, then by time
             const schedulesByDate = {};
             filteredSchedules.forEach(schedule => {
@@ -695,9 +725,9 @@ $statsStmt->close();
                 }
                 schedulesByDate[date][time].push(schedule);
             });
-            
+
             let html = '';
-            
+
             // Sort dates (most recent first for overdue, chronological for others)
             const sortedDates = Object.keys(schedulesByDate).sort((a, b) => {
                 if (currentFilter === 'overdue') {
@@ -705,23 +735,23 @@ $statsStmt->close();
                 }
                 return new Date(a) - new Date(b); // Chronological order
             });
-            
+
             sortedDates.forEach(date => {
                 const dateSchedules = schedulesByDate[date];
                 const dateObj = new Date(date + 'T00:00:00');
                 const today = new Date();
                 today.setHours(0, 0, 0, 0);
-                
+
                 let dateClass = '';
                 let dateIcon = 'fa-calendar';
-                
+
                 // Check if there are any actual overdue items for this date
-const hasOverdueItems = Object.values(dateSchedules).some(timeSchedules => 
-    timeSchedules.some(schedule => 
-        schedule.delivery_status === 'overdue'
-    )
-);
-                
+                const hasOverdueItems = Object.values(dateSchedules).some(timeSchedules =>
+                    timeSchedules.some(schedule =>
+                        schedule.delivery_status === 'overdue'
+                    )
+                );
+
                 if (hasOverdueItems) {
                     dateClass = 'bg-red-50 border-red-200';
                     dateIcon = 'fa-exclamation-triangle text-red-600';
@@ -732,9 +762,9 @@ const hasOverdueItems = Object.values(dateSchedules).some(timeSchedules =>
                     dateClass = 'bg-green-50 border-green-200';
                     dateIcon = 'fa-calendar text-green-600';
                 }
-                
+
                 const totalDateItems = Object.values(dateSchedules).reduce((sum, timeItems) => sum + timeItems.length, 0);
-                
+
                 html += `
                     <div class="border-b border-gray-200">
                         <div class="${dateClass} px-6 py-4 border-l-4">
@@ -752,13 +782,13 @@ const hasOverdueItems = Object.values(dateSchedules).some(timeSchedules =>
                             </h4>
                         </div>
                 `;
-                
+
                 // Sort time slots
                 const sortedTimes = Object.keys(dateSchedules).sort();
-                
+
                 sortedTimes.forEach(time => {
                     const timeSchedules = dateSchedules[time];
-                    
+
                     html += `
                         <div class="bg-gray-50 px-6 py-2">
                             <h5 class="text-sm font-semibold text-gray-700 uppercase tracking-wide">
@@ -768,37 +798,37 @@ const hasOverdueItems = Object.values(dateSchedules).some(timeSchedules =>
                         </div>
                         <div class="p-4 space-y-3">
                     `;
-                    
+
                     timeSchedules.forEach(schedule => {
-    const isCompleted = schedule.booking_status === 'delivered' || schedule.booking_status === 'picked_up';
-    const isOverdue = schedule.delivery_status === 'overdue';
-    const isToday = schedule.delivery_status === 'today_pending';
-    
-    let statusClass, statusIcon, statusText, statusBg;
-    
-    if (isCompleted) {
-        statusClass = 'bg-green-100 text-green-800 border-green-200';
-        statusIcon = 'fa-check-circle';
-        statusText = 'Delivered';
-        statusBg = 'bg-green-50 border-green-200';
-    } else if (isOverdue) {
-        statusClass = 'bg-red-100 text-red-800 border-red-200';
-        statusIcon = 'fa-exclamation-triangle';
-        statusText = `Overdue (${schedule.days_overdue} days)`;
-        statusBg = 'bg-red-50 border-red-200';
-    } else if (isToday) {
-        statusClass = 'bg-blue-100 text-blue-800 border-blue-200';
-        statusIcon = 'fa-clock';
-        statusText = 'Due Today';
-        statusBg = 'bg-blue-50 border-blue-200';
-    } else {
-        statusClass = 'bg-yellow-100 text-yellow-800 border-yellow-200';
-        statusIcon = 'fa-clock';
-        statusText = 'Scheduled';
-        statusBg = 'bg-yellow-50 border-yellow-200';
-    }
-    
-    html += `
+                        const isCompleted = schedule.booking_status === 'delivered' || schedule.booking_status === 'picked_up';
+                        const isOverdue = schedule.delivery_status === 'overdue';
+                        const isToday = schedule.delivery_status === 'today_pending';
+
+                        let statusClass, statusIcon, statusText, statusBg;
+
+                        if (isCompleted) {
+                            statusClass = 'bg-green-100 text-green-800 border-green-200';
+                            statusIcon = 'fa-check-circle';
+                            statusText = 'Delivered';
+                            statusBg = 'bg-green-50 border-green-200';
+                        } else if (isOverdue) {
+                            statusClass = 'bg-red-100 text-red-800 border-red-200';
+                            statusIcon = 'fa-exclamation-triangle';
+                            statusText = `Overdue (${schedule.days_overdue} days)`;
+                            statusBg = 'bg-red-50 border-red-200';
+                        } else if (isToday) {
+                            statusClass = 'bg-blue-100 text-blue-800 border-blue-200';
+                            statusIcon = 'fa-clock';
+                            statusText = 'Due Today';
+                            statusBg = 'bg-blue-50 border-blue-200';
+                        } else {
+                            statusClass = 'bg-yellow-100 text-yellow-800 border-yellow-200';
+                            statusIcon = 'fa-clock';
+                            statusText = 'Scheduled';
+                            statusBg = 'bg-yellow-50 border-yellow-200';
+                        }
+
+                        html += `
         <div class="item-card ${statusBg} border-2 rounded-lg p-4 hover:shadow-md">
             <div class="flex items-start justify-between mb-3 ">
                 <div class="flex-1">
@@ -912,20 +942,20 @@ ${schedule.booking_type && schedule.booking_type !== 'delivery' ? `
             </div>
         </div>
     `;
-});
-                    
+                    });
+
                     html += '</div>';
                 });
-                
+
                 html += '</div>';
             });
-            
+
             detailsContainer.innerHTML = html;
         }
-        
+
         function showAllDeliveries() {
             currentFilter = 'all';
-            
+
             // Reset filter buttons
             document.querySelectorAll('.filter-btn').forEach(btn => {
                 btn.classList.remove('active', 'bg-blue-500', 'text-white');
@@ -933,20 +963,20 @@ ${schedule.booking_type && schedule.booking_type !== 'delivery' ? `
             });
             document.querySelector('button[onclick="filterDeliveries(\'all\')"]').classList.remove('bg-gray-100', 'text-gray-700');
             document.querySelector('button[onclick="filterDeliveries(\'all\')"]').classList.add('active', 'bg-blue-500', 'text-white');
-            
+
             // Remove calendar selection
             const previousSelected = document.querySelector('.calendar-day.selected');
             if (previousSelected) {
                 previousSelected.classList.remove('selected');
             }
             selectedDate = null;
-            
+
             // Hide navigation button
             document.getElementById('navigateBtn').classList.add('hidden');
-            
+
             updateDeliveryDetails();
         }
-        
+
         // Helper functions
         function formatDisplayDate(dateString) {
             const date = new Date(dateString + 'T00:00:00');
@@ -954,44 +984,44 @@ ${schedule.booking_type && schedule.booking_type !== 'delivery' ? `
             today.setHours(0, 0, 0, 0);
             const dateOnly = new Date(date);
             dateOnly.setHours(0, 0, 0, 0);
-            
+
             if (dateOnly.getTime() === today.getTime()) {
-                return 'Today - ' + date.toLocaleDateString('en-US', { 
-                    weekday: 'long', 
-                    month: 'long', 
-                    day: 'numeric' 
+                return 'Today - ' + date.toLocaleDateString('en-US', {
+                    weekday: 'long',
+                    month: 'long',
+                    day: 'numeric'
                 });
             } else if (dateOnly.getTime() === today.getTime() - 86400000) {
-                return 'Yesterday - ' + date.toLocaleDateString('en-US', { 
-                    weekday: 'long', 
-                    month: 'long', 
-                    day: 'numeric' 
+                return 'Yesterday - ' + date.toLocaleDateString('en-US', {
+                    weekday: 'long',
+                    month: 'long',
+                    day: 'numeric'
                 });
             } else if (dateOnly.getTime() === today.getTime() + 86400000) {
-                return 'Tomorrow - ' + date.toLocaleDateString('en-US', { 
-                    weekday: 'long', 
-                    month: 'long', 
-                    day: 'numeric' 
+                return 'Tomorrow - ' + date.toLocaleDateString('en-US', {
+                    weekday: 'long',
+                    month: 'long',
+                    day: 'numeric'
                 });
             } else {
-                return date.toLocaleDateString('en-US', { 
-                    weekday: 'long', 
-                    year: 'numeric', 
-                    month: 'long', 
-                    day: 'numeric' 
+                return date.toLocaleDateString('en-US', {
+                    weekday: 'long',
+                    year: 'numeric',
+                    month: 'long',
+                    day: 'numeric'
                 });
             }
         }
-        
+
         function formatTime(timeString) {
             const time = new Date('2000-01-01 ' + timeString);
-            return time.toLocaleTimeString('en-US', { 
-                hour: 'numeric', 
+            return time.toLocaleTimeString('en-US', {
+                hour: 'numeric',
                 minute: '2-digit',
-                hour12: true 
+                hour12: true
             });
         }
-        
+
         function formatDateTime(datetimeString) {
             const date = new Date(datetimeString);
             return date.toLocaleString('en-US', {
@@ -1003,49 +1033,49 @@ ${schedule.booking_type && schedule.booking_type !== 'delivery' ? `
                 hour12: true
             });
         }
-        
+
         function getTodayString() {
             const today = new Date();
-            return today.getFullYear() + '-' + 
-                   String(today.getMonth() + 1).padStart(2, '0') + '-' + 
-                   String(today.getDate()).padStart(2, '0');
+            return today.getFullYear() + '-' +
+                String(today.getMonth() + 1).padStart(2, '0') + '-' +
+                String(today.getDate()).padStart(2, '0');
         }
-        
+
         function escapeHtml(text) {
             if (!text) return '';
             const div = document.createElement('div');
             div.textContent = text;
             return div.innerHTML;
         }
-        
+
         function updateCalendarHeader() {
             const monthNames = [
                 'January', 'February', 'March', 'April', 'May', 'June',
                 'July', 'August', 'September', 'October', 'November', 'December'
             ];
-            
-            document.getElementById('currentMonth').textContent = 
+
+            document.getElementById('currentMonth').textContent =
                 monthNames[currentDate.getMonth()] + ' ' + currentDate.getFullYear();
         }
-        
+
         function initializeCalendar() {
             updateCalendarHeader();
             generateCalendar(currentDate.getFullYear(), currentDate.getMonth());
-            
+
             // Navigation event listeners
             document.getElementById('prevMonth').addEventListener('click', function() {
                 currentDate.setMonth(currentDate.getMonth() - 1);
                 updateCalendarHeader();
                 generateCalendar(currentDate.getFullYear(), currentDate.getMonth());
             });
-            
+
             document.getElementById('nextMonth').addEventListener('click', function() {
                 currentDate.setMonth(currentDate.getMonth() + 1);
                 updateCalendarHeader();
                 generateCalendar(currentDate.getFullYear(), currentDate.getMonth());
             });
         }
-        
+
         // Initialize when page loads
         document.addEventListener('DOMContentLoaded', function() {
             initializeCalendar();
@@ -1053,4 +1083,5 @@ ${schedule.booking_type && schedule.booking_type !== 'delivery' ? `
         });
     </script>
 </body>
+
 </html>

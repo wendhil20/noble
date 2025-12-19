@@ -7,28 +7,28 @@ include '../connection/connect.php';
 
 // ✅ Check for remember me cookies and auto-login
 if (!isset($_SESSION['noble_user']) && isset($_COOKIE['noble_remember_token']) && isset($_COOKIE['noble_remember_email'])) {
-    
+
     $remember_token = $_COOKIE['noble_remember_token'];
     $remember_email = $_COOKIE['noble_remember_email'];
-    
+
     // Validate remember token
     $stmt = $conn->prepare("SELECT id, email, lvl, subrole, status, remember_token, remember_expires FROM nobleaccount WHERE email = ? AND remember_token = ? AND remember_expires > NOW() LIMIT 1");
     $stmt->bind_param("ss", $remember_email, $remember_token);
     $stmt->execute();
     $result = $stmt->get_result();
-    
+
     if ($result->num_rows === 1) {
         $user = $result->fetch_assoc();
-        
+
         // Valid remember token - auto login
         if ($user['status'] === 'active') {
-            
+
             // Update user activity
             $update_stmt = $conn->prepare("UPDATE nobleaccount SET last_activity = NOW(), is_online = 1, last_login = NOW() WHERE email = ?");
             $update_stmt->bind_param("s", $remember_email);
             $update_stmt->execute();
             $update_stmt->close();
-            
+
             // Set session data
             $_SESSION['noble_user'] = $user['email'];
             $_SESSION['noble_lvl'] = $user['lvl'];
@@ -42,30 +42,30 @@ if (!isset($_SESSION['noble_user']) && isset($_COOKIE['noble_remember_token']) &
             $_SESSION['is_online'] = true;
             $_SESSION['user_ip'] = $_SERVER['REMOTE_ADDR'];
             $_SESSION['remember_me'] = true;
-            
+
             // Determine redirect based on user level
             $redirect = match (strtolower($user['lvl'])) {
                 'superadmin', 'admin' => "admin/client/owner_dashboard",
                 'sales' => "admin/orders/generate_referral",
                 'accountant' => match (strtolower($user['subrole'] ?? '')) {
-        'document_controller' => "admin/accountant/accountant_view_orders",
-        default => "admin/accountant/accountant"
-    },
+                    'document_controller' => "admin/accountant/accountant_view_orders",
+                    default => "admin/accountant/accountant"
+                },
                 'supplier' => "admin/suppliermain/suppliercompany",
                 'productspecialist' => "admin/shop/adminshop",
-                'logistic' => "admin/logistic_management/logistics_dashboard",
+                'logistic' => "admin/logistic_management/logistics-main-dashboard-page-1",
                 'warehouse' => match (strtolower($user['subrole'] ?? '')) {
-        'warehouse_receiver' => "admin/warehouse_management/qr_scanner",
-        'warehouse_staff' => "admin/warehouse_management/warehouse_staff_management_main",
-        default => "admin/warehouse_management/warehouse_head_dashboard_main"
-    },
+                    'warehouse_receiver' => "admin/warehouse_management/qr_scanner",
+                    'warehouse_staff' => "admin/warehouse_management/warehouse_staff_management_main",
+                    default => "admin/warehouse_management/warehouse_head_dashboard_main"
+                },
                 'hr' => "admin/hr/account",
                 default => "admin/client/dashboard"
             };
-            
+
             // Log auto-login
             error_log("Auto-login successful for user: " . $remember_email);
-            
+
             // Redirect to appropriate dashboard
             header("Location: ../" . $redirect);
             exit();
@@ -75,7 +75,7 @@ if (!isset($_SESSION['noble_user']) && isset($_COOKIE['noble_remember_token']) &
         setcookie('noble_remember_token', '', time() - 3600, '/');
         setcookie('noble_remember_email', '', time() - 3600, '/');
     }
-    
+
     $stmt->close();
 }
 
@@ -88,4 +88,3 @@ if (!isset($_SESSION['last_cleanup']) || (time() - $_SESSION['last_cleanup']) > 
 }
 
 $conn->close();
-?>

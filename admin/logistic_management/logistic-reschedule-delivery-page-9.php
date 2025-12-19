@@ -18,7 +18,7 @@ $return_date = $_GET['date'] ?? null;
 
 // Validate delivery ID
 if (!$delivery_id || !is_numeric($delivery_id)) {
-    header("Location: main_dashboard.php");
+    header("Location: logistic-main-dashboard-page-1.php");
     exit();
 }
 
@@ -129,7 +129,7 @@ $current_delivery = $currentDeliveryStmt->get_result()->fetch_assoc();
 $currentDeliveryStmt->close();
 
 if (!$current_delivery) {
-    header("Location: main_dashboard.php");
+    header("Location: logistic-main-dashboard-page-1.php");
     exit();
 }
 
@@ -300,13 +300,13 @@ foreach ($deliveryCounts as $data) {
                 <!-- Action Buttons -->
                 <div class="flex items-center space-x-3">
                     <?php if ($return_date): ?>
-                    <a href="delivery_detailed_view.php?date=<?php echo $return_date; ?>" 
+                    <a href="logistic-delivery-detailed-view-page-14.php?date=<?php echo $return_date; ?>" 
                        class="bg-gray-100 text-gray-700 px-4 py-2 rounded-lg hover:bg-gray-200 transition-colors flex items-center">
                         <i class="fas fa-arrow-left mr-2"></i>
                         Back to Detailed View
                     </a>
                     <?php endif; ?>
-                    <a href="main_dashboard.php" 
+                    <a href="logistic-main-dashboard-page-1.php" 
                        class="bg-blue-100 text-blue-700 px-4 py-2 rounded-lg hover:bg-blue-200 transition-colors flex items-center">
                         <i class="fas fa-dashboard mr-2"></i>
                         Back to Dashboard
@@ -327,12 +327,12 @@ foreach ($deliveryCounts as $data) {
             </div>
             <div class="mt-3 flex space-x-3">
                 <?php if ($return_date): ?>
-                <a href="delivery_detailed_view.php?date=<?php echo $return_date; ?>" 
+                <a href="logistic-delivery-detailed-view-page-14.php?date=<?php echo $return_date; ?>" 
                    class="bg-green-600 text-white px-4 py-2 rounded text-sm hover:bg-green-700 transition-colors">
                     Return to Detailed View
                 </a>
                 <?php endif; ?>
-                <a href="main_dashboard.php" 
+                <a href="logistic-main-dashboard-page-1.php" 
                    class="bg-blue-600 text-white px-4 py-2 rounded text-sm hover:bg-blue-700 transition-colors">
                     Back to Dashboard
                 </a>
@@ -505,7 +505,7 @@ foreach ($deliveryCounts as $data) {
                                 <i class="fas fa-calendar-check mr-2"></i>
                                 Reschedule Delivery
                             </button>
-                            <a href="<?php echo $return_date ? "delivery_detailed_view.php?date=$return_date" : 'main_dashboard.php'; ?>" 
+                            <a href="<?php echo $return_date ? "logistic-delivery-detailed-view-page-14.php?date=$return_date" : 'logistic-main-dashboard-page-1.php'; ?>" 
                                class="px-6 py-3 border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50 transition-colors font-medium">
                                 Cancel
                             </a>

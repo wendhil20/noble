@@ -9,7 +9,7 @@ require_role(['productspecialist', 'superadmin', 'sales', 'warehouse', 'logistic
 
 // Redirect dispatchers to their own dashboard
 if (isset($_SESSION['noble_subrole']) && $_SESSION['noble_subrole'] === 'dispatcher') {
-    header("Location: dispatcher_dashboard.php");
+    header("Location: logistic-dispatcher-dashboard-page-13.php");
     exit();
 }
 
@@ -22,7 +22,7 @@ $schedule_id = isset($_GET['schedule_id']) ? intval($_GET['schedule_id']) : 0;
 $order_id = isset($_GET['order_id']) ? intval($_GET['order_id']) : 0;
 
 if (!$schedule_id || !$order_id) {
-    header("Location: logistics_dashboard_view.php");
+    header("Location: logistic-main-dashboard-page-1.php");
     exit();
 }
 
@@ -48,7 +48,7 @@ $schedule = $scheduleStmt->get_result()->fetch_assoc();
 $scheduleStmt->close();
 
 if (!$schedule) {
-    header("Location: logistics_dashboard_view.php");
+    header("Location: logistic-main-dashboard-page-1.php");
     exit();
 }
 
@@ -84,7 +84,7 @@ $replacements = $replacementsStmt->get_result()->fetch_all(MYSQLI_ASSOC);
 $replacementsStmt->close();
 
 if (empty($replacements)) {
-    header("Location: logistics_dashboard_view.php");
+    header("Location: logistic-main-dashboard-page-1.php");
     exit();
 }
 
@@ -147,13 +147,13 @@ foreach ($replacements as $item) {
         <!-- Header -->
         <div class="mb-8">
             <?php if ($schedule['delivery_date']): ?>
-            <a href="delivery_date_orders.php?date=<?php echo $schedule['delivery_date']; ?>" 
+            <a href="logistic-delivery-date-orders-page-2.php?date=<?php echo $schedule['delivery_date']; ?>" 
                class="inline-flex items-center text-orange-600 hover:text-orange-800 mb-4">
                 <i class="fas fa-arrow-left mr-2"></i>
                 Back to Orders
             </a>
             <?php else: ?>
-            <a href="logistics_dashboard_view.php" 
+            <a href="logistic-main-dashboard-page-1.php" 
                class="inline-flex items-center text-orange-600 hover:text-orange-800 mb-4">
                 <i class="fas fa-arrow-left mr-2"></i>
                 Back to Dashboard
@@ -175,7 +175,7 @@ foreach ($replacements as $item) {
                 </div>
                 
                 <?php if ($booking): ?>
-                <a href="delivery_tracking.php?booking_id=<?php echo $booking['id']; ?>" 
+                <a href="logistic-delivery-tracking-page-5.php?booking_id=<?php echo $booking['id']; ?>" 
                    class="bg-gradient-to-r from-orange-500 to-orange-600 text-white px-6 py-3 rounded-lg hover:from-orange-600 hover:to-orange-700 transition-all shadow-md hover:shadow-lg transform hover:scale-105">
                     <i class="fas fa-tasks mr-2"></i>
                     Manage Delivery

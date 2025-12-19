@@ -17,7 +17,7 @@ $selected_date = $_GET['date'] ?? null;
 
 // Validate date format
 if (!$selected_date || !preg_match('/^\d{4}-\d{2}-\d{2}$/', $selected_date)) {
-    header("Location: logistics_dashboard_view.php");
+    header("Location:  logistic-main-dashboard-page-1.php");
     exit();
 }
 
@@ -585,17 +585,17 @@ $pendingReplacementsStmt->close();
                         Assign 3rd Party
                     </button>
                     <!-- Add this button after the "Assign 3rd Party" button -->
-                    <a href="third_party_deliveries.php?date=<?php echo $selected_date; ?>"
+                    <a href="logistic-third-party-deliveries-page-10.php?date=<?php echo $selected_date; ?>"
                         class="bg-indigo-100 text-indigo-700 px-4 py-2 rounded-lg hover:bg-indigo-200 transition-colors flex items-center">
                         <i class="fas fa-list-alt mr-2"></i>
                         View 3rd Party Deliveries
                     </a>
-                    <a href="assign_drivers.php?date=<?php echo $selected_date; ?>"
+                    <a href="logistic-assign-drivers-page-17.php?date=<?php echo $selected_date; ?>"
                         class="bg-green-100 text-green-700 px-4 py-2 rounded-lg hover:bg-green-200 transition-colors flex items-center">
                         <i class="fas fa-truck mr-2"></i>
                         Schedule Trucks
                     </a>
-                    <a href="main_dashboard.php"
+                    <a href="logistic-main-dashboard-page-1.php"
                         class="bg-gray-100 text-gray-700 px-4 py-2 rounded-lg hover:bg-gray-200 transition-colors flex items-center">
                         <i class="fas fa-arrow-left mr-2"></i>
                         Back to Dashboard
@@ -721,7 +721,7 @@ $pendingReplacementsStmt->close();
                 </div>
                 <h3 class="text-2xl font-bold text-gray-700 mb-4">No Trucks Scheduled</h3>
                 <p class="text-gray-500 mb-6">You need to schedule trucks first before assigning deliveries</p>
-                <a href="assign_drivers.php?date=<?php echo $selected_date; ?>"
+                <a href="logistic-assign-drivers-page-17.php?date=<?php echo $selected_date; ?>"
                     class="bg-green-500 text-white px-6 py-3 rounded-lg hover:bg-green-600 transition-colors inline-flex items-center">
                     <i class="fas fa-truck mr-2"></i>
                     Schedule Trucks
@@ -1012,7 +1012,7 @@ ORDER BY ds.item_type DESC, ds.delivery_time ASC";
                                                             Upload Proof
                                                         </button>
                                                         <!-- Add this right after the existing action buttons div -->
-                                                        <a href="reschedule_delivery.php?delivery_id=<?php echo $item['delivery_id']; ?>&date=<?php echo $selected_date; ?>"
+                                                        <a href="logistic-reschedule-delivery-page-9.php?delivery_id=<?php echo $item['delivery_id']; ?>&date=<?php echo $selected_date; ?>"
                                                             class="w-full bg-yellow-500 text-white px-3 py-2 rounded text-xs hover:bg-yellow-600 transition-colors text-center block">
                                                             <i class="fas fa-calendar-alt mr-1"></i>
                                                             Reschedule
@@ -1621,7 +1621,7 @@ ORDER BY ds.item_type DESC, ds.delivery_time ASC";
             document.getElementById('driverModal').classList.remove('hidden');
 
             // Update modal content with fresh driver data
-            fetch('get_available_drivers.php?date=<?php echo $selected_date; ?>&truck_id=' + truckId)
+            fetch('logistic-get-available-drivers-page-11.php?date=<?php echo $selected_date; ?>&truck_id=' + truckId)
                 .then(response => response.json())
                 .then(data => {
                     updateDriverModalContent(data.drivers, truckId);

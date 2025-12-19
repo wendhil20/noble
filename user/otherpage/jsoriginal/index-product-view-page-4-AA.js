@@ -605,7 +605,7 @@ class ProductSelector {
               </div>
               <span class="timer-display font-mono tracking-wider text-xs bg-black/30 px-2 py-1 rounded" 
                     id="timer-hidden-${timerVariantId}">
-                ${currentTimerText}
+                ${currentTimerText},
               </span>
             </div>
 

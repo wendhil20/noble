@@ -22,7 +22,7 @@ function determineRedirect($userLevel) {
         'accountant' => "../admin/accountant/accountant",
         'supplier' => "../admin/suppliermain/suppliercompany",
         'productspecialist' => "../admin/shop/main-adminshop-page-1",
-        'logistic' => "../admin/logistic_management/main_dashboard",
+        'logistic' => "../admin/logistic_management/logistic-main-dashboard-page-1",
         'warehouse' => "../admin/warehouse_management/order_list",
         'hr' => "../admin/hr/account",
         default => "../admin/client/dashboard.php"

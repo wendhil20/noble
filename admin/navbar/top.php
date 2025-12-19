@@ -586,42 +586,31 @@ function checkQuoteNotifications() {
                                                 <div class="px-3 py-2">
                                                     <div class="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-2 px-2">Logistics</div>
                                                     <?php if (hasAnyRole(['superadmin']) || !hasSubrole(['dispatcher'])): ?>
-                                                        <a href="../logistic_management/main_dashboard"
+                                                        <a href="../logistic_management/logistic-main-dashboard-page-1"
                                                             class="quick-action-item flex items-center space-x-3 px-3 py-2.5 text-sm text-gray-700 hover:bg-orange-50 hover:text-orange-600 rounded-lg transition-all duration-150">
                                                             <i class="ri-dashboard-3-line text-lg"></i>
                                                             <span>Dashboard</span>
                                                         </a>
                                                     <?php endif; ?>
-                                                    <a href="../logistic_management/dispatcher_dashboard"
+                                                      <?php if (hasAnyRole(['superadmin'])): ?>
+                                                    <a href="../logistic_management/logistic-dispatcher-dashboard-page-13"
                                                         class="quick-action-item flex items-center space-x-3 px-3 py-2.5 text-sm text-gray-700 hover:bg-orange-50 hover:text-orange-600 rounded-lg transition-all duration-150">
                                                         <i class="ri-file-info-line text-lg"></i>
                                                         <span>Dispatcher Dashboard</span>
                                                     </a>
+                                                      <?php endif; ?>
                                                     <a href="../warehouse_management/qr_scanner"
                                                         class="quick-action-item flex items-center space-x-3 px-3 py-2.5 text-sm text-gray-700 hover:bg-orange-50 hover:text-orange-600 rounded-lg transition-all duration-150">
                                                         <i class="ri-qr-code-line text-lg"></i>
                                                         <span>QR Scanner</span>
                                                     </a>
-                                                    <a href="../client/driver_management"
-                                                        class="quick-action-item flex items-center space-x-3 px-3 py-2.5 text-sm text-gray-700 hover:bg-orange-50 hover:text-orange-600 rounded-lg transition-all duration-150">
-                                                        <i class="ri-user-add-line text-lg"></i>
-                                                        <span>Add Driver</span>
-                                                    </a>
+                                               
                                                     <a href="../truck_management/transpo_add_vehicle"
                                                         class="quick-action-item flex items-center space-x-3 px-3 py-2.5 text-sm text-gray-700 hover:bg-orange-50 hover:text-orange-600 rounded-lg transition-all duration-150">
                                                         <i class="ri-truck-line text-lg"></i>
                                                         <span>Add Courier Vehicle</span>
                                                     </a>
-                                                    <a href="../client/add_tracking"
-                                                        class="quick-action-item flex items-center space-x-3 px-3 py-2.5 text-sm text-gray-700 hover:bg-orange-50 hover:text-orange-600 rounded-lg transition-all duration-150">
-                                                        <i class="ri-map-pin-add-line text-lg"></i>
-                                                        <span>Add Tracking</span>
-                                                    </a>
-                                                    <a href="../client/monitortracking"
-                                                        class="quick-action-item flex items-center space-x-3 px-3 py-2.5 text-sm text-gray-700 hover:bg-orange-50 hover:text-orange-600 rounded-lg transition-all duration-150">
-                                                        <i class="ri-radar-line text-lg"></i>
-                                                        <span>Monitor Tracking</span>
-                                                    </a>
+                                         
                                                     <a href="../client/delivery_data_input"
                                                         class="quick-action-item flex items-center space-x-3 px-3 py-2.5 text-sm text-gray-700 hover:bg-orange-50 hover:text-orange-600 rounded-lg transition-all duration-150">
                                                         <i class="ri-file-info-line text-lg"></i>

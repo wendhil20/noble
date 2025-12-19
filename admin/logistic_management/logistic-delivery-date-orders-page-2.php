@@ -11,7 +11,7 @@ require_once '../role/roleaccount.php';
 require_role(['productspecialist', 'superadmin', 'sales', 'warehouse', 'logistic']);
 
 if (isset($_SESSION['noble_subrole']) && $_SESSION['noble_subrole'] === 'dispatcher') {
-    header("Location: dispatcher_dashboard.php");
+    header("Location:  logistic-dispatcher-dashboard-page-13.php");
     exit();
 }
 
@@ -23,7 +23,7 @@ if (!isset($_SESSION['noble_user'])) {
 $selectedDate = isset($_GET['date']) ? $_GET['date'] : date('Y-m-d');
 
 if (!preg_match('/^\d{4}-\d{2}-\d{2}$/', $selectedDate)) {
-    header("Location: logistics_dashboard_view.php");
+    header("Location:  logistic-main-dashboard-page-1.php");
     exit();
 }
 
@@ -85,10 +85,10 @@ while ($row = $result->fetch_assoc()) {
     $countStmt->execute();
     $countResult = $countStmt->get_result()->fetch_assoc();
     $countStmt->close();
-    
+
     $row['total_items'] = $countResult['total_items'] ?? 0;
     $row['total_quantity'] = $countResult['total_quantity'] ?? 0;
-    
+
     // GET REPLACEMENT DATA IN PHP
     if ($row['item_type'] === 'replacement') {
         $repSql = "SELECT reason, details, replacement_quantity, status FROM replacement_requests WHERE delivery_schedule_id = ? LIMIT 1";
@@ -97,7 +97,7 @@ while ($row = $result->fetch_assoc()) {
         $repStmt->execute();
         $repResult = $repStmt->get_result()->fetch_assoc();
         $repStmt->close();
-        
+
         $row['replacement_reason'] = $repResult['reason'] ?? null;
         $row['replacement_details'] = $repResult['details'] ?? null;
         $row['replacement_quantity'] = $repResult['replacement_quantity'] ?? null;
@@ -108,12 +108,14 @@ while ($row = $result->fetch_assoc()) {
         $row['replacement_quantity'] = null;
         $row['replacement_status'] = null;
     }
-    
+
     // APPLY SEARCH FILTER IN PHP
-    if ($searchQuery === '' ||
+    if (
+        $searchQuery === '' ||
         strpos((string)$row['order_id'], $searchQuery) !== false ||
         stripos($row['customer_name'], $searchQuery) !== false ||
-        stripos($row['tracking_number'] ?? '', $searchQuery) !== false) {
+        stripos($row['tracking_number'] ?? '', $searchQuery) !== false
+    ) {
         $orders[] = $row;
     }
 }
@@ -182,7 +184,7 @@ $overdueOrders = count(array_filter($orders, fn($o) => $o['delivery_status'] ===
 
         <!-- Header -->
         <div class="mb-6">
-            <a href="main_dashboard.php" class="inline-flex items-center text-blue-600 hover:text-blue-800 mb-3 text-sm font-medium">
+            <a href="logistic-main-dashboard-page-1.php" class="inline-flex items-center text-blue-600 hover:text-blue-800 mb-3 text-sm font-medium">
                 <i class="fas fa-arrow-left mr-2"></i>
                 Back to Dashboard
             </a>
@@ -301,20 +303,20 @@ $overdueOrders = count(array_filter($orders, fn($o) => $o['delivery_status'] ===
                 <div class="overflow-x-auto">
                     <table class="w-full">
                         <thead class="bg-gray-50 border-b border-gray-200">
-    <tr>
-        <th class="px-6 py-4 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">Order</th>
-        <th class="px-6 py-4 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">Tracking</th>
-        <th class="px-6 py-4 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">Customer</th>
-        <th class="px-6 py-4 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">Type</th>
-        <th class="px-6 py-4 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">Time</th>
-        <th class="px-6 py-4 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">Expected Delivery</th>
-        <th class="px-6 py-4 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">Items</th>
-        <th class="px-6 py-4 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">Weight/Volume</th>
-        <th class="px-6 py-4 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">Total</th>
-        <th class="px-6 py-4 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">Status</th>
-        <th class="px-6 py-4 text-right text-xs font-semibold text-gray-600 uppercase tracking-wider">Actions</th>
-    </tr>
-</thead>
+                            <tr>
+                                <th class="px-6 py-4 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">Order</th>
+                                <th class="px-6 py-4 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">Tracking</th>
+                                <th class="px-6 py-4 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">Customer</th>
+                                <th class="px-6 py-4 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">Type</th>
+                                <th class="px-6 py-4 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">Time</th>
+                                <th class="px-6 py-4 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">Expected Delivery</th>
+                                <th class="px-6 py-4 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">Items</th>
+                                <th class="px-6 py-4 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">Weight/Volume</th>
+                                <th class="px-6 py-4 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">Total</th>
+                                <th class="px-6 py-4 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">Status</th>
+                                <th class="px-6 py-4 text-right text-xs font-semibold text-gray-600 uppercase tracking-wider">Actions</th>
+                            </tr>
+                        </thead>
                         <tbody class="divide-y divide-gray-200">
                             <?php foreach ($orders as $order): ?>
                                 <?php
@@ -371,21 +373,21 @@ $overdueOrders = count(array_filter($orders, fn($o) => $o['delivery_status'] ===
                                         <?php echo $deliveryTypeBadge; ?>
                                     </td>
                                     <td class="px-6 py-4 whitespace-nowrap">
-    <div class="text-sm font-semibold text-gray-900"><?php echo date('g:i A', strtotime($order['delivery_time'])); ?></div>
-</td>
-<td class="px-4 py-4 whitespace-nowrap">
-    <?php if ($order['earliest_delivery'] && $order['latest_delivery']): ?>
-    <div class="bg-gradient-to-r from-blue-50 to-indigo-50 border-l-4 border-blue-500 rounded px-3 py-2">
-        <div class="text-xs">
-            <span class="text-gray-700 font-medium"><?php echo date('M d, Y', strtotime($order['earliest_delivery'])); ?></span>
-            <span class="text-gray-500 mx-1">to</span>
-            <span class="text-blue-700 font-bold"><?php echo date('M d, Y', strtotime($order['latest_delivery'])); ?></span>
-        </div>
-    </div>
-    <?php else: ?>
-    <span class="text-xs text-gray-400 italic">Not set</span>
-    <?php endif; ?>
-</td>
+                                        <div class="text-sm font-semibold text-gray-900"><?php echo date('g:i A', strtotime($order['delivery_time'])); ?></div>
+                                    </td>
+                                    <td class="px-4 py-4 whitespace-nowrap">
+                                        <?php if ($order['earliest_delivery'] && $order['latest_delivery']): ?>
+                                            <div class="bg-gradient-to-r from-blue-50 to-indigo-50 border-l-4 border-blue-500 rounded px-3 py-2">
+                                                <div class="text-xs">
+                                                    <span class="text-gray-700 font-medium"><?php echo date('M d, Y', strtotime($order['earliest_delivery'])); ?></span>
+                                                    <span class="text-gray-500 mx-1">to</span>
+                                                    <span class="text-blue-700 font-bold"><?php echo date('M d, Y', strtotime($order['latest_delivery'])); ?></span>
+                                                </div>
+                                            </div>
+                                        <?php else: ?>
+                                            <span class="text-xs text-gray-400 italic">Not set</span>
+                                        <?php endif; ?>
+                                    </td>
                                     <td class="px-6 py-4 whitespace-nowrap">
                                         <div class="text-sm text-gray-900">
                                             <span class="font-semibold"><?php echo $order['total_items']; ?></span> items
@@ -393,14 +395,14 @@ $overdueOrders = count(array_filter($orders, fn($o) => $o['delivery_status'] ===
                                         <div class="text-xs text-gray-500"><?php echo $order['total_quantity']; ?> pcs total</div>
                                     </td>
                                     <td class="px-6 py-4 whitespace-nowrap">
-    <div class="text-xs text-gray-900">
-        <div><i class="fas fa-weight text-orange-500 mr-1"></i><?php echo number_format($order['total_weight_kg'] ?? 0, 2); ?> kg</div>
-        <div class="mt-1"><i class="fas fa-cube text-orange-500 mr-1"></i><?php echo number_format($order['total_cubic_meters'] ?? 0, 3); ?> m³</div>
-        <?php if ($order['item_type'] === 'replacement'): ?>
-        <div class="mt-1 text-xs text-orange-600 italic">(Replacement)</div>
-        <?php endif; ?>
-    </div>
-</td>
+                                        <div class="text-xs text-gray-900">
+                                            <div><i class="fas fa-weight text-orange-500 mr-1"></i><?php echo number_format($order['total_weight_kg'] ?? 0, 2); ?> kg</div>
+                                            <div class="mt-1"><i class="fas fa-cube text-orange-500 mr-1"></i><?php echo number_format($order['total_cubic_meters'] ?? 0, 3); ?> m³</div>
+                                            <?php if ($order['item_type'] === 'replacement'): ?>
+                                                <div class="mt-1 text-xs text-orange-600 italic">(Replacement)</div>
+                                            <?php endif; ?>
+                                        </div>
+                                    </td>
                                     <td class="px-6 py-4 whitespace-nowrap">
                                         <div class="text-sm font-bold text-green-600">₱<?php echo number_format($order['final_total'], 2); ?></div>
                                     </td>
@@ -412,8 +414,8 @@ $overdueOrders = count(array_filter($orders, fn($o) => $o['delivery_status'] ===
                                             <?php if ($canBook): ?>
                                                 <?php
                                                 $bookingUrl = $order['item_type'] === 'replacement'
-                                                    ? "replacement_booking.php?schedule_id=" . $order['delivery_id'] . "&order_id=" . $order['order_id']
-                                                    : "delivery_booking.php?schedule_id=" . $order['delivery_id'] . "&order_id=" . $order['order_id'];
+                                                    ? "logistic-replacement-booking-page-4.php?schedule_id=" . $order['delivery_id'] . "&order_id=" . $order['order_id']
+                                                    : "logistic-delivery-booking-page-3.php?schedule_id=" . $order['delivery_id'] . "&order_id=" . $order['order_id'];
                                                 ?>
                                                 <a href="<?php echo $bookingUrl; ?>"
                                                     onclick="event.stopPropagation()"
@@ -421,7 +423,7 @@ $overdueOrders = count(array_filter($orders, fn($o) => $o['delivery_status'] ===
                                                     <i class="fas fa-calendar-check text-lg"></i>
                                                 </a>
                                             <?php elseif ($hasBooking && !$isCompleted): ?>
-                                                <a href="delivery_tracking.php?booking_id=<?php echo $order['booking_id']; ?>"
+                                                <a href="logistic-delivery-tracking-page-5.php?booking_id=<?php echo $order['booking_id']; ?>"
                                                     onclick="event.stopPropagation()"
                                                     class="text-purple-600 hover:text-purple-800" title="Manage Delivery">
                                                     <i class="fas fa-tasks text-lg"></i>
@@ -429,18 +431,18 @@ $overdueOrders = count(array_filter($orders, fn($o) => $o['delivery_status'] ===
                                             <?php endif; ?>
 
                                             <?php if ($order['item_type'] === 'replacement'): ?>
-    <a href="replacement_items_view.php?schedule_id=<?php echo $order['delivery_id']; ?>&order_id=<?php echo $order['order_id']; ?>"
-        onclick="event.stopPropagation()"
-        class="text-orange-600 hover:text-orange-800" title="View Replacement Items">
-        <i class="fas fa-sync-alt text-lg"></i>
-    </a>
-<?php else: ?>
-    <a href="order_items_view.php?order_id=<?php echo $order['order_id']; ?>"
-        onclick="event.stopPropagation()"
-        class="text-green-600 hover:text-green-800" title="View Items">
-        <i class="fas fa-list text-lg"></i>
-    </a>
-<?php endif; ?>
+                                                <a href="logistic-replacement-items-view-page-6.php?schedule_id=<?php echo $order['delivery_id']; ?>&order_id=<?php echo $order['order_id']; ?>"
+                                                    onclick="event.stopPropagation()"
+                                                    class="text-orange-600 hover:text-orange-800" title="View Replacement Items">
+                                                    <i class="fas fa-sync-alt text-lg"></i>
+                                                </a>
+                                            <?php else: ?>
+                                                <a href="logistic-order-items-view-page-7.php?order_id=<?php echo $order['order_id']; ?>"
+                                                    onclick="event.stopPropagation()"
+                                                    class="text-green-600 hover:text-green-800" title="View Items">
+                                                    <i class="fas fa-list text-lg"></i>
+                                                </a>
+                                            <?php endif; ?>
 
                                             <?php if (!$isCompleted): ?>
                                                 <button onclick="event.stopPropagation(); openRescheduleModal(<?php echo $order['delivery_id']; ?>, <?php echo $order['order_id']; ?>, '<?php echo htmlspecialchars($order['customer_name'], ENT_QUOTES); ?>', '<?php echo $order['delivery_date']; ?>', '<?php echo date('H:i', strtotime($order['delivery_time'])); ?>');"
@@ -770,7 +772,7 @@ ${order.item_type === 'replacement' && order.replacement_reason ? `
             submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin mr-2"></i>Rescheduling...';
             document.getElementById('rescheduleError').classList.add('hidden');
 
-            fetch('process_reschedule.php', {
+            fetch('logistic-process-reschedule-page-8.php', {
                     method: 'POST',
                     body: formData
                 })

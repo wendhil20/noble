@@ -122,7 +122,6 @@ if ($_POST) {
         $subcategory_slug = trim($_POST['subcategory_slug']);
 
         if (!empty($subcategory_name) && !empty($subcategory_slug) && !empty($category_id)) {
-            // Get category name for slug prefix
             $get_cat_sql = "SELECT name FROM categories WHERE id = ?";
             $get_cat_stmt = $conn->prepare($get_cat_sql);
             $get_cat_stmt->bind_param("i", $category_id);
@@ -132,11 +131,9 @@ if ($_POST) {
             $category_name = $cat_data['name'];
             $get_cat_stmt->close();
 
-            // Create auto slug: category-name + subcategory-slug
             $category_slug_part = strtolower(preg_replace('/[^a-z0-9\s-]/', '', str_replace(' ', '-', $category_name)));
             $final_slug = $category_slug_part . '-' . $subcategory_slug;
 
-            // Check if same name already exists in this category
             $check_name_sql = "SELECT id FROM product_subcategories WHERE category_id = ? AND subcategory_name = ?";
             $check_name_stmt = $conn->prepare($check_name_sql);
             $check_name_stmt->bind_param("is", $category_id, $subcategory_name);
@@ -151,7 +148,6 @@ if ($_POST) {
             }
             $check_name_stmt->close();
 
-            // Check if generated slug already exists
             $check_slug_sql = "SELECT id FROM product_subcategories WHERE subcategory_slug = ?";
             $check_slug_stmt = $conn->prepare($check_slug_sql);
             $check_slug_stmt->bind_param("s", $final_slug);
@@ -216,7 +212,6 @@ if ($_POST) {
         $sub_subcategory_slug = trim($_POST['sub_subcategory_slug']);
 
         if (!empty($sub_subcategory_name) && !empty($sub_subcategory_slug) && !empty($subcategory_id)) {
-            // Check if same sub-subcategory name already exists in this subcategory
             $check_name_sql = "SELECT id FROM product_sub_subcategories WHERE subcategory_id = ? AND sub_subcategory_name = ?";
             $check_name_stmt = $conn->prepare($check_name_sql);
             $check_name_stmt->bind_param("is", $subcategory_id, $sub_subcategory_name);
@@ -231,7 +226,6 @@ if ($_POST) {
             }
             $check_name_stmt->close();
 
-            // Check if slug already exists globally
             $check_slug_sql = "SELECT id FROM product_sub_subcategories WHERE sub_subcategory_slug = ?";
             $check_slug_stmt = $conn->prepare($check_slug_sql);
             $check_slug_stmt->bind_param("s", $sub_subcategory_slug);
@@ -383,6 +377,132 @@ if ($_POST) {
 
                         if ($update_stmt->execute()) {
                             $_SESSION['message'] = "Sub-subcategory image updated successfully!";
+                        } else {
+                            $_SESSION['error'] = "Error updating image: " . $conn->error;
+                        }
+                        $update_stmt->close();
+                    } else {
+                        $_SESSION['error'] = "Error uploading image.";
+                    }
+                } else {
+                    $_SESSION['error'] = "Invalid image type.";
+                }
+            } else {
+                $_SESSION['error'] = "No image file selected.";
+            }
+        }
+
+        header("Location: " . $_SERVER['PHP_SELF']);
+        exit();
+    }
+
+    // Update Category Image (image_path)
+    if (isset($_POST['update_category_image'])) {
+        $category_id = $_POST['category_id'];
+
+        $get_cat_sql = "SELECT image_path FROM categories WHERE id = ?";
+        $get_cat_stmt = $conn->prepare($get_cat_sql);
+        $get_cat_stmt->bind_param("i", $category_id);
+        $get_cat_stmt->execute();
+        $cat_result = $get_cat_stmt->get_result();
+        $cat_data = $cat_result->fetch_assoc();
+        $get_cat_stmt->close();
+
+        if ($cat_data) {
+            $current_image = $cat_data['image_path'];
+            $upload_dir = "../../uploads/categories/";
+
+            if (isset($_FILES['new_category_image']) && $_FILES['new_category_image']['error'] == 0) {
+                $allowed_types = ['image/jpeg', 'image/png', 'image/gif', 'image/webp'];
+                $file_type = $_FILES['new_category_image']['type'];
+
+                if (in_array($file_type, $allowed_types)) {
+                    if (!createDirectory($upload_dir)) {
+                        $_SESSION['error'] = "Error creating upload directory.";
+                        header("Location: " . $_SERVER['PHP_SELF']);
+                        exit();
+                    }
+
+                    if ($current_image && file_exists($upload_dir . $current_image)) {
+                        unlink($upload_dir . $current_image);
+                    }
+
+                    $file_extension = strtolower(pathinfo($_FILES['new_category_image']['name'], PATHINFO_EXTENSION));
+                    $new_filename = 'category_' . $category_id . '_' . time() . '.' . $file_extension;
+                    $upload_path = $upload_dir . $new_filename;
+
+                    if (move_uploaded_file($_FILES['new_category_image']['tmp_name'], $upload_path)) {
+                        chmod($upload_path, 0644);
+
+                        $update_sql = "UPDATE categories SET image_path = ? WHERE id = ?";
+                        $update_stmt = $conn->prepare($update_sql);
+                        $update_stmt->bind_param("si", $new_filename, $category_id);
+
+                        if ($update_stmt->execute()) {
+                            $_SESSION['message'] = "Category image 1 updated successfully!";
+                        } else {
+                            $_SESSION['error'] = "Error updating image: " . $conn->error;
+                        }
+                        $update_stmt->close();
+                    } else {
+                        $_SESSION['error'] = "Error uploading image.";
+                    }
+                } else {
+                    $_SESSION['error'] = "Invalid image type.";
+                }
+            } else {
+                $_SESSION['error'] = "No image file selected.";
+            }
+        }
+
+        header("Location: " . $_SERVER['PHP_SELF']);
+        exit();
+    }
+
+    // Update Category Image Two (image_pathtwo)
+    if (isset($_POST['update_category_image_two'])) {
+        $category_id = $_POST['category_id'];
+
+        $get_cat_sql = "SELECT image_pathtwo FROM categories WHERE id = ?";
+        $get_cat_stmt = $conn->prepare($get_cat_sql);
+        $get_cat_stmt->bind_param("i", $category_id);
+        $get_cat_stmt->execute();
+        $cat_result = $get_cat_stmt->get_result();
+        $cat_data = $cat_result->fetch_assoc();
+        $get_cat_stmt->close();
+
+        if ($cat_data) {
+            $current_image = $cat_data['image_pathtwo'];
+            $upload_dir = "../../uploads/categories/";
+
+            if (isset($_FILES['new_category_image_two']) && $_FILES['new_category_image_two']['error'] == 0) {
+                $allowed_types = ['image/jpeg', 'image/png', 'image/gif', 'image/webp'];
+                $file_type = $_FILES['new_category_image_two']['type'];
+
+                if (in_array($file_type, $allowed_types)) {
+                    if (!createDirectory($upload_dir)) {
+                        $_SESSION['error'] = "Error creating upload directory.";
+                        header("Location: " . $_SERVER['PHP_SELF']);
+                        exit();
+                    }
+
+                    if ($current_image && file_exists($upload_dir . $current_image)) {
+                        unlink($upload_dir . $current_image);
+                    }
+
+                    $file_extension = strtolower(pathinfo($_FILES['new_category_image_two']['name'], PATHINFO_EXTENSION));
+                    $new_filename = 'category_' . $category_id . '_two_' . time() . '.' . $file_extension;
+                    $upload_path = $upload_dir . $new_filename;
+
+                    if (move_uploaded_file($_FILES['new_category_image_two']['tmp_name'], $upload_path)) {
+                        chmod($upload_path, 0644);
+
+                        $update_sql = "UPDATE categories SET image_pathtwo = ? WHERE id = ?";
+                        $update_stmt = $conn->prepare($update_sql);
+                        $update_stmt->bind_param("si", $new_filename, $category_id);
+
+                        if ($update_stmt->execute()) {
+                            $_SESSION['message'] = "Category image 2 updated successfully!";
                         } else {
                             $_SESSION['error'] = "Error updating image: " . $conn->error;
                         }
@@ -565,7 +685,7 @@ while ($row = $subcategories_result->fetch_assoc()) {
     $subcategories[] = $row;
 }
 
-// Around line 450, update the display_sql to include product counts
+// Display SQL with product counts
 $display_sql = "SELECT 
     c.id as category_id,
     c.name as category_name,
@@ -617,7 +737,8 @@ while ($row = $display_result->fetch_assoc()) {
                 'name' => $row['sub_subcategory_name'],
                 'slug' => $row['sub_subcategory_slug'],
                 'image_path' => $row['sub_sub_image_path'],
-                'parent_slug' => $row['subcategory_slug']
+                'parent_slug' => $row['subcategory_slug'],
+                'product_count' => $row['product_count']
             ];
         }
     }
@@ -626,7 +747,6 @@ while ($row = $display_result->fetch_assoc()) {
 
 <!DOCTYPE html>
 <html lang="en">
-
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -645,9 +765,7 @@ while ($row = $display_result->fetch_assoc()) {
         }
     </script>
 </head>
-
 <body class="bg-gray-100 font-sans">
-
     <?php include '../navbar/top.php'; ?>
     <div class="max-w-7xl mx-auto p-6">
         <div class="bg-white rounded-xl shadow-lg p-8">
@@ -671,34 +789,14 @@ while ($row = $display_result->fetch_assoc()) {
                     <h2 class="text-xl font-semibold text-gray-800 mb-4">Add New Category</h2>
                     <form method="POST" enctype="multipart/form-data" class="space-y-4">
                         <div>
-                            <label for="category_name" class="block text-sm font-medium text-gray-700 mb-2">
-                                Category Name
-                            </label>
-                            <input
-                                type="text"
-                                id="category_name"
-                                name="category_name"
-                                placeholder="e.g., Electronics"
-                                class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent"
-                                required>
+                            <label for="category_name" class="block text-sm font-medium text-gray-700 mb-2">Category Name</label>
+                            <input type="text" id="category_name" name="category_name" placeholder="e.g., Electronics" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent" required>
                         </div>
                         <div>
-                            <label for="category_image" class="block text-sm font-medium text-gray-700 mb-2">
-                                Category Image (Optional)
-                            </label>
-                            <input
-                                type="file"
-                                id="category_image"
-                                name="category_image"
-                                accept="image/jpeg,image/png,image/gif,image/webp"
-                                class="w-full px-4 py-2 border border-gray-300 rounded-lg text-sm">
+                            <label for="category_image" class="block text-sm font-medium text-gray-700 mb-2">Category Image (Optional)</label>
+                            <input type="file" id="category_image" name="category_image" accept="image/jpeg,image/png,image/gif,image/webp" class="w-full px-4 py-2 border border-gray-300 rounded-lg text-sm">
                         </div>
-                        <button
-                            type="submit"
-                            name="add_category"
-                            class="w-full bg-primary hover:bg-primary-dark text-white font-medium py-2 px-4 rounded-lg transition duration-200">
-                            Add Category
-                        </button>
+                        <button type="submit" name="add_category" class="w-full bg-primary hover:bg-primary-dark text-white font-medium py-2 px-4 rounded-lg transition duration-200">Add Category</button>
                     </form>
                 </div>
 
@@ -707,14 +805,8 @@ while ($row = $display_result->fetch_assoc()) {
                     <h2 class="text-xl font-semibold text-gray-800 mb-4">Add New Subcategory</h2>
                     <form method="POST" enctype="multipart/form-data" class="space-y-4">
                         <div>
-                            <label for="category_id" class="block text-sm font-medium text-gray-700 mb-2">
-                                Select Category
-                            </label>
-                            <select
-                                id="category_id"
-                                name="category_id"
-                                class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                                required>
+                            <label for="category_id" class="block text-sm font-medium text-gray-700 mb-2">Select Category</label>
+                            <select id="category_id" name="category_id" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent" required>
                                 <option value="">-- Select Category --</option>
                                 <?php foreach ($categories as $category): ?>
                                     <option value="<?= $category['id'] ?>"><?= htmlspecialchars($category['name']) ?></option>
@@ -722,47 +814,19 @@ while ($row = $display_result->fetch_assoc()) {
                             </select>
                         </div>
                         <div>
-                            <label for="subcategory_name" class="block text-sm font-medium text-gray-700 mb-2">
-                                Subcategory Name
-                            </label>
-                            <input
-                                type="text"
-                                id="subcategory_name"
-                                name="subcategory_name"
-                                placeholder="e.g., Smartphones"
-                                class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                                required>
+                            <label for="subcategory_name" class="block text-sm font-medium text-gray-700 mb-2">Subcategory Name</label>
+                            <input type="text" id="subcategory_name" name="subcategory_name" placeholder="e.g., Smartphones" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent" required>
                         </div>
                         <div>
-                            <label for="subcategory_slug" class="block text-sm font-medium text-gray-700 mb-2">
-                                Subcategory Slug
-                            </label>
-                            <input
-                                type="text"
-                                id="subcategory_slug"
-                                name="subcategory_slug"
-                                placeholder="e.g., smartphones"
-                                class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                                required>
+                            <label for="subcategory_slug" class="block text-sm font-medium text-gray-700 mb-2">Subcategory Slug</label>
+                            <input type="text" id="subcategory_slug" name="subcategory_slug" placeholder="e.g., smartphones" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent" required>
                             <p class="text-xs text-gray-500 mt-1">Lowercase, numbers, hyphens only</p>
                         </div>
                         <div>
-                            <label for="subcategory_image" class="block text-sm font-medium text-gray-700 mb-2">
-                                Subcategory Image (Optional)
-                            </label>
-                            <input
-                                type="file"
-                                id="subcategory_image"
-                                name="subcategory_image"
-                                accept="image/jpeg,image/png,image/gif,image/webp"
-                                class="w-full px-4 py-2 border border-gray-300 rounded-lg text-sm">
+                            <label for="subcategory_image" class="block text-sm font-medium text-gray-700 mb-2">Subcategory Image (Optional)</label>
+                            <input type="file" id="subcategory_image" name="subcategory_image" accept="image/jpeg,image/png,image/gif,image/webp" class="w-full px-4 py-2 border border-gray-300 rounded-lg text-sm">
                         </div>
-                        <button
-                            type="submit"
-                            name="add_subcategory"
-                            class="w-full bg-blue-500 hover:bg-blue-600 text-white font-medium py-2 px-4 rounded-lg transition duration-200">
-                            Add Subcategory
-                        </button>
+                        <button type="submit" name="add_subcategory" class="w-full bg-blue-500 hover:bg-blue-600 text-white font-medium py-2 px-4 rounded-lg transition duration-200">Add Subcategory</button>
                     </form>
                 </div>
 
@@ -771,13 +835,8 @@ while ($row = $display_result->fetch_assoc()) {
                     <h2 class="text-xl font-semibold text-gray-800 mb-4">Add Sub-Subcategory</h2>
                     <form method="POST" enctype="multipart/form-data" class="space-y-4" id="subSubForm">
                         <div>
-                            <label for="sub_category_select" class="block text-sm font-medium text-gray-700 mb-2">
-                                Select Category First
-                            </label>
-                            <select
-                                id="sub_category_select"
-                                class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent"
-                                onchange="filterSubcategories(this.value)">
+                            <label for="sub_category_select" class="block text-sm font-medium text-gray-700 mb-2">Select Category First</label>
+                            <select id="sub_category_select" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent" onchange="filterSubcategories(this.value)">
                                 <option value="">-- Select Category --</option>
                                 <?php foreach ($categories as $category): ?>
                                     <option value="<?= $category['id'] ?>"><?= htmlspecialchars($category['name']) ?></option>
@@ -785,59 +844,25 @@ while ($row = $display_result->fetch_assoc()) {
                             </select>
                         </div>
                         <div>
-                            <label for="subcategory_id" class="block text-sm font-medium text-gray-700 mb-2">
-                                Select Subcategory
-                            </label>
-                            <select
-                                id="subcategory_id"
-                                name="subcategory_id"
-                                class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent"
-                                required>
+                            <label for="subcategory_id" class="block text-sm font-medium text-gray-700 mb-2">Select Subcategory</label>
+                            <select id="subcategory_id" name="subcategory_id" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent" required>
                                 <option value="">-- Select Subcategory --</option>
                             </select>
                         </div>
                         <div>
-                            <label for="sub_subcategory_name" class="block text-sm font-medium text-gray-700 mb-2">
-                                Sub-Subcategory Name
-                            </label>
-                            <input
-                                type="text"
-                                id="sub_subcategory_name"
-                                name="sub_subcategory_name"
-                                placeholder="e.g., iPhone Models"
-                                class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent"
-                                required>
+                            <label for="sub_subcategory_name" class="block text-sm font-medium text-gray-700 mb-2">Sub-Subcategory Name</label>
+                            <input type="text" id="sub_subcategory_name" name="sub_subcategory_name" placeholder="e.g., iPhone Models" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent" required>
                         </div>
                         <div>
-                            <label for="sub_subcategory_slug" class="block text-sm font-medium text-gray-700 mb-2">
-                                Sub-Subcategory Slug
-                            </label>
-                            <input
-                                type="text"
-                                id="sub_subcategory_slug"
-                                name="sub_subcategory_slug"
-                                placeholder="e.g., iphone-models"
-                                class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent"
-                                required>
+                            <label for="sub_subcategory_slug" class="block text-sm font-medium text-gray-700 mb-2">Sub-Subcategory Slug</label>
+                            <input type="text" id="sub_subcategory_slug" name="sub_subcategory_slug" placeholder="e.g., iphone-models" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent" required>
                             <p class="text-xs text-gray-500 mt-1">Lowercase, numbers, hyphens only</p>
                         </div>
                         <div>
-                            <label for="sub_subcategory_image" class="block text-sm font-medium text-gray-700 mb-2">
-                                Sub-Subcategory Image (Optional)
-                            </label>
-                            <input
-                                type="file"
-                                id="sub_subcategory_image"
-                                name="sub_subcategory_image"
-                                accept="image/jpeg,image/png,image/gif,image/webp"
-                                class="w-full px-4 py-2 border border-gray-300 rounded-lg text-sm">
+                            <label for="sub_subcategory_image" class="block text-sm font-medium text-gray-700 mb-2">Sub-Subcategory Image (Optional)</label>
+                            <input type="file" id="sub_subcategory_image" name="sub_subcategory_image" accept="image/jpeg,image/png,image/gif,image/webp" class="w-full px-4 py-2 border border-gray-300 rounded-lg text-sm">
                         </div>
-                        <button
-                            type="submit"
-                            name="add_sub_subcategory"
-                            class="w-full bg-purple-500 hover:bg-purple-600 text-white font-medium py-2 px-4 rounded-lg transition duration-200">
-                            Add Sub-Subcategory
-                        </button>
+                        <button type="submit" name="add_sub_subcategory" class="w-full bg-purple-500 hover:bg-purple-600 text-white font-medium py-2 px-4 rounded-lg transition duration-200">Add Sub-Subcategory</button>
                     </form>
                 </div>
             </div>
@@ -859,33 +884,44 @@ while ($row = $display_result->fetch_assoc()) {
                                             <?php if ($category['image_path'] || $category['image_pathtwo']): ?>
                                                 <div class="flex space-x-2">
                                                     <?php if ($category['image_path']): ?>
-                                                        <img
-                                                            src="../../uploads/categories/<?= htmlspecialchars($category['image_path']) ?>"
-                                                            alt="<?= htmlspecialchars($category['name']) ?>"
-                                                            class="w-12 h-12 object-cover rounded">
+                                                        <img src="../../uploads/categories/<?= htmlspecialchars($category['image_path']) ?>" alt="<?= htmlspecialchars($category['name']) ?>" class="w-12 h-12 object-cover rounded">
                                                     <?php endif; ?>
                                                     <?php if ($category['image_pathtwo']): ?>
-                                                        <img
-                                                            src="../../uploads/categories/<?= htmlspecialchars($category['image_pathtwo']) ?>"
-                                                            alt="<?= htmlspecialchars($category['name']) ?> 2"
-                                                            class="w-12 h-12 object-cover rounded">
+                                                        <img src="../../uploads/categories/<?= htmlspecialchars($category['image_pathtwo']) ?>" alt="<?= htmlspecialchars($category['name']) ?> 2" class="w-12 h-12 object-cover rounded">
                                                     <?php endif; ?>
                                                 </div>
                                             <?php endif; ?>
                                             <h3 class="text-lg font-semibold"><?= htmlspecialchars($category['name']) ?></h3>
                                         </div>
                                         <div class="flex space-x-2">
+                                            <button onclick="toggleCategoryImageUpload(<?= $category['id'] ?>)" class="bg-blue-500 hover:bg-blue-600 text-white px-3 py-1 rounded text-sm"><?= $category['image_path'] ? 'Update' : 'Add' ?> Image 1</button>
+                                            <button onclick="toggleCategoryImageUploadTwo(<?= $category['id'] ?>)" class="bg-green-500 hover:bg-green-600 text-white px-3 py-1 rounded text-sm"><?= $category['image_pathtwo'] ? 'Update' : 'Add' ?> Image 2</button>
                                             <form method="POST" class="inline" onsubmit="return confirm('Delete category and all subcategories?')">
                                                 <input type="hidden" name="delete_category_id" value="<?= $category['id'] ?>">
-                                                <button
-                                                    type="submit"
-                                                    name="delete_category"
-                                                    class="bg-red-500 hover:bg-red-600 text-white px-3 py-1 rounded text-sm">
-                                                    Delete Category
-                                                </button>
+                                                <button type="submit" name="delete_category" class="bg-red-500 hover:bg-red-600 text-white px-3 py-1 rounded text-sm">Delete Category</button>
                                             </form>
                                         </div>
                                     </div>
+                                </div>
+
+                                <!-- Category Image 1 Upload -->
+                                <div id="category-image-upload-<?= $category['id'] ?>" class="hidden p-4 bg-blue-50 rounded-lg m-4">
+                                    <form method="POST" enctype="multipart/form-data" class="flex items-center space-x-4">
+                                        <input type="hidden" name="category_id" value="<?= $category['id'] ?>">
+                                        <input type="file" name="new_category_image" accept="image/jpeg,image/png,image/gif,image/webp" class="flex-1 px-3 py-2 border border-gray-300 rounded text-sm" required>
+                                        <button type="submit" name="update_category_image" class="bg-blue-500 hover:bg-blue-600 text-white px-4 py-2 rounded text-sm">Upload</button>
+                                        <button type="button" onclick="toggleCategoryImageUpload(<?= $category['id'] ?>)" class="bg-gray-500 hover:bg-gray-600 text-white px-4 py-2 rounded text-sm">Cancel</button>
+                                    </form>
+                                </div>
+
+                                <!-- Category Image 2 Upload -->
+                                <div id="category-image-upload-two-<?= $category['id'] ?>" class="hidden p-4 bg-green-50 rounded-lg m-4">
+                                    <form method="POST" enctype="multipart/form-data" class="flex items-center space-x-4">
+                                        <input type="hidden" name="category_id" value="<?= $category['id'] ?>">
+                                        <input type="file" name="new_category_image_two" accept="image/jpeg,image/png,image/gif,image/webp" class="flex-1 px-3 py-2 border border-gray-300 rounded text-sm" required>
+                                        <button type="submit" name="update_category_image_two" class="bg-green-500 hover:bg-green-600 text-white px-4 py-2 rounded text-sm">Upload</button>
+                                        <button type="button" onclick="toggleCategoryImageUploadTwo(<?= $category['id'] ?>)" class="bg-gray-500 hover:bg-gray-600 text-white px-4 py-2 rounded text-sm">Cancel</button>
+                                    </form>
                                 </div>
 
                                 <div class="p-6">
@@ -897,40 +933,21 @@ while ($row = $display_result->fetch_assoc()) {
                                                         <div class="flex items-center space-x-4 flex-1">
                                                             <div class="w-16 h-16 bg-gray-200 rounded-lg overflow-hidden flex-shrink-0">
                                                                 <?php if ($sub['image_path']): ?>
-                                                                    <img
-                                                                        src="../../uploads/<?= htmlspecialchars($sub['slug']) ?>/<?= htmlspecialchars($sub['image_path']) ?>"
-                                                                        alt="<?= htmlspecialchars($sub['name']) ?>"
-                                                                        class="w-full h-full object-cover">
+                                                                    <img src="../../uploads/<?= htmlspecialchars($sub['slug']) ?>/<?= htmlspecialchars($sub['image_path']) ?>" alt="<?= htmlspecialchars($sub['name']) ?>" class="w-full h-full object-cover">
                                                                 <?php else: ?>
-                                                                    <div class="w-full h-full flex items-center justify-center text-gray-400">
-                                                                        <svg class="w-8 h-8" fill="currentColor" viewBox="0 0 20 20">
-                                                                            <path fill-rule="evenodd" d="M4 3a2 2 0 00-2 2v10a2 2 0 002 2h12a2 2 0 002-2V5a2 2 0 00-2-2H4zm12 12H4l4-8 3 6 2-4 3 6z" clip-rule="evenodd" />
-                                                                        </svg>
-                                                                    </div>
+                                                                    <div class="w-full h-full flex items-center justify-center text-gray-400"><svg class="w-8 h-8" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M4 3a2 2 0 00-2 2v10a2 2 0 002 2h12a2 2 0 002-2V5a2 2 0 00-2-2H4zm12 12H4l4-8 3 6 2-4 3 6z" clip-rule="evenodd" /></svg></div>
                                                                 <?php endif; ?>
                                                             </div>
-
                                                             <div class="flex-1 min-w-0">
                                                                 <div class="font-medium text-gray-900 truncate"><?= htmlspecialchars($sub['name']) ?></div>
                                                                 <div class="text-sm text-gray-500">Slug: <?= htmlspecialchars($sub['slug']) ?></div>
                                                             </div>
                                                         </div>
-
                                                         <div class="flex items-center space-x-2 flex-shrink-0">
-                                                            <button
-                                                                onclick="toggleImageUpload(<?= $sub['id'] ?>)"
-                                                                class="bg-blue-500 hover:bg-blue-600 text-white px-3 py-1 rounded text-sm font-medium">
-                                                                <?= $sub['image_path'] ? 'Update' : 'Add' ?> Image
-                                                            </button>
-
+                                                            <button onclick="toggleImageUpload(<?= $sub['id'] ?>)" class="bg-blue-500 hover:bg-blue-600 text-white px-3 py-1 rounded text-sm font-medium"><?= $sub['image_path'] ? 'Update' : 'Add' ?> Image</button>
                                                             <form method="POST" class="inline" onsubmit="return confirm('Delete subcategory?')">
                                                                 <input type="hidden" name="delete_subcategory_id" value="<?= $sub['id'] ?>">
-                                                                <button
-                                                                    type="submit"
-                                                                    name="delete_subcategory"
-                                                                    class="bg-red-500 hover:bg-red-600 text-white px-3 py-1 rounded text-sm font-medium">
-                                                                    Delete
-                                                                </button>
+                                                                <button type="submit" name="delete_subcategory" class="bg-red-500 hover:bg-red-600 text-white px-3 py-1 rounded text-sm font-medium">Delete</button>
                                                             </form>
                                                         </div>
                                                     </div>
@@ -938,24 +955,9 @@ while ($row = $display_result->fetch_assoc()) {
                                                     <div id="image-upload-<?= $sub['id'] ?>" class="hidden mb-4 p-4 bg-blue-50 rounded-lg">
                                                         <form method="POST" enctype="multipart/form-data" class="flex items-center space-x-4">
                                                             <input type="hidden" name="subcategory_id" value="<?= $sub['id'] ?>">
-                                                            <input
-                                                                type="file"
-                                                                name="new_image"
-                                                                accept="image/jpeg,image/png,image/gif,image/webp"
-                                                                class="flex-1 px-3 py-2 border border-gray-300 rounded text-sm"
-                                                                required>
-                                                            <button
-                                                                type="submit"
-                                                                name="update_subcategory_image"
-                                                                class="bg-blue-500 hover:bg-blue-600 text-white px-4 py-2 rounded text-sm">
-                                                                Upload
-                                                            </button>
-                                                            <button
-                                                                type="button"
-                                                                onclick="toggleImageUpload(<?= $sub['id'] ?>)"
-                                                                class="bg-gray-500 hover:bg-gray-600 text-white px-4 py-2 rounded text-sm">
-                                                                Cancel
-                                                            </button>
+                                                            <input type="file" name="new_image" accept="image/jpeg,image/png,image/gif,image/webp" class="flex-1 px-3 py-2 border border-gray-300 rounded text-sm" required>
+                                                            <button type="submit" name="update_subcategory_image" class="bg-blue-500 hover:bg-blue-600 text-white px-4 py-2 rounded text-sm">Upload</button>
+                                                            <button type="button" onclick="toggleImageUpload(<?= $sub['id'] ?>)" class="bg-gray-500 hover:bg-gray-600 text-white px-4 py-2 rounded text-sm">Cancel</button>
                                                         </form>
                                                     </div>
 
@@ -966,45 +968,21 @@ while ($row = $display_result->fetch_assoc()) {
                                                                     <div class="flex items-center space-x-3 flex-1">
                                                                         <div class="w-12 h-12 bg-gray-200 rounded overflow-hidden flex-shrink-0">
                                                                             <?php if ($subsub['image_path']): ?>
-                                                                                <img
-                                                                                    src="../../uploads/<?= htmlspecialchars($subsub['parent_slug']) ?>/<?= htmlspecialchars($subsub['slug']) ?>/<?= htmlspecialchars($subsub['image_path']) ?>"
-                                                                                    alt="<?= htmlspecialchars($subsub['name']) ?>"
-                                                                                    class="w-full h-full object-cover">
+                                                                                <img src="../../uploads/<?= htmlspecialchars($subsub['parent_slug']) ?>/<?= htmlspecialchars($subsub['slug']) ?>/<?= htmlspecialchars($subsub['image_path']) ?>" alt="<?= htmlspecialchars($subsub['name']) ?>" class="w-full h-full object-cover">
                                                                             <?php else: ?>
-                                                                                <div class="w-full h-full flex items-center justify-center text-gray-400">
-                                                                                    <svg class="w-6 h-6" fill="currentColor" viewBox="0 0 20 20">
-                                                                                        <path fill-rule="evenodd" d="M4 3a2 2 0 00-2 2v10a2 2 0 002 2h12a2 2 0 002-2V5a2 2 0 00-2-2H4zm12 12H4l4-8 3 6 2-4 3 6z" clip-rule="evenodd" />
-                                                                                    </svg>
-                                                                                </div>
+                                                                                <div class="w-full h-full flex items-center justify-center text-gray-400"><svg class="w-6 h-6" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M4 3a2 2 0 00-2 2v10a2 2 0 002 2h12a2 2 0 002-2V5a2 2 0 00-2-2H4zm12 12H4l4-8 3 6 2-4 3 6z" clip-rule="evenodd" /></svg></div>
                                                                             <?php endif; ?>
                                                                         </div>
-
                                                                         <div class="flex-1">
                                                                             <div class="font-medium text-gray-900 text-sm"><?= htmlspecialchars($subsub['name']) ?></div>
-                                                                            <div class="text-xs text-gray-500">
-                                                                                Slug: <?= htmlspecialchars($subsub['slug']) ?>
-                                                                                <span class="ml-2 bg-purple-100 text-purple-700 px-2 py-0.5 rounded">
-                                                                                    <?= $subsub['product_count'] ?? 0 ?> products
-                                                                                </span>
-                                                                            </div>
+                                                                            <div class="text-xs text-gray-500">Slug: <?= htmlspecialchars($subsub['slug']) ?> <span class="ml-2 bg-purple-100 text-purple-700 px-2 py-0.5 rounded"><?= $subsub['product_count'] ?? 0 ?> products</span></div>
                                                                         </div>
                                                                     </div>
-
                                                                     <div class="flex items-center space-x-2">
-                                                                        <button
-                                                                            onclick="toggleSubSubImageUpload(<?= $subsub['id'] ?>)"
-                                                                            class="bg-purple-500 hover:bg-purple-600 text-white px-2 py-1 rounded text-xs font-medium">
-                                                                            <?= $subsub['image_path'] ? 'Update' : 'Add' ?> Image
-                                                                        </button>
-
+                                                                        <button onclick="toggleSubSubImageUpload(<?= $subsub['id'] ?>)" class="bg-purple-500 hover:bg-purple-600 text-white px-2 py-1 rounded text-xs font-medium"><?= $subsub['image_path'] ? 'Update' : 'Add' ?> Image</button>
                                                                         <form method="POST" class="inline" onsubmit="return confirm('Delete sub-subcategory?')">
                                                                             <input type="hidden" name="delete_sub_subcategory_id" value="<?= $subsub['id'] ?>">
-                                                                            <button
-                                                                                type="submit"
-                                                                                name="delete_sub_subcategory"
-                                                                                class="bg-red-500 hover:bg-red-600 text-white px-2 py-1 rounded text-xs font-medium">
-                                                                                Delete
-                                                                            </button>
+                                                                            <button type="submit" name="delete_sub_subcategory" class="bg-red-500 hover:bg-red-600 text-white px-2 py-1 rounded text-xs font-medium">Delete</button>
                                                                         </form>
                                                                     </div>
                                                                 </div>
@@ -1012,24 +990,9 @@ while ($row = $display_result->fetch_assoc()) {
                                                                 <div id="sub-sub-image-upload-<?= $subsub['id'] ?>" class="hidden ml-12 mb-2 p-3 bg-purple-50 rounded-lg">
                                                                     <form method="POST" enctype="multipart/form-data" class="flex items-center space-x-3">
                                                                         <input type="hidden" name="sub_subcategory_id" value="<?= $subsub['id'] ?>">
-                                                                        <input
-                                                                            type="file"
-                                                                            name="new_sub_sub_image"
-                                                                            accept="image/jpeg,image/png,image/gif,image/webp"
-                                                                            class="flex-1 px-3 py-2 border border-gray-300 rounded text-xs"
-                                                                            required>
-                                                                        <button
-                                                                            type="submit"
-                                                                            name="update_sub_subcategory_image"
-                                                                            class="bg-purple-500 hover:bg-purple-600 text-white px-3 py-1 rounded text-xs">
-                                                                            Upload
-                                                                        </button>
-                                                                        <button
-                                                                            type="button"
-                                                                            onclick="toggleSubSubImageUpload(<?= $subsub['id'] ?>)"
-                                                                            class="bg-gray-500 hover:bg-gray-600 text-white px-3 py-1 rounded text-xs">
-                                                                            Cancel
-                                                                        </button>
+                                                                        <input type="file" name="new_sub_sub_image" accept="image/jpeg,image/png,image/gif,image/webp" class="flex-1 px-3 py-2 border border-gray-300 rounded text-xs" required>
+                                                                        <button type="submit" name="update_sub_subcategory_image" class="bg-purple-500 hover:bg-purple-600 text-white px-3 py-1 rounded text-xs">Upload</button>
+                                                                        <button type="button" onclick="toggleSubSubImageUpload(<?= $subsub['id'] ?>)" class="bg-gray-500 hover:bg-gray-600 text-white px-3 py-1 rounded text-xs">Cancel</button>
                                                                     </form>
                                                                 </div>
                                                             <?php endforeach; ?>
@@ -1039,9 +1002,7 @@ while ($row = $display_result->fetch_assoc()) {
                                             <?php endforeach; ?>
                                         </div>
                                     <?php else: ?>
-                                        <div class="text-center py-8">
-                                            <div class="text-gray-400 italic">No subcategories yet</div>
-                                        </div>
+                                        <div class="text-center py-8"><div class="text-gray-400 italic">No subcategories yet</div></div>
                                     <?php endif; ?>
                                 </div>
                             </div>
@@ -1053,36 +1014,23 @@ while ($row = $display_result->fetch_assoc()) {
     </div>
 
     <script>
-        // Subcategories data for filtering
         const subcategoriesData = <?= json_encode($subcategories) ?>;
 
-        // Auto-generate slug for subcategory
         document.getElementById('subcategory_name').addEventListener('input', function() {
             const name = this.value;
-            const slug = name.toLowerCase()
-                .replace(/[^a-z0-9\s-]/g, '')
-                .replace(/\s+/g, '-')
-                .replace(/-+/g, '-')
-                .trim('-');
+            const slug = name.toLowerCase().replace(/[^a-z0-9\s-]/g, '').replace(/\s+/g, '-').replace(/-+/g, '-').trim('-');
             document.getElementById('subcategory_slug').value = slug;
         });
 
-        // Auto-generate slug for sub-subcategory
         document.getElementById('sub_subcategory_name').addEventListener('input', function() {
             const name = this.value;
-            const slug = name.toLowerCase()
-                .replace(/[^a-z0-9\s-]/g, '')
-                .replace(/\s+/g, '-')
-                .replace(/-+/g, '-')
-                .trim('-');
+            const slug = name.toLowerCase().replace(/[^a-z0-9\s-]/g, '').replace(/\s+/g, '-').replace(/-+/g, '-').trim('-');
             document.getElementById('sub_subcategory_slug').value = slug;
         });
 
-        // Filter subcategories based on selected category
         function filterSubcategories(categoryId) {
             const subcategorySelect = document.getElementById('subcategory_id');
             subcategorySelect.innerHTML = '<option value="">-- Select Subcategory --</option>';
-
             if (categoryId) {
                 const filtered = subcategoriesData.filter(sub => sub.category_id == categoryId);
                 filtered.forEach(sub => {
@@ -1103,9 +1051,18 @@ while ($row = $display_result->fetch_assoc()) {
             const uploadForm = document.getElementById('sub-sub-image-upload-' + subSubcategoryId);
             uploadForm.classList.toggle('hidden');
         }
+
+        function toggleCategoryImageUpload(categoryId) {
+            const uploadForm = document.getElementById('category-image-upload-' + categoryId);
+            uploadForm.classList.toggle('hidden');
+        }
+
+        function toggleCategoryImageUploadTwo(categoryId) {
+            const uploadForm = document.getElementById('category-image-upload-two-' + categoryId);
+            uploadForm.classList.toggle('hidden');
+        }
     </script>
 </body>
-
 </html>
 
 <?php $conn->close(); ?>

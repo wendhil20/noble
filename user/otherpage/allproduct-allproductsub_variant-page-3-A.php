@@ -379,7 +379,7 @@ $filter_description = ($show_sale == 1) ? 'discounted' : '';
     </style>
 </head>
 
-<body class="min-h-screen font-roboto">
+<body class="min-h-screen " style="font-family: 'Montserrat', sans-serif; color: #2f1200">
     <?php 
     // Safe include with error handling
     $navbar_path = '../navbar/top.php';

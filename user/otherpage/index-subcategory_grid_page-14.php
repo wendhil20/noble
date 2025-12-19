@@ -225,7 +225,7 @@ foreach ($subcategories as $sub) {
     </style>
 </head>
 
-<body class="bg-gray-50">
+<body class="bg-gray-50" style="font-family: 'Montserrat', sans-serif; color: #2f1200">
     <?php 
     include '../navbar/top.php'; 
     
@@ -252,7 +252,7 @@ foreach ($subcategories as $sub) {
     <!-- Header -->
     <div class="bg-white">
         <div class="container mx-auto px-6 py-12 text-start">
-            <h1 class="text-4xl md:text-5xl font-bold text-gray-900 mb-4 uppercase">
+            <h1 class="text-4xl md:text-5xl font-bold mb-4 uppercase">
                 <?= htmlspecialchars($displayName) ?>
             </h1>
             <p class="text-gray-600 text-lg">
@@ -295,7 +295,7 @@ foreach ($subcategories as $sub) {
                             <!-- Title -->
                             <div class="p-4">
                                 <a href="index-subcategory-recommendations-page-15.php?subcategory_id=<?= $sub['id'] ?>&from=grid">
-                                    <h3 class="text-base font-semibold text-gray-900 hover:text-blue-600 transition-colors uppercase">
+                                    <h3 class="text-base font-semibold hover:text-blue-600 transition-colors uppercase">
                                         <?= htmlspecialchars($sub['subcategory_name']) ?>
                                     </h3>
                                 </a>
@@ -309,7 +309,7 @@ foreach ($subcategories as $sub) {
                                     <?php foreach ($sub['collections'] as $collection): ?>
                                         <li>
                                             <a href="allproduct-allproductsub_variant-page-3-A.php?sub_subcategory_id=<?= $collection['id'] ?>"
-                                                class="text-gray-600 hover:text-blue-600 hover:underline transition-colors flex items-start uppercase">
+                                                class=" hover:text-blue-600 hover:underline transition-colors flex items-start uppercase">
                                                 <span><?= htmlspecialchars($collection['sub_subcategory_name']) ?></span>
                                             </a>
                                         </li>
@@ -356,7 +356,7 @@ foreach ($subcategories as $sub) {
                         <div class="mb-6">
                             <a href="allproduct-allproductsub_variant-page-3-A.php?sub_subcategory_id=<?= $collection['id'] ?>"
                                class="inline-flex items-center group">
-                                <h3 class="text-2xl font-semibold text-gray-900 group-hover:text-blue-600 transition-colors uppercase">
+                                <h3 class="text-2xl font-semibold  group-hover:text-blue-600 transition-colors uppercase">
                                     <?= htmlspecialchars($collection['sub_subcategory_name']) ?>
                                 </h3>
                                 <i class="fas fa-arrow-right ml-3 text-lg opacity-0 group-hover:opacity-100 transition-opacity"></i>
@@ -425,13 +425,13 @@ foreach ($subcategories as $sub) {
                                         <!-- Product Info -->
                                         <div class="p-3">
                                             <!-- Product Name with Size & Color -->
-                                            <h4 class="text-sm font-medium text-gray-900 mb-2 line-clamp-2 hover:text-blue-600 transition-colors">
+                                            <h4 class="text-sm font-medium mb-2 line-clamp-2 hover:text-blue-600 transition-colors">
                                                 <?= htmlspecialchars($product['product_name']) ?>
                                                 <?php if (!empty($product['size'])): ?>
-                                                    <span class="text-gray-600">[<?= htmlspecialchars($product['size']) ?>]</span>
+                                                    <span class="">[<?= htmlspecialchars($product['size']) ?>]</span>
                                                 <?php endif; ?>
                                                 <?php if ($firstColor): ?>
-                                                    <span class="text-gray-600">[<?= htmlspecialchars($firstColor) ?>]</span>
+                                                    <span class="">[<?= htmlspecialchars($firstColor) ?>]</span>
                                                 <?php endif; ?>
                                             </h4>
                                             
@@ -458,14 +458,14 @@ foreach ($subcategories as $sub) {
                                                     <?php 
                                                     $discounted_price = $product['price'] * (1 - ($discount / 100));
                                                     ?>
-                                                    <span class="text-sm font-bold text-red-600">
+                                                    <span class="text-sm font-bold ">
                                                         ₱<?= number_format($discounted_price, 2) ?>
                                                     </span>
-                                                    <span class="text-xs text-gray-400 line-through">
+                                                    <span class="text-xs  line-through">
                                                         ₱<?= number_format($product['price'], 2) ?>
                                                     </span>
                                                 <?php else: ?>
-                                                    <span class="text-sm font-bold text-gray-900">
+                                                    <span class="text-sm font-bold ">
                                                         ₱<?= number_format($product['price'], 2) ?>
                                                     </span>
                                                 <?php endif; ?>
@@ -473,7 +473,7 @@ foreach ($subcategories as $sub) {
                                             
                                             <!-- View Count & Sold Count -->
                                             <?php if ($view_count > 0 || $total_sold > 0): ?>
-                                                <div class="text-xs text-gray-500">
+                                                <div class="text-xs ">
                                                     <?php if ($view_count > 0): ?>
                                                         <?= formatViewCount($view_count) ?> viewing
                                                     <?php endif; ?>

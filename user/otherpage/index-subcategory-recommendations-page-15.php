@@ -114,6 +114,7 @@ $collections_stmt->close();
 
 // For each collection, get TOP 6 most viewed products
 foreach ($collections as &$collection) {
+    // 🔥 CORRECTED: Use product_types JOIN like countdown timer (WORKS!)
     $products_query = "
         SELECT DISTINCT
             p.id,
@@ -123,27 +124,51 @@ foreach ($collections as &$collection) {
             p.view_count,
             p.price as base_price,
             
-            -- 🔥 SEPARATE SIZE & COLOR PRICES
-            COALESCE(MIN(pv.price), 0) as min_size_price,
-            COALESCE(MAX(pv.price), 0) as max_size_price,
-            COALESCE(MIN(pc.price), 0) as min_color_price,
-            COALESCE(MAX(pc.price), 0) as max_color_price,
+            -- 🔥 SIZE PRICES via product_types (CORRECT!)
+            (SELECT COALESCE(MIN(pv.price), 0)
+             FROM product_variants pv
+             JOIN product_types pt ON pv.type_id = pt.id
+             WHERE pt.product_id = p.id
+            ) as min_size_price,
             
-            -- Base price (fallback)
-            COALESCE(
-                NULLIF(MIN(pv.price), 0),
-                NULLIF(MIN(pc.price), 0),
-                p.price
-            ) as price,
+            (SELECT COALESCE(MAX(pv.price), 0)
+             FROM product_variants pv
+             JOIN product_types pt ON pv.type_id = pt.id
+             WHERE pt.product_id = p.id
+            ) as max_size_price,
             
-            -- Markup & Discount
-            COALESCE(MIN(pv.percent), 0) as percent,
-            COALESCE(MAX(pv.discount), 0) as discount,
+            -- 🔥 COLOR PRICES FROM SUBQUERY (clean)
+            (SELECT COALESCE(MIN(price), 0)
+             FROM product_colors 
+             WHERE product_id = p.id
+            ) as min_color_price,
             
-            GROUP_CONCAT(DISTINCT pc.color_name) as color_name
+            (SELECT COALESCE(MAX(price), 0)
+             FROM product_colors 
+             WHERE product_id = p.id
+            ) as max_color_price,
+            
+            -- Discount & Markup
+            (SELECT COALESCE(MAX(discount), 0)
+             FROM product_variants pv
+             JOIN product_types pt ON pv.type_id = pt.id
+             WHERE pt.product_id = p.id
+            ) as discount,
+            
+            (SELECT COALESCE(MIN(percent), 0)
+             FROM product_variants pv
+             JOIN product_types pt ON pv.type_id = pt.id
+             WHERE pt.product_id = p.id
+            ) as percent,
+            
+            -- Colors
+            (SELECT GROUP_CONCAT(DISTINCT color_name)
+             FROM product_colors 
+             WHERE product_id = p.id
+            ) as color_name
+            
         FROM products p
         INNER JOIN product_variants pv ON p.id = pv.product_id
-        LEFT JOIN product_colors pc ON p.id = pc.product_id
         WHERE pv.category_id = ?
         AND (
             pv.sub_subcategory_ids LIKE CONCAT('%\"', ?, '\"%')
@@ -160,7 +185,19 @@ foreach ($collections as &$collection) {
     
     $products_stmt = $conn->prepare($products_query);
     $coll_id = $collection['id'];
-    $products_stmt->bind_param("iiiiiii", $category_id, $coll_id, $coll_id, $coll_id, $coll_id, $coll_id, $coll_id);
+    
+    // Bind params: main WHERE + 6 OR conditions = 7 total
+    $products_stmt->bind_param(
+        "iiiiiii",
+        $category_id,      // main WHERE category_id
+        $coll_id,          // 6 OR conditions
+        $coll_id,
+        $coll_id,
+        $coll_id,
+        $coll_id,
+        $coll_id
+    );
+    
     $products_stmt->execute();
     $products_result = $products_stmt->get_result();
     
@@ -172,7 +209,7 @@ foreach ($collections as &$collection) {
 }
 unset($collection);
 
-// 🔥 SMART PRICE DISPLAY - LAZADA STYLE
+// 🔥 SMART PRICE DISPLAY - CORRECTED
 function calculateSmartPriceDisplay($product)
 {
     $min_size = floatval($product['min_size_price'] ?? 0);
@@ -184,48 +221,50 @@ function calculateSmartPriceDisplay($product)
     $discount = floatval($product['discount'] ?? 0);
     $percent = floatval($product['percent'] ?? 0);
 
-    $all_prices = array_filter([
-        $min_size,
-        $max_size,
-        $min_color,
-        $max_color,
-        $base_price
-    ], function ($p) {
-        return $p > 0;
-    });
+    // 🔥 SMART LOGIC: Only add if BOTH exist
+    $minFinalPrice = 0;
+    $maxFinalPrice = 0;
+
+    if ($min_size > 0 && $min_color > 0) {
+        // Both size and color exist - add them
+        $minFinalPrice = $min_size + $min_color;
+        $maxFinalPrice = $max_size + $max_color;
+    } else if ($min_size > 0) {
+        // Only size prices
+        $minFinalPrice = $min_size;
+        $maxFinalPrice = $max_size;
+    } else if ($min_color > 0) {
+        // Only color prices
+        $minFinalPrice = $min_color;
+        $maxFinalPrice = $max_color;
+    } else {
+        // Fallback to base price
+        $minFinalPrice = $base_price;
+        $maxFinalPrice = $base_price;
+    }
 
     $result = [
         'has_range' => false,
-        'min_price' => $base_price,
-        'max_price' => $base_price,
-        'display_price' => '₱' . number_format($base_price, 2)
+        'min_price' => $minFinalPrice,
+        'max_price' => $minFinalPrice,
+        'display_price' => '₱' . number_format($minFinalPrice, 2)
     ];
 
-    if (!empty($all_prices)) {
-        $min = min($all_prices);
-        $max = max($all_prices);
-
-        if ($percent > 0) {
-            $min = $min + ($min * $percent / 100);
-            $max = $max + ($max * $percent / 100);
-        }
-
-        if ($discount > 0) {
-            $min = $min - ($min * $discount / 100);
-            $max = $max - ($max * $discount / 100);
-        }
-
-        if ($min != $max) {
+    if ($minFinalPrice > 0 || $maxFinalPrice > 0) {
+        if (abs($minFinalPrice - $maxFinalPrice) > 0.01) {
             $result['has_range'] = true;
-            $result['min_price'] = $min;
-            $result['max_price'] = $max;
-            $result['display_price'] = '₱' . number_format($min, 2) . ' - ₱' . number_format($max, 2);
+            $result['min_price'] = $minFinalPrice;
+            $result['max_price'] = $maxFinalPrice;
+            $result['display_price'] = '₱' . number_format($minFinalPrice, 2) . ' - ₱' . number_format($maxFinalPrice, 2);
         } else {
-            $result['min_price'] = $min;
-            $result['max_price'] = $min;
-            $result['display_price'] = '₱' . number_format($min, 2);
+            $result['min_price'] = $minFinalPrice;
+            $result['max_price'] = $minFinalPrice;
+            $result['display_price'] = '₱' . number_format($minFinalPrice, 2);
         }
     }
+
+    $result['discount'] = $discount;
+    $result['percent'] = $percent;
 
     return $result;
 }
@@ -249,7 +288,7 @@ function formatViewCount($count) {
     <link rel="preconnect" href="https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;500;700&display=swap" rel="stylesheet">
 </head>
 
-<body class="min-h-screen font-roboto bg-gray-50">
+<body class="min-h-screen bg-gray-50" style="font-family: 'Montserrat', sans-serif; color: #2f1200">
     <?php include '../navbar/top.php'; ?>
 
     <!-- Header Section -->
@@ -295,10 +334,10 @@ function formatViewCount($count) {
                     <!-- Collection Header -->
                     <div class="flex items-center justify-between mb-6">
                         <div>
-                            <div class="inline-flex items-center gap-2 <?= !empty($collection['products']) ? 'bg-orange-500' : 'bg-gray-400' ?> text-white px-4 py-2 rounded-full text-sm mb-3 font-semibold">
+                            <div class="inline-flex items-center gap-2 <?= !empty($collection['products']) ? 'bg-orange-500' : 'bg-gray-400' ?> px-4 py-2 rounded-full text-sm mb-3 font-semibold">
                                 <?= !empty($collection['products']) ? 'Recommended' : 'NO PRODUCTS YET' ?>
                             </div>
-                            <h2 class="text-3xl font-bold text-gray-900 uppercase">
+                            <h2 class="text-3xl font-bold  uppercase">
                                 <?= htmlspecialchars($collection['sub_subcategory_name']) ?>
                             </h2>
                         </div>
@@ -370,11 +409,11 @@ function formatViewCount($count) {
                                     <!-- Product Details -->
                                     <div class="p-3">
                                         <a href="index-product_view-page-4-AA.php?id=<?= $product_id ?>">
-                                            <h3 class="text-sm font-medium text-gray-900 mb-1 line-clamp-1 group-hover:text-orange-600 transition-colors">
+                                            <h3 class="text-sm font-medium  mb-1 line-clamp-1 group-hover:text-orange-600 transition-colors">
                                                 <?= htmlspecialchars($row['product_name']) ?>
                                             </h3>
                                             <?php if (!empty($row['description'])): ?>
-                                                <p class="text-xs text-gray-600 mb-2 line-clamp-2">
+                                                <p class="text-xs  mb-2 line-clamp-2">
                                                     <?= htmlspecialchars($row['description']) ?>
                                                 </p>
                                             <?php endif; ?>
@@ -384,29 +423,29 @@ function formatViewCount($count) {
                                         <div class="mb-2">
                                             <?php if ($total_raters > 0): ?>
                                                 <div class="flex items-center gap-2">
-                                                    <div class="flex text-yellow-400 text-xs">
+                                                    <div class="flex  text-xs">
                                                         <?php
                                                         for ($i = 0; $i < $full; $i++) echo '<i class="fas fa-star"></i>';
                                                         if ($half) echo '<i class="fas fa-star-half-alt"></i>';
                                                         for ($i = 0; $i < $empty; $i++) echo '<i class="far fa-star text-gray-300"></i>';
                                                         ?>
                                                     </div>
-                                                    <span class="text-xs text-gray-600 font-medium"><?= $avg_rating ?></span>
-                                                    <span class="text-xs text-gray-400">(<?= $total_raters ?>)</span>
+                                                    <span class="text-xs  font-medium"><?= $avg_rating ?></span>
+                                                    <span class="text-xs ">(<?= $total_raters ?>)</span>
                                                 </div>
                                             <?php else: ?>
                                                 <div class="flex items-center gap-1">
-                                                    <div class="flex text-gray-300 text-xs">
+                                                    <div class="flex  text-xs">
                                                         <?php for ($i = 0; $i < 5; $i++) echo '<i class="far fa-star"></i>'; ?>
                                                     </div>
-                                                    <span class="text-xs text-gray-400">No rating</span>
+                                                    <span class="text-xs 0">No rating</span>
                                                 </div>
                                             <?php endif; ?>
                                         </div>
 
                                         <!-- 🔥 SMART PRICE RANGE DISPLAY -->
                                         <div class="flex items-baseline gap-2 flex-wrap mb-2">
-                                            <p class="text-base font-bold text-gray-900">
+                                            <p class="text-base font-bold ">
                                                 <?= $priceData['display_price'] ?>
                                             </p>
                                             <?php if ($discount > 0): ?>
@@ -418,7 +457,7 @@ function formatViewCount($count) {
 
                                         <!-- View Count + Sold Count -->
                                         <?php if ($view_count > 0 || $total_sold > 0): ?>
-                                            <div class="text-xs text-gray-500 mb-2 flex items-center gap-2">
+                                            <div class="text-xs mb-2 flex items-center gap-2">
                                                 <?php if ($view_count > 0): ?>
                                                     <span class="flex items-center gap-1">
                                                      
@@ -431,7 +470,7 @@ function formatViewCount($count) {
                                                         <span class="text-gray-300">|</span>
                                                     <?php endif; ?>
                                                     <span class="flex items-center gap-1">
-                                                        <i class="fas fa-shopping-bag text-gray-400"></i>
+                                                        <i class="fas fa-shopping-bag "></i>
                                                         <?= number_format($total_sold) ?> sold
                                                     </span>
                                                 <?php endif; ?>

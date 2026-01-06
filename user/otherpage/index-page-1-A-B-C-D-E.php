@@ -489,6 +489,7 @@ while ($row = $banners_result->fetch_assoc()) {
         }
     </script>
     <style>
+
         .swiper-slide,
         .swiper-slide-active {
             opacity: 1 !important
@@ -625,9 +626,6 @@ while ($row = $banners_result->fetch_assoc()) {
             opacity: 1 !important;
         }
 
-        .swiper-pagination-bullet-active {
-            background: #ffffffff !important;
-        }
 
         @keyframes fadeIn {
             from {
@@ -654,6 +652,82 @@ while ($row = $banners_result->fetch_assoc()) {
             background: #fb923c;
             opacity: 1
         }
+
+
+    @keyframes shimmer {
+        0% {
+            background-position: -200% 0;
+        }
+        100% {
+            background-position: 200% 0;
+        }
+    }
+
+    .animate-shimmer {
+        animation: shimmer 1.5s ease-in-out infinite;
+    }
+
+    .mySwiper {
+        position: relative;
+        width: 100%;
+    }
+
+    .swiper-wrapper {
+        display: flex;
+    }
+
+    .swiper-slide {
+        width: 100%;
+        display: flex;
+        flex-shrink: 0;
+    }
+
+    .swiper-pagination {
+        position: absolute !important;
+        bottom: 10px !important;
+        left: 0 !important;
+        right: 0 !important;
+        z-index: 10;
+        display: flex;
+        justify-content: center;
+        gap: 8px;
+        padding: 0 !important;
+    }
+
+    .swiper-pagination-bullet {
+        background: rgba(20, 16, 16, 0.6) !important;
+        opacity: 1 !important;
+        width: 8px !important;
+        height: 8px !important;
+        margin: 0 !important;
+        cursor: pointer;
+    }
+    .swiper-pagination-bullet-active {
+        background: #000000ff !important;
+        opacity: 1 !important;
+    }
+
+    .banner-image {
+        transition: opacity 0.3s ease-in-out;
+    }
+
+    /* Main slider responsive sizing */
+    .mySwiper {
+        min-height: 150px;
+    }
+
+    @media (min-width: 640px) {
+        .mySwiper {
+            min-height: 250px;
+        }
+    }
+
+    @media (min-width: 1024px) {
+        .mySwiper {
+            min-height: 350px;
+        }
+    }
+
     </style>
 </head>
 
@@ -718,70 +792,84 @@ while ($row = $banners_result->fetch_assoc()) {
         <?php unset($_SESSION['login_error']); ?>
     <?php endif; ?>
 
-    <!-- DYNAMIC BANNER SLIDER WITH CATEGORY LINKS -->
-    <div class="w-full">
-        <!-- Mobile: Full width slider, Desktop: 8 cols + 4 cols grid -->
-        <div class="grid grid-cols-1 lg:grid-cols-12 gap-1">
+<!-- DYNAMIC BANNER SLIDER WITH CATEGORY LINKS -->
+<div class="w-full">
+    <!-- Mobile: Full width slider, Desktop: 8 cols + 4 cols grid -->
+    <div class="grid grid-cols-1 lg:grid-cols-12 gap-1">
 
-            <!-- Main Slider -->
-            <div class="lg:col-span-8 w-full">
-                <div class="relative overflow-hidden">
-                    <div class="mySwiper h-[200px] sm:h-[300px] lg:h-[400px]">
-                        <div class="swiper-wrapper">
-                            <?php if (!empty($banners)): ?>
-                                <?php foreach ($banners as $idx => $banner): ?>
-                                    <a href="../otherpage/index-subcategory_grid_page-14.php?category_name=<?= urlencode(strtolower($banner['category_name'])) ?>"
-                                        class="swiper-slide block cursor-pointer hover:opacity-90 transition-opacity group">
-                                        <div class="relative w-full h-full overflow-hidden">
-                                            <img src="../../uploads/<?= basename($banner['filename']) ?>"
-                                                alt="<?= htmlspecialchars($banner['category_name'] ?? 'Banner') ?>"
-                                                class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
-                                                onerror="this.src='../../uploads/placeholder.jpg'" />
-                                        </div>
-                                    </a>
-                                <?php endforeach; ?>
-                            <?php else: ?>
-                                <div class="swiper-slide bg-gray-800 flex items-center justify-center">
-                                    <p class="text-gray-400">No banners available</p>
-                                </div>
-                            <?php endif; ?>
-                        </div>
-                        <div class="swiper-pagination"></div>
+        <!-- Main Slider -->
+        <div class="lg:col-span-8 w-full">
+            <div class="relative overflow-hidden">
+                <div class="mySwiper">
+                    <div class="swiper-wrapper">
+                        <?php if (!empty($banners)): ?>
+                            <?php foreach ($banners as $idx => $banner): ?>
+                                <a href="../otherpage/index-subcategory_grid_page-14.php?category_name=<?= urlencode(strtolower($banner['category_name'])) ?>"
+                                    class="swiper-slide block cursor-pointer hover:opacity-90 transition-opacity group">
+                                    <div class="relative w-full h-full overflow-hidden flex items-center justify-center bg-gray-100 ">
+                                        <!-- Skeleton Loading -->
+                                        <div class="skeleton-loader absolute inset-0 bg-gradient-to-r from-neutral-200 via-neutral-300 to-neutral-200 bg-[length:200%_100%] animate-shimmer"></div>
+                                        
+                                        <img src="../../uploads/<?= basename($banner['filename']) ?>"
+                                            alt="<?= htmlspecialchars($banner['category_name'] ?? 'Banner') ?>"
+                                            class="banner-image w-auto h-auto object-contain max-w-full max-h-full opacity-0 z-10"
+                                            onerror="this.src='../../uploads/placeholder.jpg'; this.style.opacity='1'; this.previousElementSibling.style.display='none';"
+                                            onload="this.style.opacity='1'; this.previousElementSibling.style.display='none';" />
+                                    </div>
+                                </a>
+                            <?php endforeach; ?>
+                        <?php else: ?>
+                            <div class="swiper-slide bg-gray-800 flex items-center justify-center rounded-lg">
+                                <p class="text-gray-400">No banners available</p>
+                            </div>
+                        <?php endif; ?>
                     </div>
+                    <div class="swiper-pagination"></div>
                 </div>
             </div>
+        </div>
 
-            <!-- Right Side Cards - Hidden on mobile, visible on desktop -->
-            <div class="hidden lg:grid lg:col-span-4 gap-1">
 
-                <!-- Card 1: Flash Discount -->
-                <a href="index-countdowntimer-page-17.php" class="relative overflow-hidden h-[197px] group  transition-all">
-                    <div class="absolute inset-0">
-                        <img src="../img/gif1.gif"
-                            alt="Flash Discount"
-                            class="w-full h-full object-cover mix-blend-overlay group-hover:scale-105 transition-transform duration-300" />
-                    </div>
-                    <div class="relative h-full flex flex-col justify-end p-4 bg-gradient-to-t from-black/70 via-black/30 to-transparent">
-                        <div class="text-white text-sm  group-hover:text-orange-400 transition-colors" style="font-family: 'Montserrat', sans-serif;">
+<!-- Right Side Cards - Hidden on mobile, visible on desktop -->
+        <div class="hidden lg:grid lg:col-span-4 gap-1">
+
+            <!-- Card 1: Flash Discount -->
+            <a href="index-countdowntimer-page-17.php" class="relative overflow-hidden group transition-all">
+                <div class="relative bg-gray-100 flex items-center justify-center" style="min-height: 175px;">
+                    <!-- Skeleton Loading -->
+                    <div class="skeleton-loader absolute inset-0 bg-gradient-to-r from-neutral-200 via-neutral-300 to-neutral-200 bg-[length:200%_100%] animate-shimmer"></div>
+                    
+                    <img src="../img/display1.webp"
+                        alt="Flash Discount"
+                        class="banner-image w-auto h-auto object-contain max-w-full max-h-full group-hover:scale-105 transition-transform duration-300 opacity-0 z-10"
+                        onload="this.style.opacity='1'; this.previousElementSibling.style.display='none';" />
+                    
+                    <div class="absolute inset-0 flex flex-col justify-end p-4 bg-gradient-to-t from-black/70 via-black/30 to-transparent pointer-events-none z-20">
+                        <div class="text-white text-sm group-hover:text-orange-400 transition-colors" style="font-family: 'Montserrat', sans-serif;">
                             Flash Discount ➜
                         </div>
                     </div>
-                </a>
+                </div>
+            </a>
 
-                <!-- Card 2: Category/Deals - Links to first banner category -->
-                <a href="<?= !empty($banners) ? '../otherpage/index-subcategory_grid_page-14.php?category_name=' . urlencode(strtolower($banners[0]['category_name'])) : '#' ?>"
-                    class="relative overflow-hidden h-[197px] group transition-all">
-                    <div class="absolute inset-0">
-                        <?php if (!empty($banners)): ?>
-                            <img src="../../uploads/<?= basename($banners[0]['filename']) ?>"
-                                alt="<?= htmlspecialchars($banners[0]['category_name']) ?>"
-                                class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
-                                onerror="this.src='../../uploads/placeholder.jpg'" />
-                        <?php else: ?>
-                            <img src="../img/gif1.gif" alt="Deals" class="w-full h-full object-cover mix-blend-overlay" />
-                        <?php endif; ?>
-                    </div>
-                    <div class="relative h-full flex flex-col justify-end p-4 bg-gradient-to-t from-black/70 via-black/30 to-transparent">
+            <!-- Card 2: Category/Deals - Links to first banner category -->
+            <a href="<?= !empty($banners) ? '../otherpage/index-subcategory_grid_page-14.php?category_name=' . urlencode(strtolower($banners[0]['category_name'])) : '#' ?>"
+                class="relative overflow-hidden group transition-all ">
+                <div class="relative bg-gray-100 flex items-center justify-center" style="min-height: 175px;">
+                    <!-- Skeleton Loading -->
+                    <div class="skeleton-loader absolute inset-0 bg-gradient-to-r from-neutral-200 via-neutral-300 to-neutral-200 bg-[length:200%_100%] animate-shimmer"></div>
+                    
+                    <?php if (!empty($banners)): ?>
+                        <img src="../../uploads/<?= basename($banners[0]['filename']) ?>"
+                            alt="<?= htmlspecialchars($banners[0]['category_name']) ?>"
+                            class="banner-image w-auto h-auto object-contain max-w-full max-h-full group-hover:scale-105 transition-transform duration-300 opacity-0 z-10"
+                            onerror="this.src='../../uploads/placeholder.jpg'; this.style.opacity='1'; this.previousElementSibling.style.display='none';"
+                            onload="this.style.opacity='1'; this.previousElementSibling.style.display='none';" />
+                    <?php else: ?>
+                        <img src="../img/gif1.gif" alt="Deals" class="banner-image w-auto h-auto object-contain max-w-full max-h-full opacity-0 z-10" onload="this.style.opacity='1'; this.previousElementSibling.style.display='none';" />
+                    <?php endif; ?>
+                    
+                    <div class="absolute inset-0 flex flex-col justify-end p-4 bg-gradient-to-t from-black/70 via-black/30 to-transparent pointer-events-none z-20">
                         <div class="text-white text-sm group-hover:text-orange-400 transition-colors" style="font-family: 'Montserrat', sans-serif;">
                             <?php
                             $label = !empty($banners) ? $banners[0]['category_name'] : 'Holiday Deals';
@@ -789,64 +877,61 @@ while ($row = $banners_result->fetch_assoc()) {
                             ?>➜
                         </div>
                     </div>
-                </a>
-            </div>
-        </div>
-
-        <!-- Mobile-only category cards (visible on small screens) -->
-        <div class="lg:hidden grid grid-cols-2 gap-1 mt-1">
-            <a href="index-countdowntimer-page-17.php" class="relative overflow-hidden h-[150px] group  transition-all">
-                <div class="absolute inset-0">
-                    <img src="../img/gif1.gif"
-                        alt="Flash Discount"
-                        class="w-full h-full object-cover mix-blend-overlay group-hover:scale-105 transition-transform duration-300" />
                 </div>
-                <div class="relative h-full flex flex-col justify-end p-3 bg-gradient-to-t from-black/70 to-transparent">
-                    <div class="text-white text-xs  group-hover:text-orange-400 transition-colors" style="font-family: 'Montserrat', sans-serif;">
+            </a>
+        </div>
+    </div>
+
+    <!-- Mobile-only category cards (visible on small screens) -->
+    <div class="lg:hidden grid grid-cols-2 gap-1 mt-1">
+        <a href="index-countdowntimer-page-17.php" class="relative overflow-hidden group transition-all ">
+            <div class="relative bg-gray-100 flex items-center justify-center" style="min-height: 120px;">
+                <!-- Skeleton Loading -->
+                <div class="skeleton-loader absolute inset-0 bg-gradient-to-r from-neutral-200 via-neutral-300 to-neutral-200 bg-[length:200%_100%] animate-shimmer"></div>
+                
+                <img src="../img/gif1.gif"
+                    alt="Flash Discount"
+                    class="banner-image w-auto h-auto object-contain max-w-full max-h-full group-hover:scale-105 transition-transform duration-300 opacity-0 z-10"
+                    onload="this.style.opacity='1'; this.previousElementSibling.style.display='none';" />
+                
+                <div class="absolute inset-0 flex flex-col justify-end p-3 bg-gradient-to-t from-black/30 to-transparent  pointer-events-none z-20">
+                    <div class="text-white text-xs group-hover:text-orange-400 transition-colors" style="font-family: 'Montserrat', sans-serif;">
                         Flash Discount ➜
                     </div>
                 </div>
-            </a>
+            </div>
+        </a>
 
-            <a href="<?= !empty($banners) ? '../otherpage/index-subcategory_grid_page-14.php?category_name=' . urlencode(strtolower($banners[0]['category_name'])) : '#' ?>"
-                class="relative overflow-hidden h-[150px] group  transition-all">
-                <div class="absolute inset-0">
-                    <?php if (!empty($banners)): ?>
-                        <img src="../../uploads/<?= basename($banners[0]['filename']) ?>"
-                            alt="<?= htmlspecialchars($banners[0]['category_name']) ?>"
-                            class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
-                            onerror="this.src='../../uploads/placeholder.jpg'" />
-                    <?php else: ?>
-                        <img src="../img/gif1.gif" alt="Deals" class="w-full h-full object-cover mix-blend-overlay" />
-                    <?php endif; ?>
-                </div>
-                <div class="relative h-full flex flex-col justify-end p-3 bg-gradient-to-t from-black/70 to-transparent">
-                    <div class="text-white text-xs  group-hover:text-orange-400 transition-colors" style="font-family: 'Montserrat', sans-serif;">
+        <a href="<?= !empty($banners) ? '../otherpage/index-subcategory_grid_page-14.php?category_name=' . urlencode(strtolower($banners[0]['category_name'])) : '#' ?>"
+            class="relative overflow-hidden group transition-all">
+            <div class="relative bg-gray-100 flex items-center justify-center" style="min-height: 120px;">
+                <!-- Skeleton Loading -->
+                <div class="skeleton-loader absolute inset-0 bg-gradient-to-r from-neutral-200 via-neutral-300 to-neutral-200 bg-[length:200%_100%] animate-shimmer"></div>
+                
+                <?php if (!empty($banners)): ?>
+                    <img src="../../uploads/<?= basename($banners[0]['filename']) ?>"
+                        alt="<?= htmlspecialchars($banners[0]['category_name']) ?>"
+                        class="banner-image w-auto h-auto object-contain max-w-full max-h-full group-hover:scale-105 transition-transform duration-300 opacity-0 z-10"
+                        onerror="this.src='../../uploads/placeholder.jpg'; this.style.opacity='1'; this.previousElementSibling.style.display='none';"
+                        onload="this.style.opacity='1'; this.previousElementSibling.style.display='none';" />
+                <?php else: ?>
+                    <img src="../img/gif1.gif" alt="Deals" class="banner-image w-auto h-auto object-contain max-w-full max-h-full opacity-0 z-10" onload="this.style.opacity='1'; this.previousElementSibling.style.display='none';" />
+                <?php endif; ?>
+                
+                <div class="absolute inset-0 flex flex-col justify-end p-3 bg-gradient-to-t from-black/30 to-transparent  pointer-events-none z-20">
+                    <div class="text-white text-xs group-hover:text-orange-400 transition-colors" style="font-family: 'Montserrat', sans-serif;">
                         <?php
                         $label = !empty($banners) ? $banners[0]['category_name'] : 'Deals';
                         echo ucfirst(htmlspecialchars($label));
                         ?>➜
                     </div>
                 </div>
-            </a>
-        </div>
+            </div>
+        </a>
     </div>
+</div>
 
-    <style>
-        .swiper-pagination {
-            bottom: 15px !important;
-        }
 
-        .swiper-pagination-bullet {
-            background: rgba(255, 255, 255, 0.7) !important;
-            opacity: 0.7 !important;
-        }
-
-        .swiper-pagination-bullet-active {
-            background: #ff8c42 !important;
-            opacity: 1 !important;
-        }
-    </style>
 
     <section class="bg-black hidden md:block border border-black/20">
         <div class="px-4 sm:px-8 lg:px-9">
@@ -1115,51 +1200,50 @@ while ($row = $banners_result->fetch_assoc()) {
         </section>
     <?php endif; ?>
 
-    <section class="px-4 sm:px-6 lg:px-8 py-10 ">
-        <div class="max-w-full mx-auto">
-            <!-- Banner -->
-            <a href="https://www.yfk20.com/login" class="group block relative overflow-hidden transition-all duration-300 pointer-events-none cursor-not-allowed" data-aos="fade-up">
-                <!-- Rectangle Container -->
-                <div class="relative w-full aspect-[16/9] sm:aspect-auto sm:h-auto bg-white border border-neutral-200 rounded-2xl overflow-hidden">
-                    <!-- Skeleton Loading -->
-                    <div class="skeleton-loader absolute inset-0 bg-gradient-to-r from-neutral-200 via-neutral-300 to-neutral-200 bg-[length:200%_100%] animate-shimmer sm:relative sm:max-h-[220px] md:max-h-[280px] lg:max-h-[380px] xl:max-h-[500px]"></div>
+<section class="px-4 sm:px-6 lg:px-8 ">
+    <div class="max-w-full mx-auto">
+        <!-- Banner -->
+        <a href="https://www.yfk20.com/login" class="group block relative overflow-hidden transition-all duration-300 pointer-events-none cursor-not-allowed" data-aos="fade-up">
+            <!-- Rectangle Container -->
+            <div class="relative bg-white overflow-hidden flex items-center justify-center inline-block">
+                <!-- Skeleton Loading -->
+                <div class="skeleton-loader absolute inset-0 bg-gradient-to-r from-neutral-200 via-neutral-300 to-neutral-200 bg-[length:200%_100%] animate-shimmer"></div>
 
-                    <!-- Image -->
-                    <img src="../img/sunpina.png"
-                        alt="Promotion Banner"
-                        class="banner-image absolute inset-0 w-full h-full object-cover sm:relative sm:object-contain sm:max-h-[220px] md:max-h-[280px] lg:max-h-[380px] xl:max-h-[500px] opacity-0 transition-opacity duration-300"
-                        onload="this.style.opacity='1'; this.previousElementSibling.style.display='none';">
+                <!-- Image -->
+                <img src="../img/sunpina.png"
+                    alt="Promotion Banner"
+                    class="banner-image w-auto h-auto object-contain opacity-0 transition-opacity duration-300 z-5"
+                    onload="this.style.opacity='1'; this.previousElementSibling.style.display='none';">
 
-                    <!-- Temporary Overlay Badge -->
-                    <div class="absolute inset-0 flex items-center justify-center z-10">
-                        <div class="bg-orange-500 text-white px-5 py-2 sm:px-6 sm:py-3 rounded-lg shadow-2xl transform rotate-[-5deg]">
-                            <p class="text-lg sm:text-xl md:text-xl lg:text-2xl font-bold">temporary</p>
-                        </div>
+                <!-- Temporary Overlay Badge -->
+                <div class="absolute inset-0 flex items-center justify-center z-10 pointer-events-none">
+                    <div class="bg-orange-500 text-white px-3 py-1 sm:px-6 sm:py-3 rounded-lg shadow-2xl transform rotate-[-5deg]">
+                        <p class="text-sm sm:text-xl md:text-xl lg:text-2xl font-bold">temporary</p>
                     </div>
                 </div>
-            </a>
-        </div>
+            </div>
+        </a>
+    </div>
 
-        <style>
-            @keyframes shimmer {
-                0% {
-                    background-position: -200% 0;
-                }
-
-                100% {
-                    background-position: 200% 0;
-                }
+    <style>
+        @keyframes shimmer {
+            0% {
+                background-position: -200% 0;
             }
-
-            .animate-shimmer {
-                animation: shimmer 1.5s ease-in-out infinite;
+            100% {
+                background-position: 200% 0;
             }
+        }
 
-            .banner-image {
-                transition: opacity 0.3s ease-in-out;
-            }
-        </style>
-    </section>
+        .animate-shimmer {
+            animation: shimmer 1.5s ease-in-out infinite;
+        }
+
+        .banner-image {
+            transition: opacity 0.3s ease-in-out;
+        }
+    </style>
+</section>
 
     <!-- Modal for "Not Available" -->
     <div id="unavailableModal" class="hidden fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4">
@@ -1179,34 +1263,32 @@ while ($row = $banners_result->fetch_assoc()) {
         </div>
     </div>
 
-    <section class="px-4 sm:px-6 lg:px-8 py-8">
-        <div class="max-w-full mx-auto">
-            <!-- 2x2 Grid Content -->
-            <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
-                <!-- Box 1 -->
-                <a href="#" onclick="showUnavailable(event)" class="group block">
-                    <div class="overflow-hidden ">
-                        <img src="../img/display2.webp"
-                            alt="Promo 1"
-                            class="w-full h-[300px] object-cover transition-transform duration-500 group-hover:scale-105">
-                    </div>
-                    <h3 class="text-lg font-semibold " style="font-family: 'Montserrat', sans-serif; color: #2f1200">Style to Modern your house! </h3>
-                </a>
+<section class="px-4 sm:px-6 lg:px-8 py-8">
+    <div class="max-w-full mx-auto">
+        <!-- 2x2 Grid Content -->
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
+            <!-- Box 1 -->
+            <a href="#" onclick="showUnavailable(event)" class="group block">
+                <div class="overflow-hidden">
+                    <img src="../img/display2.webp"
+                        alt="Promo 1"
+                        class="w-full h-auto object-cover transition-transform duration-500 group-hover:scale-105">
+                </div>
+                <h3 class="text-sm sm:text-lg font-semibold mt-4" style="font-family: 'Montserrat', sans-serif; color: #2f1200">Style to Modern your house!</h3>
+            </a>
 
-                <!-- Box 2 -->
-                <a href="#" onclick="showUnavailable(event)" class="group block">
-                    <div class="overflow-hidden ">
-                        <img src="../img/display1.webp"
-                            alt="Promo 2"
-                            class="w-full h-[300px] object-cover transition-transform duration-500 group-hover:scale-105">
-                    </div>
-                    <h3 class="text-lg font-semibold " style="font-family: 'Montserrat', sans-serif; color: #2f1200">Chair furniture deals below ₱5,000</h3>
-                </a>
-
-
-            </div>
+            <!-- Box 2 -->
+            <a href="#" onclick="showUnavailable(event)" class="group block">
+                <div class="overflow-hidden ">
+                    <img src="../img/display1.webp"
+                        alt="Promo 2"
+                        class="w-full h-auto object-cover transition-transform duration-500 group-hover:scale-105">
+                </div>
+                <h3 class="text-sm sm:text-lg font-semibold mt-4" style="font-family: 'Montserrat', sans-serif; color: #2f1200">Chair furniture deals below ₱5,000</h3>
+            </a>
         </div>
-    </section>
+    </div>
+</section>
 
     <script>
         function showUnavailable(event) {
@@ -3318,17 +3400,7 @@ while ($row = $banners_result->fetch_assoc()) {
     </script>
 
     <style>
-        /* Pagination dots */
-        .swiper-pagination-bullet {
-            background: linear-gradient(135deg, #000000ff, #000000ff) !important;
-            opacity: 0.4 !important;
-            transition: all 0.3s ease-in-out;
-        }
 
-        .swiper-pagination-bullet-active {
-            opacity: 1 !important;
-            transform: scale(1.2);
-        }
 
         /* Testimonial card */
         .testimonial-card {

@@ -2205,14 +2205,14 @@ $hidden_pages = ['help.php', 'about.php'];
         class="fixed left-0 top-0 h-full w-80 max-w-[85vw] bg-white shadow-2xl overflow-y-auto">
 
         <!-- Sidebar Header -->
-        <div class="sticky top-0 bg-white text-black p-4 flex items-center justify-between z-10">
+        <div class="sticky top-0 bg-white p-4 flex items-center justify-between z-10">
           <div class="flex items-center space-x-3">
             <div class="w-10 h-10 overflow-hidden">
               <img src="../img/logo.png" alt="Logo" class="w-full h-full object-contain">
             </div>
             <div>
-              <span class="block text-lg  text-orange-500">NobleHome</span>
-              <span class="block text-xs ">Depot</span>
+              <span class="block text-lg text-orange-500" style="font-family: 'Montserrat', sans-serif;">NobleHome</span>
+              <span class="block text-xs " style="font-family: 'Montserrat', sans-serif;">Depot</span>
             </div>
           </div>
           <button @click="mobileOpen = false" class="text-gray-700 hover:bg-gray-100 rounded-full p-2 transition">
@@ -2238,8 +2238,7 @@ $hidden_pages = ['help.php', 'about.php'];
                 <?php endif; ?>
               </div>
               <div class="flex-1 min-w-0">
-                <p class="font-semibold text-gray-800 truncate"><?= htmlspecialchars($_SESSION['user_name']) ?></p>
-                <p class="text-xs text-gray-500">Welcome back!</p>
+                <p class="font-semibold truncate" style="font-family: 'Montserrat', sans-serif;"><?= htmlspecialchars($_SESSION['user_name']) ?></p>
               </div>
             </div>
           </div>
@@ -2263,7 +2262,7 @@ $hidden_pages = ['help.php', 'about.php'];
                          this.searchOpen = true;
                      });
              }
-             }" class="p-4 border-b border-gray-200">
+             }" class="p-4 border-b border-gray-200" style="font-family: 'Montserrat', sans-serif;">
           <div class="relative">
             <input
               type="text"
@@ -2271,7 +2270,7 @@ $hidden_pages = ['help.php', 'about.php'];
               @input.debounce.300ms="fetchResults"
               @keydown.enter="fetchResults"
               placeholder="Search products..."
-              class="w-full border border-gray-300 pl-10 pr-4 py-3 rounded-lg text-sm outline-none focus:border-orange-500 focus:ring-2 focus:ring-orange-200">
+              class="w-full border border-gray-300 pl-10 pr-4 py-3 rounded-lg text-sm outline-none focus:border-orange-500 focus:ring-2 focus:ring-orange-200" style="font-family: 'Montserrat', sans-serif;">
             <svg class="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5A7 7 0 11 1 9a7 7 0 0112 0z" />
             </svg>
@@ -2313,7 +2312,7 @@ $hidden_pages = ['help.php', 'about.php'];
             <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z" />
             </svg>
-            <span class="font-medium">Inspiration</span>
+            <span class="font-medium" style="font-family: 'Montserrat', sans-serif; color: #2f1200;">Inspiration</span>
           </a>
 
           <!-- FIND PROFESSIONALS LINK - Mobile -->
@@ -2322,7 +2321,7 @@ $hidden_pages = ['help.php', 'about.php'];
             <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 13.255A23.931 23.931 0 0112 15c-3.183 0-6.22-.62-9-1.745M16 6V4a2 2 0 00-2-2h-4a2 2 0 00-2 2v2m4 6h.01M5 20h14a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
             </svg>
-            <span class="font-medium">Find Professionals</span>
+            <span class="font-medium" style="font-family: 'Montserrat', sans-serif; color: #2f1200;">Find Professionals</span>
           </a>
 
 
@@ -2332,14 +2331,14 @@ $hidden_pages = ['help.php', 'about.php'];
             <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
             </svg>
-            <span class="font-medium">Orders</span>
+            <span class="font-medium" style="font-family: 'Montserrat', sans-serif; color: #2f1200;">Orders</span>
           </a>
 
           <!-- Shop -->
           <a href="javascript:void(0)" onclick="navigateWithLoading('../otherpage/index-shop-page-2')"
             class="flex items-center gap-3 px-4 py-3 text-gray-700 hover:bg-orange-50 hover:text-orange-600 transition">
             <img src="../img/shopping-cart.png" alt="Shop" class="w-5 h-5 object-contain" />
-            <span class="font-medium">Shop</span>
+            <span class="font-medium" style="font-family: 'Montserrat', sans-serif; color: #2f1200;">Shop</span>
           </a>
 
           <!-- Products Accordion -->
@@ -2350,7 +2349,7 @@ $hidden_pages = ['help.php', 'about.php'];
                 <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10" />
                 </svg>
-                <span class="font-medium">Products</span>
+                <span class="font-medium" style="font-family: 'Montserrat', sans-serif; color: #2f1200;">Products</span>
               </div>
               <svg class="w-4 h-4 transition-transform" :class="productsOpen ? 'rotate-180' : ''" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" />
@@ -2377,7 +2376,7 @@ $hidden_pages = ['help.php', 'about.php'];
                             class="w-6 h-6 object-cover rounded"
                             onerror="this.style.display='none'">
                         <?php endif; ?>
-                        <span class="uppercase"><?= htmlspecialchars($category['name']) ?></span>
+                        <span class="uppercase" style="font-family: 'Montserrat', sans-serif; color: #2f1200;"><?= htmlspecialchars($category['name']) ?></span>
                       </div>
                       <svg class="w-3 h-3 transition-transform" :class="subOpen ? 'rotate-180' : ''" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" />
@@ -2403,7 +2402,7 @@ $hidden_pages = ['help.php', 'about.php'];
                                 class="w-5 h-5 object-contain rounded"
                                 onerror="this.style.display='none'">
                             <?php endif; ?>
-                            <span class="uppercase"><?= htmlspecialchars($sub['name']) ?></span>
+                            <span class="uppercase" style="font-family: 'Montserrat', sans-serif; color: #2f1200;"><?= htmlspecialchars($sub['name']) ?></span>
                           </a>
                         <?php endforeach; ?>
                       <?php else: ?>
@@ -2424,7 +2423,7 @@ $hidden_pages = ['help.php', 'about.php'];
             <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
             </svg>
-            <span class="font-medium">Messages</span>
+            <span class="font-medium" style="font-family: 'Montserrat', sans-serif; color: #2f1200;">Messages</span>
           </a>
 
           <!-- Notifications - Mobile Responsive -->
@@ -2436,7 +2435,7 @@ $hidden_pages = ['help.php', 'about.php'];
                 <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9" />
                 </svg>
-                <span class="font-medium text-sm">Notifications</span>
+                <span class="font-medium text-sm" style="font-family: 'Montserrat', sans-serif; color: #2f1200;">Notifications</span>
               </div>
 
               <!-- Badge positioned on button -->
@@ -2551,14 +2550,14 @@ $hidden_pages = ['help.php', 'about.php'];
               <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
               </svg>
-              <span class="font-medium">Profile</span>
+              <span class="font-medium" style="font-family: 'Montserrat', sans-serif; color: #2f1200;">Profile</span>
             </a>
             <a href="../logout.php"
               class="flex items-center gap-3 px-4 py-3 text-red-600 hover:bg-red-50 transition rounded-lg">
               <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />
               </svg>
-              <span class="font-medium">Logout</span>
+              <span class="font-medium" style="font-family: 'Montserrat', sans-serif; color: #2f1200;">Logout</span>
             </a>
           </div>
         <?php endif; ?>

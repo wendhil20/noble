@@ -1018,7 +1018,7 @@ function calculate_price($variant_price, $color_price, $percent = 0, $discount =
                 finalPrice.textContent = `₱${(initial.price || 0).toLocaleString()}`;
                 infoSection.appendChild(finalPrice);
 
-                if (hasMultipleVariants) {
+         if (hasMultipleVariants) {
                     const sizesContainer = document.createElement('div');
                     sizesContainer.className = 'mt-2';
 
@@ -1041,6 +1041,14 @@ function calculate_price($variant_price, $color_price, $percent = 0, $discount =
                         sizeBtn.dataset.origin = v.origin;
                         sizeBtn.dataset.variantPrice = v.price;
                         sizeBtn.dataset.percent = v.percent;
+
+                        // Add red dot if size has discount
+                        if (parseFloat(v.discount) > 0) {
+                            const discountDot = document.createElement('span');
+                            discountDot.className = 'absolute top-0 right-0 w-2 h-2 bg-red-500 rounded-full';
+                            sizeBtn.style.position = 'relative';
+                            sizeBtn.appendChild(discountDot);
+                        }
 
                         if (idx >= VISIBLE_SIZES) {
                             sizeBtn.style.display = 'none';

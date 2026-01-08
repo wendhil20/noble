@@ -942,7 +942,7 @@ function calculate_price($variant_price, $color_price, $percent = 0, $discount =
                 this.renderPage();
             }
 
-            createProductCard(product) {
+       createProductCard(product) {
                 const card = document.createElement('article');
                 card.className = 'product-card overflow-hidden rounded-lg shadow-sm';
 
@@ -951,7 +951,7 @@ function calculate_price($variant_price, $color_price, $percent = 0, $discount =
                 const hasMultipleVariants = variants.length > 1;
 
                 const imageContainer = document.createElement('div');
-                imageContainer.className = 'relative aspect-square overflow-hidden bg-gray-100 rounded-t-lg';
+                imageContainer.className = 'relative aspect-square overflow-visible bg-gray-100 rounded-t-lg';
 
                 const img = document.createElement('img');
                 img.src = product.color_image;
@@ -969,11 +969,21 @@ function calculate_price($variant_price, $color_price, $percent = 0, $discount =
                     imageContainer.appendChild(img2);
                 }
 
-                if (initial.discount > 0) {
+                // Only show discount if the initial (first) selected size has discount
+                const initialDiscount = parseFloat(initial.discount || 0);
+                
+                // Debug log
+                console.log(`Product: ${product.name}, Discount: ${initialDiscount}, Initial:`, initial);
+                
+                if (initialDiscount > 0) {
                     const discountBadge = document.createElement('span');
-                    discountBadge.className = 'absolute bottom-3 left-3 bg-red-600 text-white text-xs font-bold px-2 py-1 rounded';
-                    discountBadge.textContent = `Save ${Math.round(initial.discount)}%`;
+                    discountBadge.className = 'absolute bottom-3 left-3 bg-red-600 text-white text-xs font-bold px-2 py-1 rounded z-20';
+                    discountBadge.style.zIndex = '20';
+                    discountBadge.textContent = `Save ${Math.round(initialDiscount)}%`;
                     imageContainer.appendChild(discountBadge);
+                } else {
+                    // Debug: show if no discount
+                    console.log(`No discount for ${product.name}`);
                 }
 
                 const wishlistBtn = document.createElement('button');
@@ -1148,6 +1158,30 @@ function calculate_price($variant_price, $color_price, $percent = 0, $discount =
                             const priceEl = card.querySelector('.final-price');
                             if (priceEl) priceEl.textContent = `₱${variantData.price.toLocaleString()}`;
 
+                            // Update discount badge based on selected variant
+                            // Always query fresh to avoid stale references
+                            let discountBadge = imageContainer.querySelector('span.bg-red-600');
+
+                            if (variantData.discount > 0) {
+                                if (discountBadge) {
+                                    // Update existing badge
+                                    discountBadge.textContent = `Save ${Math.round(variantData.discount)}%`;
+                                } else {
+                                    // Create new badge if doesn't exist
+                                    const newBadge = document.createElement('span');
+                                    newBadge.className = 'absolute bottom-3 left-3 bg-red-600 text-white text-xs font-bold px-2 py-1 rounded z-20';
+                                    newBadge.style.zIndex = '20';
+                                    newBadge.textContent = `Save ${Math.round(variantData.discount)}%`;
+                                    imageContainer.appendChild(newBadge);
+                                }
+                            } else {
+                                // Remove badge if no discount
+                                if (discountBadge) {
+                                    discountBadge.remove();
+                                }
+                            }
+
+                            // Update button states
                             allSizeButtons.forEach(b => {
                                 b.classList.remove('bg-black', 'text-white', 'border-black');
                                 b.classList.add('bg-white', 'text-gray-800', 'border-gray-300');

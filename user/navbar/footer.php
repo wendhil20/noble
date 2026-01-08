@@ -2,8 +2,8 @@
 
 
   <footer class=" text-black py-16 mt-12 relative overflow-hidden font-roboto">
-          <!-- Divider -->
-    <div class="h-px bg-gradient-to-r from-transparent via-gray-600 to-transparent mb-8"></div>
+      <!-- Divider -->
+      <div class="h-px bg-gradient-to-r from-transparent via-gray-600 to-transparent mb-8"></div>
 
       <div class="max-w-7xl mx-auto px-6 relative z-10">
           <!-- Main Footer Content -->
@@ -29,7 +29,7 @@
                   <!-- Contact Info -->
                   <div class="space-y-3" style="font-family: 'Montserrat', sans-serif; color: #2f1200">
                       <div class="flex items-center space-x-3 text-sm">
-                          <div class="w-8 h-8 bg-orange-500/20 rounded-lg flex items-center justify-center">
+                          <div class="w-8 h-8  flex items-center justify-center">
                               <svg class="w-4 h-4 text-orange-400" fill="currentColor" viewBox="0 0 24 24">
                                   <path d="M2.003 5.884L10 9.882l7.997-3.998A2 2 0 0016 4H4a2 2 0 00-1.997 1.884z" />
                                   <path d="m18 8.118l-8 4-8-4V14a2 2 0 002 2h12a2 2 0 002-2V8.118z" />
@@ -38,7 +38,7 @@
                           <span class="text-black">noblehomeconst.ph@gmail.com</span>
                       </div>
                       <div class="flex items-center space-x-3 text-sm">
-                          <div class="w-8 h-8 bg-orange-500/20 rounded-lg flex items-center justify-center">
+                          <div class="w-8 h-8  flex items-center justify-center">
                               <svg class="w-4 h-4 text-orange-400" fill="currentColor" viewBox="0 0 24 24">
                                   <path d="M2 3a1 1 0 011-1h2.153a1 1 0 01.986.836l.74 4.435a1 1 0 01-.54 1.06l-1.548.773a11.037 11.037 0 006.105 6.105l.774-1.548a1 1 0 011.059-.54l4.435.74a1 1 0 01.836.986V17a1 1 0 01-1 1h-2C7.82 18 2 12.18 2 5V3z" />
                               </svg>
@@ -50,26 +50,28 @@
 
               <!-- Quick Links -->
               <div>
-                  <h3 class="text-xl mb-6  relative" style="font-family: 'Montserrat', sans-serif; color: #2f1200"> 
-                      Quick Links
-                      <div class="absolute -bottom-2 left-0 w-12 h-1 bg-gradient-to-r from-orange-500 to-transparent rounded-full"></div>
+                  <h3 class="text-lg mb-6  relative" style="font-family: 'Montserrat', sans-serif; color: #2f1200">
+                      Company Info
                   </h3>
-                  <nav class="space-y-3" style="font-family: 'Montserrat', sans-serif; color: #2f1200">
-                      <a href="index-page-1-A-B-C-D-E" class="block  hover:text-red-500 link-hover transition-all duration-300 font-medium">Home</a>
-                      <a href="../rules/terms.php" class="block  hover:text-red-500 link-hover transition-all duration-300 font-medium">Terms of use</a>
-                      <a href="../rules/policy.php" class="block hover:text-red-500 link-hover transition-all duration-300 font-medium">Policy</a>
-                      <a href="../about/about.php" class="block  hover:text-red-500 link-hover transition-all duration-300 font-medium">About</a>
+                  <nav class="space-y-3 text-xs" style="font-family: 'Montserrat', sans-serif; color: #2f1200">
+                      <a href="../rules/terms.php" class="block  hover:text-red-500 link-hover transition-all duration-300 ">Terms of use</a>
+                      <a href="../rules/policy.php" class="block hover:text-red-500 link-hover transition-all duration-300 ">Privacy Policy</a>
+                      <a href="../about/about.php" class="block  hover:text-red-500 link-hover transition-all duration-300 ">About Noblehome</a>
+                      <a href="#" class="block  hover:text-red-500 link-hover transition-all duration-300 ">Help Center</a>
+                   
+
                   </nav>
               </div>
-
-              <!-- Services -->
+       <!-- Services -->
               <div>
-                  <h3 class="text-xl mb-6 text-black relative">
-                      Our Services
-                      <div class="absolute -bottom-2 left-0 w-12 h-1 bg-gradient-to-r from-orange-500 to-transparent rounded-full"></div>
+                  <h3 class="text-xl mb-6 text-black relative" style="font-family: 'Montserrat', sans-serif; color: #2f1200">
+                     Customer Services
+                     
                   </h3>
-                  <ul class="space-y-3 text-gray-300">
-                      <li class="hover:text-orange-300 transition-colors cursor-pointer"></li>
+                  <ul class="space-y-3 text-xs" style="font-family: 'Montserrat', sans-serif; color: #2f1200">
+                      <a href="../rules/return.php" class="block  hover:text-red-500 link-hover transition-all duration-300 ">Return policy</a>
+                      <a href="../rules/payment.php" class="block  hover:text-red-500 link-hover transition-all duration-300 ">Payment policy</a>
+                      <a href="#" class="block  hover:text-red-500 link-hover transition-all duration-300 ">Shipping policy</a>
                       <li class="hover:text-orange-300 transition-colors cursor-pointer"></li>
                       <li class="hover:text-orange-300 transition-colors cursor-pointer"></li>
                       <li class="hover:text-orange-300 transition-colors cursor-pointer"></li>
@@ -86,13 +88,12 @@
               <!-- Copyright -->
               <div class="text-center lg:text-left">
                   <p class="text-black text-sm">
-                      © 2025 Noble Home Construction. All rights reserved.
+                      © <?= date('Y') ?> Noble Home Construction. All rights reserved.
                   </p>
                   <p class="text-gray-500 text-xs mt-1">
                       Licensed & Insured | PCAB License No. 12345
                   </p>
               </div>
-
               <!-- Enhanced Social Media -->
               <div class="flex items-center space-x-4">
                   <span class="text-black text-sm mr-2">Follow us:</span>

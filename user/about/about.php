@@ -1,4 +1,4 @@
-<?php 
+<?php
 session_name("nobleuser");
 session_start();
 include '../../connection/connect.php';
@@ -26,16 +26,12 @@ if (!isset($_SESSION['user_id']) && isset($_COOKIE['remember_token'])) {
     $stmt->close();
 }
 
-// ✅ Final check if logged in (either normal or Google)
-if (!isset($_SESSION['user_id'])) {
-    // Not logged in, redirect to login/Google callback
-    header('Location: ../google-callback.php');
-    exit;
-}
+
 ?>
 
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -56,7 +52,7 @@ if (!isset($_SESSION['user_id'])) {
             transition: opacity 0.8s ease;
             pointer-events: none;
         }
-        
+
         .slide-section.active-slide {
             opacity: 1;
             pointer-events: auto;
@@ -64,7 +60,7 @@ if (!isset($_SESSION['user_id'])) {
         }
 
         .bg-overlay {
-            background: linear-gradient(rgba(0,0,0,0.5), rgba(0,0,0,0.5));
+            background: linear-gradient(rgba(0, 0, 0, 0.5), rgba(0, 0, 0, 0.5));
         }
 
         .nav-button {
@@ -150,7 +146,8 @@ if (!isset($_SESSION['user_id'])) {
         }
     </style>
 </head>
-<body class="font-roboto overflow-x-hidden">
+
+<body class="overflow-x-hidden" style="font-family: 'Montserrat', sans-serif; color: #2f1200">
     <?php include '../navbar/top.php'; ?>
     <!-- Navigation Buttons -->
     <button id="prevBtn" class="nav-button nav-button-left">
@@ -161,15 +158,15 @@ if (!isset($_SESSION['user_id'])) {
     </button>
     <!-- Scrollable Content -->
     <div class="relative h-[600vh]">
-        
+
         <!-- Slide 1: Hero -->
         <section class="slide-section active-slide flex items-center justify-center p-4 sm:p-6 md:p-8" data-slide="0">
             <!-- Background Image -->
             <div class="absolute inset-0 z-0">
                 <img src="../img/saleandexplore/a.png" alt="Hero Background" class="w-full h-full object-cover">
-                 <div class="absolute inset-0 bg-black/50"></div>
+                <div class="absolute inset-0 bg-black/50"></div>
             </div>
-            
+
             <!-- Content Card -->
             <div class="relative z-10 rounded-3xl p-6 sm:p-10 md:p-16 max-w-5xl w-full">
                 <div class="text-center">
@@ -186,14 +183,14 @@ if (!isset($_SESSION['user_id'])) {
             </div>
         </section>
 
-         <!-- Slide 2: Introduction -->
+        <!-- Slide 2: Introduction -->
         <section class="slide-section flex items-center justify-center p-4 sm:p-6 md:p-8" data-slide="1">
             <!-- Background Image -->
             <div class="absolute inset-0 z-0">
                 <img src="https://images.unsplash.com/photo-1600047509807-ba8f99d2cdde?w=1920" alt="Construction Background" class="w-full h-full object-cover">
                 <div class="absolute inset-0 bg-black/70"></div>
             </div>
-            
+
             <!-- Content Card -->
             <div class="relative z-10 p-6 sm:p-10 md:p-16 max-w-6xl w-full">
                 <div class="grid md:grid-cols-2 gap-6 sm:gap-8 md:gap-12 items-center">
@@ -223,29 +220,29 @@ if (!isset($_SESSION['user_id'])) {
             <!-- Background Image -->
             <div class="absolute inset-0 z-0">
                 <img src="https://images.unsplash.com/photo-1600607687939-ce8a6c25118c?w=1920" alt="Modern Home Background" class="w-full h-full object-cover">
-              <div class="absolute inset-0 bg-black/70"></div>
+                <div class="absolute inset-0 bg-black/70"></div>
             </div>
-            
+
             <!-- Content Card -->
             <div class="relative z-10 backdrop-blur-sm rounded-3xl p-6 sm:p-10 md:p-16 max-w-6xl w-full shadow-2xl" data-aos="fade-up">
                 <div class="grid md:grid-cols-5 gap-6 sm:gap-8 md:gap-12 items-center">
                     <!-- Video Section - Hidden on Mobile, Visible on Desktop -->
-                    <div class="hidden md:block md:col-span-2"  data-aos="fade-up" data-aos-delay="200">
-                       <video autoplay muted loop playsinline class="w-full rounded-2xl shadow-xl">
-  <source src="../../video/g.mp4" type="video/mp4">
-  Your browser does not support the video tag.
-</video>
+                    <div class="hidden md:block md:col-span-2" data-aos="fade-up" data-aos-delay="200">
+                        <video autoplay muted loop playsinline class="w-full rounded-2xl shadow-xl">
+                            <source src="../../video/g.mp4" type="video/mp4">
+                            Your browser does not support the video tag.
+                        </video>
                     </div>
 
                     <!-- Button Section - Visible on Mobile Only -->
-                    <div class="md:hidden flex justify-center order-2"  data-aos="fade-up" data-aos-delay="200">
+                    <div class="md:hidden flex justify-center order-2" data-aos="fade-up" data-aos-delay="200">
                         <button id="openVideoModal" class="bg-gradient-to-r from-orange-500 to-orange-600 text-white px-8 py-4 rounded-2xl text-base font-semibold shadow-xl hover:shadow-2xl transition-all duration-300 transform hover:scale-105 flex items-center gap-3">
                             <i class="fas fa-play-circle text-2xl"></i>
                             Watch
                         </button>
                     </div>
 
-                    <div class="md:col-span-3 order-1 md:order-2"  data-aos="fade-up"  data-aos-delay="300">
+                    <div class="md:col-span-3 order-1 md:order-2" data-aos="fade-up" data-aos-delay="300">
                         <span class="inline-block px-4 sm:px-5 md:px-6 py-2 bg-gradient-to-r from-orange-500 to-orange-600 text-white rounded-full text-xs sm:text-sm  uppercase tracking-wider mb-4 sm:mb-6">
                             Our Mission
                         </span>
@@ -262,7 +259,7 @@ if (!isset($_SESSION['user_id'])) {
                 </div>
             </div>
         </section>
- <!-- Video Modal -->
+        <!-- Video Modal -->
         <div id="videoModal" class="fixed inset-0 bg-black/90 z-[200] hidden items-center justify-center p-4">
             <div class="relative w-full max-w-lg sm:max-w-xl md:max-w-2xl">
                 <button id="closeVideoModal" class="absolute -top-10 sm:-top-12 right-0 text-white text-2xl sm:text-3xl md:text-4xl hover:text-orange-500 transition-colors">
@@ -284,7 +281,7 @@ if (!isset($_SESSION['user_id'])) {
                 <img src="https://images.unsplash.com/photo-1600566753086-00f18fb6b3ea?w=1920" alt="Vision Background" class="w-full h-full object-cover">
                 <div class="absolute inset-0 bg-black/70"></div>
             </div>
-            
+
             <!-- Content Card -->
             <div class="relative z-10 bg-white/95 backdrop-blur-lg rounded-3xl p-6 sm:p-10 md:p-16 max-w-6xl w-full shadow-2xl">
                 <div class="text-center mb-8 sm:mb-10 md:mb-12" data-aos="fade-down">
@@ -328,7 +325,7 @@ if (!isset($_SESSION['user_id'])) {
                 <img src="https://images.unsplash.com/photo-1600607687644-aac4c3eac7f4?w=1920" alt="Values Background" class="w-full h-full object-cover">
                 <div class="absolute inset-0 bg-gradient-to-br from-purple-900/80 to-indigo-800/80"></div>
             </div>
-            
+
             <!-- Content Card -->
             <div class="relative z-10 bg-white/95 backdrop-blur-lg rounded-3xl p-6 sm:p-10 md:p-16 max-w-6xl w-full shadow-2xl">
                 <div class="text-center mb-8 sm:mb-10 md:mb-12" data-aos="fade-down">
@@ -378,7 +375,7 @@ if (!isset($_SESSION['user_id'])) {
                 <img src="https://images.unsplash.com/photo-1600585154526-990dced4db0d?w=1920" alt="CTA Background" class="w-full h-full object-cover">
                 <div class="absolute inset-0 bg-gradient-to-br from-red-900/80 to-orange-800/80"></div>
             </div>
-            
+
             <!-- Content Card -->
             <div class="relative z-10 bg-white/95 backdrop-blur-lg rounded-3xl p-6 sm:p-10 md:p-16 max-w-5xl w-full shadow-2xl text-center" data-aos="zoom-in">
                 <span class="inline-block px-4 sm:px-5 md:px-6 py-2 bg-gradient-to-r from-orange-500 to-orange-600 text-white rounded-full text-xs sm:text-sm font-semibold uppercase tracking-wider mb-4 sm:mb-6" data-aos="fade-down" data-aos-delay="200">
@@ -417,9 +414,9 @@ if (!isset($_SESSION['user_id'])) {
         let scrollTimeout;
         window.addEventListener('wheel', (e) => {
             if (isScrolling) return;
-            
+
             e.preventDefault();
-            
+
             clearTimeout(scrollTimeout);
             scrollTimeout = setTimeout(() => {
                 if (e.deltaY > 0) {
@@ -428,7 +425,9 @@ if (!isset($_SESSION['user_id'])) {
                     prevSlide();
                 }
             }, 50);
-        }, { passive: false });
+        }, {
+            passive: false
+        });
 
         // Handle touch events for mobile
         let touchStartY = 0;
@@ -436,14 +435,18 @@ if (!isset($_SESSION['user_id'])) {
 
         window.addEventListener('touchstart', (e) => {
             touchStartY = e.changedTouches[0].screenY;
-        }, { passive: true });
+        }, {
+            passive: true
+        });
 
         window.addEventListener('touchend', (e) => {
             if (isScrolling) return;
-            
+
             touchEndY = e.changedTouches[0].screenY;
             handleSwipe();
-        }, { passive: true });
+        }, {
+            passive: true
+        });
 
         function handleSwipe() {
             const swipeThreshold = 50;
@@ -457,7 +460,7 @@ if (!isset($_SESSION['user_id'])) {
         // Handle keyboard navigation
         window.addEventListener('keydown', (e) => {
             if (isScrolling) return;
-            
+
             if (e.key === 'ArrowDown' || e.key === 'PageDown' || e.key === ' ') {
                 e.preventDefault();
                 nextSlide();
@@ -512,7 +515,7 @@ if (!isset($_SESSION['user_id'])) {
 
             slides.forEach((slide) => {
                 slide.classList.remove('active-slide');
-                
+
                 slide.querySelectorAll('[data-aos]').forEach(el => {
                     el.classList.remove('aos-animate');
                 });
@@ -524,12 +527,12 @@ if (!isset($_SESSION['user_id'])) {
 
             setTimeout(() => {
                 const activeSlide = slides[slideIndex];
-                
+
                 activeSlide.querySelectorAll('[data-aos]').forEach(el => {
                     void el.offsetHeight;
                     el.classList.add('aos-animate');
                 });
-                
+
                 isScrolling = false;
             }, 100);
         }
@@ -572,4 +575,5 @@ if (!isset($_SESSION['user_id'])) {
     </script>
 
 </body>
+
 </html>

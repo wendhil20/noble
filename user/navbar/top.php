@@ -446,18 +446,18 @@ $hidden_pages = ['help.php', 'about.php'];
     <div class="flex justify-between items-center py-3 sm:py-4">
       <div class="flex items-center space-x-4 sm:space-x-6 flex-1">
 
-    <!-- Logo -->
+        <!-- Logo -->
         <a href="javascript:void(0)" onclick="navigateWithLoading('../otherpage/index-page-1-A-B-C-D-E')"
           class="flex items-center space-x-2 sm:space-x-3 hover:opacity-80 transition duration-200 flex-shrink-0">
           <div class="w-8 h-8 sm:w-10 sm:h-10 lg:w-12 lg:h-12 overflow-hidden">
             <img src="../img/logo.png" alt="Noble Home Logo" class="w-full h-full object-contain">
           </div>
-     
+
         </a>
 
 
-<!-- Search Bar with History - With localStorage -->
-<div x-data="{
+        <!-- Search Bar with History - With localStorage -->
+        <div x-data="{
   search: '',
   results: [],
   searchHistory: [],
@@ -510,9 +510,9 @@ $hidden_pages = ['help.php', 'about.php'];
       window.location.href = 'index-shop-page-2.php?search=' + encodeURIComponent(query);
   }
  }"
-  @click.away="showHistory = false; showDropdown = false"
-  class="relative w-64 md:w-96 font-mont hidden xl:block flex-1 max-w-2xl">
-     <div class="flex items-center gap-2 bg-white border border-gray-200 rounded-full shadow-sm px-3 py-1.5 w-full">
+          @click.away="showHistory = false; showDropdown = false"
+          class="relative w-64 md:w-96 font-mont hidden xl:block flex-1 max-w-2xl">
+          <div class="flex items-center gap-2 bg-white border border-gray-200 rounded-full shadow-sm px-3 py-1.5 w-full">
             <!-- Search Icon -->
             <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
@@ -538,72 +538,72 @@ $hidden_pages = ['help.php', 'about.php'];
             </button>
           </div>
 
-  <!-- Search History Dropdown -->
-  <div
-    x-show="showHistory && searchHistory.length > 0 && !showDropdown && search.trim().length === 0"
-    x-cloak
-    class="absolute z-50 bg-white shadow-lg rounded mt-2 w-full border border-gray-200">
+          <!-- Search History Dropdown -->
+          <div
+            x-show="showHistory && searchHistory.length > 0 && !showDropdown && search.trim().length === 0"
+            x-cloak
+            class="absolute z-50 bg-white shadow-lg rounded mt-2 w-full border border-gray-200">
 
-    <!-- Header -->
-    <div class="flex items-center justify-between px-4 py-2 border-b border-gray-200">
-      <span class="text-xs text-gray-500 font-medium">Search History</span>
-      <button
-        @click.stop="clearHistory()"
-        class="text-xs text-orange-500 hover:text-orange-600 font-medium uppercase">
-        CLEAR
-      </button>
-    </div>
+            <!-- Header -->
+            <div class="flex items-center justify-between px-4 py-2 border-b border-gray-200">
+              <span class="text-xs text-gray-500 font-medium">Search History</span>
+              <button
+                @click.stop="clearHistory()"
+                class="text-xs text-orange-500 hover:text-orange-600 font-medium uppercase">
+                CLEAR
+              </button>
+            </div>
 
-    <!-- History Items -->
-    <ul class="max-h-60 overflow-y-auto">
-      <template x-for="(item, index) in searchHistory" :key="index">
-        <li class="group hover:bg-gray-50 transition">
-          <div class="flex items-center justify-between px-4 py-2.5">
-            <button
-              @click.stop="performSearch(item)"
-              type="button"
-              class="flex items-center gap-2 flex-1 text-sm text-gray-700 text-left">
-              <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
-              </svg>
-              <span x-text="item"></span>
-            </button>
-            <button
-              @click.stop="removeHistoryItem(item)"
-              type="button"
-              class="opacity-0 group-hover:opacity-100 transition p-1 hover:bg-gray-200 rounded">
-              <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 text-gray-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
-              </svg>
-            </button>
+            <!-- History Items -->
+            <ul class="max-h-60 overflow-y-auto">
+              <template x-for="(item, index) in searchHistory" :key="index">
+                <li class="group hover:bg-gray-50 transition">
+                  <div class="flex items-center justify-between px-4 py-2.5">
+                    <button
+                      @click.stop="performSearch(item)"
+                      type="button"
+                      class="flex items-center gap-2 flex-1 text-sm text-gray-700 text-left">
+                      <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+                      </svg>
+                      <span x-text="item"></span>
+                    </button>
+                    <button
+                      @click.stop="removeHistoryItem(item)"
+                      type="button"
+                      class="opacity-0 group-hover:opacity-100 transition p-1 hover:bg-gray-200 rounded">
+                      <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 text-gray-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+                      </svg>
+                    </button>
+                  </div>
+                </li>
+              </template>
+            </ul>
           </div>
-        </li>
-      </template>
-    </ul>
-  </div>
 
-  <!-- Search Results Dropdown -->
-  <div
-    x-show="showDropdown && results.length > 0"
-    x-cloak
-    class="absolute z-50 bg-white shadow-lg rounded mt-2 w-full max-h-80 overflow-y-auto border border-gray-200">
-    <ul>
-      <template x-for="item in results" :key="item.id">
-        <li class="border-b last:border-0">
-          <a
-            :href="'index-shop-page-2.php?search=' + encodeURIComponent(item.product_name)"
-            @click="saveSearch(item.product_name)"
-            class="flex items-center gap-3 px-4 py-2 hover:bg-orange-100 text-sm text-gray-700">
-            <img :src="item.main_image" alt="" class="w-10 h-10 object-contain rounded border border-gray-300">
-            <span x-text="item.product_name"></span>
-          </a>
-        </li>
-      </template>
-    </ul>
-  </div>
-</div>
+          <!-- Search Results Dropdown -->
+          <div
+            x-show="showDropdown && results.length > 0"
+            x-cloak
+            class="absolute z-50 bg-white shadow-lg rounded mt-2 w-full max-h-80 overflow-y-auto border border-gray-200">
+            <ul>
+              <template x-for="item in results" :key="item.id">
+                <li class="border-b last:border-0">
+                  <a
+                    :href="'index-shop-page-2.php?search=' + encodeURIComponent(item.product_name)"
+                    @click="saveSearch(item.product_name)"
+                    class="flex items-center gap-3 px-4 py-2 hover:bg-orange-100 text-sm text-gray-700">
+                    <img :src="item.main_image" alt="" class="w-10 h-10 object-contain rounded border border-gray-300">
+                    <span x-text="item.product_name"></span>
+                  </a>
+                </li>
+              </template>
+            </ul>
+          </div>
+        </div>
 
-    
+
 
         <a href="../otherpage/index-inspirationpage-page-11.php"
           class="hidden xl:block text-md  hover:text-orange-500 transition duration-200 " style="font-family: 'Montserrat', sans-serif; color: #2f1200;">
@@ -694,16 +694,16 @@ $hidden_pages = ['help.php', 'about.php'];
         <!-- MORE DROPDOWN - Show on medium screens when space is tight -->
         <div x-data="{ moreOpen: false, searchModalOpen: false }" class="relative xl:hidden">
           <button @click="moreOpen = !moreOpen"
-            class="text-black hover:text-orange-500 transition font-mont text-sm flex items-center gap-1 relative">
+            class="text-black hover:text-orange-500 transition font-mont text-sm flex items-center gap-1 relative"> <svg class="w-4 h-4 transition-transform" :class="moreOpen ? 'rotate-180' : ''" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" />
+            </svg>
             More
             <?php if (count($newProducts) > 0): ?>
               <span class="absolute -top-2 -right-2 bg-red-600 text-white rounded-full px-1.5 py-0.5 text-[8px] leading-none min-w-[16px] text-center">
                 <?php echo count($newProducts); ?>
               </span>
             <?php endif; ?>
-            <svg class="w-4 h-4 transition-transform" :class="moreOpen ? 'rotate-180' : ''" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" />
-            </svg>
+
           </button>
 
           <!-- Dropdown Menu -->
@@ -1116,7 +1116,7 @@ $hidden_pages = ['help.php', 'about.php'];
             <svg class="w-4 h-4 transition-transform" :class="productsOpen ? 'rotate-180' : ''" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" />
             </svg>
-            Shop
+            Products
           </a>
 
           <!-- Overlay -->
@@ -1959,19 +1959,7 @@ $hidden_pages = ['help.php', 'about.php'];
               </ul>
             </div>
           </div>
-          <div x-data="chatNotif" x-init="init()" class="relative">
-            <a href="../otherpage/index-chat_main-page-9.php"
-              class="flex items-center gap-1 px-3 py-1.5  text-black text-sm font-semibold transition relative">
-              <i class="fas fa-envelope"></i>
-              <!-- Badge -->
-              <template x-if="unreadCount > 0">
-                <span
-                  class="absolute -top-1 -right-1 bg-red-500 text-white text-xs w-4 h-4 flex items-center justify-center rounded-full"
-                  x-text="unreadCount">
-                </span>
-              </template>
-            </a>
-          </div>
+
         </div>
 
 
@@ -1994,24 +1982,36 @@ $hidden_pages = ['help.php', 'about.php'];
 
             <div x-show="profileOpen" x-cloak @click.outside="profileOpen = false" x-transition
               class="absolute right-0 mt-2 w-44 bg-white border border-gray-200 rounded-md shadow-lg z-50">
-         <div class="py-2 px-3 text-sm text-gray-800 border-b bg-gray-50 rounded-sm">
-  <span class="block truncate font-medium">
-    <?= htmlspecialchars($_SESSION['user_name']) ?>
-  </span>
-</div>
-<a href="../otherpage/index-profilepersonal-page-7.php" 
-   class="flex items-center gap-2 w-full text-left px-4 py-2 text-sm text-black hover:bg-red-50">
-  <i class="fas fa-user text-black"></i>
-  <span>Profile</span>
-</a>
+              <div class="py-2 px-3 text-sm text-gray-800 border-b bg-gray-50 rounded-sm">
+                <span class="block truncate font-medium">
+                  <?= htmlspecialchars($_SESSION['user_name']) ?>
+                </span>
+              </div>
 
-<a href="../logout.php" 
-   class="flex items-center gap-2 w-full text-left px-4 py-2 text-sm text-black hover:bg-red-50">
-  <i class="fas fa-sign-out-alt text-black"></i>
-  <span>Logout</span>
-</a>
+              <a href="../otherpage/index-profilepersonal-page-7.php"
+                class="flex items-center gap-2 w-full text-left px-4 py-2 text-sm text-black hover:bg-red-50">
+                <i class="fas fa-user text-black"></i>
+                <span>Profile</span>
+              </a>
 
-
+              <div x-data="chatNotif" x-init="init()" class="relative">
+                <a href="../otherpage/index-chat_main-page-9.php"
+                  class="flex items-center gap-1 px-3 py-1.5  text-black text-sm transition relative">
+                  <i class="fas fa-envelope"></i>Messages
+                  <!-- Badge -->
+                  <template x-if="unreadCount > 0">
+                    <span
+                      class="absolute -top-1 -right-1 bg-red-500 text-white text-xs w-4 h-4 flex items-center justify-center rounded-full"
+                      x-text="unreadCount">
+                    </span>
+                  </template>
+                </a>
+              </div>
+              <a href="../logout.php"
+                class="flex items-center gap-2 w-full text-left px-4 py-2 text-sm text-black hover:bg-red-50">
+                <i class="fas fa-sign-out-alt text-black"></i>
+                <span>Logout</span>
+              </a>
             </div>
           </div>
         <?php else: ?>
@@ -2338,7 +2338,7 @@ $hidden_pages = ['help.php', 'about.php'];
           <a href="javascript:void(0)" onclick="navigateWithLoading('../otherpage/index-shop-page-2')"
             class="flex items-center gap-3 px-4 py-3 text-gray-700 hover:bg-orange-50 hover:text-orange-600 transition">
             <img src="../img/shopping-cart.png" alt="Shop" class="w-5 h-5 object-contain" />
-            <span class="font-medium" style="font-family: 'Montserrat', sans-serif; color: #2f1200;">Shop</span>
+            <span class="font-medium" style="font-family: 'Montserrat', sans-serif; color: #2f1200;">Products</span>
           </a>
 
           <!-- Products Accordion -->

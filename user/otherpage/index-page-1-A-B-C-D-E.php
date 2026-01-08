@@ -119,12 +119,26 @@ $material_querys = "
            FROM product_colors pc2 
            WHERE pc2.product_id = p.id
        )
-    WHERE pv.discount = 10
+    WHERE pv.discount > 0
     GROUP BY pv.id
     ORDER BY p.view_count DESC, RAND()
     LIMIT 10
 ";
 $material_results = mysqli_query($conn, $material_querys);
+
+// Get the maximum discount from the results
+$maxDiscount = 0;
+if (mysqli_num_rows($material_results) > 0) {
+    mysqli_data_seek($material_results, 0);
+    while ($row = mysqli_fetch_assoc($material_results)) {
+        $discount = (float)($row['discount'] ?? 0);
+        if ($discount > $maxDiscount) {
+            $maxDiscount = $discount;
+        }
+    }
+    // Reset pointer back to beginning for the swiper loop
+    mysqli_data_seek($material_results, 0);
+}
 
 // 4. Discount between 1-5% - WITH VIEW COUNT, RATING & SOLD COUNT
 $material_querysone = "
@@ -489,7 +503,6 @@ while ($row = $banners_result->fetch_assoc()) {
         }
     </script>
     <style>
-
         .swiper-slide,
         .swiper-slide-active {
             opacity: 1 !important
@@ -654,80 +667,81 @@ while ($row = $banners_result->fetch_assoc()) {
         }
 
 
-    @keyframes shimmer {
-        0% {
-            background-position: -200% 0;
+        @keyframes shimmer {
+            0% {
+                background-position: -200% 0;
+            }
+
+            100% {
+                background-position: 200% 0;
+            }
         }
-        100% {
-            background-position: 200% 0;
+
+        .animate-shimmer {
+            animation: shimmer 1.5s ease-in-out infinite;
         }
-    }
 
-    .animate-shimmer {
-        animation: shimmer 1.5s ease-in-out infinite;
-    }
-
-    .mySwiper {
-        position: relative;
-        width: 100%;
-    }
-
-    .swiper-wrapper {
-        display: flex;
-    }
-
-    .swiper-slide {
-        width: 100%;
-        display: flex;
-        flex-shrink: 0;
-    }
-
-    .swiper-pagination {
-        position: absolute !important;
-        bottom: 10px !important;
-        left: 0 !important;
-        right: 0 !important;
-        z-index: 10;
-        display: flex;
-        justify-content: center;
-        gap: 8px;
-        padding: 0 !important;
-    }
-
-    .swiper-pagination-bullet {
-        background: rgba(20, 16, 16, 0.6) !important;
-        opacity: 1 !important;
-        width: 8px !important;
-        height: 8px !important;
-        margin: 0 !important;
-        cursor: pointer;
-    }
-    .swiper-pagination-bullet-active {
-        background: #000000ff !important;
-        opacity: 1 !important;
-    }
-
-    .banner-image {
-        transition: opacity 0.3s ease-in-out;
-    }
-
-    /* Main slider responsive sizing */
-    .mySwiper {
-        min-height: 150px;
-    }
-
-    @media (min-width: 640px) {
         .mySwiper {
-            min-height: 250px;
+            position: relative;
+            width: 100%;
         }
-    }
 
-    @media (min-width: 1024px) {
+        .swiper-wrapper {
+            display: flex;
+        }
+
+        .swiper-slide {
+            width: 100%;
+            display: flex;
+            flex-shrink: 0;
+        }
+
+        .swiper-pagination {
+            position: absolute !important;
+            bottom: 10px !important;
+            left: 0 !important;
+            right: 0 !important;
+            z-index: 10;
+            display: flex;
+            justify-content: center;
+            gap: 8px;
+            padding: 0 !important;
+        }
+
+        .swiper-pagination-bullet {
+            background: rgba(20, 16, 16, 0.6) !important;
+            opacity: 1 !important;
+            width: 8px !important;
+            height: 8px !important;
+            margin: 0 !important;
+            cursor: pointer;
+        }
+
+        .swiper-pagination-bullet-active {
+            background: #000000ff !important;
+            opacity: 1 !important;
+        }
+
+        .banner-image {
+            transition: opacity 0.3s ease-in-out;
+        }
+
+        /* Main slider responsive sizing */
         .mySwiper {
-            min-height: 350px;
+            min-height: 150px;
         }
-    }
 
+        @media (min-width: 640px) {
+            .mySwiper {
+                min-height: 250px;
+            }
+        }
+
+        @media (min-width: 1024px) {
+            .mySwiper {
+                min-height: 350px;
+            }
+        }
     </style>
 </head>
 
@@ -792,73 +806,120 @@ while ($row = $banners_result->fetch_assoc()) {
         <?php unset($_SESSION['login_error']); ?>
     <?php endif; ?>
 
-<!-- DYNAMIC BANNER SLIDER WITH CATEGORY LINKS -->
-<div class="w-full">
-    <!-- Mobile: Full width slider, Desktop: 8 cols + 4 cols grid -->
-    <div class="grid grid-cols-1 lg:grid-cols-12 gap-1">
+    <!-- DYNAMIC BANNER SLIDER WITH CATEGORY LINKS -->
+    <div class="w-full">
+        <!-- Mobile: Full width slider, Tablet: 7 cols + 5 cols grid, Desktop: 8 cols + 4 cols grid -->
+        <div class="grid grid-cols-1 md:grid-cols-12 lg:grid-cols-12 gap-1">
 
-        <!-- Main Slider -->
-        <div class="lg:col-span-8 w-full">
-            <div class="relative overflow-hidden">
-                <div class="mySwiper">
-                    <div class="swiper-wrapper">
-                        <?php if (!empty($banners)): ?>
-                            <?php foreach ($banners as $idx => $banner): ?>
-                                <a href="../otherpage/index-subcategory_grid_page-14.php?category_name=<?= urlencode(strtolower($banner['category_name'])) ?>"
-                                    class="swiper-slide block cursor-pointer hover:opacity-90 transition-opacity group">
-                                    <div class="relative w-full h-full overflow-hidden flex items-center justify-center bg-gray-100 ">
-                                        <!-- Skeleton Loading -->
-                                        <div class="skeleton-loader absolute inset-0 bg-gradient-to-r from-neutral-200 via-neutral-300 to-neutral-200 bg-[length:200%_100%] animate-shimmer"></div>
-                                        
-                                        <img src="../../uploads/<?= basename($banner['filename']) ?>"
-                                            alt="<?= htmlspecialchars($banner['category_name'] ?? 'Banner') ?>"
-                                            class="banner-image w-auto h-auto object-contain max-w-full max-h-full opacity-0 z-10"
-                                            onerror="this.src='../../uploads/placeholder.jpg'; this.style.opacity='1'; this.previousElementSibling.style.display='none';"
-                                            onload="this.style.opacity='1'; this.previousElementSibling.style.display='none';" />
-                                    </div>
-                                </a>
-                            <?php endforeach; ?>
-                        <?php else: ?>
-                            <div class="swiper-slide bg-gray-800 flex items-center justify-center rounded-lg">
-                                <p class="text-gray-400">No banners available</p>
-                            </div>
-                        <?php endif; ?>
+            <!-- Main Slider -->
+            <div class="md:col-span-12 lg:col-span-12 xl:col-span-8 w-full h-full">
+                <div class="relative overflow-hidden h-full">
+                    <div class="mySwiper h-full">
+                        <div class="swiper-wrapper">
+                            <?php if (!empty($banners)): ?>
+                                <?php foreach ($banners as $idx => $banner): ?>
+                                    <a href="../otherpage/index-subcategory_grid_page-14.php?category_name=<?= urlencode(strtolower($banner['category_name'])) ?>"
+                                        class="swiper-slide block cursor-pointer hover:opacity-90 transition-opacity group">
+                                        <div class="relative w-full h-full overflow-hidden flex items-center justify-center bg-gray-100 ">
+                                            <!-- Skeleton Loading -->
+                                            <div class="skeleton-loader absolute inset-0 bg-gradient-to-r from-neutral-200 via-neutral-300 to-neutral-200 bg-[length:200%_100%] animate-shimmer"></div>
+
+                                            <img src="../../uploads/<?= basename($banner['filename']) ?>"
+                                                alt="<?= htmlspecialchars($banner['category_name'] ?? 'Banner') ?>"
+                                                class="banner-image w-auto h-auto object-contain max-w-full max-h-full opacity-0 z-10"
+                                                onerror="this.src='../../uploads/placeholder.jpg'; this.style.opacity='1'; this.previousElementSibling.style.display='none';"
+                                                onload="this.style.opacity='1'; this.previousElementSibling.style.display='none';" />
+                                        </div>
+                                    </a>
+                                <?php endforeach; ?>
+                            <?php else: ?>
+                                <div class="swiper-slide bg-gray-800 flex items-center justify-center rounded-lg">
+                                    <p class="text-gray-400">No banners available</p>
+                                </div>
+                            <?php endif; ?>
+                        </div>
+                        <div class="swiper-pagination"></div>
                     </div>
-                    <div class="swiper-pagination"></div>
                 </div>
+            </div>
+
+            <!-- Right Side Cards - Hidden on mobile, tablet, and smaller desktop - visible on large desktop only -->
+            <div class="hidden xl:grid xl:col-span-4 gap-1 auto-rows-fr">
+
+                <!-- Card 1: Flash Discount -->
+                <a href="index-countdowntimer-page-17.php" class="relative overflow-hidden group transition-all h-full">
+                    <div class="relative bg-gray-100 flex items-center justify-center h-full">
+                        <!-- Skeleton Loading -->
+                        <div class="skeleton-loader absolute inset-0 bg-gradient-to-r from-neutral-200 via-neutral-300 to-neutral-200 bg-[length:200%_100%] animate-shimmer"></div>
+
+                        <img src="../img/display1.webp"
+                            alt="Flash Discount"
+                            class="banner-image w-auto h-auto object-contain max-w-full max-h-full group-hover:scale-105 transition-transform duration-300 opacity-0 z-10"
+                            onload="this.style.opacity='1'; this.previousElementSibling.style.display='none';" />
+                        <div class="absolute inset-0 flex flex-col justify-end p-4 bg-gradient-to-t from-black/70 via-black/30 to-transparent pointer-events-none z-20">
+                            <div class="text-white text-sm group-hover:text-orange-400 transition-colors" style="font-family: 'Montserrat', sans-serif;">
+                                Flash Discount ➜
+                            </div>
+                        </div>
+                    </div>
+                </a>
+
+                <!-- Card 2: Category/Deals - Links to first banner category -->
+                <a href="<?= !empty($banners) ? '../otherpage/index-subcategory_grid_page-14.php?category_name=' . urlencode(strtolower($banners[0]['category_name'])) : '#' ?>"
+                    class="relative overflow-hidden group transition-all h-full">
+                    <div class="relative bg-gray-100 flex items-center justify-center h-full">
+                        <!-- Skeleton Loading -->
+                        <div class="skeleton-loader absolute inset-0 bg-gradient-to-r from-neutral-200 via-neutral-300 to-neutral-200 bg-[length:200%_100%] animate-shimmer"></div>
+
+                        <?php if (!empty($banners)): ?>
+                            <img src="../../uploads/<?= basename($banners[0]['filename']) ?>"
+                                alt="<?= htmlspecialchars($banners[0]['category_name']) ?>"
+                                class="banner-image w-auto h-auto object-contain max-w-full max-h-full group-hover:scale-105 transition-transform duration-300 opacity-0 z-10"
+                                onerror="this.src='../../uploads/placeholder.jpg'; this.style.opacity='1'; this.previousElementSibling.style.display='none';"
+                                onload="this.style.opacity='1'; this.previousElementSibling.style.display='none';" />
+                        <?php else: ?>
+                            <img src="../img/gif1.gif" alt="Deals" class="banner-image w-auto h-auto object-contain max-w-full max-h-full opacity-0 z-10" onload="this.style.opacity='1'; this.previousElementSibling.style.display='none';" />
+                        <?php endif; ?>
+
+                        <div class="absolute inset-0 flex flex-col justify-end p-4 bg-gradient-to-t from-black/70 via-black/30 to-transparent pointer-events-none z-20">
+                            <div class="text-white text-sm group-hover:text-orange-400 transition-colors" style="font-family: 'Montserrat', sans-serif;">
+                                <?php
+                                $label = !empty($banners) ? $banners[0]['category_name'] : 'Holiday Deals';
+                                echo ucfirst(htmlspecialchars($label));
+                                ?>➜
+                            </div>
+                        </div>
+                    </div>
+                </a>
             </div>
         </div>
 
-
-<!-- Right Side Cards - Hidden on mobile, visible on desktop -->
-        <div class="hidden lg:grid lg:col-span-4 gap-1">
-
-            <!-- Card 1: Flash Discount -->
-            <a href="index-countdowntimer-page-17.php" class="relative overflow-hidden group transition-all">
-                <div class="relative bg-gray-100 flex items-center justify-center" style="min-height: 175px;">
+        <!-- Mobile-only category cards (visible on small screens) -->
+        <div class="md:hidden grid grid-cols-2 gap-1 mt-1">
+            <a href="index-countdowntimer-page-17.php" class="relative overflow-hidden group transition-all ">
+                <div class="relative bg-gray-100 flex items-center justify-center" style="min-height: 120px;">
                     <!-- Skeleton Loading -->
                     <div class="skeleton-loader absolute inset-0 bg-gradient-to-r from-neutral-200 via-neutral-300 to-neutral-200 bg-[length:200%_100%] animate-shimmer"></div>
-                    
-                    <img src="../img/display1.webp"
+
+                    <img src="../img/gif1.gif"
                         alt="Flash Discount"
                         class="banner-image w-auto h-auto object-contain max-w-full max-h-full group-hover:scale-105 transition-transform duration-300 opacity-0 z-10"
                         onload="this.style.opacity='1'; this.previousElementSibling.style.display='none';" />
-                    
-                    <div class="absolute inset-0 flex flex-col justify-end p-4 bg-gradient-to-t from-black/70 via-black/30 to-transparent pointer-events-none z-20">
-                        <div class="text-white text-sm group-hover:text-orange-400 transition-colors" style="font-family: 'Montserrat', sans-serif;">
+
+                    <div class="absolute inset-0 flex flex-col justify-end p-3 bg-gradient-to-t from-black/30 to-transparent  pointer-events-none z-20">
+                        <div class="text-white text-xs group-hover:text-orange-400 transition-colors" style="font-family: 'Montserrat', sans-serif;">
                             Flash Discount ➜
                         </div>
                     </div>
                 </div>
             </a>
 
-            <!-- Card 2: Category/Deals - Links to first banner category -->
             <a href="<?= !empty($banners) ? '../otherpage/index-subcategory_grid_page-14.php?category_name=' . urlencode(strtolower($banners[0]['category_name'])) : '#' ?>"
-                class="relative overflow-hidden group transition-all ">
-                <div class="relative bg-gray-100 flex items-center justify-center" style="min-height: 175px;">
+                class="relative overflow-hidden group transition-all">
+                <div class="relative bg-gray-100 flex items-center justify-center" style="min-height: 120px;">
                     <!-- Skeleton Loading -->
                     <div class="skeleton-loader absolute inset-0 bg-gradient-to-r from-neutral-200 via-neutral-300 to-neutral-200 bg-[length:200%_100%] animate-shimmer"></div>
-                    
+
                     <?php if (!empty($banners)): ?>
                         <img src="../../uploads/<?= basename($banners[0]['filename']) ?>"
                             alt="<?= htmlspecialchars($banners[0]['category_name']) ?>"
@@ -868,11 +929,11 @@ while ($row = $banners_result->fetch_assoc()) {
                     <?php else: ?>
                         <img src="../img/gif1.gif" alt="Deals" class="banner-image w-auto h-auto object-contain max-w-full max-h-full opacity-0 z-10" onload="this.style.opacity='1'; this.previousElementSibling.style.display='none';" />
                     <?php endif; ?>
-                    
-                    <div class="absolute inset-0 flex flex-col justify-end p-4 bg-gradient-to-t from-black/70 via-black/30 to-transparent pointer-events-none z-20">
-                        <div class="text-white text-sm group-hover:text-orange-400 transition-colors" style="font-family: 'Montserrat', sans-serif;">
+
+                    <div class="absolute inset-0 flex flex-col justify-end p-3 bg-gradient-to-t from-black/30 to-transparent  pointer-events-none z-20">
+                        <div class="text-white text-xs group-hover:text-orange-400 transition-colors" style="font-family: 'Montserrat', sans-serif;">
                             <?php
-                            $label = !empty($banners) ? $banners[0]['category_name'] : 'Holiday Deals';
+                            $label = !empty($banners) ? $banners[0]['category_name'] : 'Deals';
                             echo ucfirst(htmlspecialchars($label));
                             ?>➜
                         </div>
@@ -882,112 +943,63 @@ while ($row = $banners_result->fetch_assoc()) {
         </div>
     </div>
 
-    <!-- Mobile-only category cards (visible on small screens) -->
-    <div class="lg:hidden grid grid-cols-2 gap-1 mt-1">
-        <a href="index-countdowntimer-page-17.php" class="relative overflow-hidden group transition-all ">
-            <div class="relative bg-gray-100 flex items-center justify-center" style="min-height: 120px;">
-                <!-- Skeleton Loading -->
-                <div class="skeleton-loader absolute inset-0 bg-gradient-to-r from-neutral-200 via-neutral-300 to-neutral-200 bg-[length:200%_100%] animate-shimmer"></div>
-                
-                <img src="../img/gif1.gif"
-                    alt="Flash Discount"
-                    class="banner-image w-auto h-auto object-contain max-w-full max-h-full group-hover:scale-105 transition-transform duration-300 opacity-0 z-10"
-                    onload="this.style.opacity='1'; this.previousElementSibling.style.display='none';" />
-                
-                <div class="absolute inset-0 flex flex-col justify-end p-3 bg-gradient-to-t from-black/30 to-transparent  pointer-events-none z-20">
-                    <div class="text-white text-xs group-hover:text-orange-400 transition-colors" style="font-family: 'Montserrat', sans-serif;">
-                        Flash Discount ➜
-                    </div>
-                </div>
-            </div>
-        </a>
-
-        <a href="<?= !empty($banners) ? '../otherpage/index-subcategory_grid_page-14.php?category_name=' . urlencode(strtolower($banners[0]['category_name'])) : '#' ?>"
-            class="relative overflow-hidden group transition-all">
-            <div class="relative bg-gray-100 flex items-center justify-center" style="min-height: 120px;">
-                <!-- Skeleton Loading -->
-                <div class="skeleton-loader absolute inset-0 bg-gradient-to-r from-neutral-200 via-neutral-300 to-neutral-200 bg-[length:200%_100%] animate-shimmer"></div>
-                
-                <?php if (!empty($banners)): ?>
-                    <img src="../../uploads/<?= basename($banners[0]['filename']) ?>"
-                        alt="<?= htmlspecialchars($banners[0]['category_name']) ?>"
-                        class="banner-image w-auto h-auto object-contain max-w-full max-h-full group-hover:scale-105 transition-transform duration-300 opacity-0 z-10"
-                        onerror="this.src='../../uploads/placeholder.jpg'; this.style.opacity='1'; this.previousElementSibling.style.display='none';"
-                        onload="this.style.opacity='1'; this.previousElementSibling.style.display='none';" />
-                <?php else: ?>
-                    <img src="../img/gif1.gif" alt="Deals" class="banner-image w-auto h-auto object-contain max-w-full max-h-full opacity-0 z-10" onload="this.style.opacity='1'; this.previousElementSibling.style.display='none';" />
-                <?php endif; ?>
-                
-                <div class="absolute inset-0 flex flex-col justify-end p-3 bg-gradient-to-t from-black/30 to-transparent  pointer-events-none z-20">
-                    <div class="text-white text-xs group-hover:text-orange-400 transition-colors" style="font-family: 'Montserrat', sans-serif;">
-                        <?php
-                        $label = !empty($banners) ? $banners[0]['category_name'] : 'Deals';
-                        echo ucfirst(htmlspecialchars($label));
-                        ?>➜
-                    </div>
-                </div>
-            </div>
-        </a>
-    </div>
-</div>
-
-
 
     <section class="bg-black hidden md:block border border-black/20">
-        <div class="px-4 sm:px-8 lg:px-9">
-            <!-- Clickable Banner Image - Left Aligned -->
+        <div class="px-4 sm:px-8 lg:px-9 py-2">
+            <!-- Clickable Banner Image - Auto Size based on actual image dimensions -->
             <a href="index-shop-page-2.php" class="block hover:opacity-90 transition-opacity duration-300 w-fit">
                 <img src="../img/exclusive1.png"
                     alt="Exclusive Discounts - Shop Now"
-                    class="h-auto object-contain max-h-[30px] sm:max-h-[40px] md:max-h-[50px] lg:max-h-[60px]">
+                    class="h-auto w-auto object-contain"
+                    loading="lazy">
             </a>
         </div>
     </section>
 
+    <section class="py-3 tracking-wide px-2 bg-gray-100 block">
+         <div class="max-w-full mx-auto grid grid-cols-2 md:grid-cols-4 justify-items-center hidden md:grid">
 
-    <section class="py-3 tracking-wide px-4 hidden md:block bg-gray-100">
-        <div class="max-w-7xl mx-auto flex justify-between items-center">
             <!-- Fast Delivery -->
-            <div class="flex items-center gap-2">
-                <svg xmlns="http://www.w3.org/2000/svg" class="w-8 h-8 text-gray-700" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.5">
+            <div class="flex flex-col md:flex-row md:items-center md:gap-3">
+                <svg xmlns="http://www.w3.org/2000/svg" class="w-6 h-6 md:w-8 md:h-8 text-gray-700 mx-auto md:mx-0 mb-2 md:mb-0 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.5">
                     <path stroke-linecap="round" stroke-linejoin="round" d="M13 10V3L4 14h7v7l9-11h-7z" />
                 </svg>
-                <div>
-                    <h3 class="text-base font-bold" style="font-family: 'Montserrat', sans-serif; color: #2f1200">Fast Delivery</h3>
-                    <p class="text-sm text-gray-500" style="font-family: 'Montserrat', sans-serif; color: #2f1200">Quick and reliable shipping</p>
+                <div class="text-center md:text-left">
+                    <h3 class="text-xs md:text-base " style="font-family: 'Montserrat', sans-serif; color: #2f1200">Fast Delivery</h3>
+                    <p class="text-xs text-gray-500 ">Quick & reliable shipping</p>
                 </div>
             </div>
 
             <!-- High Quality -->
-            <div class="flex items-center gap-2">
-                <svg xmlns="http://www.w3.org/2000/svg" class="w-8 h-8 text-gray-700" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.5">
+            <div class="flex flex-col md:flex-row md:items-center md:gap-3">
+                <svg xmlns="http://www.w3.org/2000/svg" class="w-6 h-6 md:w-8 md:h-8 text-gray-700 mx-auto md:mx-0 mb-2 md:mb-0 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.5">
                     <path stroke-linecap="round" stroke-linejoin="round" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
                 </svg>
-                <div>
-                    <h3 class="text-base font-bold" style="font-family: 'Montserrat', sans-serif; color: #2f1200">High Quality</h3>
-                    <p class="text-sm text-gray-500" style="font-family: 'Montserrat', sans-serif; color: #2f1200">Products you can trust</p>
+                <div class="text-center md:text-left">
+                    <h3 class="text-xs md:text-base " style="font-family: 'Montserrat', sans-serif; color: #2f1200">High Quality</h3>
+                    <p class="text-xs text-gray-500 ">Premium products guaranteed</p>
                 </div>
             </div>
 
             <!-- Affordable Prices -->
-            <div class="flex items-center gap-2">
-                <svg xmlns="http://www.w3.org/2000/svg" class="w-8 h-8 text-gray-700" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.5">
+            <div class="flex flex-col md:flex-row md:items-center md:gap-3">
+                <svg xmlns="http://www.w3.org/2000/svg" class="w-6 h-6 md:w-8 md:h-8 text-gray-700 mx-auto md:mx-0 mb-2 md:mb-0 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.5">
                     <path stroke-linecap="round" stroke-linejoin="round" d="M7 7h.01M7 3h5c.512 0 1.024.195 1.414.586l7 7a2 2 0 010 2.828l-7 7a2 2 0 01-2.828 0l-7-7A1.994 1.994 0 013 12V7a4 4 0 014-4z" />
                 </svg>
-                <div>
-                    <h3 class="text-base font-bold" style="font-family: 'Montserrat', sans-serif; color: #2f1200">Affordable Prices</h3>
-                    <p class="text-sm text-gray-500" style="font-family: 'Montserrat', sans-serif; color: #2f1200">Great value for your money</p>
+                <div class="text-center md:text-left">
+                    <h3 class="text-xs md:text-base " style="font-family: 'Montserrat', sans-serif; color: #2f1200">Affordable Prices</h3>
+                    <p class="text-xs text-gray-500 ">Best deals & discounts</p>
                 </div>
             </div>
 
             <!-- Secure Checkout -->
-            <div class="flex items-center gap-2">
-                <svg xmlns="http://www.w3.org/2000/svg" class="w-8 h-8 text-gray-700" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.5">
+            <div class="flex flex-col md:flex-row md:items-center md:gap-3">
+                <svg xmlns="http://www.w3.org/2000/svg" class="w-6 h-6 md:w-8 md:h-8 text-gray-700 mx-auto md:mx-0 mb-2 md:mb-0 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.5">
                     <path stroke-linecap="round" stroke-linejoin="round" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
                 </svg>
-                <div>
-                    <h3 class="text-base font-bold" style="font-family: 'Montserrat', sans-serif; color: #2f1200">Secure Checkout</h3>
-                    <p class="text-sm text-gray-500" style="font-family: 'Montserrat', sans-serif; color: #2f1200">Safe and easy payments</p>
+                <div class="text-center md:text-left">
+                    <h3 class="text-xs md:text-base " style="font-family: 'Montserrat', sans-serif; color: #2f1200">Secure Checkout</h3>
+                    <p class="text-xs text-gray-500">Safe & encrypted payments</p>
                 </div>
             </div>
         </div>
@@ -1200,50 +1212,6 @@ while ($row = $banners_result->fetch_assoc()) {
         </section>
     <?php endif; ?>
 
-<section class="px-4 sm:px-6 lg:px-8 ">
-    <div class="max-w-full mx-auto">
-        <!-- Banner -->
-        <a href="https://www.yfk20.com/login" class="group block relative overflow-hidden transition-all duration-300 pointer-events-none cursor-not-allowed" data-aos="fade-up">
-            <!-- Rectangle Container -->
-            <div class="relative bg-white overflow-hidden flex items-center justify-center inline-block">
-                <!-- Skeleton Loading -->
-                <div class="skeleton-loader absolute inset-0 bg-gradient-to-r from-neutral-200 via-neutral-300 to-neutral-200 bg-[length:200%_100%] animate-shimmer"></div>
-
-                <!-- Image -->
-                <img src="../img/sunpina.png"
-                    alt="Promotion Banner"
-                    class="banner-image w-auto h-auto object-contain opacity-0 transition-opacity duration-300 z-5"
-                    onload="this.style.opacity='1'; this.previousElementSibling.style.display='none';">
-
-                <!-- Temporary Overlay Badge -->
-                <div class="absolute inset-0 flex items-center justify-center z-10 pointer-events-none">
-                    <div class="bg-orange-500 text-white px-3 py-1 sm:px-6 sm:py-3 rounded-lg shadow-2xl transform rotate-[-5deg]">
-                        <p class="text-sm sm:text-xl md:text-xl lg:text-2xl font-bold">temporary</p>
-                    </div>
-                </div>
-            </div>
-        </a>
-    </div>
-
-    <style>
-        @keyframes shimmer {
-            0% {
-                background-position: -200% 0;
-            }
-            100% {
-                background-position: 200% 0;
-            }
-        }
-
-        .animate-shimmer {
-            animation: shimmer 1.5s ease-in-out infinite;
-        }
-
-        .banner-image {
-            transition: opacity 0.3s ease-in-out;
-        }
-    </style>
-</section>
 
     <!-- Modal for "Not Available" -->
     <div id="unavailableModal" class="hidden fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4">
@@ -1263,32 +1231,32 @@ while ($row = $banners_result->fetch_assoc()) {
         </div>
     </div>
 
-<section class="px-4 sm:px-6 lg:px-8 py-8">
-    <div class="max-w-full mx-auto">
-        <!-- 2x2 Grid Content -->
-        <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
-            <!-- Box 1 -->
-            <a href="#" onclick="showUnavailable(event)" class="group block">
-                <div class="overflow-hidden">
-                    <img src="../img/display2.webp"
-                        alt="Promo 1"
-                        class="w-full h-auto object-cover transition-transform duration-500 group-hover:scale-105">
-                </div>
-                <h3 class="text-sm sm:text-lg font-semibold mt-4" style="font-family: 'Montserrat', sans-serif; color: #2f1200">Style to Modern your house!</h3>
-            </a>
+    <section class="px-4 sm:px-6 lg:px-8 py-3">
+        <div class="max-w-full mx-auto">
+            <!-- 2x2 Grid Content -->
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
+                <!-- Box 1 -->
+                <a href="#" onclick="showUnavailable(event)" class="group block">
+                    <div class="overflow-hidden">
+                        <img src="../img/display2.webp"
+                            alt="Promo 1"
+                            class="w-full h-auto object-cover transition-transform duration-500 group-hover:scale-105">
+                    </div>
+                    <h3 class="text-sm sm:text-lg font-semibold mt-4" style="font-family: 'Montserrat', sans-serif; color: #2f1200">Style to Modern your house!</h3>
+                </a>
 
-            <!-- Box 2 -->
-            <a href="#" onclick="showUnavailable(event)" class="group block">
-                <div class="overflow-hidden ">
-                    <img src="../img/display1.webp"
-                        alt="Promo 2"
-                        class="w-full h-auto object-cover transition-transform duration-500 group-hover:scale-105">
-                </div>
-                <h3 class="text-sm sm:text-lg font-semibold mt-4" style="font-family: 'Montserrat', sans-serif; color: #2f1200">Chair furniture deals below ₱5,000</h3>
-            </a>
+                <!-- Box 2 -->
+                <a href="#" onclick="showUnavailable(event)" class="group block">
+                    <div class="overflow-hidden ">
+                        <img src="../img/display1.webp"
+                            alt="Promo 2"
+                            class="w-full h-auto object-cover transition-transform duration-500 group-hover:scale-105">
+                    </div>
+                    <h3 class="text-sm sm:text-lg font-semibold mt-4" style="font-family: 'Montserrat', sans-serif; color: #2f1200">Chair furniture deals below ₱5,000</h3>
+                </a>
+            </div>
         </div>
-    </div>
-</section>
+    </section>
 
     <script>
         function showUnavailable(event) {
@@ -1511,825 +1479,43 @@ while ($row = $banners_result->fetch_assoc()) {
         </div>
     </section>
 
-    <section class="px-2 sm:px-4 lg:px-6 py-1 sm:py-1 mt-4">
-        <!-- Main Container with Border -->
-        <div class="bg-white p-4 sm:p-6">
-            <!-- Grid Layout: Left (Furniture) and Right (Bed Furniture) -->
-            <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 lg:gap-8">
+    <section class="px-4 sm:px-6 lg:px-8 ">
+        <div class="max-w-full mx-auto">
+            <!-- Banner -->
+            <a href="https://www.yfk20.com/login" class="group block relative overflow-hidden transition-all duration-300 pointer-events-none cursor-not-allowed" data-aos="fade-up">
+                <!-- Rectangle Container -->
+                <div class="relative bg-white overflow-hidden flex items-center justify-center inline-block">
+                    <!-- Skeleton Loading -->
+                    <div class="skeleton-loader absolute inset-0 bg-gradient-to-r from-neutral-200 via-neutral-300 to-neutral-200 bg-[length:200%_100%] animate-shimmer"></div>
 
-                <!-- LEFT SIDE: FURNITURE -->
-                <div class="space-y-4">
-                    <!-- Header with Better Design -->
-                    <div class="mb-6">
-                        <!-- Centered Title with Black Divider -->
-                        <div class="flex justify-center items-center gap-3">
-                            <div class="w-12 h-px bg-black"></div>
-
-                            <div class="text-center">
-                                <h2 class="text-xl sm:text-2xl lg:text-3xl tracking-tight font-semibold" style="font-family: 'Montserrat', sans-serif; color: #2f1200">
-                                    Furniture
-                                </h2>
-                            </div>
-
-                            <div class="w-12 h-px bg-black"></div>
-                        </div>
-                    </div>
-
-                    <?php
-                    // Assuming $conn is your database connection
-                    $furniture_cat_id = 1;
-
-                    // Get category name
-                    $cat_name_query = $conn->prepare("SELECT name FROM categories WHERE id = ?");
-                    $cat_name_query->bind_param("i", $furniture_cat_id);
-                    $cat_name_query->execute();
-                    $cat_name_result = $cat_name_query->get_result();
-                    $furniture_cat_name = $cat_name_result->fetch_assoc()['name'] ?? 'furniture';
-                    $cat_name_query->close();
-
-                    // Get 4 RANDOM subcategories for the modal
-                    $all_sub_query = $conn->prepare("
-    SELECT DISTINCT id, subcategory_name 
-    FROM product_subcategories 
-    WHERE category_id = ? 
-    ORDER BY RAND()
-    LIMIT 4
-");
-                    $all_sub_query->bind_param("i", $furniture_cat_id);
-                    $all_sub_query->execute();
-                    $all_sub_result = $all_sub_query->get_result();
-                    $all_subcats = [];
-                    while ($sub_row = $all_sub_result->fetch_assoc()) {
-                        $all_subcats[] = $sub_row;
-                    }
-                    $all_sub_query->close();
-                    ?>
-                    <!-- Hamburger Menu Button -->
-                    <div class="mb-3">
-                        <button
-                            type="button"
-                            id="filterMenuBtn"
-                            onclick="toggleFilterMenu()"
-                            class="inline-flex items-center gap-2 px-2 py-2.5 text-sm bg-white hover:bg-gray-50 transition-all duration-300 hover:shadow-md uppercase" style="font-family: 'Montserrat', sans-serif; color: #2f1200">
-
-                            <span>Suggestions for you ➜</span>
-                        </button>
-                    </div>
-
-
-                    <!-- Dropdown Menu (Hidden by default) -->
-                    <div id="filterMenu" class="hidden bg-white  shadow-lg mb-4 overflow-hidden">
-                        <div class="p-3">
-                            <h3 class="text-sm font-bold text-gray-700 px-2 py-2"><?= ucfirst($furniture_cat_name) ?> Categories</h3>
-                            <ul class="space-y-1">
-                                <?php foreach ($all_subcats as $subcat): ?>
-                                    <li>
-                                        <a
-                                            href="../otherpage/index-subcategory-recommendations-page-15.php?subcategory_id=<?= $subcat['id'] ?>&from=home"
-                                            onclick="toggleFilterMenu()"
-                                            class="block w-full text-left px-4 py-3 rounded-lg text-gray-700 hover:bg-blue-100 hover:text-blue-600 transition-colors font-medium">
-                                            <?= ucfirst(htmlspecialchars($subcat['subcategory_name'])) ?>
-                                        </a>
-                                    </li>
-                                <?php endforeach; ?>
-                            </ul>
-                        </div>
-                    </div>
-
-                    <script>
-                        function toggleFilterMenu() {
-                            const menu = document.getElementById('filterMenu');
-                            menu.classList.toggle('hidden');
-                        }
-
-                        // Close menu when clicking outside
-                        document.addEventListener('click', function(e) {
-                            const menu = document.getElementById('filterMenu');
-                            const btn = document.getElementById('filterMenuBtn');
-
-                            if (!menu.contains(e.target) && !btn.contains(e.target)) {
-                                menu.classList.add('hidden');
-                            }
-                        });
-                    </script>
-
-                    <!-- Product Swiper -->
-                    <div class="swiper mySwiper-furniture w-full">
-                        <div class="swiper-wrapper">
-                            <?php
-                            // FURNITURE SECTION - Replace the price calculation part
-                            mysqli_data_seek($result, 0);
-                            while ($row = mysqli_fetch_assoc($result)) :
-                                // ✅ DIRECT CALCULATION - NO calculateSmartPriceDisplay()
-                                $minSizePrice = (float)($row['min_size_price'] ?? 0);
-                                $maxSizePrice = (float)($row['max_size_price'] ?? 0);
-                                $minColorPrice = (float)($row['min_color_price'] ?? 0);
-                                $maxColorPrice = (float)($row['max_color_price'] ?? 0);
-                                $discount = (float)($row['discount'] ?? 0);
-
-                                // 🔥 SIMPLE FORMULA: size_price + color_price
-                                $minFinalPrice = $minSizePrice + $minColorPrice;
-                                $maxFinalPrice = $maxSizePrice + $maxColorPrice;
-
-                                // Format display price
-                                if ($minFinalPrice != $maxFinalPrice) {
-                                    $priceDisplay = '₱' . number_format($minFinalPrice, 2) . ' - ₱' . number_format($maxFinalPrice, 2);
-                                } else {
-                                    $priceDisplay = '₱' . number_format($minFinalPrice, 2);
-                                }
-
-                                $product_id = (int)$row['id'];
-                                $subcategory_name = $row['subcategory_name'] ?? 'uncategorized';
-                                $sub_slug = strtolower(str_replace(' ', '-', $subcategory_name));
-
-                                $rating_q = $conn->prepare("SELECT ROUND(AVG(rating), 1) AS avg_rating, COUNT(*) AS total_raters FROM product_ratings WHERE product_id = ?");
-                                $rating_q->bind_param("i", $product_id);
-                                $rating_q->execute();
-                                $rating_result = $rating_q->get_result()->fetch_assoc();
-                                $avg_rating = $rating_result['avg_rating'] ?? 0;
-                                $total_raters = $rating_result['total_raters'] ?? 0;
-                                $rating_q->close();
-
-                                $sold_q = $conn->prepare("SELECT SUM(quantity) as total_sold FROM sold_items WHERE product_id = ?");
-                                $sold_q->bind_param("i", $product_id);
-                                $sold_q->execute();
-                                $sold_result = $sold_q->get_result()->fetch_assoc();
-                                $total_sold = (int)($sold_result['total_sold'] ?? 0);
-                                $sold_q->close();
-
-                                $full = floor($avg_rating);
-                                $half = ($avg_rating - $full >= 0.5) ? 1 : 0;
-                                $empty = 5 - $full - $half;
-                                $view_count = (int)($row['view_count'] ?? 0);
-                            ?>
-                                <div class="swiper-slide p-1 furniture-item" data-subcategory="<?= $sub_slug ?>">
-                                    <div class="relative rounded overflow-hidden group hover:shadow-2xl transition-all duration-500 ease-out h-[240px] sm:h-[280px] lg:h-[340px] bg-white">
-                                        <div class="absolute top-2 right-2 z-20">
-                                            <label class="flex items-center justify-center w-7 h-7 bg-white hover:bg-gray-100 rounded cursor-pointer transition-all duration-300 hover:scale-110 shadow">
-                                                <input type="checkbox" class="compare-checkbox hidden" data-product-id="<?= $product_id ?>" onchange="toggleCompare(this, <?= $product_id ?>)">
-                                                <i class="fas fa-plus text-black text-xs compare-icon"></i>
-                                                <i class="fas fa-check text-black text-xs compare-icon-checked hidden"></i>
-                                            </label>
-                                        </div>
-
-
-                                        <a href="index-product_view-page-4-AA?id=<?= $product_id ?>" class="block h-full">
-                                            <div class="relative h-[110px] sm:h-[130px] lg:h-[180px] overflow-hidden">
-                                                <div class="absolute inset-0 bg-gradient-to-t from-black/20 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300 z-10"></div>
-                                                <?php if (!empty($row['main_image'])): ?>
-                                                    <img src="../../<?= $row['main_image'] ?>" loading="lazy" alt="<?= htmlspecialchars($row['product_name']) ?>" class="w-full h-full object-cover sm:object-contain transition-all duration-700 group-hover:brightness-105" />
-                                                <?php else: ?>
-                                                    <div class="w-full h-full flex items-center justify-center bg-gray-200 text-gray-400">
-                                                        <svg class="w-8 h-8 sm:w-10 sm:h-10" fill="currentColor" viewBox="0 0 20 20">
-                                                            <path fill-rule="evenodd" d="M4 3a2 2 0 00-2 2v10a2 2 0 002 2h12a2 2 0 002-2V5a2 2 0 00-2-2H4zm12 12H4l4-8 3 6 2-4 3 6z" clip-rule="evenodd" />
-                                                        </svg>
-                                                    </div>
-                                                <?php endif; ?>
-                                            </div>
-
-                                            <div class="p-1.5 sm:p-2 lg:p-2.5 flex flex-col justify-between h-[130px] sm:h-[150px] lg:h-[160px]">
-                                                <div class="space-y-0.5 sm:space-y-1">
-                                                    <div class="relative w-full max-w-xs">
-                                                        <h3 class="text-[13px] sm:text-[13px] line-clamp-1 font-semibold leading-tight group-hover:text-orange-600 transition-colors duration-300 line-clamp-2 sm:truncate pr-4" style="font-family: 'Montserrat', sans-serif; color: #2f1200">
-                                                            <?= htmlspecialchars($row['product_name']) ?>
-                                                        </h3>
-                                                        <div class="hidden sm:block absolute top-0 right-0 h-full w-4 bg-gradient-to-l from-white to-transparent"></div>
-                                                    </div>
-
-                                                    <div class="flex items-center justify-between">
-                                                        <?php if ($total_raters > 0): ?>
-                                                            <div class="flex items-center space-x-0.5">
-                                                                <div class="flex text-yellow-400 text-[8px] sm:text-[9px]">
-                                                                    <?php
-                                                                    for ($i = 0; $i < $full; $i++) echo '<i class="fas fa-star"></i>';
-                                                                    if ($half) echo '<i class="fas fa-star-half-alt"></i>';
-                                                                    for ($i = 0; $i < $empty; $i++) echo '<i class="far fa-star text-gray-300"></i>';
-                                                                    ?>
-                                                                </div>
-                                                                <span class="text-[8px] sm:text-[9px] text-gray-500 font-medium"><?= $avg_rating ?></span>
-                                                            </div>
-                                                            <span class="text-[8px] sm:text-[9px] text-gray-400">(<?= $total_raters ?>)</span>
-                                                        <?php else: ?>
-                                                            <div class="flex items-center space-x-0.5">
-                                                                <div class="flex text-gray-300 text-[8px] sm:text-[9px]">
-                                                                    <?php for ($i = 0; $i < 5; $i++) echo '<i class="far fa-star"></i>'; ?>
-                                                                </div>
-                                                                <span class="text-[8px] sm:text-[9px] text-gray-400">No rating</span>
-                                                            </div>
-                                                        <?php endif; ?>
-                                                    </div>
-
-                                                    <?php if (!empty($row['description'])): ?>
-                                                        <p class="text-[13px] sm:text-[13px] leading-relaxed line-clamp-1 sm:line-clamp-2" style="font-family: 'Montserrat', sans-serif; color: #2f1200">
-                                                            <?= htmlspecialchars($row['description']) ?>
-                                                        </p>
-                                                    <?php else: ?>
-                                                        <p class="text-[8px] sm:text-[9px] text-gray-400 italic">No description</p>
-                                                    <?php endif; ?>
-
-                                                    <div class="flex items-baseline gap-1 flex-wrap">
-                                                        <!-- AFTER (use this) -->
-                                                        <?php if ($discount > 0): ?>
-                                                            <p class="text-[11px] font-semibold " style="font-family: 'Montserrat', sans-serif; color: #2f1200"><?= $priceDisplay ?></p>
-                                                            <span class="text-[8px] font-semibold text-red-600 bg-red-50 px-1 py-0.5 rounded">-<?= number_format($discount, 0) ?>%</span>
-                                                        <?php else: ?>
-                                                            <p class="text-[11px] font-semibold " style="font-family: 'Montserrat', sans-serif; color: #2f1200"><?= $priceDisplay ?></p>
-                                                        <?php endif; ?>
-                                                    </div>
-                                                </div>
-
-                                                <div class="mt-2 flex items-center justify-between gap-2 border-t border-gray-100 pt-2">
-                                                    <form action="index-product_view-page-4-AA" method="GET" class="pointer-events-auto hidden sm:block" onclick="event.stopPropagation()">
-                                                        <input type="hidden" name="id" value="<?= $product_id ?>">
-                                                        <button type="submit" class="flex items-center gap-1 text-black hover:text-orange-500 transition font-medium text-[11px] px-2 py-1 border border-gray-300 rounded hover:border-orange-500">
-                                                            <i class="fa-solid fa-bag-shopping text-[11px]"></i>
-                                                            <span>View</span>
-                                                        </button>
-                                                    </form>
-
-                                                    <div class="flex items-center gap-2 text-[9px] text-gray-500">
-                                                        <?php if ($view_count > 0): ?>
-                                                            <div class="flex items-center gap-1 px-2 py-1 rounded" style="font-family: 'Montserrat', sans-serif; color: #2f1200">
-                                                                viewing
-                                                                <span class="font-medium"><?= formatViewCount($view_count) ?></span>
-                                                            </div>
-                                                        <?php endif; ?>
-
-                                                        <?php if ($total_sold > 0): ?>
-                                                            <div class="flex items-center gap-1 bg-green-50 px-2 py-1 rounded" style="font-family: 'Montserrat', sans-serif; color: #2f1200">
-                                                                Sold
-                                                                <span class="font-medium"><?= number_format($total_sold) ?></span>
-                                                            </div>
-                                                        <?php endif; ?>
-                                                    </div>
-                                                </div>
-                                            </div>
-                                        </a>
-                                    </div>
-                                </div>
-                            <?php endwhile; ?>
-                        </div>
-                    </div>
+                    <!-- Image -->
+                    <img src="../img/kd.png"
+                        alt="Promotion Banner"
+                        class="banner-image w-full h-auto object-contain opacity-0 transition-opacity duration-300 z-5"
+                        onload="this.style.opacity='1'; this.previousElementSibling.style.display='none';">
                 </div>
-
-                <!-- RIGHT SIDE: BED FURNITURE -->
-                <div class="space-y-4">
-
-                    <!-- Header with Better Design -->
-                    <div class="mb-6">
-                        <!-- Centered Title with Black Divider -->
-                        <div class="flex justify-center items-center gap-3">
-                            <div class="w-12 h-px bg-black"></div>
-
-                            <div class="text-center">
-                                <h2 class="text-xl sm:text-2xl lg:text-3xl font-semibold tracking-tight" style="font-family: 'Montserrat', sans-serif; color: #2f1200">
-                                    Tiles
-                                </h2>
-                            </div>
-
-                            <div class="w-12 h-px bg-black"></div>
-                        </div>
-                    </div>
-                    <?php
-                    // Get subcategories for Tiles/Aircon from actual product variants
-                    $tiles_cat_query = $conn->prepare("SELECT id, name FROM categories WHERE name LIKE '%aircon%' OR name LIKE '%tiles%' LIMIT 1");
-                    $tiles_cat_query->execute();
-                    $tiles_cat_result = $tiles_cat_query->get_result();
-
-                    $category_name = 'Categories';
-                    $all_tiles_subcats = [];
-
-                    if ($tiles_cat_row = $tiles_cat_result->fetch_assoc()) {
-                        $tiles_cat_id = $tiles_cat_row['id'];
-                        $category_name = $tiles_cat_row['name'];
-                        $tiles_cat_query->close();
-
-                        // Get 4 RANDOM subcategories for the menu
-                        $all_tiles_sub_query = $conn->prepare("
-        SELECT DISTINCT ps.id, ps.subcategory_name
-        FROM product_subcategories ps
-        WHERE ps.category_id = ?
-        ORDER BY RAND()
-        LIMIT 4
-    ");
-                        $all_tiles_sub_query->bind_param("i", $tiles_cat_id);
-                        $all_tiles_sub_query->execute();
-                        $all_tiles_sub_result = $all_tiles_sub_query->get_result();
-
-                        while ($row = $all_tiles_sub_result->fetch_assoc()) {
-                            $all_tiles_subcats[] = $row;
-                        }
-                        $all_tiles_sub_query->close();
-                    } else {
-                        $tiles_cat_query->close();
-                    }
-                    ?>
-
-                    <!-- Hamburger Menu Button -->
-                    <div class="mb-3">
-                        <button
-                            type="button"
-                            id="tilesFilterMenuBtn"
-                            onclick="toggleTilesFilterMenu()"
-                            class="inline-flex items-center gap-2 px-2 py-2.5 text-sm bg-white hover:bg-gray-50 transition-all duration-300 hover:shadow-md uppercase" style="font-family: 'Montserrat', sans-serif; color: #2f1200">
-
-                            <span>Suggestions for you ➜</span>
-                        </button>
-                    </div>
-
-                    <!-- Dropdown Menu (Hidden by default) -->
-                    <div id="tilesFilterMenu" class="hidden bg-white border-2 border-gray-300 rounded-lg shadow-lg mb-4 overflow-hidden">
-                        <div class="p-4">
-                            <h3 class="text-sm font-bold text-gray-700 px-2 py-2 mb-2">All <?= ucfirst($category_name) ?></h3>
-                            <div class="flex flex-col gap-2">
-                                <?php foreach ($all_tiles_subcats as $subcat): ?>
-                                    <a
-                                        href="../otherpage/index-subcategory-recommendations-page-15.php?subcategory_id=<?= $subcat['id'] ?>&from=home"
-                                        onclick="toggleTilesFilterMenu()"
-                                        class="bed-filter-btn px-6 py-3 text-sm font-semibold rounded-lg border-2 border-gray-300 text-gray-600 transition-all duration-300 hover:shadow-md hover:border-blue-400 hover:bg-blue-50 hover:text-blue-600 text-center">
-                                        <?= ucfirst(htmlspecialchars($subcat['subcategory_name'])) ?>
-                                    </a>
-                                <?php endforeach; ?>
-                            </div>
-                        </div>
-                    </div>
-
-                    <script>
-                        function toggleTilesFilterMenu() {
-                            const menu = document.getElementById('tilesFilterMenu');
-                            menu.classList.toggle('hidden');
-                        }
-
-                        // Close menu when clicking outside
-                        document.addEventListener('click', function(e) {
-                            const menu = document.getElementById('tilesFilterMenu');
-                            const btn = document.getElementById('tilesFilterMenuBtn');
-
-                            if (!menu.contains(e.target) && !btn.contains(e.target)) {
-                                menu.classList.add('hidden');
-                            }
-                        });
-                    </script>
-
-                    <!-- Product Swiper -->
-                    <div class="swiper mySwiper-bedfurniture w-full">
-                        <div class="swiper-wrapper">
-                            <?php
-                            if (isset($resultss) && $resultss) {
-                                mysqli_data_seek($resultss, 0);
-                                while ($row = mysqli_fetch_assoc($resultss)) :
-                                    // ✅ DIRECT CALCULATION - NO calculateSmartPriceDisplay()
-                                    $minSizePrice = (float)($row['min_size_price'] ?? 0);
-                                    $maxSizePrice = (float)($row['max_size_price'] ?? 0);
-                                    $minColorPrice = (float)($row['min_color_price'] ?? 0);
-                                    $maxColorPrice = (float)($row['max_color_price'] ?? 0);
-                                    $discount = (float)($row['discount'] ?? 0);
-
-                                    // 🔥 SIMPLE FORMULA: size_price + color_price
-                                    $minFinalPrice = $minSizePrice + $minColorPrice;
-                                    $maxFinalPrice = $maxSizePrice + $maxColorPrice;
-
-                                    // Format display price
-                                    if ($minFinalPrice != $maxFinalPrice) {
-                                        $priceDisplay = '₱' . number_format($minFinalPrice, 2) . ' - ₱' . number_format($maxFinalPrice, 2);
-                                    } else {
-                                        $priceDisplay = '₱' . number_format($minFinalPrice, 2);
-                                    }
-
-                                    $product_id = (int)$row['id'];
-
-                                    $subcategory_name = $row['subcategory_name'] ?? 'uncategorized';
-                                    $sub_slug = strtolower(str_replace(' ', '-', $subcategory_name));
-
-                                    $rating_q = $conn->prepare("SELECT ROUND(AVG(rating), 1) AS avg_rating, COUNT(*) AS total_raters FROM product_ratings WHERE product_id = ?");
-                                    $rating_q->bind_param("i", $product_id);
-                                    $rating_q->execute();
-                                    $rating_result = $rating_q->get_result()->fetch_assoc();
-                                    $avg_rating = $rating_result['avg_rating'] ?? 0;
-                                    $total_raters = $rating_result['total_raters'] ?? 0;
-                                    $rating_q->close();
-
-                                    $sold_q = $conn->prepare("SELECT SUM(quantity) as total_sold FROM sold_items WHERE product_id = ?");
-                                    $sold_q->bind_param("i", $product_id);
-                                    $sold_q->execute();
-                                    $sold_result = $sold_q->get_result()->fetch_assoc();
-                                    $total_sold = (int)($sold_result['total_sold'] ?? 0);
-                                    $sold_q->close();
-
-                                    $full = floor($avg_rating);
-                                    $half = ($avg_rating - $full >= 0.5) ? 1 : 0;
-                                    $empty = 5 - $full - $half;
-                                    $view_count = (int)($row['view_count'] ?? 0);
-                            ?>
-                                    <div class="swiper-slide p-1 bed-item" data-subcategory="<?= $sub_slug ?>">
-                                        <div class="relative rounded overflow-hidden group hover:shadow-2xl transition-all duration-500 ease-out h-[240px] sm:h-[280px] lg:h-[340px] bg-white">
-                                            <div class="absolute top-2 right-2 z-20">
-                                                <label class="flex items-center justify-center w-7 h-7 bg-white hover:bg-gray-100 rounded cursor-pointer transition-all duration-300 hover:scale-110 shadow">
-                                                    <input type="checkbox" class="compare-checkbox hidden" data-product-id="<?= $product_id ?>" onchange="toggleCompare(this, <?= $product_id ?>)">
-                                                    <i class="fas fa-plus text-black text-xs compare-icon"></i>
-                                                    <i class="fas fa-check text-black text-xs compare-icon-checked hidden"></i>
-                                                </label>
-                                            </div>
-
-                                            <a href="index-product_view-page-4-AA?id=<?= $product_id ?>" class="block h-full">
-                                                <div class="relative h-[110px] sm:h-[130px] lg:h-[180px] overflow-hidden">
-                                                    <div class="absolute inset-0 bg-gradient-to-t from-black/20 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300 z-10"></div>
-                                                    <?php if (!empty($row['main_image'])): ?>
-                                                        <img src="../../<?= $row['main_image'] ?>" loading="lazy" alt="<?= htmlspecialchars($row['product_name']) ?>" class="w-full h-full object-cover sm:object-contain transition-all duration-700 group-hover:brightness-105" />
-                                                    <?php else: ?>
-                                                        <div class="w-full h-full flex items-center justify-center bg-gray-200 text-gray-400">
-                                                            <svg class="w-8 h-8 sm:w-10 sm:h-10" fill="currentColor" viewBox="0 0 20 20">
-                                                                <path fill-rule="evenodd" d="M4 3a2 2 0 00-2 2v10a2 2 0 002 2h12a2 2 0 002-2V5a2 2 0 00-2-2H4zm12 12H4l4-8 3 6 2-4 3 6z" clip-rule="evenodd" />
-                                                            </svg>
-                                                        </div>
-                                                    <?php endif; ?>
-                                                </div>
-
-                                                <div class="p-1.5 sm:p-2 lg:p-2.5 flex flex-col justify-between h-[130px] sm:h-[150px] lg:h-[160px]">
-                                                    <div class="space-y-0.5 sm:space-y-1">
-                                                        <div class="relative w-full max-w-xs">
-                                                            <h3 class="text-[13px] sm:text-[13px] line-clamp-1 font-bold leading-tight group-hover:text-orange-600 transition-colors duration-300 line-clamp-2 sm:truncate pr-4" style="font-family: 'Montserrat', sans-serif; color: #2f1200">
-                                                                <?= htmlspecialchars($row['product_name']) ?>
-                                                            </h3>
-                                                            <div class="hidden sm:block absolute top-0 right-0 h-full w-4 bg-gradient-to-l from-white to-transparent"></div>
-                                                        </div>
-
-                                                        <div class="flex items-center justify-between">
-                                                            <?php if ($total_raters > 0): ?>
-                                                                <div class="flex items-center space-x-0.5">
-                                                                    <div class="flex text-yellow-400 text-[8px] sm:text-[9px]">
-                                                                        <?php
-                                                                        for ($i = 0; $i < $full; $i++) echo '<i class="fas fa-star"></i>';
-                                                                        if ($half) echo '<i class="fas fa-star-half-alt"></i>';
-                                                                        for ($i = 0; $i < $empty; $i++) echo '<i class="far fa-star text-gray-300"></i>';
-                                                                        ?>
-                                                                    </div>
-                                                                    <span class="text-[8px] sm:text-[9px] text-gray-500 font-medium"><?= $avg_rating ?></span>
-                                                                </div>
-                                                                <span class="text-[8px] sm:text-[9px] text-gray-400">(<?= $total_raters ?>)</span>
-                                                            <?php else: ?>
-                                                                <div class="flex items-center space-x-0.5">
-                                                                    <div class="flex text-gray-300 text-[8px] sm:text-[9px]">
-                                                                        <?php for ($i = 0; $i < 5; $i++) echo '<i class="far fa-star"></i>'; ?>
-                                                                    </div>
-                                                                    <span class="text-[8px] sm:text-[9px] text-gray-400">No rating</span>
-                                                                </div>
-                                                            <?php endif; ?>
-                                                        </div>
-
-                                                        <?php if (!empty($row['description'])): ?>
-                                                            <p class="text-[13px] sm:text-[13px] text-gray-600 leading-relaxed line-clamp-1 sm:line-clamp-2" style="font-family: 'Montserrat', sans-serif; color: #2f1200">
-                                                                <?= htmlspecialchars($row['description']) ?>
-                                                            </p>
-                                                        <?php else: ?>
-                                                            <p class="text-[8px] sm:text-[9px] text-gray-400 italic">No description</p>
-                                                        <?php endif; ?>
-
-                                                        <div class="flex items-baseline gap-1 flex-wrap">
-                                                            <!-- AFTER (use this) -->
-                                                            <?php if ($discount > 0): ?>
-                                                                <p class="text-[11px] font-bold " style="font-family: 'Montserrat', sans-serif; color: #2f1200"><?= $priceDisplay ?></p>
-                                                                <span class="text-[8px] font-semibold text-red-600 bg-red-50 px-1 py-0.5 rounded">-<?= number_format($discount, 0) ?>%</span>
-                                                            <?php else: ?>
-                                                                <p class="text-[11px] font-bold " style="font-family: 'Montserrat', sans-serif; color: #2f1200"><?= $priceDisplay ?></p>
-                                                                <p class="text-[11px] font-bold "><?= $priceDisplay ?></p>
-                                                            <?php endif; ?>
-                                                        </div>
-                                                    </div>
-
-                                                    <div class="mt-2 flex items-center justify-between gap-2 border-t border-gray-100 pt-2">
-                                                        <form action="index-product_view-page-4-AA" method="GET" class="pointer-events-auto hidden sm:block" onclick="event.stopPropagation()">
-                                                            <input type="hidden" name="id" value="<?= $product_id ?>">
-                                                            <button type="submit" class="flex items-center gap-1 hover:text-orange-500 transition font-medium text-[11px] px-2 py-1 border border-gray-300 rounded hover:border-orange-500" style="font-family: 'Montserrat', sans-serif; color: #2f1200">
-                                                                <i class="fa-solid fa-bag-shopping text-[11px]"></i>
-                                                                <span>View</span>
-                                                            </button>
-                                                        </form>
-
-                                                        <div class="flex items-center gap-2 text-[9px] text-gray-500">
-                                                            <?php if ($view_count > 0): ?>
-                                                                <div class="flex items-center gap-1  px-2 py-1 rounded" style="font-family: 'Montserrat', sans-serif; color: #2f1200">
-                                                                    viewing
-                                                                    <span class="font-medium"><?= formatViewCount($view_count) ?></span>
-                                                                </div>
-                                                            <?php endif; ?>
-
-                                                            <?php if ($total_sold > 0): ?>
-                                                                <div class="flex items-center gap-1 bg-green-50 px-2 py-1 rounded" style="font-family: 'Montserrat', sans-serif; color: #2f1200">
-                                                                    sold
-                                                                    <span class="font-medium"><?= number_format($total_sold) ?></span>
-                                                                </div>
-                                                            <?php endif; ?>
-                                                        </div>
-                                                    </div>
-                                                </div>
-                                            </a>
-                                        </div>
-                                    </div>
-                            <?php
-                                endwhile;
-                            }
-                            ?>
-                        </div>
-                    </div>
-                </div>
-
-                <style>
-                    /* Improved Button Styles */
-                    .bed-filter-btn {
-                        border-color: #d1d5db;
-                        background: white;
-                        color: #4b5563;
-                        text-decoration: none;
-                        display: inline-flex;
-                        align-items: center;
-                        gap: 0.5rem;
-                    }
-
-
-                    .compare-checkbox:checked~.compare-icon {
-                        display: none !important;
-                    }
-
-                    .compare-checkbox:checked~.compare-icon-checked {
-                        display: inline-block !important;
-                    }
-
-                    .compare-icon-checked {
-                        display: none;
-                    }
-
-                    .compare-checkbox:checked~.compare-icon,
-                    .compare-checkbox:checked~.compare-icon-checked {
-                        animation: scaleIn 0.3s ease;
-                    }
-
-                    @keyframes scaleIn {
-                        0% {
-                            transform: scale(0);
-                        }
-
-                        50% {
-                            transform: scale(1.2);
-                        }
-
-                        100% {
-                            transform: scale(1);
-                        }
-                    }
-
-                    @keyframes slide-up {
-                        from {
-                            transform: translateY(100%);
-                            opacity: 0;
-                        }
-
-                        to {
-                            transform: translateY(0);
-                            opacity: 1;
-                        }
-                    }
-
-                    @keyframes slide-down {
-                        from {
-                            transform: translateY(0);
-                            opacity: 1;
-                        }
-
-                        to {
-                            transform: translateY(100%);
-                            opacity: 0;
-                        }
-                    }
-
-                    .animate-slide-up {
-                        animation: slide-up 0.3s ease;
-                    }
-
-                    /* Filter Button Styles */
-                    .furniture-filter-btn,
-                    .bed-filter-btn {
-                        border-color: #d1d5db;
-                        background: white;
-                        color: #6b7280;
-                    }
-
-                    .furniture-filter-btn:hover,
-                    .bed-filter-btn:hover {
-                        border-color: #f97316;
-                        color: #f97316;
-                    }
-
-                    .furniture-filter-btn.active {
-                        border-color: #f97316;
-                        background: #f97316;
-                        color: white;
-                    }
-
-                    .bed-filter-btn.active {
-                        border-color: #3b82f6;
-                        background: #3b82f6;
-                        color: white;
-                    }
-
-                    .furniture-item,
-                    .bed-item {
-                        transition: opacity 0.3s ease, transform 0.3s ease;
-                    }
-
-                    .furniture-item.hidden,
-                    .bed-item.hidden {
-                        display: none !important;
-                    }
-                </style>
-
-                <script>
-                    // Initialize Swiper for Furniture
-                    let furnitureSwiper = new Swiper('.mySwiper-furniture', {
-                        slidesPerView: 1,
-                        spaceBetween: 8,
-                        breakpoints: {
-                            320: {
-                                slidesPerView: 2,
-                                spaceBetween: 8,
-                            },
-                            480: {
-                                slidesPerView: 2,
-                                spaceBetween: 10,
-                            },
-                            640: {
-                                slidesPerView: 2,
-                                spaceBetween: 15,
-                            },
-                            1024: {
-                                slidesPerView: 3,
-                                spaceBetween: 20,
-                            },
-                            1536: {
-                                slidesPerView: 4,
-                                spaceBetween: 20,
-                            },
-                        }
-                    });
-
-                    // Initialize Swiper for Bed Furniture
-                    let bedFurnitureSwiper = new Swiper('.mySwiper-bedfurniture', {
-                        slidesPerView: 1,
-                        spaceBetween: 8,
-                        breakpoints: {
-                            320: {
-                                slidesPerView: 2,
-                                spaceBetween: 8,
-                            },
-                            480: {
-                                slidesPerView: 2,
-                                spaceBetween: 10,
-                            },
-                            640: {
-                                slidesPerView: 2,
-                                spaceBetween: 15,
-                            },
-                            1024: {
-                                slidesPerView: 3,
-                                spaceBetween: 20,
-                            },
-                            1536: {
-                                slidesPerView: 4,
-                                spaceBetween: 20,
-                            },
-                        }
-                    });
-                    // Filter Furniture by Subcategory
-                    function filterFurniture(subcategory) {
-                        const items = document.querySelectorAll('.furniture-item');
-                        const buttons = document.querySelectorAll('.furniture-filter-btn');
-
-                        // Update active button
-                        buttons.forEach(btn => {
-                            if (btn.getAttribute('data-filter') === subcategory) {
-                                btn.classList.add('active');
-                            } else {
-                                btn.classList.remove('active');
-                            }
-                        });
-
-                        // Filter items
-                        items.forEach(item => {
-                            if (subcategory === 'all') {
-                                item.classList.remove('hidden');
-                            } else {
-                                if (item.getAttribute('data-subcategory') === subcategory) {
-                                    item.classList.remove('hidden');
-                                } else {
-                                    item.classList.add('hidden');
-                                }
-                            }
-                        });
-
-                        // Update Swiper after filtering
-                        setTimeout(() => {
-                            furnitureSwiper.update();
-                        }, 100);
-                    }
-
-                    // Filter Bed Furniture by Subcategory
-                    function filterBedFurniture(subcategory) {
-                        const items = document.querySelectorAll('.bed-item');
-                        const buttons = document.querySelectorAll('.bed-filter-btn');
-
-                        // Update active button
-                        buttons.forEach(btn => {
-                            if (btn.getAttribute('data-filter') === subcategory) {
-                                btn.classList.add('active');
-                            } else {
-                                btn.classList.remove('active');
-                            }
-                        });
-
-                        // Filter items
-                        items.forEach(item => {
-                            if (subcategory === 'all') {
-                                item.classList.remove('hidden');
-                            } else {
-                                if (item.getAttribute('data-subcategory') === subcategory) {
-                                    item.classList.remove('hidden');
-                                } else {
-                                    item.classList.add('hidden');
-                                }
-                            }
-                        });
-
-                        // Update Swiper after filtering
-                        setTimeout(() => {
-                            bedFurnitureSwiper.update();
-                        }, 100);
-                    }
-
-                    let compareProducts = JSON.parse(localStorage.getItem('compareProducts') || '[]');
-
-                    function updateCompareButton() {
-                        const compareBtn = document.getElementById('compareBtn');
-                        const compareCount = document.getElementById('compareCount');
-
-                        if (compareProducts.length > 0) {
-                            compareBtn.classList.remove('hidden');
-                            compareBtn.classList.add('flex');
-                            compareCount.textContent = compareProducts.length;
-                        } else {
-                            compareBtn.classList.add('hidden');
-                            compareBtn.classList.remove('flex');
-                        }
-                    }
-
-                    function toggleCompare(checkbox, productId) {
-                        event.stopPropagation();
-
-                        if (checkbox.checked) {
-                            if (!compareProducts.includes(productId)) {
-                                compareProducts.push(productId);
-                                showToast('Product added to comparison');
-                            }
-                        } else {
-                            compareProducts = compareProducts.filter(id => id !== productId);
-                            showToast('Product removed from comparison');
-                        }
-
-                        localStorage.setItem('compareProducts', JSON.stringify(compareProducts));
-                        updateCompareButton();
-                    }
-
-                    function goToComparison() {
-                        if (compareProducts.length < 2) {
-                            alert('Please select at least 2 products to compare.');
-                            return;
-                        }
-                        window.location.href = 'index-shopcompare-C.php?products=' + compareProducts.join(',');
-                    }
-
-                    function showToast(message) {
-                        const toast = document.createElement('div');
-                        toast.className = 'fixed bottom-4 right-4 bg-gray-800 text-white px-4 py-2 rounded-lg shadow-lg z-50 animate-slide-up';
-                        toast.textContent = message;
-                        document.body.appendChild(toast);
-
-                        setTimeout(() => {
-                            toast.style.animation = 'slide-down 0.3s ease';
-                            setTimeout(() => toast.remove(), 300);
-                        }, 2000);
-                    }
-
-                    document.addEventListener('DOMContentLoaded', function() {
-                        document.querySelectorAll('.compare-checkbox').forEach(checkbox => {
-                            const productId = parseInt(checkbox.dataset.productId);
-                            if (compareProducts.includes(productId)) {
-                                checkbox.checked = true;
-                            }
-                        });
-                        updateCompareButton();
-                    });
-                </script>
-            </div>
+            </a>
         </div>
+
+        <style>
+            @keyframes shimmer {
+                0% {
+                    background-position: -200% 0;
+                }
+
+                100% {
+                    background-position: 200% 0;
+                }
+            }
+
+            .animate-shimmer {
+                animation: shimmer 1.5s ease-in-out infinite;
+            }
+
+            .banner-image {
+                transition: opacity 0.3s ease-in-out;
+            }
+        </style>
     </section>
 
 
@@ -2339,191 +1525,257 @@ while ($row = $banners_result->fetch_assoc()) {
     $bestsellerItems = $conn->query("SELECT * FROM bestseller ORDER BY id DESC");
     $bestsellerData = $bestsellerItems->fetch_all(MYSQLI_ASSOC);
     ?>
-
-    <section class="py-8 md:py-12 lg:py-16 bg-gray-50" id="bestseller-section">
-        <div class="max-w-7xl mx-auto w-full px-4 md:px-6 lg:px-8">
+    <section class="py-10 bg-white" id="bestseller-section">
+        <div class="max-w-full mx-auto w-full px-4 md:px-6 lg:px-8">
 
             <!-- Section Header -->
-            <div class="mb-8 md:mb-12 lg:mb-16">
-                <h2 class="text-2xl sm:text-3xl md:text-4xl lg:text-5xl font-bold  mb-2" style="font-family: 'Montserrat', sans-serif; color: #2f1200">
+            <div class="mb-8">
+                <h2 class="text-2xl sm:text-3xl md:text-4xl mb-2" style="font-family: 'Montserrat', sans-serif; color: #2f1200">
                     Best Sellers
                 </h2>
-                <p class=" text-xs sm:text-sm md:text-base" style="font-family: 'Montserrat', sans-serif; color: #2f1200">
-                    Top quality products at unbeatable prices
+                <p class="text-xs sm:text-sm md:text-base" style="font-family: 'Montserrat', sans-serif; color: #2f1200">
+                    Top quality products
                 </p>
             </div>
 
-            <!-- Content Area with Carousel -->
-            <div class="relative" id="bestseller-content">
+            <!-- Carousel Container with Arrows -->
+            <div class="carousel-container">
+                <!-- Left Arrow -->
+                <button class="carousel-arrow carousel-arrow-prev" aria-label="Previous slide">
+                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <path d="M15 18l-6-6 6-6" />
+                    </svg>
+                </button>
 
-                <!-- Content Carousel -->
-                <?php foreach ($bestsellerData as $index => $item): ?>
-                    <div
-                        id="content-<?= $index ?>"
-                        class="bestseller-content grid grid-cols-1 md:grid-cols-2 gap-4 sm:gap-6 md:gap-8 lg:gap-12 items-center <?= $index === 0 ? '' : 'hidden' ?>">
-
-                        <!-- Image Container -->
-                        <div class="overflow-hidden rounded-lg shadow-lg w-full">
-                            <img
-                                src="<?= htmlspecialchars($item['image'] ?: '../img/promo/default.png') ?>"
-                                alt="<?= htmlspecialchars($item['title']) ?>"
-                                class="w-full h-64 sm:h-80 md:h-96 lg:h-[500px] object-cover hover:scale-105 transition-transform duration-500">
-                        </div>
-
-                        <!-- Content -->
-                        <div class="space-y-4 md:space-y-6 lg:space-y-8 w-full">
-                            <div>
-                                <div class="flex items-center gap-2 sm:gap-3 flex-wrap mb-3">
-                                    <span class="inline-block bg-red-600 text-white px-3 py-1 rounded-md text-xs" style="font-family: 'Montserrat', sans-serif;">
-                                        BESTSELLER
-                                    </span>
-                                    <!-- CTA Button - Next to BESTSELLER -->
-                                    <a href="index-bestseller-detail-B.php?slug=<?= htmlspecialchars($item['slug']) ?>"
-                                        class="inline-block bg-black text-white px-3 py-1 rounded-lg text-xs sm:text-sm hover:bg-red-600 transition-colors duration-300" style="font-family: 'Montserrat', sans-serif;">
-                                        Learn More
-                                    </a>
-                                    <!-- Navigation Arrows - Always visible next to BESTSELLER -->
-                                    <div class="flex gap-2 ml-auto sm:ml-0">
-                                        <button onclick="prevBestseller()" class="bg-black text-white p-1.5 sm:p-2 rounded-full hover:bg-red-600 transition-colors duration-300">
-                                            <svg class="w-4 h-4 sm:w-5 sm:h-5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
-                                                <path stroke-linecap="round" stroke-linejoin="round" d="M15 19l-7-7 7-7"></path>
-                                            </svg>
-                                        </button>
-                                        <button onclick="nextBestseller()" class="bg-black text-white p-1.5 sm:p-2 rounded-full hover:bg-red-600 transition-colors duration-300">
-                                            <svg class="w-4 h-4 sm:w-5 sm:h-5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
-                                                <path stroke-linecap="round" stroke-linejoin="round" d="M9 5l7 7-7 7"></path>
-                                            </svg>
-                                        </button>
+                <!-- Swiper Carousel -->
+                <div class="swiper bestsellerSwiper">
+                    <div class="swiper-wrapper">
+                        <?php foreach ($bestsellerData as $item): ?>
+                            <div class="swiper-slide">
+                                <a href="index-bestseller-detail-B.php?slug=<?= htmlspecialchars($item['slug']) ?>" class="product-card block text-center">
+                                    <!-- Image Container -->
+                                    <div class="product-image rounded-lg overflow-hidden shadow-sm bg-gray-100 mb-3">
+                                        <img
+                                            src="<?= htmlspecialchars($item['image'] ?: '../img/promo/default.png') ?>"
+                                            alt="<?= htmlspecialchars($item['title']) ?>"
+                                            class="w-full h-full object-cover">
                                     </div>
-                                </div>
 
-                                <h3 class="text-xl sm:text-2xl md:text-3xl lg:text-4xl mb-3 uppercase leading-tight" style="font-family: 'Montserrat', sans-serif; color: #2f1200">
-                                    <?= htmlspecialchars($item['title']) ?>
-                                </h3>
-                                <div class="w-12 h-1 bg-red-600 rounded-full"></div>
+                                    <!-- Product Info -->
+                                    <div class="product-info">
+                                        <div class="sale-badge mb-2">BESTSELLER</div>
+
+                                        <h3 class="product-title font-medium text-gray-800 mb-2">
+                                            <?= htmlspecialchars($item['title']) ?>
+                                        </h3>
+                                    </div>
+                                </a>
                             </div>
-
-                            <p class="text-xs sm:text-sm md:text-base leading-relaxed line-clamp-6 sm:line-clamp-8" style="font-family: 'Montserrat', sans-serif; color: #2f1200">
-                                <?= nl2br(htmlspecialchars($item['description'])) ?>
-                            </p>
-
-                            <!-- Features -->
-                            <div class="flex flex-col gap-2 sm:gap-3 text-xs sm:text-sm">
-                                <div class="flex items-center gap-2">
-                                    <svg class="w-4 h-4 sm:w-5 sm:h-5 text-green-600 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20">
-                                        <path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd" />
-                                    </svg>
-                                    <span class="text-gray-700">Quality Guaranteed</span>
-                                </div>
-                                <div class="flex items-center gap-2">
-                                    <svg class="w-4 h-4 sm:w-5 sm:h-5 text-green-600 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20">
-                                        <path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd" />
-                                    </svg>
-                                    <span class="text-gray-700">Top Rated Product</span>
-                                </div>
-                            </div>
-
-
-                        </div>
-
+                        <?php endforeach; ?>
                     </div>
-                <?php endforeach; ?>
+                </div>
 
+                <!-- Right Arrow -->
+                <button class="carousel-arrow carousel-arrow-next" aria-label="Next slide">
+                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <path d="M9 18l6-6-6-6" />
+                    </svg>
+                </button>
             </div>
 
         </div>
     </section>
 
     <style>
-        .bestseller-content {
-            animation: fadeInCarousel 0.5s ease-in-out;
+        .carousel-container {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            position: relative;
         }
 
-        .bestseller-content.hidden {
-            animation: fadeOutCarousel 0.5s ease-in-out;
+        .carousel-arrow {
+            width: 44px;
+            height: 44px;
+            border-radius: 50%;
+            background: #1f2937;
+            color: white;
+            border: none;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.3s ease;
+            flex-shrink: 0;
         }
 
-        @keyframes fadeInCarousel {
-            from {
-                opacity: 0;
-                transform: translateY(10px);
-            }
-
-            to {
-                opacity: 1;
-                transform: translateY(0);
-            }
-        }
-
-        @keyframes fadeOutCarousel {
-            from {
-                opacity: 1;
-                transform: translateY(0);
-            }
-
-            to {
-                opacity: 0;
-                transform: translateY(10px);
+        /* Hide arrows on mobile */
+        @media (max-width: 1024px) {
+            .carousel-arrow {
+                display: none;
             }
         }
 
-        /* Ensure proper layout on all screen sizes */
-        @media (max-width: 768px) {
-            #bestseller-content {
-                margin: 0 -16px;
-                padding: 0 16px;
-            }
+        .carousel-arrow:hover {
+            background: #dc2626;
+            transform: scale(1.1);
         }
 
-        /* Prevent overflow on laptop */
-        @media (min-width: 1024px) {
-            .bestseller-content {
-                min-height: auto;
-                align-items: center;
+        .carousel-arrow:active {
+            transform: scale(0.95);
+        }
+
+        .carousel-arrow svg {
+            width: 24px;
+            height: 24px;
+        }
+
+        .product-card {
+            transition: all 0.3s ease;
+            cursor: pointer;
+        }
+
+        .product-card:hover {
+            transform: translateY(-6px);
+        }
+
+        .product-image {
+            overflow: hidden;
+            background: #f5f5f5;
+            aspect-ratio: 1;
+            border-radius: 6px;
+            margin-bottom: 12px;
+        }
+
+        .product-image img {
+            width: 100%;
+            height: 100%;
+            object-fit: contain;
+            transition: transform 0.3s ease;
+        }
+
+        .product-card:hover .product-image img {
+            transform: scale(1.08);
+        }
+
+        .sale-badge {
+            background: #dc2626;
+            color: white;
+            font-size: 11px;
+            font-weight: bold;
+            padding: 4px 8px;
+            border-radius: 3px;
+            display: inline-block;
+            font-family: 'Montserrat', sans-serif;
+        }
+
+        .product-title {
+            font-size: 13px;
+            font-weight: 500;
+            color: #374151;
+            line-height: 1.4;
+            min-height: 36px;
+            margin-bottom: 8px;
+            display: -webkit-box;
+            -webkit-line-clamp: 2;
+            -webkit-box-orient: vertical;
+            overflow: hidden;
+            font-family: 'Montserrat', sans-serif;
+        }
+
+        .current-price {
+            font-size: 16px;
+            font-weight: 700;
+            color: #111827;
+            font-family: 'Montserrat', sans-serif;
+        }
+
+        .rating {
+            display: flex;
+            align-items: center;
+            gap: 4px;
+            font-size: 12px;
+            color: #6b7280;
+            justify-content: center;
+            margin-top: 6px;
+            font-family: 'Montserrat', sans-serif;
+        }
+
+        .stars {
+            color: #fbbf24;
+            font-size: 12px;
+        }
+
+        .free-shipping {
+            font-size: 12px;
+            color: #059669;
+            font-weight: 500;
+            font-family: 'Montserrat', sans-serif;
+        }
+
+        .bestsellerSwiper {
+            flex: 1;
+            width: 100%;
+            padding-bottom: 5px;
+            position: relative;
+        }
+
+
+        @media (max-width: 1024px) {
+            .carousel-arrow {
+                display: none;
             }
         }
     </style>
 
     <script>
-        let currentIndex = 0;
-        const totalItems = <?= count($bestsellerData) ?>;
-
-        function nextBestseller() {
-            currentIndex = (currentIndex + 1) % totalItems;
-            updateContent();
-        }
-
-        function prevBestseller() {
-            currentIndex = (currentIndex - 1 + totalItems) % totalItems;
-            updateContent();
-        }
-
-        function updateContent() {
-            // Hide all content
-            document.querySelectorAll('.bestseller-content').forEach(content => {
-                content.classList.add('hidden');
-            });
-
-            // Show selected content
-            document.getElementById('content-' + currentIndex)?.classList.remove('hidden');
-        }
+        const swiper = new Swiper('.bestsellerSwiper', {
+            slidesPerView: 4,
+            spaceBetween: 20,
+            navigation: {
+                nextEl: '.carousel-arrow-next',
+                prevEl: '.carousel-arrow-prev',
+            },
+            pagination: {
+                el: '.bestseller-pagination',
+                clickable: true,
+            },
+            breakpoints: {
+                320: {
+                    slidesPerView: 2,
+                    spaceBetween: 12,
+                },
+                640: {
+                    slidesPerView: 3,
+                    spaceBetween: 16,
+                },
+                768: {
+                    slidesPerView: 4,
+                    spaceBetween: 16,
+                },
+                1024: {
+                    slidesPerView: 5,
+                    spaceBetween: 20,
+                },
+                1280: {
+                    slidesPerView: 6,
+                    spaceBetween: 24,
+                }
+            }
+        });
     </script>
 
+    <section class=" p-2">
+        <!-- Full Width Container for Top Sales -->
+        <div class="w-full">
 
-    <section class="px-4 p-2">
-        <!-- Combined Container for Both Sections -->
-        <div class="grid grid-cols-1 lg:grid-cols-2 gap-2 ">
-
-            <!-- LEFT SECTION: Top Sales (10% Discount) -->
+            <!-- TOP SALES SECTION -->
             <?php if (mysqli_num_rows($material_results) > 0): ?>
-                <div class="p-1 rounded-lg">
+                <div class="p-6 rounded-lg">
                     <!-- Header -->
-                    <div class="text-center mb-6">
-                        <h2 class="text-2xl lg:text-3xl mb-1 tracking-tight" style="font-family: 'Montserrat', sans-serif; color: #2f1200" data-aos="fade-up">Top Sales</h2>
-                        <h3 class="text-base lg:text-lg text-black mb-2" data-aos="fade-up">
-                            Up to <span class="text-red-500" style="font-family: 'Montserrat', sans-serif;">10% OFF ➜</span>
-                        </h3>
-                        <div class="mx-auto w-24 h-0.5 bg-gradient-to-r from-orange-500 to-transparent rounded-full"></div>
+                    <div class="text-base mb-6">
+                        <h2 class="text-2xl sm:text-3xl mb-1 tracking-tight" style="font-family: 'Montserrat', sans-serif; color: #2f1200" data-aos="fade-up">Sales Up to <span class="text-red-500" style="font-family: 'Montserrat', sans-serif;"><?= number_format($maxDiscount, 0) ?>% OFF ➜</span></h2>
+                
                     </div>
 
                     <!-- Swiper Container -->
@@ -2532,14 +1784,10 @@ while ($row = $banners_result->fetch_assoc()) {
                             <?php
                             mysqli_data_seek($material_results, 0);
                             while ($row = mysqli_fetch_assoc($material_results)) :
-                                // ✅ DIRECT CALCULATION - size_price + color_price
                                 $variantPrice = (float)($row['price'] ?? 0);
                                 $colorPrice = (float)($row['color_price'] ?? 0);
                                 $discount = (float)($row['discount'] ?? 0);
-
-                                // 🔥 SIMPLE FORMULA: variant + color (no markup deduction)
                                 $finalPrice = $variantPrice + $colorPrice;
-
                                 $viewCount = (int)($row['view_count'] ?? 0);
                                 $soldCount = (int)($row['total_sold'] ?? 0);
                                 $avgRating = (float)($row['avg_rating'] ?? 0);
@@ -2547,12 +1795,7 @@ while ($row = $banners_result->fetch_assoc()) {
                             ?>
                                 <div class="swiper-slide p-1">
                                     <div class="bg-white p-2 lg:p-3 group hover:shadow-lg transition duration-300 flex flex-col justify-between h-[320px] text-center relative rounded-md">
-                                        <!-- Discount Badge -->
-                                        <div class="absolute top-0 left-0 z-10">
-                                            <div class="w-8 h-8 relative">
-                                                <img src="../img/icon/d.png" alt="Icon" class="absolute top-1 left-1 w-6 h-6 object-contain" />
-                                            </div>
-                                        </div>
+
 
                                         <!-- Product Image -->
                                         <div class="w-32 h-32 mx-auto rounded-lg overflow-hidden mb-2">
@@ -2572,7 +1815,7 @@ while ($row = $banners_result->fetch_assoc()) {
                                                     <span class="">
                                                         <?php if (!empty($row['color'])): ?>
                                                             <?php if (!empty($row['color_code'])): ?>
-                                                                <span class="inline-block w-2.5 h-2.5 rounded-full border border-gray-300 ml-1 mr-0.5 align-middle" style="background-color: <?= htmlspecialchars($row['color_code']) ?>  font-family: 'Montserrat', sans-serif;"></span>
+                                                                <span class="inline-block w-2.5 h-2.5 rounded-full border border-gray-300 ml-1 mr-0.5 align-middle" style="background-color: <?= htmlspecialchars($row['color_code']) ?>; font-family: 'Montserrat', sans-serif;"></span>
                                                             <?php endif; ?>
                                                             <?= htmlspecialchars($row['color']) ?>
                                                         <?php endif; ?>
@@ -2626,134 +1869,7 @@ while ($row = $banners_result->fetch_assoc()) {
                                                     <input type="hidden" name="variant_price" value="<?= floatval($row['price'] ?? 0) ?>">
                                                     <input type="hidden" name="total_price" value="<?= floatval($finalPrice) ?>">
                                                     <input type="hidden" name="return_url" value="index">
-                                                    <button type="submit" class="w-full bg-black hover:bg-gray-800 text-white text-xs py-2 rounded transition-all" style="font-family: 'Montserrat', sans-serif; ">
-                                                        Add to Cart
-                                                    </button>
-                                                </form>
-                                            </div>
-                                        </div>
-                                    </div>
-                                </div>
-                            <?php endwhile; ?>
-                        </div>
-                    </div>
-                </div>
-            <?php endif; ?>
-
-            <!-- RIGHT SECTION: Discounted Minimal (5% Discount) -->
-            <?php if (mysqli_num_rows($material_resultsone) > 0): ?>
-                <div class="p-1 rounded-lg">
-                    <!-- Header -->
-                    <div class="text-center mb-6">
-                        <h2 class="text-2xl lg:text-3xl mb-1 tracking-tight" style="font-family: 'Montserrat', sans-serif; color: #2f1200" data-aos="fade-up">Discounted Minimal</h2>
-                        <h3 class="text-base lg:text-lg text-black mb-2" style="font-family: 'Montserrat', sans-serif; color: #2f1200" data-aos="fade-up">
-                            Up to <span class="text-red-500">5% OFF ➜</span>
-                        </h3>
-                        <div class="mx-auto w-24 h-0.5 bg-gradient-to-r from-orange-500 to-transparent rounded-full"></div>
-                    </div>
-
-                    <!-- Swiper Container -->
-                    <div class="swiper mySwiper-minimal w-full">
-                        <div class="swiper-wrapper" data-aos="fade-up" data-aos-delay="300">
-                            <?php
-                            mysqli_data_seek($material_resultsone, 0);
-                            while ($row = mysqli_fetch_assoc($material_resultsone)) :
-                                // ✅ DIRECT CALCULATION - size_price + color_price
-                                $variantPrice = (float)($row['price'] ?? 0);
-                                $colorPrice = (float)($row['color_price'] ?? 0);
-                                $discount = (float)($row['discount'] ?? 0);
-
-                                // 🔥 SIMPLE FORMULA: variant + color (no markup deduction)
-                                $finalPrice = $variantPrice + $colorPrice;
-
-                                $viewCount = (int)($row['view_count'] ?? 0);
-                                $soldCount = (int)($row['total_sold'] ?? 0);
-                                $avgRating = (float)($row['avg_rating'] ?? 0);
-                                $ratingCount = (int)($row['rating_count'] ?? 0);
-                            ?>
-                                <div class="swiper-slide p-1">
-                                    <div class="bg-white p-2 lg:p-3 group hover:shadow-lg transition duration-300 flex flex-col justify-between h-[320px] text-center relative rounded-md">
-                                        <!-- Discount Badge -->
-                                        <div class="absolute top-0 left-0 z-10">
-                                            <div class="w-8 h-8 relative">
-                                                <img src="../img/icon/d.png" alt="Icon" class="absolute top-1 left-1 w-6 h-6 object-contain" />
-                                            </div>
-                                        </div>
-
-                                        <!-- Product Image -->
-                                        <div class="w-32 h-32 mx-auto rounded-lg overflow-hidden mb-2">
-                                            <?php if (!empty($row['type_image'])): ?>
-                                                <img src="../../<?= $row['type_image'] ?>" loading="lazy" alt="<?= htmlspecialchars($row['size']) ?>" class="w-full h-full object-cover transition-transform duration-300" />
-                                            <?php else: ?>
-                                                <div class="w-full h-full flex items-center justify-center text-gray-400 text-xs">No Image</div>
-                                            <?php endif; ?>
-                                        </div>
-
-                                        <!-- Product Info -->
-                                        <div>
-                                            <div class="px-1 text-left">
-                                                <p class="text-xs text-black leading-relaxed text-left">
-                                                    <span class="font-medium group-hover:text-orange-600 transition-colors duration-300" style="font-family: 'Montserrat', sans-serif; color: #2f1200"><?= htmlspecialchars($row['product_name']) ?></span>
-                                                    <span class="" style="font-family: 'Montserrat', sans-serif; color: #2f1200"><?= !empty($row['size']) ? ' ' . htmlspecialchars($row['size']) : '' ?></span>
-                                                    <span class="" style="font-family: 'Montserrat', sans-serif; color: #2f1200">
-                                                        <?php if (!empty($row['color'])): ?>
-                                                            <?php if (!empty($row['color_code'])): ?>
-                                                                <span class="inline-block w-2.5 h-2.5 rounded-full border border-gray-300 ml-1 mr-0.5 align-middle" style="background-color: <?= htmlspecialchars($row['color_code']) ?>"></span>
-                                                            <?php endif; ?>
-                                                            <?= htmlspecialchars($row['color']) ?>
-                                                        <?php endif; ?>
-                                                    </span>
-                                                </p>
-                                            </div>
-
-                                            <!-- Stats -->
-                                            <div class="flex items-center justify-start gap-1 mt-1 text-xs px-1" style="font-family: 'Montserrat', sans-serif; color: #2f1200">
-                                                <span><?= number_format($viewCount) ?> viewing</span>
-                                                <span>|</span>
-                                                <span><?= number_format($soldCount) ?> sold</span>
-                                                <?php if ($ratingCount > 0): ?>
-                                                    <span>|</span>
-                                                    <div class="flex items-center gap-0.5">
-                                                        <i class="fa-solid fa-star text-yellow-500 text-xs"></i>
-                                                        <span><?= number_format($avgRating, 1) ?></span>
-                                                    </div>
-                                                <?php endif; ?>
-                                            </div>
-
-                                            <!-- Price -->
-                                            <div class="my-1 text-left px-1" style="font-family: 'Montserrat', sans-serif; color: #2f1200">
-                                                <?php if ($discount > 0): ?>
-
-                                                    <p class="text-sm  font-semibold">
-                                                        ₱<?= number_format($finalPrice, 2) ?>
-                                                        <span class="text-xs text-red-500">-<?= number_format($discount, 0) ?>%</span>
-                                                    </p>
-                                                <?php else: ?>
-                                                    <p class="text-sm text-green-600 font-bold">₱<?= number_format($finalPrice, 2) ?></p>
-                                                <?php endif; ?>
-                                            </div>
-
-                                            <!-- Buttons -->
-                                            <div class="flex gap-1 mt-1 px-1">
-                                                <form action="index-product_view-page-4-AA" method="GET" class="flex-1">
-                                                    <input type="hidden" name="id" value="<?= (int)$row['product_id'] ?>">
-                                                    <button type="submit" class="w-full text-black hover:text-orange-500 transition font-medium text-xs py-1.5 border border-gray-300 rounded hover:border-orange-500">
-                                                        View
-                                                    </button>
-                                                </form>
-
-                                                <form class="productForm flex-1" data-product-id="<?= (int)$row['product_id'] ?>">
-                                                    <input type="hidden" name="product_id" value="<?= (int)$row['product_id'] ?>">
-                                                    <input type="hidden" name="selected_type" value="<?= htmlspecialchars($row['type_name'] ?? '') ?>">
-                                                    <input type="hidden" name="selected_variant" value="<?= htmlspecialchars($row['size'] ?? '') ?>">
-                                                    <input type="hidden" name="variant_id" value="<?= (int)($row['id'] ?? 0) ?>">
-                                                    <input type="hidden" name="selected_color_id" value="<?= (int)($row['color_id'] ?? 0) ?>">
-                                                    <input type="hidden" name="selected_color_name" value="<?= htmlspecialchars($row['color'] ?? '') ?>">
-                                                    <input type="hidden" name="color_price" value="<?= floatval($row['color_price'] ?? 0) ?>">
-                                                    <input type="hidden" name="variant_price" value="<?= floatval($row['price'] ?? 0) ?>">
-                                                    <input type="hidden" name="total_price" value="<?= floatval($finalPrice) ?>">
-                                                    <input type="hidden" name="return_url" value="index">
-                                                    <button type="submit" class="w-full bg-black hover:bg-gray-800 text-white text-xs py-1.5 rounded transition-all">
+                                                    <button type="submit" class="w-full bg-black hover:bg-gray-800 text-white text-xs py-2 rounded transition-all" style="font-family: 'Montserrat', sans-serif;">
                                                         Add to Cart
                                                     </button>
                                                 </form>
@@ -2770,47 +1886,43 @@ while ($row = $banners_result->fetch_assoc()) {
     </section>
 
     <script>
-        // Initialize Swiper instances with better scaling and configuration
         document.addEventListener('DOMContentLoaded', function() {
-
-            // Common breakpoint configuration for reusability
             const commonBreakpoints = {
                 320: {
                     slidesPerView: 2,
-                    spaceBetween: 8,
+                    spaceBetween: 8
                 },
                 480: {
                     slidesPerView: 2,
-                    spaceBetween: 8,
+                    spaceBetween: 8
                 },
                 640: {
                     slidesPerView: 2,
-                    spaceBetween: 8,
+                    spaceBetween: 8
                 },
                 768: {
-                    slidesPerView: 2,
-                    spaceBetween: 12,
+                    slidesPerView: 3,
+                    spaceBetween: 12
                 },
                 820: {
-                    slidesPerView: 3,
-                    spaceBetween: 12,
+                    slidesPerView: 4,
+                    spaceBetween: 12
                 },
                 1024: {
-                    slidesPerView: 2,
-                    spaceBetween: 15,
+                    slidesPerView: 5,
+                    spaceBetween: 15
                 },
                 1280: {
-                    slidesPerView: 4,
-                    spaceBetween: 15,
+                    slidesPerView: 6,
+                    spaceBetween: 15
                 },
                 1536: {
-                    slidesPerView: 4,
-                    spaceBetween: 20,
+                    slidesPerView: 7,
+                    spaceBetween: 20
                 }
             };
 
-            // Top Sales Swiper
-            const topSalesSwiper = new Swiper('.mySwiper-topsales', {
+            new Swiper('.mySwiper-topsales', {
                 slidesPerView: 1,
                 spaceBetween: 10,
                 loop: true,
@@ -2818,41 +1930,7 @@ while ($row = $banners_result->fetch_assoc()) {
                     delay: 3000,
                     disableOnInteraction: false,
                 },
-                pagination: {
-                    el: '.swiper-pagination-topsales',
-                    clickable: true,
-                },
-                navigation: {
-                    nextEl: '.swiper-button-next-topsales',
-                    prevEl: '.swiper-button-prev-topsales',
-                },
                 breakpoints: commonBreakpoints
-            });
-
-            // Minimal Swiper
-            const minimalSwiper = new Swiper('.mySwiper-minimal', {
-                slidesPerView: 1,
-                spaceBetween: 10,
-                loop: true,
-                autoplay: {
-                    delay: 3500,
-                    disableOnInteraction: false,
-                },
-                pagination: {
-                    el: '.swiper-pagination-minimal',
-                    clickable: true,
-                },
-                navigation: {
-                    nextEl: '.swiper-button-next-minimal',
-                    prevEl: '.swiper-button-prev-minimal',
-                },
-                breakpoints: commonBreakpoints
-            });
-
-            // Optional: Add keyboard support
-            document.addEventListener('keydown', function(e) {
-                if (e.key === 'ArrowLeft') topSalesSwiper.slidePrev();
-                if (e.key === 'ArrowRight') topSalesSwiper.slideNext();
             });
         });
     </script>
@@ -2894,12 +1972,10 @@ while ($row = $banners_result->fetch_assoc()) {
 
         <?php if ($row_count > 0): ?>
             <!-- Top Sales Section -->
-            <section class="px-4 py-10">
+            <section class="p-6 px-4 py-4">
                 <!-- Header -->
-                <div class="text-center mb-10 relative">
-                    <h2 class="text-4xl mb-2 tracking-tight" style="font-family: 'Montserrat', sans-serif; color: #2f1200" data-aos="fade-up">New Arrival</h2>
-
-                    <div class="mx-auto w-32 h-1 bg-gradient-to-r from-orange-500 to-transparent rounded-full"></div>
+                <div class="text-base mb-10 relative">
+                    <h2 class="text-3xl mb-2 tracking-tight" style="font-family: 'Montserrat', sans-serif; color: #2f1200" data-aos="fade-up">New Arrival</h2>
                 </div>
 
                 <?php
@@ -2911,9 +1987,9 @@ while ($row = $banners_result->fetch_assoc()) {
                     <!-- Swiper Container -->
                     <div class="swiper mySwiper-products w-full">
                         <div class="swiper-wrapper" data-aos="fade-up" data-aos-delay="300">
-                             <?php
-                            mysqli_data_seek($material_results, 0);
-                            while ($row = mysqli_fetch_assoc($material_results)) :
+                            <?php
+                            mysqli_data_seek($material_resultstwo, 0);
+                            while ($row = mysqli_fetch_assoc($material_resultstwo)) :
                                 // ✅ DIRECT CALCULATION - size_price + color_price
                                 $variantPrice = (float)($row['price'] ?? 0);
                                 $colorPrice = (float)($row['color_price'] ?? 0);
@@ -2929,7 +2005,7 @@ while ($row = $banners_result->fetch_assoc()) {
                             ?>
                                 <div class="swiper-slide p-1">
                                     <div class="bg-white p-2 lg:p-3 group hover:shadow-lg transition duration-300 flex flex-col justify-between h-[320px] text-center relative rounded-md">
-                          
+
 
                                         <!-- Product Image -->
                                         <div class="w-32 h-32 mx-auto rounded-lg overflow-hidden mb-2">
@@ -3400,8 +2476,6 @@ while ($row = $banners_result->fetch_assoc()) {
     </script>
 
     <style>
-
-
         /* Testimonial card */
         .testimonial-card {
             background: white;
@@ -3466,7 +2540,7 @@ while ($row = $banners_result->fetch_assoc()) {
     <section class="px-4 sm:px-6 lg:px-8 py-8">
         <div class="max-w-full mx-auto">
             <!-- 2x2 Grid Content -->
-            <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
+            <div class="grid grid-cols-1">
                 <!-- Box 3 -->
                 <a href="#" onclick="showUnavailable(event)" class="group block">
                     <div class="overflow-hidden ">
@@ -3475,16 +2549,6 @@ while ($row = $banners_result->fetch_assoc()) {
                             class="w-full h-[300px] object-cover transition-transform duration-500 group-hover:scale-105">
                     </div>
                     <h3 class="text-lg font-semibold " style="font-family: 'Montserrat', sans-serif; color: #2f1200">Keep Shopping For Holiday ➜</h3>
-                </a>
-
-                <!-- Box 4 -->
-                <a href="#" onclick="showUnavailable(event)" class="group block">
-                    <div class="overflow-hidden ">
-                        <img src="../img/display3.webp"
-                            alt="Promo 4"
-                            class="w-full h-[300px] object-cover transition-transform duration-500 group-hover:scale-105">
-                    </div>
-                    <h3 class="text-lg font-semibold " style="font-family: 'Montserrat', sans-serif; color: #2f1200">Upgrade Your Living Space Today! ➜</h3>
                 </a>
             </div>
         </div>

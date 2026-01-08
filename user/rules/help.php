@@ -31,14 +31,9 @@ if (!isset($_SESSION['user_id']) && isset($_COOKIE['remember_token'])) {
   $stmt->close();
 }
 
-// ✅ Final session check
-if (!isset($_SESSION['user_id'])) {
-  // Not logged in — redirect to login or Google auth
-  header('Location: ../google-callback.php');
-  exit;
-}
-
 ?>
+
+
 <!DOCTYPE html>
 <html lang="en">
 <head>

@@ -78,6 +78,67 @@ try {
     error_log("Sale banners fetch error: " . $e->getMessage());
     $onsale_result = null;
 }
+
+// Fetch discounted materials with view count, rating & sold count
+try {
+    $material_query = "
+        SELECT 
+            pv.*,
+            pv.origin,
+            pt.type_name,
+            pt.type_image,
+            pt.product_id,
+            p.product_name,
+            p.codename,
+            p.main_image,
+            p.description,
+            p.view_count,
+            p.unique_view_count,
+            AVG(r.rating) AS avg_rating,
+            COUNT(DISTINCT r.id) AS rating_count,
+            COALESCE(SUM(si.quantity), 0) AS total_sold,
+            pc.id AS color_id,
+            pc.color_name AS color,
+            pc.color_code,
+            pc.price AS color_price
+        FROM product_variants pv
+        INNER JOIN product_types pt ON pv.type_id = pt.id
+        INNER JOIN products p ON pt.product_id = p.id
+        LEFT JOIN product_ratings r ON r.product_id = p.id
+        LEFT JOIN sold_items si ON si.product_id = p.id
+        LEFT JOIN product_colors pc 
+            ON pc.product_id = p.id
+           AND pc.id = (
+               SELECT MIN(pc2.id) 
+               FROM product_colors pc2 
+               WHERE pc2.product_id = p.id
+           )
+        WHERE pv.discount > 0
+        GROUP BY pv.id
+        ORDER BY p.view_count DESC, RAND()
+        LIMIT 10
+    ";
+    
+    $material_results = mysqli_query($conn, $material_query);
+    
+    if (!$material_results) {
+        throw new Exception("Materials query failed: " . mysqli_error($conn));
+    }
+    
+    // Get max discount for header
+    $maxDiscount = 0;
+    if ($material_results && mysqli_num_rows($material_results) > 0) {
+        $tempResults = mysqli_query($conn, "SELECT MAX(discount) as max_discount FROM product_variants WHERE discount > 0");
+        if ($tempResults) {
+            $maxRow = mysqli_fetch_assoc($tempResults);
+            $maxDiscount = (float)($maxRow['max_discount'] ?? 0);
+        }
+    }
+} catch (Exception $e) {
+    error_log("Materials fetch error: " . $e->getMessage());
+    $material_results = null;
+    $maxDiscount = 0;
+}
 ?>
      
 <!DOCTYPE html>
@@ -90,6 +151,7 @@ try {
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/swiper@11/swiper-bundle.min.css" />
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" />
     <style>
         * {
             font-family: 'Poppins', sans-serif;
@@ -171,7 +233,7 @@ try {
 
     <!-- Hero Banner -->
     <?php if ($onsale_result && $onsale_result->num_rows > 0): ?>
-        <div class="container mx-auto px-4 max-w-7xl mt-8 mb-16">
+        <div class="container mx-auto px-4 max-w-8xl mt-8 mb-16">
             <div class="swiper banner-swiper relative rounded-2xl overflow-hidden bg-gradient-to-br from-gray-900 to-gray-800 h-96 md:h-[500px]">
                 <div class="swiper-wrapper">
                     <?php while ($banner = $onsale_result->fetch_assoc()): ?>
@@ -191,12 +253,10 @@ try {
                     <h1 class="text-white text-4xl md:text-5xl font-bold mb-2" style="font-family: 'Montserrat', sans-serif; ">
                         SALE
                     </h1>
-                    <p class="text-gray-200 text-sm md:text-base" style="font-family: 'Montserrat', sans-serif; ">
-                        Up to 10% OFF on Selected Items
-                    </p>
+            
                 </div>
 
-                     <button class="swiper-button-prev">
+                <button class="swiper-button-prev">
                     <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M15 19l-7-7 7-7" />
                     </svg>
@@ -311,6 +371,112 @@ try {
                 </div>
             </div>
         </div>
+
+        <!-- TOP SALES SECTION -->
+        <?php if (mysqli_num_rows($material_results) > 0): ?>
+            <section class="mt-20 mb-10">
+                <div class="p-6 rounded-lg">
+                    <!-- Header -->
+                    <div class="text-base mb-8">
+                        <h2 class="text-2xl sm:text-3xl mb-2 tracking-tight" style="font-family: 'Montserrat', sans-serif; color: #2f1200">
+                            Sales Up to <span class="text-red-500" style="font-family: 'Montserrat', sans-serif;"><?= number_format($maxDiscount, 0) ?>% OFF</span> <span class="text-2xl">➜</span>
+                        </h2>
+                        <p class="text-gray-600 text-sm">Trending products with amazing discounts</p>
+                    </div>
+
+                    <!-- Swiper Container -->
+                    <div class="swiper mySwiper-topsales w-full">
+                        <div class="swiper-wrapper">
+                            <?php
+                            mysqli_data_seek($material_results, 0);
+                            while ($row = mysqli_fetch_assoc($material_results)) :
+                                $variantPrice = (float)($row['price'] ?? 0);
+                                $colorPrice = (float)($row['color_price'] ?? 0);
+                                $discount = (float)($row['discount'] ?? 0);
+                                $finalPrice = $variantPrice + $colorPrice;
+                                $viewCount = (int)($row['view_count'] ?? 0);
+                                $soldCount = (int)($row['total_sold'] ?? 0);
+                                $avgRating = (float)($row['avg_rating'] ?? 0);
+                                $ratingCount = (int)($row['rating_count'] ?? 0);
+                            ?>
+                                <div class="swiper-slide p-1">
+                                    <div class="bg-white p-3 group hover:shadow-lg transition duration-300 flex flex-col justify-between h-[320px] text-center relative rounded-md border border-gray-200 hover:border-black">
+
+                                        <!-- Discount Badge -->
+                                        <?php if ($discount > 0): ?>
+                                            <div class="absolute top-2 right-2 bg-red-500 text-white text-xs font-bold px-2 py-1 rounded z-10" style="font-family: 'Montserrat', sans-serif;">
+                                                -<?= number_format($discount, 0) ?>%
+                                            </div>
+                                        <?php endif; ?>
+
+                                        <!-- Product Image -->
+                                        <div class="w-32 h-32 mx-auto rounded-lg overflow-hidden mb-2">
+                                            <?php if (!empty($row['type_image'])): ?>
+                                                <img src="../../<?= $row['type_image'] ?>" loading="lazy" alt="<?= htmlspecialchars($row['size']) ?>" class="w-full h-full object-cover transition-transform duration-300 group-hover:scale-110" />
+                                            <?php else: ?>
+                                                <div class="w-full h-full flex items-center justify-center text-gray-400 text-xs">No Image</div>
+                                            <?php endif; ?>
+                                        </div>
+
+                                        <!-- Product Info -->
+                                        <div>
+                                            <div class="px-1 text-left">
+                                                <p class="text-xs leading-relaxed text-left line-clamp-2">
+                                                    <span class="font-medium group-hover:text-orange-600 transition-colors duration-300" style="font-family: 'Montserrat', sans-serif; color: #2f1200"><?= htmlspecialchars($row['product_name']) ?></span>
+                                                    <span class="" style="font-family: 'Montserrat', sans-serif; color: #2f1200"><?= !empty($row['size']) ? ' ' . htmlspecialchars($row['size']) : '' ?></span>
+                                                    <?php if (!empty($row['color'])): ?>
+                                                        <span class="block text-xs mt-0.5">
+                                                            <?php if (!empty($row['color_code'])): ?>
+                                                                <span class="inline-block w-2.5 h-2.5 rounded-full border border-gray-300 mr-1 align-middle" style="background-color: <?= htmlspecialchars($row['color_code']) ?>"></span>
+                                                            <?php endif; ?>
+                                                            <span style="font-family: 'Montserrat', sans-serif; color: #2f1200"><?= htmlspecialchars($row['color']) ?></span>
+                                                        </span>
+                                                    <?php endif; ?>
+                                                </p>
+                                            </div>
+
+                                            <!-- Stats -->
+                                            <div class="flex items-center justify-start gap-1 mt-2 text-xs px-1 flex-wrap" style="font-family: 'Montserrat', sans-serif; color: #2f1200">
+                                                <span class="text-gray-600"><?= number_format($viewCount) ?> views</span>
+                                                <span class="text-gray-400">•</span>
+                                                <span class="text-gray-600"><?= number_format($soldCount) ?> sold</span>
+                                                <?php if ($ratingCount > 0): ?>
+                                                    <span class="text-gray-400">•</span>
+                                                    <div class="flex items-center gap-0.5">
+                                                        <i class="fa-solid fa-star text-yellow-500 text-xs"></i>
+                                                        <span class="text-gray-600"><?= number_format($avgRating, 1) ?></span>
+                                                    </div>
+                                                <?php endif; ?>
+                                            </div>
+
+                                            <!-- Price -->
+                                            <div class="my-2 text-left px-1" style="font-family: 'Montserrat', sans-serif; color: #2f1200">
+                                                <p class="text-sm font-bold text-gray-900">
+                                                    ₱<?= number_format($finalPrice, 2) ?>
+                                                </p>
+                                                <?php if ($discount > 0): ?>
+                                                    <p class="text-xs text-green-600 font-semibold">Save <?= number_format($discount, 0) ?>%</p>
+                                                <?php endif; ?>
+                                            </div>
+
+                                            <!-- Buttons -->
+                                            <div class="mt-2 px-1">
+                                                <form action="index-product_view-page-4-AA" method="GET" class="w-full">
+                                                    <input type="hidden" name="id" value="<?= (int)$row['product_id'] ?>">
+                                                    <button type="submit" class="w-full text-black hover:text-orange-500 hover:border-orange-500 transition font-medium text-xs py-2 border border-gray-300 rounded bg-white hover:bg-gray-50" style="font-family: 'Montserrat', sans-serif; color: #2f1200">
+                                                        View
+                                                    </button>
+                                                </form>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            <?php endwhile; ?>
+                        </div>
+                    </div>
+                </div>
+            </section>
+        <?php endif; ?>
     </div>
 
     <?php 
@@ -337,6 +503,55 @@ try {
                 speed: 800,
             });
         }
+
+        // Top Sales Swiper
+        document.addEventListener('DOMContentLoaded', function() {
+            const commonBreakpoints = {
+                320: {
+                    slidesPerView: 2,
+                    spaceBetween: 8
+                },
+                480: {
+                    slidesPerView: 2,
+                    spaceBetween: 8
+                },
+                640: {
+                    slidesPerView: 2,
+                    spaceBetween: 8
+                },
+                768: {
+                    slidesPerView: 3,
+                    spaceBetween: 12
+                },
+                820: {
+                    slidesPerView: 4,
+                    spaceBetween: 12
+                },
+                1024: {
+                    slidesPerView: 5,
+                    spaceBetween: 15
+                },
+                1280: {
+                    slidesPerView: 6,
+                    spaceBetween: 15
+                },
+                1536: {
+                    slidesPerView: 6,
+                    spaceBetween: 20
+                }
+            };
+
+            new Swiper('.mySwiper-topsales', {
+                slidesPerView: 1,
+                spaceBetween: 10,
+                loop: true,
+                autoplay: {
+                    delay: 3000,
+                    disableOnInteraction: false,
+                },
+                breakpoints: commonBreakpoints
+            });
+        });
 
         function openSidebar() {
             const sidebar = document.getElementById('sidebar');

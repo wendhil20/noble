@@ -307,7 +307,7 @@ if ($stmt2 = $conn->prepare($statusSql)) {
     if ($r2) $statusCounts = $r2->fetch_all(MYSQLI_ASSOC);
     $stmt2->close();
     // Count ongoing orders (not 100% assigned)
-$ongoingOrdersSql = "
+    $ongoingOrdersSql = "
     SELECT COUNT(DISTINCT o.id) as count 
     FROM orders o 
     WHERE o.warehouse_employee_id = ? 
@@ -320,17 +320,17 @@ $ongoingOrdersSql = "
         OR (SELECT COUNT(*) FROM order_items oi_total WHERE oi_total.order_id = o.id) = 0
     )
 ";
-$ongoingOrdersCount = 0;
-if ($stmt_ongoing = $conn->prepare($ongoingOrdersSql)) {
-    $stmt_ongoing->bind_param("i", $user_id);
-    $stmt_ongoing->execute();
-    $r_ongoing = $stmt_ongoing->get_result();
-    if ($r_ongoing) {
-        $ongoingResult = $r_ongoing->fetch_assoc();
-        $ongoingOrdersCount = (int)$ongoingResult['count'];
+    $ongoingOrdersCount = 0;
+    if ($stmt_ongoing = $conn->prepare($ongoingOrdersSql)) {
+        $stmt_ongoing->bind_param("i", $user_id);
+        $stmt_ongoing->execute();
+        $r_ongoing = $stmt_ongoing->get_result();
+        if ($r_ongoing) {
+            $ongoingResult = $r_ongoing->fetch_assoc();
+            $ongoingOrdersCount = (int)$ongoingResult['count'];
+        }
+        $stmt_ongoing->close();
     }
-    $stmt_ongoing->close();
-}
 }
 
 // Count orders with approved OR processing replacement requests
@@ -529,193 +529,202 @@ foreach ($statusCounts as $row) {
 
     <!-- Main content -->
     <div class="max-w-[95%] mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        <!-- Filters -->
-        <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-6 mb-8">
-            <form method="GET" class="space-y-4">
-                <div class="flex flex-wrap gap-2 mb-4">
-    <a href="?" class="px-4 py-2 rounded-lg text-sm font-medium transition-colors duration-200 flex items-center space-x-1 <?php echo ($status_filter === '' && !$show_replacements && !$show_ready_for_schedule && !$show_defects && !$show_ready_replacements) ? 'bg-primary-600 text-white shadow-md' : 'bg-orange-100 text-orange-700 hover:bg-orange-200'; ?>">
-    <i class="fas fa-tasks"></i>
-    <span>Incomplete Assignments</span>
-    <span class="ml-1 px-2 py-0.5 rounded-full text-xs font-bold <?php echo ($status_filter === '' && !$show_replacements && !$show_ready_for_schedule && !$show_defects && !$show_ready_replacements) ? 'bg-white/20' : 'bg-orange-200'; ?>">
-        <?php echo $ongoingOrdersCount; ?>
-    </span>
-</a>
+        <!-- Modern Filters Section -->
+<div class="bg-white rounded-xl shadow-sm border border-gray-200 p-6 mb-6">
+    <form method="GET" class="space-y-4">
+        
+        <!-- Status Filter Tabs -->
+        <div class="flex flex-wrap gap-2 mb-4">
+            
+            <!-- Incomplete Assignments -->
+            <a href="?" class="px-3 py-1.5 rounded-lg text-xs font-medium transition-all duration-200 inline-flex items-center gap-1.5 <?php echo ($status_filter === '' && !$show_replacements && !$show_ready_for_schedule && !$show_defects && !$show_ready_replacements) ? 'bg-primary-600 text-white shadow-sm' : 'bg-orange-100 text-orange-700 hover:bg-orange-200'; ?>">
+                <i class="fas fa-tasks text-sm"></i>
+                <span>Incomplete</span>
+                <span class="ml-1 px-1.5 py-0.5 rounded text-xs <?php echo ($status_filter === '' && !$show_replacements && !$show_ready_for_schedule && !$show_defects && !$show_ready_replacements) ? 'bg-white/20' : 'bg-orange-200'; ?>">
+                    <?php echo $ongoingOrdersCount; ?>
+                </span>
+            </a>
 
-    <?php 
-    // Define the order of statuses you want to display
-    $statusOrder = ['pending', 'Ongoing', 'processing', 'Ready for Pickup', 'Out for Delivery', 'Delivered', 'completed', 'cancelled'];
-    
-    // Status icons and colors
-    $statusConfig = [
-    'pending' => ['icon' => 'fa-clock', 'color' => 'yellow'],
-    'Ongoing' => ['icon' => 'fa-tasks', 'color' => 'orange'],
-    'processing' => ['icon' => 'fa-cog', 'color' => 'blue'],
-    'Ready for Pickup' => ['icon' => 'fa-box', 'color' => 'indigo'],
-    'Out for Delivery' => ['icon' => 'fa-truck', 'color' => 'purple'],
-    'Delivered' => ['icon' => 'fa-check-circle', 'color' => 'green'],
-    'completed' => ['icon' => 'fa-check-double', 'color' => 'green'],
-    'cancelled' => ['icon' => 'fa-times-circle', 'color' => 'red']
-];
-    
-    foreach ($statusOrder as $status):
-        if (!isset($statusCountsArray[$status])) continue;
-        $count = $statusCountsArray[$status];
-        $config = $statusConfig[$status] ?? ['icon' => 'fa-circle', 'color' => 'gray'];
-        $isActive = ($status_filter === $status && !$show_replacements && !$show_ready_for_schedule && !$show_defects && !$show_ready_replacements);
-    ?>
-        <a href="?status=<?php echo urlencode($status); ?><?php echo !empty($search_query) ? '&search=' . urlencode($search_query) : ''; ?><?php echo !empty($date_from) ? '&date_from=' . urlencode($date_from) : ''; ?><?php echo !empty($date_to) ? '&date_to=' . urlencode($date_to) : ''; ?>"
-            class="px-4 py-2 rounded-lg text-sm font-medium transition-colors duration-200 flex items-center space-x-1 <?php echo $isActive ? 'bg-' . $config['color'] . '-600 text-white shadow-md' : 'bg-' . $config['color'] . '-100 text-' . $config['color'] . '-700 hover:bg-' . $config['color'] . '-200'; ?>">
-            <i class="fas <?php echo $config['icon']; ?>"></i>
-            <span><?php echo htmlspecialchars(ucfirst($status)); ?></span>
-            <span class="ml-1 px-2 py-0.5 rounded-full text-xs font-bold <?php echo $isActive ? 'bg-white/20' : 'bg-' . $config['color'] . '-200'; ?>">
-                <?php echo (int)$count; ?>
-            </span>
-        </a>
-    <?php endforeach; ?>
+            <?php
+            $statusOrder = ['pending', 'Ongoing', 'processing', 'Ready for Pickup', 'Out for Delivery', 'Delivered', 'completed', 'cancelled'];
+            $statusConfig = [
+                'pending' => ['icon' => 'fa-clock', 'color' => 'yellow'],
+                'Ongoing' => ['icon' => 'fa-tasks', 'color' => 'orange'],
+                'processing' => ['icon' => 'fa-cog', 'color' => 'blue'],
+                'Ready for Pickup' => ['icon' => 'fa-box', 'color' => 'indigo'],
+                'Out for Delivery' => ['icon' => 'fa-truck', 'color' => 'purple'],
+                'Delivered' => ['icon' => 'fa-check-circle', 'color' => 'green'],
+                'completed' => ['icon' => 'fa-check-double', 'color' => 'green'],
+                'cancelled' => ['icon' => 'fa-times-circle', 'color' => 'red']
+            ];
 
-                    <!-- Replacement Items Filter -->
-                    <?php if ($replacementOrdersCount > 0): ?>
-                        <a href="?replacements=1<?php echo !empty($search_query) ? '&search=' . urlencode($search_query) : ''; ?><?php echo !empty($date_from) ? '&date_from=' . urlencode($date_from) : ''; ?><?php echo !empty($date_to) ? '&date_to=' . urlencode($date_to) : ''; ?>"
-                            class="px-4 py-2 rounded-lg text-sm font-medium transition-colors duration-200 relative <?php echo $show_replacements ? 'bg-red-600 text-white' : 'bg-red-100 text-red-700 hover:bg-red-200 pulse-notification'; ?>">
-                            <i class="fas fa-sync-alt mr-1"></i>
-                            Replacements (<?php echo $replacementOrdersCount; ?>)
-                            <?php if (!$show_replacements): ?>
-                                <span class="absolute -top-1 -right-1 h-3 w-3 bg-red-500 border-2 border-white rounded-full animate-ping"></span>
-                                <span class="absolute -top-1 -right-1 h-3 w-3 bg-red-500 border-2 border-white rounded-full"></span>
-                            <?php endif; ?>
-                        </a>
+            foreach ($statusOrder as $status):
+                if (!isset($statusCountsArray[$status])) continue;
+                $count = $statusCountsArray[$status];
+                $config = $statusConfig[$status] ?? ['icon' => 'fa-circle', 'color' => 'gray'];
+                $isActive = ($status_filter === $status && !$show_replacements && !$show_ready_for_schedule && !$show_defects && !$show_ready_replacements);
+            ?>
+                <a href="?status=<?php echo urlencode($status); ?><?php echo !empty($search_query) ? '&search=' . urlencode($search_query) : ''; ?><?php echo !empty($date_from) ? '&date_from=' . urlencode($date_from) : ''; ?><?php echo !empty($date_to) ? '&date_to=' . urlencode($date_to) : ''; ?>"
+                   class="px-3 py-1.5 rounded-lg text-xs font-medium transition-all duration-200 inline-flex items-center gap-1.5 <?php echo $isActive ? 'bg-' . $config['color'] . '-600 text-white shadow-sm' : 'bg-' . $config['color'] . '-100 text-' . $config['color'] . '-700 hover:bg-' . $config['color'] . '-200'; ?>">
+                    <i class="fas <?php echo $config['icon']; ?> text-sm"></i>
+                    <span><?php echo htmlspecialchars(ucfirst($status)); ?></span>
+                    <span class="ml-1 px-1.5 py-0.5 rounded text-xs <?php echo $isActive ? 'bg-white/20' : 'bg-' . $config['color'] . '-200'; ?>">
+                        <?php echo (int)$count; ?>
+                    </span>
+                </a>
+            <?php endforeach; ?>
+
+            <!-- Replacements -->
+            <?php if ($replacementOrdersCount > 0): ?>
+                <a href="?replacements=1<?php echo !empty($search_query) ? '&search=' . urlencode($search_query) : ''; ?><?php echo !empty($date_from) ? '&date_from=' . urlencode($date_from) : ''; ?><?php echo !empty($date_to) ? '&date_to=' . urlencode($date_to) : ''; ?>"
+                   class="relative px-3 py-1.5 rounded-lg text-xs font-medium transition-all duration-200 inline-flex items-center gap-1.5 <?php echo $show_replacements ? 'bg-red-600 text-white shadow-sm' : 'bg-red-100 text-red-700 hover:bg-red-200'; ?>">
+                    <i class="fas fa-sync-alt text-sm"></i>
+                    <span>Replacements</span>
+                    <span class="ml-1 px-1.5 py-0.5 rounded text-xs <?php echo $show_replacements ? 'bg-white/20' : 'bg-red-200'; ?>">
+                        <?php echo $replacementOrdersCount; ?>
+                    </span>
+                    <?php if (!$show_replacements): ?>
+                        <span class="absolute -top-1 -right-1 h-2 w-2 bg-red-500 border border-white rounded-full animate-pulse"></span>
                     <?php endif; ?>
+                </a>
+            <?php endif; ?>
 
-                    <!-- Defects Filter - NEW -->
-<?php 
-$defectsOrdersCountSql = "
-    SELECT COUNT(DISTINCT o.id) as count 
-    FROM orders o 
-    WHERE o.warehouse_employee_id = ? 
-    AND EXISTS (SELECT 1 FROM defect_reports dr 
-                WHERE dr.order_id = o.id 
-                AND dr.status != 'resolved')
-";
-$defectsOrdersCount = 0;
-if ($stmt5 = $conn->prepare($defectsOrdersCountSql)) {
-    $stmt5->bind_param("i", $user_id);
-    $stmt5->execute();
-    $r5 = $stmt5->get_result();
-    if ($r5) {
-        $defectsResult = $r5->fetch_assoc();
-        $defectsOrdersCount = (int)$defectsResult['count'];
-    }
-    $stmt5->close();
-}
+            <!-- Defects -->
+            <?php
+            $defectsOrdersCountSql = "
+                SELECT COUNT(DISTINCT o.id) as count 
+                FROM orders o 
+                WHERE o.warehouse_employee_id = ? 
+                AND EXISTS (SELECT 1 FROM defect_reports dr 
+                            WHERE dr.order_id = o.id 
+                            AND dr.status != 'resolved')
+            ";
+            $defectsOrdersCount = 0;
+            if ($stmt5 = $conn->prepare($defectsOrdersCountSql)) {
+                $stmt5->bind_param("i", $user_id);
+                $stmt5->execute();
+                $r5 = $stmt5->get_result();
+                if ($r5) {
+                    $defectsResult = $r5->fetch_assoc();
+                    $defectsOrdersCount = (int)$defectsResult['count'];
+                }
+                $stmt5->close();
+            }
 
-
-
-if ($defectsOrdersCount > 0): ?>
-    <a href="?defects=1<?php echo !empty($search_query) ? '&search=' . urlencode($search_query) : ''; ?><?php echo !empty($date_from) ? '&date_from=' . urlencode($date_from) : ''; ?><?php echo !empty($date_to) ? '&date_to=' . urlencode($date_to) : ''; ?>"
-        class="px-4 py-2 rounded-lg text-sm font-medium transition-colors duration-200 relative <?php echo $show_defects ? 'bg-orange-600 text-white' : 'bg-orange-100 text-orange-700 hover:bg-orange-200 pulse-notification'; ?>">
-        <i class="fas fa-exclamation-triangle mr-1"></i>
-        Unresolved Defects (<?php echo $defectsOrdersCount; ?>)
-        <?php if (!$show_defects): ?>
-            <span class="absolute -top-1 -right-1 h-3 w-3 bg-orange-500 border-2 border-white rounded-full animate-ping"></span>
-            <span class="absolute -top-1 -right-1 h-3 w-3 bg-orange-500 border-2 border-white rounded-full"></span>
-        <?php endif; ?>
-    </a>
-<?php endif; ?>
-
-                    <!-- Ready for Schedule Filter - ADD THIS NEW TAB -->
-                    <?php if ($readyForScheduleCount > 0): ?>
-                        <a href="?ready_schedule=1<?php echo !empty($search_query) ? '&search=' . urlencode($search_query) : ''; ?><?php echo !empty($date_from) ? '&date_from=' . urlencode($date_from) : ''; ?><?php echo !empty($date_to) ? '&date_to=' . urlencode($date_to) : ''; ?>"
-                            class="px-4 py-2 rounded-lg text-sm font-medium transition-colors duration-200 relative <?php echo $show_ready_for_schedule ? 'bg-green-600 text-white' : 'bg-green-100 text-green-700 hover:bg-green-200 pulse-notification'; ?>">
-                            <i class="fas fa-calendar-check mr-1"></i>
-                            Ready to Schedule (<?php echo $readyForScheduleCount; ?>)
-                            <?php if (!$show_ready_for_schedule): ?>
-                                <span class="absolute -top-1 -right-1 h-3 w-3 bg-green-500 border-2 border-white rounded-full animate-ping"></span>
-                                <span class="absolute -top-1 -right-1 h-3 w-3 bg-green-500 border-2 border-white rounded-full"></span>
-                            <?php endif; ?>
-                        </a>
+            if ($defectsOrdersCount > 0): ?>
+                <a href="?defects=1<?php echo !empty($search_query) ? '&search=' . urlencode($search_query) : ''; ?><?php echo !empty($date_from) ? '&date_from=' . urlencode($date_from) : ''; ?><?php echo !empty($date_to) ? '&date_to=' . urlencode($date_to) : ''; ?>"
+                   class="relative px-3 py-1.5 rounded-lg text-xs font-medium transition-all duration-200 inline-flex items-center gap-1.5 <?php echo $show_defects ? 'bg-orange-600 text-white shadow-sm' : 'bg-orange-100 text-orange-700 hover:bg-orange-200'; ?>">
+                    <i class="fas fa-exclamation-triangle text-sm"></i>
+                    <span>Defects</span>
+                    <span class="ml-1 px-1.5 py-0.5 rounded text-xs <?php echo $show_defects ? 'bg-white/20' : 'bg-orange-200'; ?>">
+                        <?php echo $defectsOrdersCount; ?>
+                    </span>
+                    <?php if (!$show_defects): ?>
+                        <span class="absolute -top-1 -right-1 h-2 w-2 bg-orange-500 border border-white rounded-full animate-pulse"></span>
                     <?php endif; ?>
+                </a>
+            <?php endif; ?>
 
-<!-- Ready to Order Filter - NEW -->
-<?php 
-$readyToOrderCountSql = "
-    SELECT COUNT(DISTINCT o.id) as count 
-    FROM orders o 
-    WHERE o.warehouse_employee_id = ? 
-    AND EXISTS (
-        SELECT 1 FROM po_attachments pa 
-        WHERE pa.order_id = o.id 
-        AND pa.approval_status = 'approved'
-        AND pa.marked_as_ordered = 0
-    )
-";
-$readyToOrderFilterCount = 0;
-if ($stmt_ready_order = $conn->prepare($readyToOrderCountSql)) {
-    $stmt_ready_order->bind_param("i", $user_id);
-    $stmt_ready_order->execute();
-    $r_ready_order = $stmt_ready_order->get_result();
-    if ($r_ready_order) {
-        $readyOrderResult = $r_ready_order->fetch_assoc();
-        $readyToOrderFilterCount = (int)$readyOrderResult['count'];
-    }
-    $stmt_ready_order->close();
-}
+            <!-- Ready to Schedule -->
+            <?php if ($readyForScheduleCount > 0): ?>
+                <a href="?ready_schedule=1<?php echo !empty($search_query) ? '&search=' . urlencode($search_query) : ''; ?><?php echo !empty($date_from) ? '&date_from=' . urlencode($date_from) : ''; ?><?php echo !empty($date_to) ? '&date_to=' . urlencode($date_to) : ''; ?>"
+                   class="relative px-3 py-1.5 rounded-lg text-xs font-medium transition-all duration-200 inline-flex items-center gap-1.5 <?php echo $show_ready_for_schedule ? 'bg-green-600 text-white shadow-sm' : 'bg-green-100 text-green-700 hover:bg-green-200'; ?>">
+                    <i class="fas fa-calendar-check text-sm"></i>
+                    <span>Schedule</span>
+                    <span class="ml-1 px-1.5 py-0.5 rounded text-xs <?php echo $show_ready_for_schedule ? 'bg-white/20' : 'bg-green-200'; ?>">
+                        <?php echo $readyForScheduleCount; ?>
+                    </span>
+                    <?php if (!$show_ready_for_schedule): ?>
+                        <span class="absolute -top-1 -right-1 h-2 w-2 bg-green-500 border border-white rounded-full animate-pulse"></span>
+                    <?php endif; ?>
+                </a>
+            <?php endif; ?>
 
-$show_ready_to_order = isset($_GET['ready_to_order']) ? (bool)$_GET['ready_to_order'] : false;
+            <!-- Ready to Order -->
+            <?php
+            $readyToOrderCountSql = "
+                SELECT COUNT(DISTINCT o.id) as count 
+                FROM orders o 
+                WHERE o.warehouse_employee_id = ? 
+                AND EXISTS (
+                    SELECT 1 FROM po_attachments pa 
+                    WHERE pa.order_id = o.id 
+                    AND pa.approval_status = 'approved'
+                    AND pa.marked_as_ordered = 0
+                )
+            ";
+            $readyToOrderFilterCount = 0;
+            if ($stmt_ready_order = $conn->prepare($readyToOrderCountSql)) {
+                $stmt_ready_order->bind_param("i", $user_id);
+                $stmt_ready_order->execute();
+                $r_ready_order = $stmt_ready_order->get_result();
+                if ($r_ready_order) {
+                    $readyOrderResult = $r_ready_order->fetch_assoc();
+                    $readyToOrderFilterCount = (int)$readyOrderResult['count'];
+                }
+                $stmt_ready_order->close();
+            }
+            $show_ready_to_order = isset($_GET['ready_to_order']) ? (bool)$_GET['ready_to_order'] : false;
 
-if ($readyToOrderFilterCount > 0): ?>
-    <a href="?ready_to_order=1<?php echo !empty($search_query) ? '&search=' . urlencode($search_query) : ''; ?><?php echo !empty($date_from) ? '&date_from=' . urlencode($date_from) : ''; ?><?php echo !empty($date_to) ? '&date_to=' . urlencode($date_to) : ''; ?>"
-        class="px-4 py-2 rounded-lg text-sm font-medium transition-colors duration-200 relative <?php echo $show_ready_to_order ? 'bg-green-600 text-white' : 'bg-green-100 text-green-700 hover:bg-green-200 pulse-notification'; ?>">
-        <i class="fas fa-bell mr-1"></i>
-        Ready to Order (<?php echo $readyToOrderFilterCount; ?>)
-        <?php if (!$show_ready_to_order): ?>
-            <span class="absolute -top-1 -right-1 h-3 w-3 bg-green-500 border-2 border-white rounded-full animate-ping"></span>
-            <span class="absolute -top-1 -right-1 h-3 w-3 bg-green-500 border-2 border-white rounded-full"></span>
-        <?php endif; ?>
-    </a>
-<?php endif; ?>
+            if ($readyToOrderFilterCount > 0): ?>
+                <a href="?ready_to_order=1<?php echo !empty($search_query) ? '&search=' . urlencode($search_query) : ''; ?><?php echo !empty($date_from) ? '&date_from=' . urlencode($date_from) : ''; ?><?php echo !empty($date_to) ? '&date_to=' . urlencode($date_to) : ''; ?>"
+                   class="relative px-3 py-1.5 rounded-lg text-xs font-medium transition-all duration-200 inline-flex items-center gap-1.5 <?php echo $show_ready_to_order ? 'bg-green-600 text-white shadow-sm' : 'bg-green-100 text-green-700 hover:bg-green-200'; ?>">
+                    <i class="fas fa-bell text-sm"></i>
+                    <span>Order Ready</span>
+                    <span class="ml-1 px-1.5 py-0.5 rounded text-xs <?php echo $show_ready_to_order ? 'bg-white/20' : 'bg-green-200'; ?>">
+                        <?php echo $readyToOrderFilterCount; ?>
+                    </span>
+                    <?php if (!$show_ready_to_order): ?>
+                        <span class="absolute -top-1 -right-1 h-2 w-2 bg-green-500 border border-white rounded-full animate-pulse"></span>
+                    <?php endif; ?>
+                </a>
+            <?php endif; ?>
 
-                    <!-- Replacements Ready for Schedule Filter - NEW -->
-<?php if ($readyReplacementsCount > 0): ?>
-    <a href="?ready_replacements=1<?php echo !empty($search_query) ? '&search=' . urlencode($search_query) : ''; ?><?php echo !empty($date_from) ? '&date_from=' . urlencode($date_from) : ''; ?><?php echo !empty($date_to) ? '&date_to=' . urlencode($date_to) : ''; ?>"
-        class="px-4 py-2 rounded-lg text-sm font-medium transition-colors duration-200 relative <?php echo $show_ready_replacements ? 'bg-red-600 text-white' : 'bg-red-100 text-red-700 hover:bg-red-200 pulse-notification'; ?>">
-        <i class="fas fa-sync-alt mr-1"></i>
-        Replacements Ready (<?php echo $readyReplacementsCount; ?>)
-        <?php if (!$show_ready_replacements): ?>
-            <span class="absolute -top-1 -right-1 h-3 w-3 bg-red-500 border-2 border-white rounded-full animate-ping"></span>
-            <span class="absolute -top-1 -right-1 h-3 w-3 bg-red-500 border-2 border-white rounded-full"></span>
-        <?php endif; ?>
-    </a>
-<?php endif; ?>
-                </div>
-
-                <div class="flex gap-4">
-                    <div class="flex-1">
-                        <label class="block text-sm font-medium text-gray-700 mb-1">Search</label>
-                        <input type="text" name="search" value="<?php echo htmlspecialchars($search_query); ?>" placeholder="Order ID, Customer, Email..." class="w-full px-3 py-2 border border-gray-300 rounded-md">
-                    </div>
-                    <div class="flex items-end">
-                        <button type="submit" class="bg-primary-600 hover:bg-primary-700 text-white px-6 py-2 rounded-md transition-colors duration-200">
-                            <i class="fas fa-search mr-2"></i>Search
-                        </button>
-                    </div>
-                </div>
-
-                <!-- Hidden field to preserve ready schedule filter -->
-                <?php if ($show_ready_for_schedule): ?>
-                    <input type="hidden" name="ready_schedule" value="1">
-                <?php endif; ?>
-            </form>
+            <!-- Replacements Ready -->
+            <?php if ($readyReplacementsCount > 0): ?>
+                <a href="?ready_replacements=1<?php echo !empty($search_query) ? '&search=' . urlencode($search_query) : ''; ?><?php echo !empty($date_from) ? '&date_from=' . urlencode($date_from) : ''; ?><?php echo !empty($date_to) ? '&date_to=' . urlencode($date_to) : ''; ?>"
+                   class="relative px-3 py-1.5 rounded-lg text-xs font-medium transition-all duration-200 inline-flex items-center gap-1.5 <?php echo $show_ready_replacements ? 'bg-red-600 text-white shadow-sm' : 'bg-red-100 text-red-700 hover:bg-red-200'; ?>">
+                    <i class="fas fa-sync-alt text-sm"></i>
+                    <span>Rep. Ready</span>
+                    <span class="ml-1 px-1.5 py-0.5 rounded text-xs <?php echo $show_ready_replacements ? 'bg-white/20' : 'bg-red-200'; ?>">
+                        <?php echo $readyReplacementsCount; ?>
+                    </span>
+                    <?php if (!$show_ready_replacements): ?>
+                        <span class="absolute -top-1 -right-1 h-2 w-2 bg-red-500 border border-white rounded-full animate-pulse"></span>
+                    <?php endif; ?>
+                </a>
+            <?php endif; ?>
         </div>
+
+        <!-- Search Bar -->
+        <div class="flex gap-2">
+            <div class="flex-1">
+                <input type="text" name="search" value="<?php echo htmlspecialchars($search_query); ?>" 
+                       placeholder="Order ID, Customer, Email..." 
+                       class="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-primary-600 focus:border-transparent outline-none transition-all duration-200">
+            </div>
+            <button type="submit" class="px-5 py-2 bg-primary-600 hover:bg-primary-700 text-white rounded-lg text-sm font-medium transition-all duration-200 flex items-center gap-2">
+                <i class="fas fa-search"></i>
+                Search
+            </button>
+        </div>
+
+        <!-- Hidden field -->
+        <?php if ($show_ready_for_schedule): ?>
+            <input type="hidden" name="ready_schedule" value="1">
+        <?php endif; ?>
+    </form>
+</div>
 
         <!-- Orders -->
         <?php if (!empty($orders)): ?>
             <div class="space-y-4">
                 <?php foreach ($orders as $order):
                     $assignedItems = (int)$order['assigned_count'];
-$item_count = (int)$order['item_count'];
-$po_attachment_count = (int)$order['po_attachment_count'];
-$approved_replacements_count = (int)($order['approved_replacements_count'] ?? 0);
-$unresolved_defects_count = (int)($order['unresolved_defects_count'] ?? 0);
+                    $item_count = (int)$order['item_count'];
+                    $po_attachment_count = (int)$order['po_attachment_count'];
+                    $approved_replacements_count = (int)($order['approved_replacements_count'] ?? 0);
+                    $unresolved_defects_count = (int)($order['unresolved_defects_count'] ?? 0);
                     $assignmentPercentage = $item_count > 0 ? round(($assignedItems / $item_count) * 100) : 0;
                     $hasPOFiles = $po_attachment_count > 0;
                     $hasReplacements = $approved_replacements_count > 0;
@@ -736,17 +745,17 @@ $unresolved_defects_count = (int)($order['unresolved_defects_count'] ?? 0);
                                         <div class="flex items-center flex-wrap gap-2 mb-1">
                                             <h3 class="text-lg font-bold text-gray-900">Order #<?php echo htmlspecialchars($order['id']); ?></h3>
                                             <?php if ($hasReplacements): ?>
-    <span class="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-red-100 text-red-800 pulse-notification">
-        <i class="fas fa-sync-alt mr-1"></i>
-        <?php echo $approved_replacements_count; ?> Replacement<?php echo $approved_replacements_count > 1 ? 's' : ''; ?>
-    </span>
-<?php endif; ?>
-<?php if ($unresolved_defects_count > 0): ?>
-    <span class="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-orange-100 text-orange-800 pulse-notification">
-        <i class="fas fa-exclamation-triangle mr-1"></i>
-        <?php echo $unresolved_defects_count; ?> Defect<?php echo $unresolved_defects_count > 1 ? 's' : ''; ?>
-    </span>
-<?php endif; ?>
+                                                <span class="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-red-100 text-red-800 pulse-notification">
+                                                    <i class="fas fa-sync-alt mr-1"></i>
+                                                    <?php echo $approved_replacements_count; ?> Replacement<?php echo $approved_replacements_count > 1 ? 's' : ''; ?>
+                                                </span>
+                                            <?php endif; ?>
+                                            <?php if ($unresolved_defects_count > 0): ?>
+                                                <span class="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-orange-100 text-orange-800 pulse-notification">
+                                                    <i class="fas fa-exclamation-triangle mr-1"></i>
+                                                    <?php echo $unresolved_defects_count; ?> Defect<?php echo $unresolved_defects_count > 1 ? 's' : ''; ?>
+                                                </span>
+                                            <?php endif; ?>
                                             <?php
                                             // Check if order is ready for scheduling - ADD THIS HERE TOO
                                             $isReadyForSchedule = false;
@@ -777,35 +786,37 @@ $unresolved_defects_count = (int)($order['unresolved_defects_count'] ?? 0);
                                                     <i class="fas fa-calendar-check mr-1"></i>Ready to Schedule
                                                 </span>
                                             <?php endif; ?>
-                                            <?php 
-// Check if replacements are ready for scheduling
-$replacementsReady = false;
-$warehouse_replacements_count = (int)($order['warehouse_replacements_count'] ?? 0);
-if ($warehouse_replacements_count > 0 && $approved_replacements_count > 0) {
-    $checkReplReadySql = "
+                                            <?php
+                                            // Check if replacements are ready for scheduling
+                                            $replacementsReady = false;
+                                            $warehouse_replacements_count = (int)($order['warehouse_replacements_count'] ?? 0);
+                                            if ($warehouse_replacements_count > 0 && $approved_replacements_count > 0) {
+                                                $checkReplReadySql = "
         SELECT 
             (SELECT COUNT(*) FROM replacement_requests WHERE order_id = ? AND status = 'In Warehouse') as ready_count,
             (SELECT COUNT(*) FROM replacement_requests WHERE order_id = ? AND status IN ('approved', 'processing', 'In Warehouse')) as total_count,
             (SELECT COUNT(*) FROM delivery_schedules WHERE order_id = ? AND item_type = 'replacement') as scheduled_count
     ";
-    if ($checkReplStmt = $conn->prepare($checkReplReadySql)) {
-        $checkReplStmt->bind_param("iii", $order['id'], $order['id'], $order['id']);
-        $checkReplStmt->execute();
-        $replReadyResult = $checkReplStmt->get_result()->fetch_assoc();
-        $checkReplStmt->close();
-        
-        if ($replReadyResult['ready_count'] == $replReadyResult['total_count']
-            && $replReadyResult['total_count'] > 0
-            && $replReadyResult['scheduled_count'] == 0) {
-            $replacementsReady = true;
-        }
-    }
-}
-if ($replacementsReady): ?>
-    <span class="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-red-100 text-red-800 pulse-notification relative">
-        <i class="fas fa-sync-alt mr-1"></i>Replacements Ready
-    </span>
-<?php endif; ?>
+                                                if ($checkReplStmt = $conn->prepare($checkReplReadySql)) {
+                                                    $checkReplStmt->bind_param("iii", $order['id'], $order['id'], $order['id']);
+                                                    $checkReplStmt->execute();
+                                                    $replReadyResult = $checkReplStmt->get_result()->fetch_assoc();
+                                                    $checkReplStmt->close();
+
+                                                    if (
+                                                        $replReadyResult['ready_count'] == $replReadyResult['total_count']
+                                                        && $replReadyResult['total_count'] > 0
+                                                        && $replReadyResult['scheduled_count'] == 0
+                                                    ) {
+                                                        $replacementsReady = true;
+                                                    }
+                                                }
+                                            }
+                                            if ($replacementsReady): ?>
+                                                <span class="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-red-100 text-red-800 pulse-notification relative">
+                                                    <i class="fas fa-sync-alt mr-1"></i>Replacements Ready
+                                                </span>
+                                            <?php endif; ?>
                                         </div>
                                         <div class="text-sm text-gray-600 space-y-1">
                                             <div class="flex items-center"><i class="fas fa-user mr-2"></i><span><?php echo htmlspecialchars($order['customer_name']); ?></span></div>
@@ -833,104 +844,104 @@ if ($replacementsReady): ?>
                                         <div class="mt-1 text-gray-500"><?php echo $assignedItems; ?>/<?php echo $item_count; ?> assigned</div>
 
                                         <?php if ($hasPOFiles): ?>
-    <div class="mt-2 text-green-600">
-        <i class="fas fa-file-excel mr-1"></i>
-        <?php echo $po_attachment_count; ?> P.O. file(s)
-    </div>
-    <?php
-    // Check if there are approved POs ready to order
-    $readyToOrderSql = "SELECT COUNT(*) as count FROM po_attachments 
+                                            <div class="mt-2 text-green-600">
+                                                <i class="fas fa-file-excel mr-1"></i>
+                                                <?php echo $po_attachment_count; ?> P.O. file(s)
+                                            </div>
+                                            <?php
+                                            // Check if there are approved POs ready to order
+                                            $readyToOrderSql = "SELECT COUNT(*) as count FROM po_attachments 
                         WHERE order_id = ? AND approval_status = 'approved' 
                         AND marked_as_ordered = 0";
-    $readyToOrderStmt = $conn->prepare($readyToOrderSql);
-    $readyToOrderStmt->bind_param("i", $order['id']);
-    $readyToOrderStmt->execute();
-    $readyToOrderResult = $readyToOrderStmt->get_result()->fetch_assoc();
-    $readyToOrderStmt->close();
-    $readyToOrderCount = (int)$readyToOrderResult['count'];
-    
-    if ($readyToOrderCount > 0): ?>
-        <div class="mt-1 flex items-center">
-            <span class="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-green-100 text-green-800 pulse-notification">
-                <i class="fas fa-bell mr-1"></i>
-                <?php echo $readyToOrderCount; ?> Ready to Order
-            </span>
-        </div>
-    <?php endif; ?>
-<?php endif; ?>
+                                            $readyToOrderStmt = $conn->prepare($readyToOrderSql);
+                                            $readyToOrderStmt->bind_param("i", $order['id']);
+                                            $readyToOrderStmt->execute();
+                                            $readyToOrderResult = $readyToOrderStmt->get_result()->fetch_assoc();
+                                            $readyToOrderStmt->close();
+                                            $readyToOrderCount = (int)$readyToOrderResult['count'];
+
+                                            if ($readyToOrderCount > 0): ?>
+                                                <div class="mt-1 flex items-center">
+                                                    <span class="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-green-100 text-green-800 pulse-notification">
+                                                        <i class="fas fa-bell mr-1"></i>
+                                                        <?php echo $readyToOrderCount; ?> Ready to Order
+                                                    </span>
+                                                </div>
+                                            <?php endif; ?>
+                                        <?php endif; ?>
                                     </div>
                                 </div>
 
                                 <div class="flex flex-col items-center space-y-2 ml-4">
-                                    <?php 
+                                    <?php
 
-// Check if all PO files are approved
-$allPOApprovedSql = "SELECT 
+                                    // Check if all PO files are approved
+                                    $allPOApprovedSql = "SELECT 
     COUNT(*) as total_pos,
     SUM(CASE WHEN approval_status = 'approved' THEN 1 ELSE 0 END) as approved_pos
     FROM po_attachments WHERE order_id = ?";
-$allPOApprovedStmt = $conn->prepare($allPOApprovedSql);
-$allPOApprovedStmt->bind_param("i", $order['id']);
-$allPOApprovedStmt->execute();
-$allPOApprovedResult = $allPOApprovedStmt->get_result()->fetch_assoc();
-$allPOApprovedStmt->close();
+                                    $allPOApprovedStmt = $conn->prepare($allPOApprovedSql);
+                                    $allPOApprovedStmt->bind_param("i", $order['id']);
+                                    $allPOApprovedStmt->execute();
+                                    $allPOApprovedResult = $allPOApprovedStmt->get_result()->fetch_assoc();
+                                    $allPOApprovedStmt->close();
 
-$totalPOs = (int)$allPOApprovedResult['total_pos'];
-$approvedPOs = (int)$allPOApprovedResult['approved_pos'];
-$allPOsApproved = ($totalPOs > 0 && $totalPOs === $approvedPOs);
+                                    $totalPOs = (int)$allPOApprovedResult['total_pos'];
+                                    $approvedPOs = (int)$allPOApprovedResult['approved_pos'];
+                                    $allPOsApproved = ($totalPOs > 0 && $totalPOs === $approvedPOs);
 
-// Always show Manage P.O. button (for both generating new and managing existing)
-?>
-    <a href="warehouse_staff_po_management_A.php?order_id=<?php echo urlencode($order['id']); ?>" 
-       class="bg-primary-600 hover:bg-primary-700 text-white px-4 py-2 rounded-lg transition-colors duration-200 flex items-center space-x-2">
-        <i class="fas fa-cogs"></i>
-        <span><?php echo $hasPOFiles ? 'Manage P.O.' : 'Generate P.O.'; ?></span>
-    </a>
+                                    // Always show Manage P.O. button (for both generating new and managing existing)
+                                    ?>
+                                    <a href="warehouse_staff_po_management_A.php?order_id=<?php echo urlencode($order['id']); ?>"
+                                        class="bg-primary-600 hover:bg-primary-700 text-white px-4 py-2 rounded-lg transition-colors duration-200 flex items-center space-x-2">
+                                        <i class="fas fa-cogs"></i>
+                                        <span><?php echo $hasPOFiles ? 'Manage P.O.' : 'Generate P.O.'; ?></span>
+                                    </a>
 
                                     <?php if ($hasPOFiles): ?>
-                                        <a href="warehouse_head_staff_view_po_files_B.php?order_id=<?php echo urlencode($order['id']); ?>" 
-                                           class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg transition-colors duration-200 flex items-center space-x-2">
+                                        <a href="warehouse_head_staff_view_po_files_B.php?order_id=<?php echo urlencode($order['id']); ?>"
+                                            class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg transition-colors duration-200 flex items-center space-x-2">
                                             <i class="fas fa-eye"></i>
                                             <span>View P.O. (<?php echo $po_attachment_count; ?>)</span>
                                         </a>
                                     <?php endif; ?>
 
-                                    <?php 
-// Only show Track Items if PO files exist AND all are marked as ordered
-if (in_array($order['status'], ['processing', 'Ready for Pickup', 'Picked Up', 'Delivered', 'Out for Delivery']) && $hasPOFiles) {
-    // Check if all PO files are marked as ordered
-    $checkOrderedSql = "SELECT 
+                                    <?php
+                                    // Only show Track Items if PO files exist AND all are marked as ordered
+                                    if (in_array($order['status'], ['processing', 'Ready for Pickup', 'Picked Up', 'Delivered', 'Out for Delivery']) && $hasPOFiles) {
+                                        // Check if all PO files are marked as ordered
+                                        $checkOrderedSql = "SELECT 
         COUNT(*) as total_pos,
         SUM(CASE WHEN marked_as_ordered = 1 THEN 1 ELSE 0 END) as ordered_pos
         FROM po_attachments WHERE order_id = ?";
-    $checkOrderedStmt = $conn->prepare($checkOrderedSql);
-    $checkOrderedStmt->bind_param("i", $order['id']);
-    $checkOrderedStmt->execute();
-    $checkOrderedResult = $checkOrderedStmt->get_result()->fetch_assoc();
-    $checkOrderedStmt->close();
-    
-    $totalPOsCheck = (int)$checkOrderedResult['total_pos'];
-    $orderedPOsCheck = (int)$checkOrderedResult['ordered_pos'];
-    $allPOsOrderedCheck = ($totalPOsCheck > 0 && $totalPOsCheck === $orderedPOsCheck);
-    
-    if ($allPOsOrderedCheck):
-?>
-    <a href="warehouse_staff_order_tracking_C.php?order_id=<?php echo urlencode($order['id']); ?>" class="bg-purple-600 hover:bg-purple-700 text-white px-3 py-2 rounded-lg transition-colors duration-200 flex items-center space-x-2 text-sm">
-        <i class="fas fa-route"></i><span>Track Items</span>
-    </a>
-<?php 
-    endif;
-}
-?>
+                                        $checkOrderedStmt = $conn->prepare($checkOrderedSql);
+                                        $checkOrderedStmt->bind_param("i", $order['id']);
+                                        $checkOrderedStmt->execute();
+                                        $checkOrderedResult = $checkOrderedStmt->get_result()->fetch_assoc();
+                                        $checkOrderedStmt->close();
+
+                                        $totalPOsCheck = (int)$checkOrderedResult['total_pos'];
+                                        $orderedPOsCheck = (int)$checkOrderedResult['ordered_pos'];
+                                        $allPOsOrderedCheck = ($totalPOsCheck > 0 && $totalPOsCheck === $orderedPOsCheck);
+
+                                        if ($allPOsOrderedCheck):
+                                    ?>
+                                            <a href="warehouse_staff_order_tracking_C.php?order_id=<?php echo urlencode($order['id']); ?>" class="bg-purple-600 hover:bg-purple-700 text-white px-3 py-2 rounded-lg transition-colors duration-200 flex items-center space-x-2 text-sm">
+                                                <i class="fas fa-route"></i><span>Track Items</span>
+                                            </a>
+                                    <?php
+                                        endif;
+                                    }
+                                    ?>
                                     <!-- Defect Reports Button -->
                                     <?php if ($unresolved_defects_count > 0): ?>
-    <a href="view_defects.php?order_id=<?php echo urlencode($order['id']); ?>"
-        class="bg-orange-600 hover:bg-orange-700 text-white px-3 py-2 rounded-lg transition-colors duration-200 flex items-center space-x-2 text-sm pulse-notification relative">
-        <i class="fas fa-exclamation-triangle"></i>
-        <span>View Defects (<?php echo $unresolved_defects_count; ?>)</span>
-        <span class="absolute -top-1 -right-1 h-3 w-3 bg-orange-500 border-2 border-white rounded-full animate-ping"></span>
-    </a>
-<?php endif; ?>
+                                        <a href="view_defects.php?order_id=<?php echo urlencode($order['id']); ?>"
+                                            class="bg-orange-600 hover:bg-orange-700 text-white px-3 py-2 rounded-lg transition-colors duration-200 flex items-center space-x-2 text-sm pulse-notification relative">
+                                            <i class="fas fa-exclamation-triangle"></i>
+                                            <span>View Defects (<?php echo $unresolved_defects_count; ?>)</span>
+                                            <span class="absolute -top-1 -right-1 h-3 w-3 bg-orange-500 border-2 border-white rounded-full animate-ping"></span>
+                                        </a>
+                                    <?php endif; ?>
                                 </div>
                             </div>
                         </div>
@@ -944,16 +955,16 @@ if (in_array($order['status'], ['processing', 'Ready for Pickup', 'Picked Up', '
                     <h3 class="text-lg font-medium mb-2">No Orders Found</h3>
                     <p class="text-sm">
                         <?php if ($show_replacements): ?>
-    You don't have any orders with approved replacement requests.
-    <?php elseif ($show_ready_to_order): ?>
-    You don't have any orders with P.O. files ready to order from suppliers.
-<?php elseif ($show_ready_for_schedule): ?>
-    You don't have any orders ready for delivery scheduling.
-<?php elseif ($show_defects): ?>
-    You don't have any orders with unresolved defects.
-<?php else: ?>
-    You don't have any assigned orders right now.
-<?php endif; ?>
+                            You don't have any orders with approved replacement requests.
+                        <?php elseif ($show_ready_to_order): ?>
+                            You don't have any orders with P.O. files ready to order from suppliers.
+                        <?php elseif ($show_ready_for_schedule): ?>
+                            You don't have any orders ready for delivery scheduling.
+                        <?php elseif ($show_defects): ?>
+                            You don't have any orders with unresolved defects.
+                        <?php else: ?>
+                            You don't have any assigned orders right now.
+                        <?php endif; ?>
                     </p>
                     <?php if ($show_replacements || $show_ready_for_schedule): ?>
                         <a href="?" class="mt-4 inline-block text-primary-600 hover:text-primary-700 font-medium">

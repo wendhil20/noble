@@ -299,38 +299,78 @@ if (isset($_POST['delete_file'])) {
 <body class="bg-gradient-to-br from-gray-50 to-gray-100 min-h-screen">
     <?php include '../navbar/top.php'; ?>
     
-    <!-- Header -->
-    <div class="bg-white shadow-lg border-b border-gray-200">
-        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-            <div class="flex justify-between items-center py-6">
-                <div class="flex items-center space-x-4">
-                <a href="warehouse_staff_management_main.php" class="bg-gray-100 hover:bg-gray-200 p-2 rounded-lg transition-colors duration-200">
-                    <i class="fas fa-arrow-left text-gray-600"></i>
+  <!-- Header Navbar -->
+<nav class="bg-white shadow-md border-b border-gray-200">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div class="flex items-center justify-between h-20">
+            
+            <!-- Left Section: Logo & Navigation -->
+            <div class="flex items-center gap-4">
+                
+                <!-- Back Button -->
+                <a href="warehouse_staff_management_main.php" 
+                   class="p-2.5 bg-gray-100 hover:bg-gray-200 rounded-lg transition-colors duration-200"
+                   title="Back">
+                    <i class="fas fa-arrow-left text-gray-600 text-lg"></i>
                 </a>
+                
+                <!-- Generate P.O. Button -->
                 <a href="warehouse_staff_generate_po_A-B.php?order_id=<?php echo $order_id; ?>" 
-                   class="bg-green-500 hover:bg-green-600 p-2 rounded-lg transition-colors duration-200"
+                   class="p-2.5 bg-green-500 hover:bg-green-600 rounded-lg transition-colors duration-200"
                    title="Generate New P.O.">
-                    <i class="fas fa-file-invoice text-white"></i>
+                    <i class="fas fa-file-invoice text-white text-lg"></i>
                 </a>
-                    <div class="bg-gradient-to-r from-blue-500 to-blue-600 p-3 rounded-xl shadow-lg">
-                        <i class="fas fa-file-excel text-white text-2xl"></i>
+                
+                <!-- Divider -->
+                <div class="h-8 w-px bg-gray-300"></div>
+                
+                <!-- Icon & Brand -->
+                <div class="flex items-center gap-3">
+                    <div class="bg-gradient-to-r from-blue-500 to-blue-600 p-2.5 rounded-lg shadow-md">
+                        <i class="fas fa-file-excel text-white text-xl"></i>
                     </div>
                     <div>
-                        <h1 class="text-3xl font-bold text-gray-900">P.O. Files</h1>
-                        <p class="text-gray-600 mt-1">Order #<?php echo $order_id; ?> - <?php echo htmlspecialchars($order['customer_name']); ?></p>
+                        <h1 class="text-xl font-bold text-gray-900">P.O. Files</h1>
+                        <p class="text-xs text-gray-500">Order #<?php echo $order_id; ?></p>
                     </div>
                 </div>
-                <div class="text-right">
-                    <div class="bg-blue-50 px-4 py-2 rounded-lg mb-2">
-                        <span class="text-blue-700 font-medium">Status: <?php echo htmlspecialchars(ucfirst($order['status'])); ?></span>
-                    </div>
-                    <div class="bg-blue-50 px-4 py-2 rounded-lg">
-                        <span class="text-blue-700 font-medium"><?php echo count($attachments); ?> P.O. Files</span>
-                    </div>
-                </div>
+                
             </div>
+            
+            <!-- Middle Section: Customer Name -->
+            <div class="flex-1 px-8">
+                <p class="text-center text-sm text-gray-600 font-medium">
+                    <?php echo htmlspecialchars($order['customer_name']); ?>
+                </p>
+            </div>
+            
+            <!-- Right Section: Status -->
+            <div class="flex items-center gap-4">
+                
+                <!-- Status Badge -->
+                <div class="text-right">
+                    <p class="text-xs text-gray-500 uppercase tracking-wider">Status</p>
+                    <p class="text-sm font-bold text-blue-700">
+                        <?php echo htmlspecialchars(ucfirst($order['status'])); ?>
+                    </p>
+                </div>
+                
+                <!-- Divider -->
+                <div class="h-8 w-px bg-gray-300"></div>
+                
+                <!-- File Count -->
+                <div class="text-right">
+                    <p class="text-xs text-gray-500 uppercase tracking-wider">Files</p>
+                    <p class="text-sm font-bold text-blue-700">
+                        <?php echo count($attachments); ?>
+                    </p>
+                </div>
+                
+            </div>
+            
         </div>
     </div>
+</nav>
 
     <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         

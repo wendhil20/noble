@@ -15,10 +15,8 @@ $host = $_SERVER['HTTP_HOST'];
 $isLocalhost = (strpos($host, 'localhost') !== false || strpos($host, '127.0.0.1') !== false);
 
 if ($isLocalhost) {
-    // Localhost path with 'noble' folder
     $redirectUri = $protocol . $host . '/noble/user/google-callback.php';
 } else {
-    // Production domain - starts from 'user'
     $redirectUri = $protocol . $host . '/user/google-callback.php';
 }
 
@@ -53,22 +51,21 @@ if (isset($_GET['code'])) {
         
         $client->setAccessToken($token['access_token']);
         
-        // Use People API (newer and more reliable)
+        // Use People API
         $service = new PeopleService($client);
         $profile = $service->people->get('people/me', [
             'personFields' => 'names,emailAddresses,photos'
         ]);
         
-        // Extract user information
+        // Extract user information with proper null checks
         $emailAddresses = $profile->getEmailAddresses();
         $names = $profile->getNames();
         $photos = $profile->getPhotos();
         
-        $email = $emailAddresses && count($emailAddresses) > 0 ? $emailAddresses[0]->getValue() : '';
-        $name = $names && count($names) > 0 ? $names[0]->getDisplayName() : '';
-        $picture = $photos && count($photos) > 0 ? $photos[0]->getUrl() : '';
+        $email = ($emailAddresses && count($emailAddresses) > 0) ? $emailAddresses[0]->getValue() : '';
+        $name = ($names && count($names) > 0) ? $names[0]->getDisplayName() : '';
+        $picture = ($photos && count($photos) > 0) ? $photos[0]->getUrl() : 'https://via.placeholder.com/150?text=' . urlencode(substr($email, 0, 1));
         
-        // Debug - remove after testing
         error_log("People API - Email: $email, Name: $name, Picture: $picture");
         
         // Ensure we have required data
@@ -84,7 +81,7 @@ if (isset($_GET['code'])) {
         $login_method = 'google';
         
         // Check if user exists
-        $stmt = $conn->prepare("SELECT id, login_method FROM users WHERE email = ?");
+        $stmt = $conn->prepare("SELECT id, login_method, profile_picture FROM users WHERE email = ?");
         if (!$stmt) {
             throw new Exception("Database prepare failed: " . $conn->error);
         }
@@ -110,46 +107,48 @@ if (isset($_GET['code'])) {
             }
             
             $user_id = $insert->insert_id;
+            $insert->close();
             
         } else {
-            // Existing user
+            // Existing user - always update profile picture and remember token
             $row = $result->fetch_assoc();
             $user_id = $row['id'];
-            $existing_method = $row['login_method'];
             
-            // Update user information
-            if ($existing_method !== 'google') {
-                $update = $conn->prepare("UPDATE users SET remember_token = ?, profile_picture = ?, login_method = ? WHERE id = ?");
-                if (!$update) {
-                    throw new Exception("Database prepare failed for update: " . $conn->error);
-                }
-                $update->bind_param("sssi", $remember_token, $picture, $login_method, $user_id);
-            } else {
-                $update = $conn->prepare("UPDATE users SET remember_token = ?, profile_picture = ? WHERE id = ?");
-                if (!$update) {
-                    throw new Exception("Database prepare failed for update: " . $conn->error);
-                }
-                $update->bind_param("ssi", $remember_token, $picture, $user_id);
+            // Always update with latest Google picture
+            $update = $conn->prepare("UPDATE users SET remember_token = ?, profile_picture = ?, login_method = ? WHERE id = ?");
+            if (!$update) {
+                throw new Exception("Database prepare failed for update: " . $conn->error);
             }
+            $update->bind_param("sssi", $remember_token, $picture, $login_method, $user_id);
             
             if (!$update->execute()) {
                 throw new Exception("Failed to update user: " . $update->error);
             }
+            $update->close();
         }
         
-        // Set session variables
+        // Clear old sessions
+        $_SESSION = array();
+        
+        // Set new session variables
         $_SESSION['user_id'] = $user_id;
         $_SESSION['user_name'] = $name;
         $_SESSION['user_email'] = $email;
         $_SESSION['user_picture'] = $picture;
         $_SESSION['google_logged_in'] = true;
         $_SESSION['login_success'] = 'Welcome, ' . htmlspecialchars($name) . '!';
-        // ✅ Assign referral code if user came from a referral link
+        
+        // Assign referral code if user came from a referral link
         require_once '../includes/referral_tracker.php';
         assignReferralToUser($conn, $user_id);
         
         // Set remember token cookie
         setcookie('remember_token', $remember_token, time() + (30 * 24 * 60 * 60), "/", "", false, true);
+        
+        // Clear any previous login error messages
+        unset($_SESSION['login_needed']);
+        
+        $stmt->close();
         
         // Dynamic redirect based on environment
         if ($isLocalhost) {

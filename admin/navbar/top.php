@@ -207,9 +207,9 @@ if (!isset($_SESSION['noble_name']) || !isset($_SESSION['noble_lvl']) || !isset(
                             <i class="ri-user-line text-white text-xl"></i>
                         </div>
                         <div class="flex-1 min-w-0">
-                            <p class="text-sm font-semibold text-gray-800 truncate"><?= htmlspecialchars($_SESSION['noble_name']) ?></p>
+                            <p class="text-sm font-semibold text-gray-800 truncate uppercase"><?= htmlspecialchars($_SESSION['noble_name']) ?></p>
                             <div class="flex items-center space-x-2">
-                                <span class="text-xs text-orange-600 font-medium"><?= htmlspecialchars($_SESSION['noble_lvl']) ?></span>
+                                <span class="text-xs text-orange-600 font-medium uppercase"><?= htmlspecialchars($_SESSION['noble_lvl']) ?></span>
                                 <div class="w-2 h-2 bg-green-400 rounded-full"></div>
                             </div>
                         </div>
@@ -288,15 +288,7 @@ if (!isset($_SESSION['noble_name']) || !isset($_SESSION['noble_lvl']) || !isset(
                 </a>
             <?php endif; ?>
 
-            <?php if (hasAnyRole(['accountant', 'superadmin'])): ?>
-                <a href="../transaction"
-                    @click="sidebarOpen = false"
-                    class="nav-item flex items-center space-x-3 px-4 py-3 rounded-xl font-medium <?= $current_page == 'transaction' ? 'text-orange-600 active-link' : 'text-gray-700 hover:bg-gray-50' ?>">
-                    <i class="ri-bill-line text-xl"></i>
-                    <span>Transactions</span>
-                </a>
-            <?php endif; ?>
-
+      
             <!-- Divider -->
             <div class="pt-4 border-t border-gray-200 mt-4"></div>
 
@@ -375,16 +367,7 @@ if (!isset($_SESSION['noble_name']) || !isset($_SESSION['noble_lvl']) || !isset(
                         </a>
                     <?php endif; ?>
 
-                    <?php if (hasAnyRole(['accountant', 'superadmin'])): ?>
-                        <a href="../transaction"
-                            class="desktop-nav-item nav-item px-4 py-2 rounded-lg font-medium transition-all duration-300 
-                              <?= $current_page == 'transaction' ? 'text-orange-600 bg-orange-50 active' : 'text-gray-700 hover:text-orange-500 hover:bg-gray-50' ?>">
-                            <div class="flex items-center space-x-2">
-                                <i class="ri-bill-line text-lg"></i>
-                                <span>Transactions</span>
-                            </div>
-                        </a>
-                    <?php endif; ?>
+         
 
                     <!-- Quick Action Bar -->
                     <div class="  py-3">
@@ -430,7 +413,7 @@ if (!isset($_SESSION['noble_name']) || !isset($_SESSION['noble_lvl']) || !isset(
                                                         <span>Individual P.O Approval</span>
                                                     </a>
                                                 </div>
-                                                <hr class="my-2 border-gray-200">
+                                                
                                             <?php endif; ?>
 
                                             <?php if (hasAnyRole(['superadmin', 'productspecialist'])): ?>
@@ -479,7 +462,7 @@ if (!isset($_SESSION['noble_name']) || !isset($_SESSION['noble_lvl']) || !isset(
                                                         </div>
                                                     </a>
                                                 </div>
-                                                <hr class="my-2 border-gray-200">
+                                             
                                             <?php endif; ?>
 
                                             <?php if (hasAnyRole(['superadmin', 'sales'])): ?>
@@ -507,49 +490,49 @@ if (!isset($_SESSION['noble_name']) || !isset($_SESSION['noble_lvl']) || !isset(
                                                         <span>Orders</span>
                                                     </a>
 
-                                            <!-- Dashboard Sales with Notification Badge -->
-<a href="../orders/main-dashboardorder-page-1"
-    class="quick-action-item flex items-center space-x-3 px-3 py-2.5 text-sm text-gray-700 
+                                                    <!-- Dashboard Sales with Notification Badge -->
+                                                    <a href="../orders/main-dashboardorder-page-1"
+                                                        class="quick-action-item flex items-center space-x-3 px-3 py-2.5 text-sm text-gray-700 
            hover:bg-orange-50 hover:text-orange-600 rounded-lg transition-all duration-150 relative">
-    <i class="ri-bar-chart-grouped-line text-lg"></i>
-    <span>Customize Quotation Request</span>
-    
-    <!-- Notification Badge -->
-    <span id="quote-notification" 
-        class="absolute -top-1 -right-1 bg-red-500 text-white text-xs font-bold rounded-full w-5 h-5 
+                                                        <i class="ri-bar-chart-grouped-line text-lg"></i>
+                                                        <span>Customize Quotation Request</span>
+
+                                                        <!-- Notification Badge -->
+                                                        <span id="quote-notification"
+                                                            class="absolute -top-1 -right-1 bg-red-500 text-white text-xs font-bold rounded-full w-5 h-5 
                flex items-center justify-center hidden">
-        <span id="quote-count">0</span>
-    </span>
-</a>
+                                                            <span id="quote-count">0</span>
+                                                        </span>
+                                                    </a>
 
-<script>
-// Check notification count on page load
-document.addEventListener('DOMContentLoaded', function() {
-    checkQuoteNotifications();
-    
-    // Check every 30 seconds for new requests
-    setInterval(checkQuoteNotifications, 30000);
-});
+                                                    <script>
+                                                        // Check notification count on page load
+                                                        document.addEventListener('DOMContentLoaded', function() {
+                                                            checkQuoteNotifications();
 
-function checkQuoteNotifications() {
-    fetch('../orders/main-get-request-details-page-1-A.php?action=get-notification-count')
-        .then(response => response.json())
-        .then(data => {
-            if (data.success && data.pending_count > 0) {
-                const badge = document.getElementById('quote-notification');
-                const count = document.getElementById('quote-count');
-                
-                count.textContent = data.pending_count;
-                badge.classList.remove('hidden');
-            } else {
-                document.getElementById('quote-notification').classList.add('hidden');
-            }
-        })
-        .catch(error => console.error('Error fetching notification count:', error));
-}
-</script>
+                                                            // Check every 30 seconds for new requests
+                                                            setInterval(checkQuoteNotifications, 30000);
+                                                        });
 
-                                             
+                                                        function checkQuoteNotifications() {
+                                                            fetch('../orders/main-get-request-details-page-1-A.php?action=get-notification-count')
+                                                                .then(response => response.json())
+                                                                .then(data => {
+                                                                    if (data.success && data.pending_count > 0) {
+                                                                        const badge = document.getElementById('quote-notification');
+                                                                        const count = document.getElementById('quote-count');
+
+                                                                        count.textContent = data.pending_count;
+                                                                        badge.classList.remove('hidden');
+                                                                    } else {
+                                                                        document.getElementById('quote-notification').classList.add('hidden');
+                                                                    }
+                                                                })
+                                                                .catch(error => console.error('Error fetching notification count:', error));
+                                                        }
+                                                    </script>
+
+
                                                     <!-- Target Price Management -->
                                                     <a href="../orders/target-price-management.php"
                                                         class="quick-action-item flex items-center space-x-3 px-3 py-2.5 text-sm text-gray-700 
@@ -578,7 +561,7 @@ function checkQuoteNotifications() {
 
                                                 </div>
 
-                                                <hr class="my-2 border-gray-200">
+
                                             <?php endif; ?>
 
 
@@ -592,32 +575,38 @@ function checkQuoteNotifications() {
                                                             <span>Dashboard</span>
                                                         </a>
                                                     <?php endif; ?>
-                                                      <?php if (hasAnyRole(['superadmin'])): ?>
-                                                    <a href="../logistic_management/logistic-dispatcher-dashboard-page-13"
-                                                        class="quick-action-item flex items-center space-x-3 px-3 py-2.5 text-sm text-gray-700 hover:bg-orange-50 hover:text-orange-600 rounded-lg transition-all duration-150">
-                                                        <i class="ri-file-info-line text-lg"></i>
-                                                        <span>Dispatcher Dashboard</span>
-                                                    </a>
-                                                      <?php endif; ?>
-                                                    <a href="../warehouse_management/qr_scanner"
+                                                                                                     
+                                    
+                                                  <?php if (hasAnyRole(['superadmin']) || !hasSubrole(['dispatcher', ''])): ?>
+                                                        <a href="../warehouse_management/qr_scanner"
+                                                            class="quick-action-item flex items-center space-x-3 px-3 py-2.5 text-sm text-gray-700 hover:bg-orange-50 hover:text-orange-600 rounded-lg transition-all duration-150">
+                                                            <i class="ri-qr-code-line text-lg"></i>
+                                                            <span>QR Scanner</span>
+                                                        </a>
+                                                    <?php endif; ?>
+
+                                                  <?php if (hasAnyRole(['superadmin']) || !hasSubrole([''])): ?>
+                                                    <a href="../logistic_management/logistic-dispatcher-dashboard-page-13.php"
                                                         class="quick-action-item flex items-center space-x-3 px-3 py-2.5 text-sm text-gray-700 hover:bg-orange-50 hover:text-orange-600 rounded-lg transition-all duration-150">
                                                         <i class="ri-qr-code-line text-lg"></i>
-                                                        <span>QR Scanner</span>
+                                                        <span>Dashboard Dispatcher</span>
                                                     </a>
-                                               
+                                                    <?php endif; ?>
+
+
                                                     <a href="../truck_management/transpo_add_vehicle"
                                                         class="quick-action-item flex items-center space-x-3 px-3 py-2.5 text-sm text-gray-700 hover:bg-orange-50 hover:text-orange-600 rounded-lg transition-all duration-150">
                                                         <i class="ri-truck-line text-lg"></i>
                                                         <span>Add Courier Vehicle</span>
                                                     </a>
-                                         
+
                                                     <a href="../client/delivery_data_input"
                                                         class="quick-action-item flex items-center space-x-3 px-3 py-2.5 text-sm text-gray-700 hover:bg-orange-50 hover:text-orange-600 rounded-lg transition-all duration-150">
                                                         <i class="ri-file-info-line text-lg"></i>
                                                         <span>Delivery Info Management</span>
                                                     </a>
                                                 </div>
-                                                <hr class="my-2 border-gray-200">
+                                              
                                             <?php endif; ?>
 
                                             <?php if (hasAnyRole(['superadmin', 'hr'])): ?>
@@ -634,7 +623,7 @@ function checkQuoteNotifications() {
                                                         <span>Account Management</span>
                                                     </a>
                                                 </div>
-                                                <hr class="my-2 border-gray-200">
+                                               
                                             <?php endif; ?>
 
                                             <?php if (hasAnyRole(['superadmin', 'supplier'])): ?>
@@ -646,7 +635,7 @@ function checkQuoteNotifications() {
                                                         <span>Profile</span>
                                                     </a>
                                                 </div>
-                                                <hr class="my-2 border-gray-200">
+                                             
                                             <?php endif; ?>
 
                                             <?php if (hasAnyRole(['superadmin', 'warehouse'])): ?>
@@ -661,7 +650,7 @@ function checkQuoteNotifications() {
                                                         </a>
                                                     <?php endif; ?>
 
-                                                    <?php if (hasAnyRole(['superadmin']) || !hasSubrole(['warehouse_receiver'])): ?>
+                                                    <?php if (hasAnyRole(['superadmin']) || !hasSubrole(['warehouse_receiver', ''])): ?>
                                                         <a href="../warehouse_management/warehouse_staff_management_main"
                                                             class="quick-action-item flex items-center space-x-3 px-3 py-2.5 text-sm text-gray-700 hover:bg-orange-50 hover:text-orange-600 rounded-lg transition-all duration-150">
                                                             <i class="ri-archive-line text-lg"></i>
@@ -669,21 +658,22 @@ function checkQuoteNotifications() {
                                                         </a>
                                                     <?php endif; ?>
 
-                                                    <?php if (hasAnyRole(['superadmin']) || !hasSubrole(['warehouse_staff'])): ?>
+                                                    <?php if (hasAnyRole(['superadmin']) || !hasSubrole(['warehouse_staff', ''])): ?>
                                                         <a href="../warehouse_management/receiver_po_list_main"
                                                             class="quick-action-item flex items-center space-x-3 px-3 py-2.5 text-sm text-gray-700 hover:bg-orange-50 hover:text-orange-600 rounded-lg transition-all duration-150">
                                                             <i class="ri-search-eye-line text-lg"></i>
                                                             <span>Assigned Receive Items</span>
                                                         </a>
                                                     <?php endif; ?>
-
-                                                    <a href="../warehouse_management/qr_scanner"
-                                                        class="quick-action-item flex items-center space-x-3 px-3 py-2.5 text-sm text-gray-700 hover:bg-orange-50 hover:text-orange-600 rounded-lg transition-all duration-150">
-                                                        <i class="ri-qr-code-line text-lg"></i>
-                                                        <span>QR Scanner</span>
-                                                    </a>
+                                                    <?php if (hasAnyRole(['superadmin']) || !hasSubrole(['warehouse_staff', ''])): ?>
+                                                        <a href="../warehouse_management/qr_scanner"
+                                                            class="quick-action-item flex items-center space-x-3 px-3 py-2.5 text-sm text-gray-700 hover:bg-orange-50 hover:text-orange-600 rounded-lg transition-all duration-150">
+                                                            <i class="ri-qr-code-line text-lg"></i>
+                                                            <span>QR Scanner</span>
+                                                        </a>
+                                                    <?php endif; ?>
                                                 </div>
-                                                <hr class="my-2 border-gray-200">
+
                                             <?php endif; ?>
 
                                             <?php if (hasAnyRole(['superadmin', 'accountant'])): ?>
@@ -710,16 +700,16 @@ function checkQuoteNotifications() {
                                                             <span>Project Approval</span>
                                                         </a>
                                                     <?php endif; ?>
-                                                  
-                                                   <!-- HIDDEN: Only show for superadmin -->
-        <?php if (hasAnyRole(['superadmin'])): ?>
-            <a href="../accountant/accountant_view_orders"
-                class="quick-action-item flex items-center space-x-3 px-3 py-2.5 text-sm text-gray-700 
+
+                                                    <!-- HIDDEN: Only show for superadmin -->
+                                                    <?php if (hasAnyRole(['superadmin'])): ?>
+                                                        <a href="../accountant/accountant_view_orders"
+                                                            class="quick-action-item flex items-center space-x-3 px-3 py-2.5 text-sm text-gray-700 
               hover:bg-orange-50 hover:text-orange-600 rounded-lg transition-all duration-150">
-                <i class="ri-money-dollar-circle-line text-lg"></i>
-                <span>Dashboard</span>
-            </a>
-        <?php endif; ?>
+                                                            <i class="ri-money-dollar-circle-line text-lg"></i>
+                                                            <span>Dashboard</span>
+                                                        </a>
+                                                    <?php endif; ?>
 
                                                     <a href="../accountant/document_controller_view_orders"
                                                         class="quick-action-item flex items-center space-x-3 px-3 py-2.5 text-sm text-gray-700 
@@ -754,24 +744,12 @@ function checkQuoteNotifications() {
                                                             <i class="ri-file-excel-2-line text-lg"></i>
                                                             <span>Project Excel</span>
                                                         </a>
-                                                    <?php endif; ?>
-
-                                                    <?php if (hasAnyRole(['superadmin']) || !hasSubrole(['document_controller'])): ?>
-                                                        <!-- Accountant Management -->
-                                                        <a href="../accountant/accountant.php"
-                                                            class="quick-action-item flex items-center space-x-3 px-3 py-2.5 text-sm text-gray-700 
-                  hover:bg-orange-50 hover:text-orange-600 rounded-lg transition-all duration-150">
-                                                            <i class="ri-briefcase-4-line text-lg"></i>
-                                                            <span>Accountant Management</span>
-                                                        </a>
-                                                    <?php endif; ?>
+                                                    <?php endif; ?>                                   
                                                 </div>
                                             <?php endif; ?>
                                         </div>
                                     </div>
                                 </div>
-
-
                             </div>
                         </div>
                     </div>
@@ -1116,7 +1094,7 @@ function checkQuoteNotifications() {
                         <button @click="activeDropdown = activeDropdown === 'profile' ? null : 'profile'"
                             class="flex items-center space-x-3 px-4 py-2 rounded-lg hover:bg-gray-50 transition-all duration-300">
                             <div class="hidden sm:flex flex-col items-end">
-                                <span class="font-semibold text-sm text-black"><?= htmlspecialchars($_SESSION['noble_name']) ?></span>
+                                <span class="font-semibold text-sm text-black uppercase"><?= htmlspecialchars($_SESSION['noble_name']) ?></span>
                                 <div class="flex items-center space-x-2 mt-0.5">
                                     <div class="w-2 h-2 bg-green-400 rounded-full animate-pulse"></div>
                                     <span class="text-xs text-gray-500">Online</span>
@@ -1138,8 +1116,7 @@ function checkQuoteNotifications() {
                             x-cloak
                             class="absolute right-0 mt-2 w-56 dropdown-menu shadow-xl rounded-xl overflow-hidden">
                             <div class="p-4 bg-gradient-to-r from-orange-50 to-red-50 border-b border-orange-100">
-                                <p class="font-semibold text-gray-800"><?= htmlspecialchars($_SESSION['noble_name']) ?></p>
-                                <p class="text-xs text-gray-500 mt-1"><?= htmlspecialchars($_SESSION['noble_lvl']) ?></p>
+                              
                                 <div class="flex items-center space-x-2 mt-2">
                                     <div class="w-2 h-2 bg-green-400 rounded-full animate-pulse"></div>
                                     <span class="text-xs text-green-600 font-medium">Active</span>
@@ -1157,7 +1134,6 @@ function checkQuoteNotifications() {
                             </div>
                         </div>
                     </div>
-
                 </div>
 
                 <!-- Mobile User Avatar -->

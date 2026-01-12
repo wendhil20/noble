@@ -103,7 +103,7 @@ $material_querys = "
         AVG(r.rating) AS avg_rating,
         COUNT(DISTINCT r.id) AS rating_count,
         COALESCE(SUM(si.quantity), 0) AS total_sold,
-        pc.id AS color_id,
+        pc.id AS color_id,+
         pc.color_name AS color,
         pc.color_code,
         pc.price AS color_price

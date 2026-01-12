@@ -232,9 +232,7 @@ $statsStmt->close();
         <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
             <div class="flex flex-col sm:flex-row sm:justify-between sm:items-center py-4 space-y-4 sm:space-y-0">
                 <div class="flex items-center space-x-4">
-                    <div class="bg-blue-500 p-3 rounded-lg">
-                        <i class="fas fa-eye text-white text-2xl"></i>
-                    </div>
+
                     <div>
                         <h1 class="text-3xl font-bold text-gray-900">Delivery Schedule View</h1>
                         <p class="text-gray-600 mt-1">View and monitor all delivery schedules</p>
@@ -263,6 +261,7 @@ $statsStmt->close();
                         class="filter-btn bg-orange-100 text-orange-700 px-4 py-2 rounded-lg hover:bg-orange-200 transition-colors">
                         <i class="fas fa-exchange-alt mr-1"></i>Replacements
                     </button>
+ 
                 </div>
             </div>
         </div>
@@ -416,6 +415,47 @@ $statsStmt->close();
             </div>
         </div>
     </div>
+
+    <!-- Completed Deliveries Table Section -->
+<div class="mt-4">
+    <div class="bg-white shadow-sm border border-gray-200 p-6">
+        <h3 class="text-2xl font-bold text-gray-900 mb-6 flex items-center">
+            <i class="fas fa-check-circle text-green-600 mr-3"></i>
+            Completed Deliveries
+        </h3>
+
+        <div class="overflow-x-auto">
+            <table class="w-full">
+                <thead>
+                    <tr class="bg-green-50 border-b-2 border-green-200">
+                        <th class="px-6 py-4 text-left text-sm font-semibold text-gray-900">Order ID</th>
+                        <th class="px-6 py-4 text-left text-sm font-semibold text-gray-900">Customer Name</th>
+                        <th class="px-6 py-4 text-left text-sm font-semibold text-gray-900">Delivery Date</th>
+                        <th class="px-6 py-4 text-left text-sm font-semibold text-gray-900">Completed Date</th>
+                        <th class="px-6 py-4 text-left text-sm font-semibold text-gray-900">Courier</th>
+                        <th class="px-6 py-4 text-left text-sm font-semibold text-gray-900">Tracking No.</th>
+                        <th class="px-6 py-4 text-left text-sm font-semibold text-gray-900">Total Amount</th>
+                        <th class="px-6 py-4 text-left text-sm font-semibold text-gray-900">Status</th>
+                    </tr>
+                </thead>
+                <tbody id="completed-table-body">
+                    <!-- This will be populated by JavaScript -->
+                </tbody>
+            </table>
+        </div>
+
+        <!-- No completed deliveries message -->
+        <div id="no-completed-message" class="hidden">
+            <div class="p-8 text-center">
+                <div class="text-gray-400 mb-4">
+                    <i class="fas fa-inbox text-6xl"></i>
+                </div>
+                <h4 class="text-lg font-medium text-gray-600">No Completed Deliveries Yet</h4>
+                <p class="text-gray-500 mt-2">All completed deliveries will appear here</p>
+            </div>
+        </div>
+    </div>
+</div>
 
     <script>
         // Calendar and scheduling data
@@ -1076,11 +1116,76 @@ ${schedule.booking_type && schedule.booking_type !== 'delivery' ? `
             });
         }
 
+        // ADD THIS FUNCTION after the initializeCalendar() function
+
+function populateCompletedDeliveriesTable() {
+    const completedSchedules = schedules.filter(s => s.delivery_status === 'completed');
+    const tableBody = document.getElementById('completed-table-body');
+    const noMessage = document.getElementById('no-completed-message');
+
+    if (completedSchedules.length === 0) {
+        tableBody.innerHTML = '';
+        noMessage.classList.remove('hidden');
+        return;
+    }
+
+    noMessage.classList.add('hidden');
+
+    // Sort by actual delivery time (most recent first)
+    completedSchedules.sort((a, b) => {
+        if (!a.actual_delivery_time || !b.actual_delivery_time) return 0;
+        return new Date(b.actual_delivery_time) - new Date(a.actual_delivery_time);
+    });
+
+    let html = '';
+
+    completedSchedules.forEach(schedule => {
+        const deliveryDate = new Date(schedule.delivery_date + 'T00:00:00');
+        const completedDate = schedule.actual_delivery_time ? new Date(schedule.actual_delivery_time) : null;
+
+        html += `
+            <tr class="border-b border-gray-200 hover:bg-green-50 transition-colors">
+                <td class="px-6 py-4 text-sm font-medium text-blue-600">
+                    <a href="#" class="hover:underline">#${schedule.order_id}</a>
+                </td>
+                <td class="px-6 py-4 text-sm text-gray-900">${escapeHtml(schedule.customer_name)}</td>
+                <td class="px-6 py-4 text-sm text-gray-700">
+                    ${deliveryDate.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}
+                </td>
+                <td class="px-6 py-4 text-sm text-gray-700">
+                    ${completedDate ? completedDate.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric', hour: '2-digit', minute: '2-digit' }) : 'N/A'}
+                </td>
+                <td class="px-6 py-4 text-sm text-gray-700">
+                    ${schedule.courier_name ? escapeHtml(schedule.courier_name) : '<span class="text-gray-400">-</span>'}
+                </td>
+                <td class="px-6 py-4 text-sm text-gray-700">
+                    ${schedule.tracking_number ? escapeHtml(schedule.tracking_number) : '<span class="text-gray-400">-</span>'}
+                </td>
+                <td class="px-6 py-4 text-sm font-semibold text-gray-900">
+                    ₱${parseFloat(schedule.final_total).toLocaleString('en-US', {minimumFractionDigits: 2, maximumFractionDigits: 2})}
+                </td>
+                <td class="px-6 py-4 text-sm">
+                    <span class="bg-green-100 text-green-800 px-3 py-1 rounded-full text-xs font-bold flex items-center w-fit">
+                        <i class="fas fa-check-circle mr-2"></i>
+                        ${schedule.booking_status === 'delivered' ? 'Delivered' : 'Picked Up'}
+                    </span>
+                </td>
+            </tr>
+        `;
+    });
+
+    tableBody.innerHTML = html;
+}
+
+
         // Initialize when page loads
         document.addEventListener('DOMContentLoaded', function() {
             initializeCalendar();
             updateDeliveryDetails(); // Show all deliveries by default
+             populateCompletedDeliveriesTable(); // ADD THIS LINE
         });
+
+        
     </script>
 </body>
 

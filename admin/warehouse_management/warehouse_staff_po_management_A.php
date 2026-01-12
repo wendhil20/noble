@@ -108,14 +108,14 @@ for ($i = 0; $i < count($allItems); $i++) {
 
     // Check if item is unassigned
     $isUnassigned = (is_null($allItems[$i]['supplier_id']) || $allItems[$i]['supplier_id'] == 0);
-    
+
     if ($isUnassigned) {
         $unassignedCount++;
     }
 
     // Get linked suppliers with proper JOIN - using variant_id
-if ($allItems[$i]['variant_id']) {
-    $linkedSuppStmt = $conn->prepare("
+    if ($allItems[$i]['variant_id']) {
+        $linkedSuppStmt = $conn->prepare("
         SELECT 
             slp.supplier_id,
             slp.supplier_type,
@@ -139,7 +139,7 @@ if ($allItems[$i]['variant_id']) {
             END ASC, 
             sl.business_name ASC
     ");
-    $linkedSuppStmt->bind_param("i", $allItems[$i]['variant_id']);
+        $linkedSuppStmt->bind_param("i", $allItems[$i]['variant_id']);
         $linkedSuppStmt->execute();
         $linkedResult = $linkedSuppStmt->get_result();
         $allItems[$i]['linked_suppliers'] = $linkedResult->fetch_all(MYSQLI_ASSOC);
@@ -151,7 +151,7 @@ if ($allItems[$i]['variant_id']) {
                 $allItems[$i]['primary_supplier'] = $supplier;
                 if ($isUnassigned) {
                     $primaryAvailableCount++;
-                    
+
                     // AUTO-ASSIGN: If item is unassigned and has a primary supplier, assign it automatically
                     $autoAssignStmt = $conn->prepare("
                         UPDATE order_items 
@@ -159,7 +159,7 @@ if ($allItems[$i]['variant_id']) {
                         WHERE id = ?
                     ");
                     $autoAssignStmt->bind_param("ii", $supplier['supplier_id'], $allItems[$i]['item_id']);
-                    
+
                     if ($autoAssignStmt->execute()) {
                         // Update the current item data to reflect the assignment
                         $allItems[$i]['supplier_id'] = $supplier['supplier_id'];
@@ -238,8 +238,15 @@ if ($allItems[$i]['variant_id']) {
         }
 
         @keyframes pulse {
-            0%, 100% { opacity: 1; }
-            50% { opacity: 0.5; }
+
+            0%,
+            100% {
+                opacity: 1;
+            }
+
+            50% {
+                opacity: 0.5;
+            }
         }
     </style>
 </head>
@@ -247,16 +254,16 @@ if ($allItems[$i]['variant_id']) {
 <body class="bg-gradient-to-br from-gray-50 to-gray-100 min-h-screen">
     <?php include '../navbar/top.php'; ?>
     <!-- Header -->
-<div class="bg-transparent">
-    <div class="max-w-[95%] mx-auto px-4 sm:px-6 lg:px-8">
-        <div class="flex justify-between items-center py-4">
-            <div class="flex items-center space-x-4">
-                <a href="warehouse_staff_management_main.php" class="text-primary-600 hover:text-primary-700">
-                    <i class="fas fa-arrow-left text-xl"></i>
-                </a>
-                <div class="bg-primary-500 p-3 rounded-lg">
-                    <i class="fas fa-clipboard-list text-white text-2xl"></i>
-                </div>
+    <div class="bg-transparent">
+        <div class="max-w-[95%] mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="flex justify-between items-center py-4">
+                <div class="flex items-center space-x-4">
+                    <a href="warehouse_staff_management_main.php" class="text-primary-600 hover:text-primary-700">
+                        <i class="fas fa-arrow-left text-xl"></i>
+                    </a>
+                    <div class="bg-primary-500 p-3 rounded-lg">
+                        <i class="fas fa-clipboard-list text-white text-2xl"></i>
+                    </div>
                     <div>
                         <h1 class="text-3xl font-bold text-gray-900">P.O Management</h1>
                         <p class="text-gray-600 mt-1">
@@ -273,62 +280,62 @@ if ($allItems[$i]['variant_id']) {
     </div>
 
     <!-- Main Content -->
-<div class="max-w-[95%] mx-auto px-4 sm:px-6 lg:px-8 py-8">
+    <div class="max-w-[95%] mx-auto px-4 sm:px-6 lg:px-8 py-8">
         <div id="alertContainer" class="mb-6"></div>
 
         <!-- Auto-Assignment Notification -->
         <?php if ($autoAssignedCount > 0): ?>
-        <div class="mb-6 bg-green-50 border-l-4 border-green-400 p-4 rounded-lg shadow-sm">
-            <div class="flex items-center mb-2">
-                <div class="flex-shrink-0">
-                    <i class="fas fa-check-circle text-green-600 text-xl"></i>
-                </div>
-                <div class="ml-3">
-                    <h3 class="text-lg font-semibold text-green-900">
-                        Auto-Assignment Complete!
-                    </h3>
-                    <p class="text-green-700 text-sm mt-1">
-                        Successfully assigned <?php echo $autoAssignedCount; ?> item<?php echo $autoAssignedCount > 1 ? 's' : ''; ?> to their primary suppliers.
-                    </p>
-                </div>
-            </div>
-            
-            <!-- Details of auto-assigned items -->
-            <div class="ml-9 mt-3 space-y-2">
-                <?php foreach ($autoAssignedItems as $assignedItem): ?>
-                    <div class="text-sm text-green-800 bg-green-100 px-3 py-2 rounded">
-                        <i class="fas fa-arrow-right mr-2"></i>
-                        <strong><?php echo htmlspecialchars($assignedItem['product_name']); ?></strong>
-                        → <?php echo htmlspecialchars($assignedItem['supplier_name']); ?>
+            <div class="mb-6 bg-green-50 border-l-4 border-green-400 p-4 rounded-lg shadow-sm">
+                <div class="flex items-center mb-2">
+                    <div class="flex-shrink-0">
+                        <i class="fas fa-check-circle text-green-600 text-xl"></i>
                     </div>
-                <?php endforeach; ?>
+                    <div class="ml-3">
+                        <h3 class="text-lg font-semibold text-green-900">
+                            Auto-Assignment Complete!
+                        </h3>
+                        <p class="text-green-700 text-sm mt-1">
+                            Successfully assigned <?php echo $autoAssignedCount; ?> item<?php echo $autoAssignedCount > 1 ? 's' : ''; ?> to their primary suppliers.
+                        </p>
+                    </div>
+                </div>
+
+                <!-- Details of auto-assigned items -->
+                <div class="ml-9 mt-3 space-y-2">
+                    <?php foreach ($autoAssignedItems as $assignedItem): ?>
+                        <div class="text-sm text-green-800 bg-green-100 px-3 py-2 rounded">
+                            <i class="fas fa-arrow-right mr-2"></i>
+                            <strong><?php echo htmlspecialchars($assignedItem['product_name']); ?></strong>
+                            → <?php echo htmlspecialchars($assignedItem['supplier_name']); ?>
+                        </div>
+                    <?php endforeach; ?>
+                </div>
             </div>
-        </div>
         <?php endif; ?>
 
         <!-- Bulk Assignment Section -->
         <?php if ($unassignedCount > 0 && $primaryAvailableCount > 0): ?>
-        <div class="mb-6 bg-blue-50 border border-blue-200 rounded-xl p-4">
-            <div class="flex items-center justify-between">
-                <div class="flex items-center space-x-3">
-                    <div class="bg-blue-100 p-2 rounded-lg">
-                        <i class="fas fa-magic text-blue-600"></i>
+            <div class="mb-6 bg-blue-50 border border-blue-200 rounded-xl p-4">
+                <div class="flex items-center justify-between">
+                    <div class="flex items-center space-x-3">
+                        <div class="bg-blue-100 p-2 rounded-lg">
+                            <i class="fas fa-magic text-blue-600"></i>
+                        </div>
+                        <div>
+                            <h3 class="text-lg font-semibold text-blue-900">Bulk Assignment Available</h3>
+                            <p class="text-blue-700 text-sm">
+                                <?php echo $primaryAvailableCount; ?> unassigned items can be automatically assigned to their primary suppliers
+                            </p>
+                        </div>
                     </div>
-                    <div>
-                        <h3 class="text-lg font-semibold text-blue-900">Bulk Assignment Available</h3>
-                        <p class="text-blue-700 text-sm">
-                            <?php echo $primaryAvailableCount; ?> unassigned items can be automatically assigned to their primary suppliers
-                        </p>
-                    </div>
-                </div>
-                <button onclick="assignAllToPrimarySuppliers()" 
+                    <button onclick="assignAllToPrimarySuppliers()"
                         id="bulkAssignBtn"
                         class="bg-gradient-to-r from-blue-500 to-blue-600 hover:from-blue-600 hover:to-blue-700 text-white px-6 py-3 rounded-lg shadow-lg transition-all duration-200 transform hover:scale-105 flex items-center space-x-2">
-                    <i class="fas fa-wand-magic-sparkles"></i>
-                    <span class="font-medium">Assign All to Primary Suppliers</span>
-                </button>
+                        <i class="fas fa-wand-magic-sparkles"></i>
+                        <span class="font-medium">Assign All to Primary Suppliers</span>
+                    </button>
+                </div>
             </div>
-        </div>
         <?php endif; ?>
 
         <!-- Assignment Status Summary -->
@@ -391,9 +398,6 @@ if ($allItems[$i]['variant_id']) {
                     <div class="flex items-center space-x-4">
                         <div class="text-right">
                             <?php if ($newOrderTotal != $order['total']): ?>
-                                <div class="text-sm text-gray-500">
-                                    Original: <span class="line-through">₱<?php echo number_format($order['total'], 2); ?></span>
-                                </div>
                                 <div class="text-lg font-bold text-amber-600 price-updated">
                                     Updated: ₱<?php echo number_format($newOrderTotal, 2); ?>
                                 </div>
@@ -411,22 +415,7 @@ if ($allItems[$i]['variant_id']) {
                 </div>
             </div>
 
-            <!-- Price Update Notice -->
-            <?php if ($newOrderTotal != $order['total']): ?>
-    <div class="bg-amber-50 border-l-4 border-amber-400 p-4 mb-4">
-        <div class="flex">
-            <div class="flex-shrink-0">
-                <i class="fas fa-exclamation-triangle text-amber-400"></i>
-            </div>
-            <div class="ml-3">
-                <p class="text-sm text-amber-700">
-                    <strong>Price Update Notice:</strong> Some items are now using supplier prices from assigned suppliers.
-                    The total has been recalculated from ₱<?php echo number_format($order['total'], 2); ?> to ₱<?php echo number_format($newOrderTotal, 2); ?>.
-                </p>
-            </div>
-        </div>
-    </div>
-<?php endif; ?>
+       
 
             <!-- Order Items -->
             <?php if (!empty($allItems)): ?>
@@ -436,58 +425,58 @@ if ($allItems[$i]['variant_id']) {
                             <div class="flex justify-between items-start mb-4">
                                 <div class="flex-1">
                                     <h3 class="text-lg font-bold text-gray-900 mb-2">
-    <?php echo htmlspecialchars($item['product_name']); ?>
-    <?php if ($item['namevariant']): ?>
-        <span class="text-sm text-gray-600 font-normal">- <?php echo htmlspecialchars($item['namevariant']); ?></span>
-    <?php endif; ?>
-</h3>
-<div class="grid grid-cols-2 md:grid-cols-4 gap-4 text-sm text-gray-600">
-    <div><strong>Variant ID:</strong> <?php echo htmlspecialchars($item['variant_id']); ?></div>
-    <div><strong>Code:</strong> <?php echo htmlspecialchars($item['codename']); ?></div>
-    <div><strong>Size:</strong> <?php echo htmlspecialchars($item['variant_size_db'] ?? $item['size']); ?></div>
-    <div><strong>Color:</strong> <?php echo htmlspecialchars($item['variant_color_db'] ?? $item['variant_color']); ?></div>
-    <div><strong>Qty:</strong> <?php echo htmlspecialchars($item['quantity']); ?></div>
-</div>
+                                        <?php echo htmlspecialchars($item['product_name']); ?>
+                                        <?php if ($item['namevariant']): ?>
+                                            <span class="text-sm text-gray-600 font-normal">- <?php echo htmlspecialchars($item['namevariant']); ?></span>
+                                        <?php endif; ?>
+                                    </h3>
+                                    <div class="grid grid-cols-2 md:grid-cols-4 gap-4 text-sm text-gray-600">
+                                        <div><strong>Variant ID:</strong> <?php echo htmlspecialchars($item['variant_id']); ?></div>
+                                        <div><strong>Code:</strong> <?php echo htmlspecialchars($item['codename']); ?></div>
+                                        <div><strong>Size:</strong> <?php echo htmlspecialchars($item['variant_size_db'] ?? $item['size']); ?></div>
+                                        <div><strong>Color:</strong> <?php echo htmlspecialchars($item['variant_color_db'] ?? $item['variant_color']); ?></div>
+                                        <div><strong>Qty:</strong> <?php echo htmlspecialchars($item['quantity']); ?></div>
+                                    </div>
 
                                     <!-- Price Information with Update Indicator -->
-<div class="mt-2 text-sm text-gray-600">
-    <div class="flex flex-wrap items-center gap-4">
-        <div>
-            <strong>Price:</strong>
-            <?php if ($item['current_price'] != $item['order_price']): ?>
-                <span class="line-through text-gray-400">₱<?php echo number_format($item['order_price'], 2); ?></span>
-                <span class="price-updated ml-1">₱<?php echo number_format($item['current_price'], 2); ?></span>
-                <i class="fas fa-arrow-up text-amber-500 ml-1" title="Price updated from supplier"></i>
-            <?php else: ?>
-                ₱<?php echo number_format($item['current_price'], 2); ?>
-            <?php endif; ?>
-        </div>
+                                    <div class="mt-2 text-sm text-gray-600">
+                                        <div class="flex flex-wrap items-center gap-4">
+                                            <div>
+                                                <strong>Price:</strong>
+                                                <?php if ($item['current_price'] != $item['order_price']): ?>
+                                                    <span class="line-through text-gray-400">₱<?php echo number_format($item['order_price'], 2); ?></span>
+                                                    <span class="price-updated ml-1">₱<?php echo number_format($item['current_price'], 2); ?></span>
+                                                    <i class="fas fa-arrow-up text-amber-500 ml-1" title="Price updated from supplier"></i>
+                                                <?php else: ?>
+                                                    ₱<?php echo number_format($item['current_price'], 2); ?>
+                                                <?php endif; ?>
+                                            </div>
 
-        <div>
-            <strong>Subtotal:</strong>
-            <?php if ($item['calculated_subtotal'] != $item['original_subtotal']): ?>
-                <span class="line-through text-gray-400">₱<?php echo number_format($item['original_subtotal'], 2); ?></span>
-                <span class="price-updated ml-1">₱<?php echo number_format($item['calculated_subtotal'], 2); ?></span>
-                <i class="fas fa-calculator text-amber-500 ml-1" title="Subtotal recalculated"></i>
-            <?php else: ?>
-                ₱<?php echo number_format($item['calculated_subtotal'], 2); ?>
-            <?php endif; ?>
-        </div>
+                                            <div>
+                                                <strong>Subtotal:</strong>
+                                                <?php if ($item['calculated_subtotal'] != $item['original_subtotal']): ?>
+                                                    <span class="line-through text-gray-400">₱<?php echo number_format($item['original_subtotal'], 2); ?></span>
+                                                    <span class="price-updated ml-1">₱<?php echo number_format($item['calculated_subtotal'], 2); ?></span>
+                                                    <i class="fas fa-calculator text-amber-500 ml-1" title="Subtotal recalculated"></i>
+                                                <?php else: ?>
+                                                    ₱<?php echo number_format($item['calculated_subtotal'], 2); ?>
+                                                <?php endif; ?>
+                                            </div>
 
-        <?php if ($item['origin']): ?>
-            <div>
-                <strong>Origin:</strong> <?php echo htmlspecialchars($item['origin']); ?>
-            </div>
-        <?php endif; ?>
-    </div>
+                                            <?php if ($item['origin']): ?>
+                                                <div>
+                                                    <strong>Origin:</strong> <?php echo htmlspecialchars($item['origin']); ?>
+                                                </div>
+                                            <?php endif; ?>
+                                        </div>
 
-    <?php if ($item['supplier_price'] && $item['current_price'] != $item['order_price']): ?>
-        <div class="mt-1 text-xs text-amber-600">
-            <i class="fas fa-info-circle mr-1"></i>
-            Using supplier price: ₱<?php echo number_format($item['supplier_price'], 2); ?>
-        </div>
-    <?php endif; ?>
-</div>
+                                        <?php if ($item['supplier_price'] && $item['current_price'] != $item['order_price']): ?>
+                                            <div class="mt-1 text-xs text-amber-600">
+                                                <i class="fas fa-info-circle mr-1"></i>
+                                                Using supplier price: ₱<?php echo number_format($item['supplier_price'], 2); ?>
+                                            </div>
+                                        <?php endif; ?>
+                                    </div>
                                 </div>
                             </div>
 
@@ -562,31 +551,31 @@ if ($allItems[$i]['variant_id']) {
                                                             <h4 class="font-semibold text-gray-900 mb-1 text-sm"><?php echo htmlspecialchars($supplier['business_name']); ?></h4>
 
                                                             <!-- Contact Info -->
-<div class="text-xs text-gray-600 space-y-1">
-    <div class="flex items-center">
-        <i class="fas fa-user mr-1"></i>
-        <span><?php echo htmlspecialchars($supplier['primary_contact_name']); ?></span>
-    </div>
-    <div class="flex items-center">
-        <i class="fas fa-envelope mr-1"></i>
-        <span><?php echo htmlspecialchars($supplier['email_address']); ?></span>
-    </div>
-    <div class="flex items-center">
-        <i class="fas fa-phone mr-1"></i>
-        <span><?php echo htmlspecialchars($supplier['phone_number']); ?></span>
-    </div>
-    <?php if ($supplier['supplier_price']): ?>
-        <div class="flex items-center mt-2 pt-2 border-t border-gray-200">
-            <i class="fas fa-tag mr-1 text-green-600"></i>
-            <span class="font-semibold text-green-700">₱<?php echo number_format($supplier['supplier_price'], 2); ?></span>
-        </div>
-    <?php else: ?>
-        <div class="flex items-center mt-2 pt-2 border-t border-gray-200">
-            <i class="fas fa-exclamation-circle mr-1 text-yellow-600"></i>
-            <span class="text-yellow-700 italic">Price not set</span>
-        </div>
-    <?php endif; ?>
-</div>
+                                                            <div class="text-xs text-gray-600 space-y-1">
+                                                                <div class="flex items-center">
+                                                                    <i class="fas fa-user mr-1"></i>
+                                                                    <span><?php echo htmlspecialchars($supplier['primary_contact_name']); ?></span>
+                                                                </div>
+                                                                <div class="flex items-center">
+                                                                    <i class="fas fa-envelope mr-1"></i>
+                                                                    <span><?php echo htmlspecialchars($supplier['email_address']); ?></span>
+                                                                </div>
+                                                                <div class="flex items-center">
+                                                                    <i class="fas fa-phone mr-1"></i>
+                                                                    <span><?php echo htmlspecialchars($supplier['phone_number']); ?></span>
+                                                                </div>
+                                                                <?php if ($supplier['supplier_price']): ?>
+                                                                    <div class="flex items-center mt-2 pt-2 border-t border-gray-200">
+                                                                        <i class="fas fa-tag mr-1 text-green-600"></i>
+                                                                        <span class="font-semibold text-green-700">₱<?php echo number_format($supplier['supplier_price'], 2); ?></span>
+                                                                    </div>
+                                                                <?php else: ?>
+                                                                    <div class="flex items-center mt-2 pt-2 border-t border-gray-200">
+                                                                        <i class="fas fa-exclamation-circle mr-1 text-yellow-600"></i>
+                                                                        <span class="text-yellow-700 italic">Price not set</span>
+                                                                    </div>
+                                                                <?php endif; ?>
+                                                            </div>
 
                                                             <!-- Action Buttons -->
                                                             <div class="flex space-x-2 mt-3">
@@ -617,7 +606,7 @@ if ($allItems[$i]['variant_id']) {
                                     </div>
                                 </div>
 
-                                
+
                             </div>
                         </div>
                     <?php endforeach; ?>
@@ -694,7 +683,7 @@ if ($allItems[$i]['variant_id']) {
             window.location.href = `mailto:${email}?subject=Purchase Order Inquiry - Order #${orderId}&body=Hello,%0D%0A%0D%0AI would like to inquire about products for Order #${orderId}.%0D%0A%0D%0AThank you.`;
         }
 
-        
+
 
         function unassignSupplier(itemId) {
             if (!confirm('Are you sure you want to remove the assigned supplier from this item?')) {
@@ -734,7 +723,7 @@ if ($allItems[$i]['variant_id']) {
 
             const btn = document.getElementById('bulkAssignBtn');
             const originalContent = btn.innerHTML;
-            
+
             // Show loading state
             btn.innerHTML = '<i class="fas fa-spinner fa-spin mr-2"></i>Processing...';
             btn.disabled = true;
@@ -744,7 +733,7 @@ if ($allItems[$i]['variant_id']) {
                     headers: {
                         'Content-Type': 'application/json',
                     },
-                    body: JSON.stringify({  
+                    body: JSON.stringify({
                         order_id: <?php echo $order['id']; ?>,
                         type: 'primary_only'
                     })
@@ -753,7 +742,7 @@ if ($allItems[$i]['variant_id']) {
                 .then(data => {
                     if (data.success) {
                         showAlert(`Successfully assigned ${data.assigned_count} items to their primary suppliers!`, 'success');
-                        
+
                         // Add visual feedback for assigned items
                         if (data.assigned_items) {
                             data.assigned_items.forEach(itemId => {
@@ -763,7 +752,7 @@ if ($allItems[$i]['variant_id']) {
                                 }
                             });
                         }
-                        
+
                         setTimeout(() => location.reload(), 2000);
                     } else {
                         showAlert(data.error || 'Failed to assign suppliers', 'error');
@@ -776,7 +765,8 @@ if ($allItems[$i]['variant_id']) {
                     btn.innerHTML = originalContent;
                     btn.disabled = false;
                 });
-        }
+            }
+            
     </script>
 </body>
 

@@ -402,7 +402,7 @@ if (!empty($view_assigned)) {
                         <span class="text-primary-700 font-medium"><?php echo count($orders); ?> Orders</span>
                     </div>
                     <?php if (!empty($view_assigned)): ?>
-                    <a href="warehouse_head_assignment.php" class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg transition-colors duration-200">
+                    <a href="warehouse_head_assignment_A.php" class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg transition-colors duration-200">
                         <i class="fas fa-arrow-left mr-2"></i>Back to Unassigned
                     </a>
                     <?php endif; ?>

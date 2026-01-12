@@ -377,9 +377,7 @@ if ($empStatsResult) {
         <div class="max-w-[95%] mx-auto px-4 sm:px-6 lg:px-8">
             <div class="flex justify-between items-center py-6">
                 <div class="flex items-center space-x-4">
-                    <div class="bg-white/20 p-4 rounded-xl backdrop-blur-sm">
-                        <i class="fas fa-crown text-yellow-300 text-3xl"></i>
-                    </div>
+                  
                     <div>
                         <p class="text-red-100 mt-1">
                             Viewing: <strong>ALL WAREHOUSE ORDERS</strong>
@@ -399,7 +397,8 @@ if ($empStatsResult) {
                         <span>Manage Assignments</span>
                     </a>
                     <p class="text-red-100 text-sm mt-3">Logged in as:
-                        <strong><?php echo htmlspecialchars($fullname); ?></strong></p>
+                        <strong><?php echo htmlspecialchars($fullname); ?></strong>
+                    </p>
                 </div>
             </div>
         </div>
@@ -525,36 +524,36 @@ if ($empStatsResult) {
                         All Orders (<?php echo $totalOrders; ?>)
                     </a>
 
-                    <?php 
-// Define the order of statuses you want to display (starting from processing, no pending)
-$statusOrder = ['Ongoing', 'processing', 'Ready for Pickup', 'Out for Delivery', 'Delivered', 'completed', 'cancelled'];
+                    <?php
+                    // Define the order of statuses you want to display (starting from processing, no pending)
+                    $statusOrder = ['Ongoing', 'processing', 'Ready for Pickup', 'Out for Delivery', 'Delivered', 'completed', 'cancelled'];
 
-// Status icons and colors
-$statusConfig = [
-    'Ongoing' => ['icon' => 'fa-tasks', 'color' => 'orange'],
-    'processing' => ['icon' => 'fa-cog', 'color' => 'blue'],
-    'Ready for Pickup' => ['icon' => 'fa-box', 'color' => 'indigo'],
-    'Out for Delivery' => ['icon' => 'fa-truck', 'color' => 'purple'],
-    'Delivered' => ['icon' => 'fa-check-circle', 'color' => 'green'],
-    'completed' => ['icon' => 'fa-check-double', 'color' => 'green'],
-    'cancelled' => ['icon' => 'fa-times-circle', 'color' => 'red']
-];
+                    // Status icons and colors
+                    $statusConfig = [
+                        'Ongoing' => ['icon' => 'fa-tasks', 'color' => 'orange'],
+                        'processing' => ['icon' => 'fa-cog', 'color' => 'blue'],
+                        'Ready for Pickup' => ['icon' => 'fa-box', 'color' => 'indigo'],
+                        'Out for Delivery' => ['icon' => 'fa-truck', 'color' => 'purple'],
+                        'Delivered' => ['icon' => 'fa-check-circle', 'color' => 'green'],
+                        'completed' => ['icon' => 'fa-check-double', 'color' => 'green'],
+                        'cancelled' => ['icon' => 'fa-times-circle', 'color' => 'red']
+                    ];
 
-foreach ($statusOrder as $status):
-    if (!isset($statusCounts[$status])) continue;
-    $count = $statusCounts[$status];
-    $config = $statusConfig[$status] ?? ['icon' => 'fa-circle', 'color' => 'gray'];
-    $isActive = ($status_filter === $status && !$show_replacements && !$show_unassigned && !$show_ready_for_schedule);
-?>
-    <a href="?status=<?php echo urlencode($status); ?><?php echo !empty($search_query) ? '&search=' . urlencode($search_query) : ''; ?><?php echo !empty($date_from) ? '&date_from=' . urlencode($date_from) : ''; ?><?php echo !empty($date_to) ? '&date_to=' . urlencode($date_to) : ''; ?><?php echo $employee_filter > 0 ? '&employee=' . $employee_filter : ''; ?>"
-        class="px-4 py-2 rounded-lg text-sm font-medium transition-colors duration-200 flex items-center space-x-1 <?php echo $isActive ? 'bg-' . $config['color'] . '-600 text-white shadow-md' : 'bg-' . $config['color'] . '-100 text-' . $config['color'] . '-700 hover:bg-' . $config['color'] . '-200'; ?>">
-        <i class="fas <?php echo $config['icon']; ?>"></i>
-        <span><?php echo htmlspecialchars(ucfirst($status)); ?></span>
-        <span class="ml-1 px-2 py-0.5 rounded-full text-xs font-bold <?php echo $isActive ? 'bg-white/20' : 'bg-' . $config['color'] . '-200'; ?>">
-            <?php echo (int)$count; ?>
-        </span>
-    </a>
-<?php endforeach; ?>
+                    foreach ($statusOrder as $status):
+                        if (!isset($statusCounts[$status])) continue;
+                        $count = $statusCounts[$status];
+                        $config = $statusConfig[$status] ?? ['icon' => 'fa-circle', 'color' => 'gray'];
+                        $isActive = ($status_filter === $status && !$show_replacements && !$show_unassigned && !$show_ready_for_schedule);
+                    ?>
+                        <a href="?status=<?php echo urlencode($status); ?><?php echo !empty($search_query) ? '&search=' . urlencode($search_query) : ''; ?><?php echo !empty($date_from) ? '&date_from=' . urlencode($date_from) : ''; ?><?php echo !empty($date_to) ? '&date_to=' . urlencode($date_to) : ''; ?><?php echo $employee_filter > 0 ? '&employee=' . $employee_filter : ''; ?>"
+                            class="px-4 py-2 rounded-lg text-sm font-medium transition-colors duration-200 flex items-center space-x-1 <?php echo $isActive ? 'bg-' . $config['color'] . '-600 text-white shadow-md' : 'bg-' . $config['color'] . '-100 text-' . $config['color'] . '-700 hover:bg-' . $config['color'] . '-200'; ?>">
+                            <i class="fas <?php echo $config['icon']; ?>"></i>
+                            <span><?php echo htmlspecialchars(ucfirst($status)); ?></span>
+                            <span class="ml-1 px-2 py-0.5 rounded-full text-xs font-bold <?php echo $isActive ? 'bg-white/20' : 'bg-' . $config['color'] . '-200'; ?>">
+                                <?php echo (int)$count; ?>
+                            </span>
+                        </a>
+                    <?php endforeach; ?>
 
                     <?php if ($readyForScheduleCount > 0): ?>
                         <a href="?ready_schedule=1"
@@ -601,14 +600,14 @@ foreach ($statusOrder as $status):
                     <div>
                         <label class="block text-sm font-medium text-gray-700 mb-1">Filter by Employee</label>
                         <select name="employee"
-    class="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-primary-500 focus:border-transparent">
-    <option value="0">All Staff Members</option>
-    <?php foreach ($warehouseEmployees as $emp): ?>
-        <option value="<?php echo $emp['id']; ?>" <?php echo ($employee_filter == $emp['id']) ? 'selected' : ''; ?>>
-            <?php echo htmlspecialchars($emp['fullname']); ?>
-        </option>
-    <?php endforeach; ?>
-</select>
+                            class="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-primary-500 focus:border-transparent">
+                            <option value="0">All Staff Members</option>
+                            <?php foreach ($warehouseEmployees as $emp): ?>
+                                <option value="<?php echo $emp['id']; ?>" <?php echo ($employee_filter == $emp['id']) ? 'selected' : ''; ?>>
+                                    <?php echo htmlspecialchars($emp['fullname']); ?>
+                                </option>
+                            <?php endforeach; ?>
+                        </select>
                     </div>
 
                     <div class="flex items-end">
@@ -633,7 +632,7 @@ foreach ($statusOrder as $status):
                     $hasPOFiles = $po_attachment_count > 0;
                     $hasReplacements = $approved_replacements_count > 0;
                     $isUnassigned = empty($order['warehouse_employee_id']);
-                    ?>
+                ?>
                     <div
                         class="bg-white rounded-lg shadow-sm border border-gray-200 hover:shadow-md transition-all duration-200 <?php echo $hasReplacements ? 'border-l-4 border-l-red-500' : ''; ?> <?php echo ($isUnassigned && $order['status'] === 'Ongoing') ? 'border-l-4 border-l-orange-500' : ''; ?>">
                         <div class="p-4">
@@ -715,15 +714,15 @@ foreach ($statusOrder as $status):
                                 </div>
 
                                 <!-- Actions Dropdown -->
-<div class="flex-shrink-0 relative">
-    <button onclick="toggleActionsMenu(<?php echo $order['id']; ?>)"
-        class="bg-gray-100 hover:bg-gray-200 p-2 rounded-lg transition-colors duration-200">
-        <i class="fas fa-ellipsis-v text-gray-600"></i>
-    </button>
+                                <div class="flex-shrink-0 relative">
+                                    <button onclick="toggleActionsMenu(<?php echo $order['id']; ?>)"
+                                        class="bg-gray-100 hover:bg-gray-200 p-2 rounded-lg transition-colors duration-200">
+                                        <i class="fas fa-ellipsis-v text-gray-600"></i>
+                                    </button>
 
-    <!-- Dropdown Menu - Now appears at TOP -->
-    <div id="actions-<?php echo $order['id']; ?>"
-        class="hidden absolute right-0 bottom-full mb-2 w-56 bg-white rounded-lg shadow-lg border border-gray-200 z-10">
+                                    <!-- Dropdown Menu - Now appears at TOP -->
+                                    <div id="actions-<?php echo $order['id']; ?>"
+                                        class="hidden absolute right-0 bottom-full mb-2 w-56 bg-white rounded-lg shadow-lg border border-gray-200 z-10">
                                         <div class="py-2">
                                             <?php if ($isUnassigned): ?>
                                                 <a href="warehouse_head_assignment_A.php?order_id=<?php echo urlencode($order['id']); ?>"
@@ -737,12 +736,6 @@ foreach ($statusOrder as $status):
                                                 </a>
                                             <?php endif; ?>
 
-                                            <?php if ($hasPOFiles): ?>
-                                                <a href="warehouse_head_staff_view_po_files_B.php?order_id=<?php echo urlencode($order['id']); ?>"
-                                                    class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 transition-colors">
-                                                    <i class="fas fa-file-alt mr-2 w-4"></i>View P.O. Files
-                                                </a>
-                                            <?php endif; ?>
 
                                             <?php if (in_array($order['status'], ['processing', 'Ready for Pickup', 'Picked Up', 'Delivered', 'Out for Delivery'])): ?>
                                                 <button
@@ -1113,21 +1106,19 @@ foreach ($statusOrder as $status):
             // Render grouped items
             ['local', 'international'].forEach(origin => {
                 if (data.groupedItems[origin] && Object.keys(data.groupedItems[origin]).length > 0) {
-                    const config = origin === 'local' ?
-                        {
-                            color: 'green',
-                            icon: 'fa-home',
-                            emoji: '🏠',
-                            gradient: 'from-green-500 to-green-600',
-                            title: 'Local Products'
-                        } :
-                        {
-                            color: 'blue',
-                            icon: 'fa-globe',
-                            emoji: '🌏',
-                            gradient: 'from-blue-500 to-blue-600',
-                            title: 'International Products'
-                        };
+                    const config = origin === 'local' ? {
+                        color: 'green',
+                        icon: 'fa-home',
+                        emoji: '🏠',
+                        gradient: 'from-green-500 to-green-600',
+                        title: 'Local Products'
+                    } : {
+                        color: 'blue',
+                        icon: 'fa-globe',
+                        emoji: '🌏',
+                        gradient: 'from-blue-500 to-blue-600',
+                        title: 'International Products'
+                    };
 
                     html += `
                         <div class="mb-8">
@@ -1305,26 +1296,26 @@ foreach ($statusOrder as $status):
         }
 
         // Close modal on escape key
-        document.addEventListener('keydown', function (e) {
+        document.addEventListener('keydown', function(e) {
             if (e.key === 'Escape') {
                 closeTrackingModal();
             }
         });
 
         // Close tracking modal when clicking outside
-        document.getElementById('trackingModal').addEventListener('click', function (e) {
+        document.getElementById('trackingModal').addEventListener('click', function(e) {
             if (e.target === this) {
                 closeTrackingModal();
             }
         });
 
         // Auto-refresh every 2 minutes to keep data current
-        setTimeout(function () {
+        setTimeout(function() {
             location.reload();
         }, 120000);
 
         // Highlight newly unassigned orders
-        document.addEventListener('DOMContentLoaded', function () {
+        document.addEventListener('DOMContentLoaded', function() {
             const urlParams = new URLSearchParams(window.location.search);
             if (urlParams.get('unassigned') === '1') {
                 console.log('Showing unassigned orders');
@@ -1348,7 +1339,7 @@ foreach ($statusOrder as $status):
         }
 
         // Close dropdowns when clicking outside
-        document.addEventListener('click', function (e) {
+        document.addEventListener('click', function(e) {
             if (!e.target.closest('button[onclick^="toggleActionsMenu"]') && !e.target.closest('[id^="actions-"]')) {
                 document.querySelectorAll('[id^="actions-"]').forEach(menu => {
                     menu.classList.add('hidden');

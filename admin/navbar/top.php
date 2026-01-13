@@ -288,7 +288,7 @@ if (!isset($_SESSION['noble_name']) || !isset($_SESSION['noble_lvl']) || !isset(
                 </a>
             <?php endif; ?>
 
-      
+
             <!-- Divider -->
             <div class="pt-4 border-t border-gray-200 mt-4"></div>
 
@@ -345,16 +345,7 @@ if (!isset($_SESSION['noble_name']) || !isset($_SESSION['noble_lvl']) || !isset(
                         </a>
                     <?php endif; ?>
 
-                    <?php if (hasAnyRole(['superadmin'])): ?>
-                        <a href="../addclient/insertclient"
-                            class="desktop-nav-item nav-item px-4 py-2 rounded-lg font-medium transition-all duration-300 
-                              <?= $current_page == 'insertclient' ? 'text-orange-600 bg-orange-50 active' : 'text-gray-700 hover:text-orange-500 hover:bg-gray-50' ?>">
-                            <div class="flex items-center space-x-2">
-                                <i class="ri-team-line text-lg"></i>
-                                <span>Clients</span>
-                            </div>
-                        </a>
-                    <?php endif; ?>
+
 
                     <?php if (hasAnyRole(['sales'])): ?>
                         <a href="../chatadmin/admin_chatmain"
@@ -367,7 +358,7 @@ if (!isset($_SESSION['noble_name']) || !isset($_SESSION['noble_lvl']) || !isset(
                         </a>
                     <?php endif; ?>
 
-         
+
 
                     <!-- Quick Action Bar -->
                     <div class="  py-3">
@@ -394,29 +385,63 @@ if (!isset($_SESSION['noble_name']) || !isset($_SESSION['noble_lvl']) || !isset(
                                         class="absolute left-0 mt-2 w-72 bg-white rounded-xl shadow-2xl border border-gray-200 z-50 max-h-[70vh] overflow-y-auto custom-scrollbar">
                                         <div class="py-2">
 
-                                            <?php if (hasAnyRole(['superadmin'])): ?>
+                                           <?php if (hasAnyRole(['superadmin'])): ?>
                                                 <div class="px-3 py-2">
                                                     <div class="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-2 px-2">Operational Manager</div>
                                                     <a href="../client/owner_dashboard.php"
                                                         class="quick-action-item flex items-center space-x-3 px-3 py-2.5 text-sm text-gray-700 hover:bg-orange-50 hover:text-orange-600 rounded-lg transition-all duration-150">
-                                                        <i class="ri-add-circle-line text-lg"></i>
+                                                        <i class="ri-dashboard-line text-lg"></i>
                                                         <span>Dashboard</span>
                                                     </a>
                                                     <a href="../client/approve_purchase_orders.php"
                                                         class="quick-action-item flex items-center space-x-3 px-3 py-2.5 text-sm text-gray-700 hover:bg-orange-50 hover:text-orange-600 rounded-lg transition-all duration-150">
-                                                        <i class="ri-add-circle-line text-lg"></i>
+                                                        <i class="ri-checkbox-multiple-line text-lg"></i>
                                                         <span>Project Approval</span>
                                                     </a>
+
+                                                    <?php
+                                                    // Get pending P.O. count
+                                                    $pendingCountSql = "SELECT COUNT(*) as pending_count FROM po_attachments WHERE superadmin_approval_status = 'pending'";
+                                                    $pendingResult = $conn->query($pendingCountSql);
+                                                    $pendingCount = $pendingResult->fetch_assoc()['pending_count'] ?? 0;
+                                                    ?>
+
                                                     <a href="../client/superadmin_po_approval.php"
-                                                        class="quick-action-item flex items-center space-x-3 px-3 py-2.5 text-sm text-gray-700 hover:bg-orange-50 hover:text-orange-600 rounded-lg transition-all duration-150">
-                                                        <i class="ri-add-circle-line text-lg"></i>
+                                                        class="quick-action-item flex items-center space-x-3 px-3 py-2.5 text-sm text-gray-700 hover:bg-orange-50 hover:text-orange-600 rounded-lg transition-all duration-150 relative">
+                                                        <i class="ri-file-list-line text-lg"></i>
                                                         <span>Individual P.O Approval</span>
+
+                                                        <?php if ($pendingCount > 0): ?>
+                                                            <span class="absolute -top-2 -right-2 bg-red-500 text-white text-xs font-bold rounded-full w-6 h-6 flex items-center justify-center ">
+                                                                <?php echo $pendingCount > 99 ? '99+' : $pendingCount; ?>
+                                                            </span>
+                                                        <?php endif; ?>
                                                     </a>
+
+                                                    <a href="../client/superadmin_accountantdashboard.php"
+                                                        class="quick-action-item flex items-center space-x-3 px-3 py-2.5 text-sm text-gray-700 hover:bg-orange-50 hover:text-orange-600 rounded-lg transition-all duration-150">
+                                                        <i class="ri-calculator-line text-lg"></i>
+                                                        <span>Accountant Dashboard</span>
+                                                    </a>
+
+                                                    <a href="../client/superadmin_logisticdashboard.php"
+                                                        class="quick-action-item flex items-center space-x-3 px-3 py-2.5 text-sm text-gray-700 hover:bg-orange-50 hover:text-orange-600 rounded-lg transition-all duration-150">
+                                                        <i class="ri-truck-line text-lg"></i>
+                                                        <span>Logistic Dashboard</span>
+                                                    </a>
+
+                                                    
+                                                    <a href="../client/superadmin_warehousedashboard.php"
+                                                        class="quick-action-item flex items-center space-x-3 px-3 py-2.5 text-sm text-gray-700 hover:bg-orange-50 hover:text-orange-600 rounded-lg transition-all duration-150">
+                                                        <i class="ri-store-2-line text-lg"></i>
+                                                        <span>Warehouse Dashboard</span>
+                                                    </a>
+                                                   
                                                 </div>
-                                                
+
                                             <?php endif; ?>
 
-                                            <?php if (hasAnyRole(['superadmin', 'productspecialist'])): ?>
+                                            <?php if (hasAnyRole(['productspecialist'])): ?>
                                                 <div class="px-3 py-2">
                                                     <div class="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-2 px-2">Product Management</div>
                                                     <a href="../shop/main-adminshop-page-1.php"
@@ -462,10 +487,10 @@ if (!isset($_SESSION['noble_name']) || !isset($_SESSION['noble_lvl']) || !isset(
                                                         </div>
                                                     </a>
                                                 </div>
-                                             
+
                                             <?php endif; ?>
 
-                                            <?php if (hasAnyRole(['superadmin', 'sales'])): ?>
+                                            <?php if (hasAnyRole(['sales'])): ?>
                                                 <div class="px-3 py-2">
 
                                                     <!-- SALES HEADER WITH ICON -->
@@ -565,7 +590,7 @@ if (!isset($_SESSION['noble_name']) || !isset($_SESSION['noble_lvl']) || !isset(
                                             <?php endif; ?>
 
 
-                                            <?php if (hasAnyRole(['superadmin', 'logistic'])): ?>
+                                            <?php if (hasAnyRole(['', 'logistic'])): ?>
                                                 <div class="px-3 py-2">
                                                     <div class="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-2 px-2">Logistics</div>
                                                     <?php if (hasAnyRole(['superadmin']) || !hasSubrole(['dispatcher'])): ?>
@@ -575,9 +600,9 @@ if (!isset($_SESSION['noble_name']) || !isset($_SESSION['noble_lvl']) || !isset(
                                                             <span>Dashboard</span>
                                                         </a>
                                                     <?php endif; ?>
-                                                                                                     
-                                    
-                                                  <?php if (hasAnyRole(['superadmin']) || !hasSubrole(['dispatcher', ''])): ?>
+
+
+                                                    <?php if (hasAnyRole(['superadmin']) || !hasSubrole(['dispatcher', ''])): ?>
                                                         <a href="../warehouse_management/qr_scanner"
                                                             class="quick-action-item flex items-center space-x-3 px-3 py-2.5 text-sm text-gray-700 hover:bg-orange-50 hover:text-orange-600 rounded-lg transition-all duration-150">
                                                             <i class="ri-qr-code-line text-lg"></i>
@@ -585,12 +610,12 @@ if (!isset($_SESSION['noble_name']) || !isset($_SESSION['noble_lvl']) || !isset(
                                                         </a>
                                                     <?php endif; ?>
 
-                                                  <?php if (hasAnyRole(['superadmin']) || !hasSubrole([''])): ?>
-                                                    <a href="../logistic_management/logistic-dispatcher-dashboard-page-13.php"
-                                                        class="quick-action-item flex items-center space-x-3 px-3 py-2.5 text-sm text-gray-700 hover:bg-orange-50 hover:text-orange-600 rounded-lg transition-all duration-150">
-                                                        <i class="ri-qr-code-line text-lg"></i>
-                                                        <span>Dashboard Dispatcher</span>
-                                                    </a>
+                                                    <?php if (hasAnyRole(['superadmin']) || !hasSubrole([''])): ?>
+                                                        <a href="../logistic_management/logistic-dispatcher-dashboard-page-13.php"
+                                                            class="quick-action-item flex items-center space-x-3 px-3 py-2.5 text-sm text-gray-700 hover:bg-orange-50 hover:text-orange-600 rounded-lg transition-all duration-150">
+                                                            <i class="ri-qr-code-line text-lg"></i>
+                                                            <span>Dashboard Dispatcher</span>
+                                                        </a>
                                                     <?php endif; ?>
 
 
@@ -606,10 +631,10 @@ if (!isset($_SESSION['noble_name']) || !isset($_SESSION['noble_lvl']) || !isset(
                                                         <span>Delivery Info Management</span>
                                                     </a>
                                                 </div>
-                                              
+
                                             <?php endif; ?>
 
-                                            <?php if (hasAnyRole(['superadmin', 'hr'])): ?>
+                                            <?php if (hasAnyRole(['hr'])): ?>
                                                 <div class="px-3 py-2">
                                                     <div class="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-2 px-2">Human Resources</div>
                                                     <a href="../hr/assign_head"
@@ -623,10 +648,10 @@ if (!isset($_SESSION['noble_name']) || !isset($_SESSION['noble_lvl']) || !isset(
                                                         <span>Account Management</span>
                                                     </a>
                                                 </div>
-                                               
+
                                             <?php endif; ?>
 
-                                            <?php if (hasAnyRole(['superadmin', 'supplier'])): ?>
+                                            <?php if (hasAnyRole(['supplier'])): ?>
                                                 <div class="px-3 py-2">
                                                     <div class="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-2 px-2">Supplier</div>
                                                     <a href="../suppliermain/suppliers"
@@ -635,10 +660,10 @@ if (!isset($_SESSION['noble_name']) || !isset($_SESSION['noble_lvl']) || !isset(
                                                         <span>Profile</span>
                                                     </a>
                                                 </div>
-                                             
+
                                             <?php endif; ?>
 
-                                            <?php if (hasAnyRole(['superadmin', 'warehouse'])): ?>
+                                            <?php if (hasAnyRole(['warehouse'])): ?>
                                                 <div class="px-3 py-2">
                                                     <div class="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-2 px-2">Warehouse</div>
 
@@ -676,7 +701,7 @@ if (!isset($_SESSION['noble_name']) || !isset($_SESSION['noble_lvl']) || !isset(
 
                                             <?php endif; ?>
 
-                                            <?php if (hasAnyRole(['superadmin', 'accountant'])): ?>
+                                            <?php if (hasAnyRole(['accountant'])): ?>
                                                 <div class="px-3 py-2">
 
                                                     <!-- ACCOUNTANT HEADER WITH ICON -->
@@ -686,14 +711,24 @@ if (!isset($_SESSION['noble_name']) || !isset($_SESSION['noble_lvl']) || !isset(
                                                     </div>
 
                                                     <!-- Revenue Accountant -->
-                                                    <?php if (hasAnyRole(['superadmin']) || !hasSubrole(['document_controller'])): ?>
+                                                    <?php if (hasAnyRole(['']) || !hasSubrole(['document_controller'])): ?>
                                                         <a href="../accountant/accountant"
                                                             class="quick-action-item flex items-center space-x-3 px-3 py-2.5 text-sm text-gray-700 hover:bg-orange-50 hover:text-orange-600 rounded-lg transition-all duration-150">
                                                             <i class="ri-archive-line text-lg"></i>
                                                             <span>Dashboard</span>
                                                         </a>
                                                     <?php endif; ?>
-                                                    <?php if (hasAnyRole(['superadmin']) || !hasSubrole(['document_controller'])): ?>
+
+                                                    <!-- Revenue Accountant -->
+                                                    <?php if (hasAnyRole(['']) || !hasSubrole([''])): ?>
+                                                        <a href="../accountant/accountant_view_orders"
+                                                            class="quick-action-item flex items-center space-x-3 px-3 py-2.5 text-sm text-gray-700 hover:bg-orange-50 hover:text-orange-600 rounded-lg transition-all duration-150">
+                                                            <i class="ri-archive-line text-lg"></i>
+                                                            <span>Dashboard Document Controller</span>
+                                                        </a>
+                                                    <?php endif; ?>
+
+                                                    <?php if (hasAnyRole(['']) || !hasSubrole(['document_controller'])): ?>
                                                         <a href="../accountant/approve_purchase_orders_accountant"
                                                             class="quick-action-item flex items-center space-x-3 px-3 py-2.5 text-sm text-gray-700 hover:bg-orange-50 hover:text-orange-600 rounded-lg transition-all duration-150">
                                                             <i class="ri-archive-line text-lg"></i>
@@ -702,7 +737,7 @@ if (!isset($_SESSION['noble_name']) || !isset($_SESSION['noble_lvl']) || !isset(
                                                     <?php endif; ?>
 
                                                     <!-- HIDDEN: Only show for superadmin -->
-                                                    <?php if (hasAnyRole(['superadmin'])): ?>
+                                                    <?php if (hasAnyRole([''])): ?>
                                                         <a href="../accountant/accountant_view_orders"
                                                             class="quick-action-item flex items-center space-x-3 px-3 py-2.5 text-sm text-gray-700 
               hover:bg-orange-50 hover:text-orange-600 rounded-lg transition-all duration-150">
@@ -717,7 +752,7 @@ if (!isset($_SESSION['noble_name']) || !isset($_SESSION['noble_lvl']) || !isset(
                                                         <i class="ri-file-text-line text-lg"></i>
                                                         <span>Project Document</span>
                                                     </a>
-                                                    <?php if (hasAnyRole(['superadmin']) || !hasSubrole(['document_controller'])): ?>
+                                                    <?php if (hasAnyRole(['']) || !hasSubrole(['document_controller'])): ?>
                                                         <a href="../accountant/accountantdashboard.php"
                                                             class="quick-action-item flex items-center space-x-3 px-3 py-2.5 text-sm text-gray-700 
                   hover:bg-orange-50 hover:text-orange-600 rounded-lg transition-all duration-150">
@@ -726,7 +761,7 @@ if (!isset($_SESSION['noble_name']) || !isset($_SESSION['noble_lvl']) || !isset(
                                                         </a>
                                                     <?php endif; ?>
 
-                                                    <?php if (hasAnyRole(['superadmin']) || !hasSubrole(['document_controller'])): ?>
+                                                    <?php if (hasAnyRole(['']) || !hasSubrole(['document_controller'])): ?>
                                                         <!-- Add QR Code -->
                                                         <a href="../accountant/manage_qr_codes.php"
                                                             class="quick-action-item flex items-center space-x-3 px-3 py-2.5 text-sm text-gray-700 
@@ -736,7 +771,7 @@ if (!isset($_SESSION['noble_name']) || !isset($_SESSION['noble_lvl']) || !isset(
                                                         </a>
                                                     <?php endif; ?>
 
-                                                    <?php if (hasAnyRole(['superadmin']) || !hasSubrole(['document_controller'])): ?>
+                                                    <?php if (hasAnyRole(['']) || !hasSubrole(['document_controller'])): ?>
                                                         <!-- Project Excel -->
                                                         <a href="../accountant/accountantexcel.php"
                                                             class="quick-action-item flex items-center space-x-3 px-3 py-2.5 text-sm text-gray-700 
@@ -744,7 +779,7 @@ if (!isset($_SESSION['noble_name']) || !isset($_SESSION['noble_lvl']) || !isset(
                                                             <i class="ri-file-excel-2-line text-lg"></i>
                                                             <span>Project Excel</span>
                                                         </a>
-                                                    <?php endif; ?>                                   
+                                                    <?php endif; ?>
                                                 </div>
                                             <?php endif; ?>
                                         </div>
@@ -1116,7 +1151,7 @@ if (!isset($_SESSION['noble_name']) || !isset($_SESSION['noble_lvl']) || !isset(
                             x-cloak
                             class="absolute right-0 mt-2 w-56 dropdown-menu shadow-xl rounded-xl overflow-hidden">
                             <div class="p-4 bg-gradient-to-r from-orange-50 to-red-50 border-b border-orange-100">
-                              
+
                                 <div class="flex items-center space-x-2 mt-2">
                                     <div class="w-2 h-2 bg-green-400 rounded-full animate-pulse"></div>
                                     <span class="text-xs text-green-600 font-medium">Active</span>

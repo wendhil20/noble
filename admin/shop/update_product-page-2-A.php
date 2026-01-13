@@ -334,7 +334,7 @@ if (!empty($product['sub_images'])) {
                     </div>
 
                     <div>
-                      <label class="text-xs font-medium text-gray-600">Size/Type</label>
+                      <label class="text-xs font-medium text-gray-600">Size Name</label>
                       <input type="text" name="variant_size[<?php echo $typeIndex; ?>][]"
                         value="<?php echo htmlspecialchars($variant['size']); ?>"
                         placeholder="Size" class="border p-2 w-full rounded text-sm" />

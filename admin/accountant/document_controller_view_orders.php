@@ -171,10 +171,6 @@ $totalOrders = array_sum($status_counts);
                         <p class="text-gray-600 text-sm">Document Controller - Review & Approve POs</p>
                     </div>
                 </div>
-                <div class="text-right hidden sm:block">
-                    <div class="text-sm font-medium text-gray-900"><?php echo htmlspecialchars($fullname); ?></div>
-                    <div class="text-xs text-gray-500">Document Controller</div>
-                </div>
             </div>
         </div>
     </div>
@@ -196,56 +192,7 @@ $totalOrders = array_sum($status_counts);
             </div>
         <?php endif; ?>
 
-        <!-- Statistics Cards -->
-        <div class="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
-            <div class="bg-white rounded-xl shadow-sm p-6 border-l-4 border-blue-500">
-                <div class="flex items-center">
-                    <div class="w-12 h-12 bg-blue-100 rounded-lg flex items-center justify-center">
-                        <i class="fas fa-file-alt text-blue-600 text-xl"></i>
-                    </div>
-                    <div class="ml-4">
-                        <p class="text-sm font-medium text-gray-600">Total POs</p>
-                        <p class="text-2xl font-bold text-gray-900"><?php echo number_format($totalOrders); ?></p>
-                    </div>
-                </div>
-            </div>
-
-            <div class="bg-white rounded-xl shadow-sm p-6 border-l-4 border-yellow-500">
-                <div class="flex items-center">
-                    <div class="w-12 h-12 bg-yellow-100 rounded-lg flex items-center justify-center">
-                        <i class="fas fa-clock text-yellow-600 text-xl"></i>
-                    </div>
-                    <div class="ml-4">
-                        <p class="text-sm font-medium text-gray-600">Pending</p>
-                        <p class="text-2xl font-bold text-gray-900"><?php echo number_format($status_counts['pending']); ?></p>
-                    </div>
-                </div>
-            </div>
-
-            <div class="bg-white rounded-xl shadow-sm p-6 border-l-4 border-green-500">
-                <div class="flex items-center">
-                    <div class="w-12 h-12 bg-green-100 rounded-lg flex items-center justify-center">
-                        <i class="fas fa-check-circle text-green-600 text-xl"></i>
-                    </div>
-                    <div class="ml-4">
-                        <p class="text-sm font-medium text-gray-600">Approved</p>
-                        <p class="text-2xl font-bold text-gray-900"><?php echo number_format($status_counts['approved']); ?></p>
-                    </div>
-                </div>
-            </div>
-
-            <div class="bg-white rounded-xl shadow-sm p-6 border-l-4 border-red-500">
-                <div class="flex items-center">
-                    <div class="w-12 h-12 bg-red-100 rounded-lg flex items-center justify-center">
-                        <i class="fas fa-times-circle text-red-600 text-xl"></i>
-                    </div>
-                    <div class="ml-4">
-                        <p class="text-sm font-medium text-gray-600">Rejected</p>
-                        <p class="text-2xl font-bold text-gray-900"><?php echo number_format($status_counts['rejected']); ?></p>
-                    </div>
-                </div>
-            </div>
-        </div>
+        
 
         <!-- Filters -->
         <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-6 mb-8">

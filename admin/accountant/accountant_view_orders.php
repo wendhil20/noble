@@ -8,7 +8,7 @@ ini_set('display_errors', 1);
 include '../../connection/connect.php';
 require_once '../role/roleaccount.php';
 require_role(['accountant', 'superadmin']);
-require_subrole(['document_controller','']);
+require_subrole(['document_controller', '']);
 
 if (!isset($_SESSION['noble_user'])) {
     header("Location: ../../loginpage/index.php");
@@ -16,7 +16,8 @@ if (!isset($_SESSION['noble_user'])) {
 }
 
 // Get current user details
-function resolve_current_user_details($conn) {
+function resolve_current_user_details($conn)
+{
     if (!empty($_SESSION['current_user_details'])) {
         return $_SESSION['current_user_details'];
     }
@@ -111,7 +112,8 @@ if ($date_to !== '') {
 $whereClause = 'WHERE ' . implode(' AND ', $whereParts);
 
 // Helper function for binding params
-function bindParamsToStmt($stmt, $types, $params) {
+function bindParamsToStmt($stmt, $types, $params)
+{
     if ($types === '' || empty($params)) return;
     $bind_names[] = $types;
     for ($i = 0; $i < count($params); $i++) {
@@ -193,14 +195,15 @@ if ($pendingApprovalsResult) {
 
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Warehouse Orders Overview - Accountant</title>
     <script src="https://cdn.tailwindcss.com"></script>
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" 
-          integrity="sha512-iecdLmaskl7CVkqkXNQ/ZH/XLlvWZOJyj7Yy7tcenmpD1ypASozpmT/E0iPtmFIB46ZmdtAc9eNBvH0H/ZpiBw==" 
-          crossorigin="anonymous" referrerpolicy="no-referrer" />
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css"
+        integrity="sha512-iecdLmaskl7CVkqkXNQ/ZH/XLlvWZOJyj7Yy7tcenmpD1ypASozpmT/E0iPtmFIB46ZmdtAc9eNBvH0H/ZpiBw=="
+        crossorigin="anonymous" referrerpolicy="no-referrer" />
     <script>
         tailwind.config = {
             theme: {
@@ -230,118 +233,60 @@ if ($pendingApprovalsResult) {
         <div class="w-full px-6">
             <div class="flex justify-between items-center py-4">
                 <div class="flex items-center space-x-3">
-    <div class="w-10 h-10 bg-noble-orange rounded-lg flex items-center justify-center relative">
-        <i class="fas fa-box text-white text-lg"></i>
-        <?php if ($pendingApprovalsCount > 0): ?>
-            <span class="absolute -top-1 -right-1 bg-red-500 text-white text-xs font-bold rounded-full h-5 w-5 flex items-center justify-center animate-pulse">
-                <?php echo $pendingApprovalsCount; ?>
-            </span>
-        <?php endif; ?>
-    </div>
-    <div>
-        <h1 class="text-2xl font-bold text-gray-900">Warehouse Orders Overview</h1>
-        <p class="text-sm text-gray-600">
-            View all warehouse orders and P.O. files
-            <?php if ($pendingApprovalsCount > 0): ?>
-                <span class="inline-flex items-center ml-2 px-2 py-1 text-xs font-medium bg-red-100 text-red-800 rounded-full">
-                    <i class="fas fa-bell mr-1"></i>
-                    <?php echo $pendingApprovalsCount; ?> pending approval<?php echo $pendingApprovalsCount != 1 ? 's' : ''; ?>
-                </span>
-            <?php endif; ?>
-        </p>
-    </div>
-</div>
-                <div>
-                    <a href="accountant.php" class="inline-flex items-center px-4 py-2 border border-gray-300 shadow-sm text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-noble-orange">
-                        <i class="fas fa-arrow-left mr-2"></i>
-                        Back to Dashboard
-                    </a>
+                    <div class="w-10 h-10 bg-noble-orange rounded-lg flex items-center justify-center relative">
+                        <i class="fas fa-box text-white text-lg"></i>
+                    
+                    </div>
+                    <div>
+                        <h1 class="text-2xl font-bold text-gray-900">Warehouse Orders Overview</h1>
+                        <p class="text-sm text-gray-600">
+                            View all warehouse orders and P.O. files
+                            <?php if ($pendingApprovalsCount > 0): ?>
+                                <span class="inline-flex items-center ml-2 px-2 py-1 text-xs font-medium bg-red-100 text-red-800 rounded-full">
+                                    <i class="fas fa-bell mr-1"></i>
+                                    <?php echo $pendingApprovalsCount; ?> pending approval<?php echo $pendingApprovalsCount != 1 ? 's' : ''; ?>
+                                </span>
+                            <?php endif; ?>
+                        </p>
+                    </div>
                 </div>
+
             </div>
         </div>
     </header>
 
     <!-- Main Content -->
     <main class="w-full px-6 py-8">
-        <!-- Statistics Cards -->
-        <div class="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
-            <div class="bg-white rounded-xl shadow-sm p-6 border-l-4 border-blue-500">
-                <div class="flex items-center">
-                    <div class="w-12 h-12 bg-blue-100 rounded-lg flex items-center justify-center">
-                        <i class="fas fa-shopping-cart text-blue-600 text-xl"></i>
-                    </div>
-                    <div class="ml-4">
-                        <p class="text-sm font-medium text-gray-600">Total Orders</p>
-                        <p class="text-2xl font-bold text-gray-900"><?php echo number_format($totalOrders); ?></p>
-                    </div>
-                </div>
-            </div>
-
-            <div class="bg-white rounded-xl shadow-sm p-6 border-l-4 border-yellow-500">
-                <div class="flex items-center">
-                    <div class="w-12 h-12 bg-yellow-100 rounded-lg flex items-center justify-center">
-                        <i class="fas fa-clock text-yellow-600 text-xl"></i>
-                    </div>
-                    <div class="ml-4">
-                        <p class="text-sm font-medium text-gray-600">Pending</p>
-                        <p class="text-2xl font-bold text-gray-900"><?php echo number_format($statusCountsArray['pending'] ?? 0); ?></p>
-                    </div>
-                </div>
-            </div>
-
-            <div class="bg-white rounded-xl shadow-sm p-6 border-l-4 border-purple-500">
-                <div class="flex items-center">
-                    <div class="w-12 h-12 bg-purple-100 rounded-lg flex items-center justify-center">
-                        <i class="fas fa-cog text-purple-600 text-xl"></i>
-                    </div>
-                    <div class="ml-4">
-                        <p class="text-sm font-medium text-gray-600">Processing</p>
-                        <p class="text-2xl font-bold text-gray-900"><?php echo number_format($statusCountsArray['processing'] ?? 0); ?></p>
-                    </div>
-                </div>
-            </div>
-
-            <div class="bg-white rounded-xl shadow-sm p-6 border-l-4 border-green-500">
-                <div class="flex items-center">
-                    <div class="w-12 h-12 bg-green-100 rounded-lg flex items-center justify-center">
-                        <i class="fas fa-check-circle text-green-600 text-xl"></i>
-                    </div>
-                    <div class="ml-4">
-                        <p class="text-sm font-medium text-gray-600">Delivered</p>
-                        <p class="text-2xl font-bold text-gray-900"><?php echo number_format($statusCountsArray['Delivered'] ?? 0); ?></p>
-                    </div>
-                </div>
-            </div>
-        </div>
+    
 
         <!-- Filters -->
         <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-6 mb-8">
             <form method="GET" class="space-y-4">
                 <div class="flex flex-wrap gap-2 mb-4">
-    <a href="?" class="px-4 py-2 rounded-lg text-sm font-medium transition-colors duration-200 relative <?php echo $status_filter === '' && !isset($_GET['approval_pending']) ? 'bg-noble-orange text-white' : 'bg-gray-100 text-gray-700 hover:bg-gray-200'; ?>">
-        <i class="fas fa-list mr-1"></i>
-        All Orders
-        <?php if ($pendingApprovalsCount > 0): ?>
-            <span class="absolute -top-2 -right-2 bg-red-500 text-white text-xs font-bold rounded-full h-5 w-5 flex items-center justify-center animate-pulse">
-                <?php echo $pendingApprovalsCount; ?>
-            </span>
-        <?php endif; ?>
-    </a>
-    
-    <!-- NEW: Requesting Approval Filter -->
-    <a href="?approval_pending=1<?php echo !empty($search_query) ? '&search=' . urlencode($search_query) : ''; ?><?php echo !empty($date_from) ? '&date_from=' . urlencode($date_from) : ''; ?><?php echo !empty($date_to) ? '&date_to=' . urlencode($date_to) : ''; ?>"
-       class="px-4 py-2 rounded-lg text-sm font-medium transition-colors duration-200 flex items-center space-x-1 relative <?php echo isset($_GET['approval_pending']) ? 'bg-orange-600 text-white shadow-md' : 'bg-orange-100 text-orange-700 hover:bg-orange-200'; ?>">
-        <i class="fas fa-bell"></i>
-        <span>Requesting Approval</span>
-        <?php if ($pendingApprovalsCount > 0): ?>
-            <span class="ml-1 px-2 py-0.5 rounded-full text-xs font-bold <?php echo isset($_GET['approval_pending']) ? 'bg-white/20' : 'bg-orange-200'; ?>">
-                <?php echo (int)$pendingApprovalsCount; ?>
-            </span>
-        <?php endif; ?>
-    </a>
-    
-    <?php
-    $statusOrder = ['pending', 'Ongoing', 'processing', 'Ready for Pickup', 'Out for Delivery', 'Delivered', 'completed', 'cancelled'];
+                    <a href="?" class="px-4 py-2 rounded-lg text-sm font-medium transition-colors duration-200 relative <?php echo $status_filter === '' && !isset($_GET['approval_pending']) ? 'bg-noble-orange text-white' : 'bg-gray-100 text-gray-700 hover:bg-gray-200'; ?>">
+                        <i class="fas fa-list mr-1"></i>
+                        All Orders
+                        <?php if ($pendingApprovalsCount > 0): ?>
+                            <span class="absolute -top-2 -right-2 bg-red-500 text-white text-xs font-bold rounded-full h-5 w-5 flex items-center justify-center animate-pulse">
+                                <?php echo $pendingApprovalsCount; ?>
+                            </span>
+                        <?php endif; ?>
+                    </a>
+
+                    <!-- NEW: Requesting Approval Filter -->
+                    <a href="?approval_pending=1<?php echo !empty($search_query) ? '&search=' . urlencode($search_query) : ''; ?><?php echo !empty($date_from) ? '&date_from=' . urlencode($date_from) : ''; ?><?php echo !empty($date_to) ? '&date_to=' . urlencode($date_to) : ''; ?>"
+                        class="px-4 py-2 rounded-lg text-sm font-medium transition-colors duration-200 flex items-center space-x-1 relative <?php echo isset($_GET['approval_pending']) ? 'bg-orange-600 text-white shadow-md' : 'bg-orange-100 text-orange-700 hover:bg-orange-200'; ?>">
+                        <i class="fas fa-bell"></i>
+                        <span>Requesting Approval</span>
+                        <?php if ($pendingApprovalsCount > 0): ?>
+                            <span class="ml-1 px-2 py-0.5 rounded-full text-xs font-bold <?php echo isset($_GET['approval_pending']) ? 'bg-white/20' : 'bg-orange-200'; ?>">
+                                <?php echo (int)$pendingApprovalsCount; ?>
+                            </span>
+                        <?php endif; ?>
+                    </a>
+
+                    <?php
+                    $statusOrder = ['pending', 'Ongoing', 'processing', 'Ready for Pickup', 'Out for Delivery', 'Delivered', 'completed', 'cancelled'];
                     $statusConfig = [
                         'pending' => ['icon' => 'fa-clock', 'color' => 'yellow'],
                         'Ongoing' => ['icon' => 'fa-tasks', 'color' => 'orange'],
@@ -352,7 +297,7 @@ if ($pendingApprovalsResult) {
                         'completed' => ['icon' => 'fa-check-double', 'color' => 'green'],
                         'cancelled' => ['icon' => 'fa-times-circle', 'color' => 'red']
                     ];
-                    
+
                     foreach ($statusOrder as $status):
                         if (!isset($statusCountsArray[$status])) continue;
                         $count = $statusCountsArray[$status];
@@ -370,31 +315,33 @@ if ($pendingApprovalsResult) {
                     <?php endforeach; ?>
                 </div>
 
-                <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
-                    <div>
-                        <label class="block text-sm font-medium text-gray-700 mb-1">Search</label>
-                        <input type="text" name="search" value="<?php echo htmlspecialchars($search_query); ?>" 
-                               placeholder="Order ID, Customer, Email..." 
-                               class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-noble-orange focus:border-transparent">
-                    </div>
-                    <div>
-                        <label class="block text-sm font-medium text-gray-700 mb-1">Date From</label>
-                        <input type="date" name="date_from" value="<?php echo htmlspecialchars($date_from); ?>" 
-                               class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-noble-orange focus:border-transparent">
-                    </div>
-                    <div>
-                        <label class="block text-sm font-medium text-gray-700 mb-1">Date To</label>
-                        <input type="date" name="date_to" value="<?php echo htmlspecialchars($date_to); ?>" 
-                               class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-noble-orange focus:border-transparent">
-                    </div>
-                </div>
+              <div class="grid grid-cols-1 md:grid-cols-4 gap-3">
+    <div class="md:col-span-2">
+        <label class="block text-sm font-medium text-gray-700 mb-1">Search</label>
+        <div class="flex gap-2">
+            <input type="text" name="search" value="<?php echo htmlspecialchars($search_query); ?>"
+                placeholder="Order ID, Customer, Email..."
+                class="flex-1 px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-noble-orange focus:border-transparent">
+            <button type="submit" class="bg-noble-orange hover:bg-noble-orange-dark text-white px-6 py-2 rounded-md transition-colors duration-200 flex items-center justify-center whitespace-nowrap">
+                <i class="fas fa-search mr-2"></i>
+                Search
+            </button>
+        </div>
+    </div>
+    
+    <div>
+        <label class="block text-sm font-medium text-gray-700 mb-1">Date From</label>
+        <input type="date" name="date_from" value="<?php echo htmlspecialchars($date_from); ?>"
+            class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-noble-orange focus:border-transparent">
+    </div>
+    
+    <div>
+        <label class="block text-sm font-medium text-gray-700 mb-1">Date To</label>
+        <input type="date" name="date_to" value="<?php echo htmlspecialchars($date_to); ?>"
+            class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-noble-orange focus:border-transparent">
+    </div>
+</div>
 
-                <div class="flex justify-end">
-                    <button type="submit" class="bg-noble-orange hover:bg-noble-orange-dark text-white px-6 py-2 rounded-md transition-colors duration-200 flex items-center">
-                        <i class="fas fa-search mr-2"></i>
-                        Search
-                    </button>
-                </div>
             </form>
         </div>
 
@@ -473,34 +420,34 @@ if ($pendingApprovalsResult) {
                                         </div>
                                     </td>
                                     <td class="px-6 py-4 whitespace-nowrap">
-    <div class="flex items-center space-x-2">
-        <?php if ($order['po_attachment_count'] > 0): ?>
-            <span class="inline-flex items-center px-2 py-1 text-xs font-medium bg-green-100 text-green-800 rounded-full">
-                <i class="fas fa-file-excel mr-1"></i>
-                <?php echo $order['po_attachment_count']; ?> file(s)
-            </span>
-            <?php if ($order['pending_approvals'] > 0): ?>
-                <span class="inline-flex items-center px-2 py-1 text-xs font-medium bg-orange-100 text-orange-800 rounded-full animate-pulse">
-                    <i class="fas fa-exclamation-circle mr-1"></i>
-                    <?php echo $order['pending_approvals']; ?> pending
-                </span>
-            <?php endif; ?>
-        <?php else: ?>
-            <span class="inline-flex items-center px-2 py-1 text-xs font-medium bg-gray-100 text-gray-500 rounded-full">
-                <i class="fas fa-times mr-1"></i>
-                No files
-            </span>
-        <?php endif; ?>
-    </div>
-</td>
+                                        <div class="flex items-center space-x-2">
+                                            <?php if ($order['po_attachment_count'] > 0): ?>
+                                                <span class="inline-flex items-center px-2 py-1 text-xs font-medium bg-green-100 text-green-800 rounded-full">
+                                                    <i class="fas fa-file-excel mr-1"></i>
+                                                    <?php echo $order['po_attachment_count']; ?> file(s)
+                                                </span>
+                                                <?php if ($order['pending_approvals'] > 0): ?>
+                                                    <span class="inline-flex items-center px-2 py-1 text-xs font-medium bg-orange-100 text-orange-800 rounded-full animate-pulse">
+                                                        <i class="fas fa-exclamation-circle mr-1"></i>
+                                                        <?php echo $order['pending_approvals']; ?> pending
+                                                    </span>
+                                                <?php endif; ?>
+                                            <?php else: ?>
+                                                <span class="inline-flex items-center px-2 py-1 text-xs font-medium bg-gray-100 text-gray-500 rounded-full">
+                                                    <i class="fas fa-times mr-1"></i>
+                                                    No files
+                                                </span>
+                                            <?php endif; ?>
+                                        </div>
+                                    </td>
                                     <td class="px-6 py-4 whitespace-nowrap">
                                         <div class="text-sm text-gray-900"><?php echo date('M d, Y', strtotime($order['created_at'])); ?></div>
                                         <div class="text-xs text-gray-500"><?php echo date('H:i', strtotime($order['created_at'])); ?></div>
                                     </td>
                                     <td class="px-6 py-4 whitespace-nowrap text-sm font-medium">
                                         <?php if ($order['po_attachment_count'] > 0): ?>
-                                            <a href="accountant_view_po.php?order_id=<?php echo $order['id']; ?>" 
-                                               class="inline-flex items-center px-3 py-1 border border-transparent text-xs leading-4 font-medium rounded-md text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500">
+                                            <a href="accountant_view_po.php?order_id=<?php echo $order['id']; ?>"
+                                                class="inline-flex items-center px-3 py-1 border border-transparent text-xs leading-4 font-medium rounded-md text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500">
                                                 <i class="fas fa-eye mr-1"></i>
                                                 View P.O.
                                             </a>
@@ -524,4 +471,5 @@ if ($pendingApprovalsResult) {
     </main>
 
 </body>
+
 </html>

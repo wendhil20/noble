@@ -291,8 +291,8 @@ $categoryResult = mysqli_query($conn, $categoryQuery);
       <!-- Row 1: Basic Info -->
       <div class="grid grid-cols-2 md:grid-cols-4 gap-2 mb-2">
         <div>
-          <label class="text-xs font-medium text-gray-600">Size/Type</label>
-          <input type="text" name="variant_size[${index}][]" placeholder="Size/Type" class="border p-2 rounded w-full text-sm" />
+          <label class="text-xs font-medium text-gray-600">Size Name</label>
+          <input type="text" name="variant_size[${index}][]" placeholder="Size" class="border p-2 rounded w-full text-sm" />
         </div>
         <div>
           <label class="text-xs font-medium text-gray-600">Variant Name</label>
@@ -303,8 +303,8 @@ $categoryResult = mysqli_query($conn, $categoryQuery);
           <input type="number" step="0.01" name="variant_original_price[${index}][]" placeholder="Original Price" class="border p-2 rounded w-full text-sm" oninput="copyToBasePrice(this)" />
         </div>
         <div>
-          <label class="text-xs font-medium text-gray-600">Base Price</label>
-          <input type="number" step="0.01" name="variant_price[${index}][]" placeholder="Base Price" class="border p-2 rounded w-full text-sm" />
+          <label class="text-xs font-medium text-gray-600">Final Price</label>
+          <input type="number" step="0.01" name="variant_price[${index}][]" placeholder="Final Price" class="border p-2 rounded w-full text-sm" />
         </div>
       </div>
 

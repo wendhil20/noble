@@ -300,33 +300,35 @@ while ($row = $countResult->fetch_assoc()) {
         </div>
     </main>
 
-    <!-- Approve Modal -->
-    <div id="approveModal" class="fixed inset-0 z-50 hidden bg-black bg-opacity-50 flex items-center justify-center p-4">
-        <div class="bg-white rounded-lg shadow-xl max-w-md w-full">
-            <form method="POST">
-                <div class="p-6">
-                    <div class="flex items-center mb-4">
-                        <div class="bg-green-100 p-2 rounded-lg mr-3">
-                            <i class="fas fa-check text-green-600 text-xl"></i>
-                        </div>
-                        <h3 class="text-lg font-semibold">Approve P.O. File</h3>
+<!-- Approve Modal -->
+<div id="approveModal" class="fixed inset-0 z-50 hidden bg-black bg-opacity-50 flex items-center justify-center p-4">
+    <div class="bg-white rounded-lg shadow-xl max-w-md w-full">
+        <form method="POST">
+            <div class="p-6">
+                <div class="flex items-center mb-4">
+                    <div class="bg-green-100 p-2 rounded-lg mr-3 flex-shrink-0">
+                        <i class="fas fa-check text-green-600 text-xl"></i>
                     </div>
-                    <p class="text-gray-600 mb-6">Approve <strong id="approveFileName"></strong>?</p>
-                    <input type="hidden" name="file_id" id="approveFileId">
-                    <div class="flex justify-end space-x-3">
-                        <button type="button" onclick="closeModal('approveModal')" 
-                                class="px-4 py-2 bg-gray-100 rounded-lg hover:bg-gray-200 transition">
-                            Cancel
-                        </button>
-                        <button type="submit" name="approve_po" 
-                                class="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition">
-                            <i class="fas fa-check mr-2"></i>Approve
-                        </button>
-                    </div>
+                    <h3 class="text-lg font-semibold">Approve P.O. File</h3>
                 </div>
-            </form>
-        </div>
+                <p class="text-gray-600 mb-6 break-words">
+                    Approve <strong id="approveFileName" class="break-all"></strong>?
+                </p>
+                <input type="hidden" name="file_id" id="approveFileId">
+                <div class="flex justify-end gap-3">
+                    <button type="button" onclick="closeModal('approveModal')" 
+                            class="px-4 py-2 bg-gray-100 rounded-lg hover:bg-gray-200 transition">
+                        Cancel
+                    </button>
+                    <button type="submit" name="approve_po" 
+                            class="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition flex items-center">
+                        <i class="fas fa-check mr-2"></i>Approve
+                    </button>
+                </div>
+            </div>
+        </form>
     </div>
+</div>
 
     <!-- Reject Modal -->
     <div id="rejectModal" class="fixed inset-0 z-50 hidden bg-black bg-opacity-50 flex items-center justify-center p-4">

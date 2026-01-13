@@ -2825,19 +2825,68 @@ $is_guest = !isset($_SESSION['user_id']);
 
           <!-- Specifications Tab Content -->
           <div id="content-specifications" class="tab-content">
-            <div class="bg-gray-50 rounded-lg p-4 lg:p-6">
-              <dl class="space-y-3">
-                <?php for ($i = 1; $i <= 10; $i++):
-                  $key = "descrip$i";
-                  if (!empty($product_specs[$key])):
-                ?>
-                    <div class="flex flex-col sm:flex-row sm:justify-between py-2 border-b border-gray-200 last:border-b-0">
-                      <dd class="text-black text-sm lg:text-base"><?= htmlspecialchars($product_specs[$key]) ?></dd>
-                    </div>
-                <?php endif;
-                endfor; ?>
-              </dl>
+    <div class="space-y-6">
+        
+       
+        <!-- Description 1: Product Details -->
+        <?php if (!empty($product_specs['descrip1'])): ?>
+          <div>
+            <h3 class="text-lg font-bold text-gray-900 mb-4 flex items-center">
+              <i class="fas fa-align-left mr-3"></i>
+              Product Details
+            </h3>
+            <div class="text-gray-700 text-base space-y-2">
+              <?php 
+                $lines = explode("\n", $product_specs['descrip1']);
+                foreach ($lines as $line):
+                  $trimmed = trim($line);
+                  if (!empty($trimmed)):
+              ?>
+                <div class="py-1 border-b border-gray-200 last:border-b-0">
+                  <?= htmlspecialchars($trimmed) ?>
+                </div>
+              <?php 
+                  endif;
+                endforeach;
+              ?>
             </div>
+          </div>
+        <?php endif; ?>
+        
+        <!-- Description 6 & 7: Unit & Specifications -->
+        <?php if (!empty($product_specs['descrip6']) || !empty($product_specs['descrip7'])): ?>
+          <div class="space-y-3">
+            
+            <!-- Unit Information Section -->
+            <?php if (!empty($product_specs['descrip6'])): ?>
+              <div class="py-2 border-b border-gray-200">
+                <div class="text-gray-700 text-base">
+                  <?= htmlspecialchars($product_specs['descrip6']) ?>
+                </div>
+              </div>
+            <?php endif; ?>
+
+            <!-- Technical Specifications Section -->
+            <?php if (!empty($product_specs['descrip7'])): ?>
+              <div class="py-2 border-b border-gray-200 last:border-b-0">
+                <div class="text-gray-700 text-base">
+                  <?= htmlspecialchars($product_specs['descrip7']) ?>
+                </div>
+              </div>
+            <?php endif; ?>
+
+          </div>
+        <?php endif; ?>
+
+        <!-- No Descriptions Message -->
+        <?php if (empty($product_specs['descrip1']) && empty($product_specs['descrip6']) && empty($product_specs['descrip7'])): ?>
+          <div class="bg-gray-50 rounded-xl p-6 text-center border border-dashed border-gray-300">
+            <i class="fas fa-inbox text-gray-300 text-4xl mb-3 block"></i>
+            <p class="text-gray-400 italic">No product descriptions available</p>
+          </div>
+        <?php endif; ?>
+
+      </div>
           </div>
 
           <!-- Reviews Tab Content -->

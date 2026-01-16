@@ -168,6 +168,81 @@ try {
     }
   }
 
+
+// ✅ HANDLE SUB IMAGES DELETION WITH AUTO-DELETE
+  // Images stored in: ../../sub_images/
+  
+  $subImagesKeepArray = $_POST['keep_sub_image'] ?? [];
+  $product = $conn->query("SELECT sub_images FROM products WHERE id = $product_id")->fetch_assoc();
+  $existingSubImages = [];
+
+  if (!empty($product['sub_images'])) {
+    $decoded = json_decode($product['sub_images'], true);
+    if (is_array($decoded)) {
+      $existingSubImages = $decoded;
+    }
+  }
+
+  error_log("📸 Processing sub images. Current count: " . count($existingSubImages));
+
+  // Process which sub images to keep
+  $subImagesToKeep = [];
+  foreach ($existingSubImages as $index => $subImageFilename) {
+    $shouldKeep = isset($subImagesKeepArray[$index]) && $subImagesKeepArray[$index] == '1';
+    
+    if (!$shouldKeep) {
+      // ❌ DELETE FILE FROM DISK (sub_images folder)
+      $fullPath = '../../sub_images/' . $subImageFilename;
+      error_log("🗑️ Checking deletion: $fullPath");
+      
+      if (file_exists($fullPath)) {
+        unlink($fullPath);
+        error_log("✅ Deleted sub image: $subImageFilename");
+      } else {
+        error_log("⚠️ File not found, but removing from DB anyway: $subImageFilename");
+      }
+    } else {
+      // ✅ KEEP THIS IMAGE
+      $subImagesToKeep[] = $subImageFilename;
+      error_log("✅ Keeping sub image: $subImageFilename");
+    }
+  }
+
+  // Update database with remaining sub images
+  $updatedSubImagesJson = json_encode($subImagesToKeep);
+  $conn->query("UPDATE products SET sub_images = '$updatedSubImagesJson' WHERE id = $product_id");
+  error_log("📸 Updated sub_images in DB: " . count($subImagesToKeep) . " images remaining");
+
+  // ✅ HANDLE NEW SUB IMAGES UPLOAD
+  if (!empty($_FILES['new_sub_images']['name'][0])) {
+    $newSubImages = $subImagesToKeep; // Start with existing images
+    
+    foreach ($_FILES['new_sub_images']['name'] as $fileIndex => $fileName) {
+      if (!empty($fileName)) {
+        $subImageName = time() . '_' . $fileIndex . '_' . basename($fileName);
+        $uploadDir = '../../sub_images/';
+        
+        if (!is_dir($uploadDir)) {
+          mkdir($uploadDir, 0755, true);
+        }
+        
+        $uploadPath = $uploadDir . $subImageName;
+        
+        if (move_uploaded_file($_FILES['new_sub_images']['tmp_name'][$fileIndex], $uploadPath)) {
+          $newSubImages[] = $subImageName;
+          error_log("✅ Uploaded new sub image: $subImageName");
+        } else {
+          throw new Exception("Failed to upload sub image at index $fileIndex");
+        }
+      }
+    }
+    
+    // Save updated list to database
+    $newSubImagesJson = json_encode($newSubImages);
+    $conn->query("UPDATE products SET sub_images = '$newSubImagesJson' WHERE id = $product_id");
+    error_log("📸 Updated sub_images after upload: " . count($newSubImages) . " total images");
+  }
+
   // 2. HANDLE PRODUCT COLORS WITH AUTO-DELETE
   if (isset($_POST['color_id'])) {
     $colorIds = $_POST['color_id'] ?? [];

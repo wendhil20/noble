@@ -201,78 +201,77 @@ if ($result) {
     <main class="w-full px-6 py-8">
         
         <!-- Key Metrics Section -->
-        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
-            
-            <!-- Pending Payments Card -->
-            <div class="bg-gradient-to-br from-yellow-50 to-yellow-100 rounded-xl shadow-sm p-6 hover:shadow-lg transition-all hover:scale-105 border border-yellow-200">
-                <div class="flex items-start justify-between">
-                    <div class="flex-1">
-                        <p class="text-sm font-semibold text-yellow-700 uppercase tracking-wider mb-2">Pending Payments</p>
-                        <p class="text-4xl font-bold text-yellow-900"><?php echo number_format($pending_payments); ?></p>
-                        <p class="text-sm text-yellow-700 mt-3 font-medium">
-                            <i class="fas fa-money-bill mr-2"></i>
-                            ₱<?php echo number_format($total_pending_amount, 2); ?>
-                        </p>
-                    </div>
-                    <div class="w-14 h-14 bg-yellow-200 rounded-lg flex items-center justify-center flex-shrink-0">
-                        <i class="fas fa-hourglass-half text-yellow-700 text-2xl"></i>
-                    </div>
-                </div>
+<div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
+    
+    <!-- Pending Payments Card -->
+    <div class="bg-gradient-to-br from-yellow-50 to-yellow-100 rounded-lg shadow-sm p-4 hover:shadow-md transition-all border border-yellow-200">
+        <div class="flex items-start justify-between">
+            <div class="flex-1">
+                <p class="text-xs font-semibold text-yellow-700 uppercase tracking-wide mb-1">Pending</p>
+                <p class="text-2xl font-bold text-yellow-900"><?php echo number_format($pending_payments); ?></p>
+                <p class="text-xs text-yellow-700 mt-2 font-medium">
+                    <i class="fas fa-money-bill mr-1"></i>
+                    ₱<?php echo number_format($total_pending_amount, 2); ?>
+                </p>
             </div>
-
-            <!-- Verified Payments Card -->
-            <div class="bg-gradient-to-br from-green-50 to-green-100 rounded-xl shadow-sm p-6 hover:shadow-lg transition-all hover:scale-105 border border-green-200">
-                <div class="flex items-start justify-between">
-                    <div class="flex-1">
-                        <p class="text-sm font-semibold text-green-700 uppercase tracking-wider mb-2">Verified Payments</p>
-                        <p class="text-4xl font-bold text-green-900"><?php echo number_format($verified_payments); ?></p>
-                        <p class="text-sm text-green-700 mt-3 font-medium">
-                            <i class="fas fa-check-circle mr-2"></i>
-                            Completed
-                        </p>
-                    </div>
-                    <div class="w-14 h-14 bg-green-200 rounded-lg flex items-center justify-center flex-shrink-0">
-                        <i class="fas fa-check-double text-green-700 text-2xl"></i>
-                    </div>
-                </div>
+            <div class="w-10 h-10 bg-yellow-200 rounded flex items-center justify-center flex-shrink-0">
+                <i class="fas fa-hourglass-half text-yellow-700 text-lg"></i>
             </div>
-
-            <!-- Total Revenue Card -->
-            <div class="bg-gradient-to-br from-orange-50 to-orange-100 rounded-xl shadow-sm p-6 hover:shadow-lg transition-all hover:scale-105 border border-orange-200">
-                <div class="flex items-start justify-between">
-                    <div class="flex-1">
-                        <p class="text-sm font-semibold text-orange-700 uppercase tracking-wider mb-2">Total Revenue</p>
-                        <p class="text-4xl font-bold text-orange-900">₱<?php echo number_format($total_revenue, 2); ?></p>
-                        <p class="text-sm text-orange-700 mt-3 font-medium">
-                            <i class="fas fa-coins mr-2"></i>
-                            Verified Only
-                        </p>
-                    </div>
-                    <div class="w-14 h-14 bg-orange-200 rounded-lg flex items-center justify-center flex-shrink-0">
-                        <i class="fas fa-chart-line text-orange-700 text-2xl"></i>
-                    </div>
-                </div>
-            </div>
-
-            <!-- Rejected Payments Card -->
-            <div class="bg-gradient-to-br from-red-50 to-red-100 rounded-xl shadow-sm p-6 hover:shadow-lg transition-all hover:scale-105 border border-red-200">
-                <div class="flex items-start justify-between">
-                    <div class="flex-1">
-                        <p class="text-sm font-semibold text-red-700 uppercase tracking-wider mb-2">Rejected Payments</p>
-                        <p class="text-4xl font-bold text-red-900"><?php echo number_format($rejected_payments); ?></p>
-                        <p class="text-sm text-red-700 mt-3 font-medium">
-                            <i class="fas fa-times-circle mr-2"></i>
-                            Declined
-                        </p>
-                    </div>
-                    <div class="w-14 h-14 bg-red-200 rounded-lg flex items-center justify-center flex-shrink-0">
-                        <i class="fas fa-ban text-red-700 text-2xl"></i>
-                    </div>
-                </div>
-            </div>
-
         </div>
+    </div>
 
+    <!-- Verified Payments Card -->
+    <div class="bg-gradient-to-br from-green-50 to-green-100 rounded-lg shadow-sm p-4 hover:shadow-md transition-all border border-green-200">
+        <div class="flex items-start justify-between">
+            <div class="flex-1">
+                <p class="text-xs font-semibold text-green-700 uppercase tracking-wide mb-1">Verified</p>
+                <p class="text-2xl font-bold text-green-900"><?php echo number_format($verified_payments); ?></p>
+                <p class="text-xs text-green-700 mt-2 font-medium">
+                    <i class="fas fa-check-circle mr-1"></i>
+                    Completed
+                </p>
+            </div>
+            <div class="w-10 h-10 bg-green-200 rounded flex items-center justify-center flex-shrink-0">
+                <i class="fas fa-check-double text-green-700 text-lg"></i>
+            </div>
+        </div>
+    </div>
+
+    <!-- Total Revenue Card -->
+    <div class="bg-gradient-to-br from-orange-50 to-orange-100 rounded-lg shadow-sm p-4 hover:shadow-md transition-all border border-orange-200">
+        <div class="flex items-start justify-between">
+            <div class="flex-1">
+                <p class="text-xs font-semibold text-orange-700 uppercase tracking-wide mb-1">Revenue</p>
+                <p class="text-2xl font-bold text-orange-900">₱<?php echo number_format($total_revenue, 2); ?></p>
+                <p class="text-xs text-orange-700 mt-2 font-medium">
+                    <i class="fas fa-coins mr-1"></i>
+                    Verified
+                </p>
+            </div>
+            <div class="w-10 h-10 bg-orange-200 rounded flex items-center justify-center flex-shrink-0">
+                <i class="fas fa-chart-line text-orange-700 text-lg"></i>
+            </div>
+        </div>
+    </div>
+
+    <!-- Rejected Payments Card -->
+    <div class="bg-gradient-to-br from-red-50 to-red-100 rounded-lg shadow-sm p-4 hover:shadow-md transition-all border border-red-200">
+        <div class="flex items-start justify-between">
+            <div class="flex-1">
+                <p class="text-xs font-semibold text-red-700 uppercase tracking-wide mb-1">Rejected</p>
+                <p class="text-2xl font-bold text-red-900"><?php echo number_format($rejected_payments); ?></p>
+                <p class="text-xs text-red-700 mt-2 font-medium">
+                    <i class="fas fa-times-circle mr-1"></i>
+                    Declined
+                </p>
+            </div>
+            <div class="w-10 h-10 bg-red-200 rounded flex items-center justify-center flex-shrink-0">
+                <i class="fas fa-ban text-red-700 text-lg"></i>
+            </div>
+        </div>
+    </div>
+
+</div>
         <!-- Today's Summary & Payment Methods -->
         <div class="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-8">
             

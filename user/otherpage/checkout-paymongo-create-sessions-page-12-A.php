@@ -1,5 +1,5 @@
 <?php
-// paymongo-create-sessions.php - FIXED: Dynamic URLs + NO STOCK DEDUCTION
+// paymongo-create-sessions.php - FIXED: Dynamic URLs + color_id tracking
 
 error_reporting(E_ALL);
 ini_set('display_errors', 0);
@@ -29,24 +29,24 @@ if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
 
 try {
     require_once '../../connection/connect.php';
-    
+
     if (!isset($_SESSION['user_id'])) {
         throw new Exception('User not logged in');
     }
 
- // ✅ BUILD DYNAMIC URLs
+    // ✅ BUILD DYNAMIC URLs
     $protocol = (!empty($_SERVER['HTTPS']) && $_SERVER['HTTPS'] !== 'off') ? 'https://' : 'http://';
     $host = $_SERVER['HTTP_HOST'];
-    
+
     // Detect if localhost or production
     $isLocalhost = (strpos($host, 'localhost') !== false || strpos($host, '127.0.0.1') !== false);
-    
+
     if ($isLocalhost) {
         $basePath = '/noble/user/otherpage';
     } else {
         $basePath = '/user/otherpage';
     }
-    
+
     $success_url = $protocol . $host . $basePath . '/checkout-paymongo-success-page-12-A.php';
     $cancel_url = $protocol . $host . $basePath . '/index-checkout-page-12.php';
 
@@ -64,77 +64,74 @@ try {
     $user_id = intval($_SESSION['user_id']);
     $delivery_fee = floatval($input['delivery_fee'] ?? 0);
     $order_details = $input['order_details'] ?? [];
-    
-   // ✅ SALES COMMISSION TRACKING (NO DISCOUNT)
-$sales_commission_rate = 0.00;
-$sales_commission_amount = 0.00;
-$sales_user_id = null;
-$sales_referral_code = null;
 
-// Check logged-in user's referred_by_code
-if (!empty($user_id)) {
-    $user_check = $conn->prepare("SELECT referred_by_code FROM users WHERE id = ? LIMIT 1");
-    $user_check->bind_param("i", $user_id);
-    $user_check->execute();
-    $user_result = $user_check->get_result();
-    
-    if ($user_result->num_rows > 0) {
-        $user_data = $user_result->fetch_assoc();
-        $potential_code = $user_data['referred_by_code'];
-        
-        if (!empty($potential_code)) {
-            $sales_check = $conn->prepare("
-                SELECT rc.user_id, rc.referral_code, na.commission_rate
-                FROM referral_codes rc
-                INNER JOIN nobleaccount na ON rc.user_id = na.id
-                WHERE rc.referral_code = ? 
-                AND rc.is_active = 1 
-                AND na.lvl = 'sales'
-                AND na.commission_rate > 0
-                LIMIT 1
-            ");
-            
-            $sales_check->bind_param("s", $potential_code);
-            $sales_check->execute();
-            $sales_result = $sales_check->get_result();
-            
-            if ($sales_result->num_rows > 0) {
-                $sales_data = $sales_result->fetch_assoc();
-                $sales_user_id = $sales_data['user_id'];
-                $sales_referral_code = $sales_data['referral_code'];
-                $sales_commission_rate = floatval($sales_data['commission_rate']);
-                
-                // Get original cart subtotal
-                $cart_stmt = $conn->prepare("
-                    SELECT SUM(price * quantity) as original_subtotal
-                    FROM user_cart_items 
-                    WHERE user_id = ?
+    // ✅ SALES COMMISSION TRACKING (NO DISCOUNT)
+    $sales_commission_rate = 0.00;
+    $sales_commission_amount = 0.00;
+    $sales_user_id = null;
+    $sales_referral_code = null;
+
+    // Check logged-in user's referred_by_code
+    if (!empty($user_id)) {
+        $user_check = $conn->prepare("SELECT referred_by_code FROM users WHERE id = ? LIMIT 1");
+        $user_check->bind_param("i", $user_id);
+        $user_check->execute();
+        $user_result = $user_check->get_result();
+
+        if ($user_result->num_rows > 0) {
+            $user_data = $user_result->fetch_assoc();
+            $potential_code = $user_data['referred_by_code'];
+
+            if (!empty($potential_code)) {
+                $sales_check = $conn->prepare("
+                    SELECT rc.user_id, rc.referral_code, na.commission_rate
+                    FROM referral_codes rc
+                    INNER JOIN nobleaccount na ON rc.user_id = na.id
+                    WHERE rc.referral_code = ? 
+                    AND rc.is_active = 1 
+                    AND na.lvl = 'sales'
+                    AND na.commission_rate > 0
+                    LIMIT 1
                 ");
-                $cart_stmt->bind_param("i", $user_id);
-                $cart_stmt->execute();
-                $cart_result = $cart_stmt->get_result();
-                $cart_row = $cart_result->fetch_assoc();
-                $original_subtotal = floatval($cart_row['original_subtotal'] ?? 0);
-                $cart_stmt->close();
-                
-                $sales_commission_amount = $original_subtotal * ($sales_commission_rate / 100);
-                
-                error_log("=== PayMongo Sales Commission ===");
-                error_log("Commission Rate: {$sales_commission_rate}%");
-                error_log("Commission Amount: ₱" . number_format($sales_commission_amount, 2));
+
+                $sales_check->bind_param("s", $potential_code);
+                $sales_check->execute();
+                $sales_result = $sales_check->get_result();
+
+                if ($sales_result->num_rows > 0) {
+                    $sales_data = $sales_result->fetch_assoc();
+                    $sales_user_id = $sales_data['user_id'];
+                    $sales_referral_code = $sales_data['referral_code'];
+                    $sales_commission_rate = floatval($sales_data['commission_rate']);
+
+                    // Get original cart subtotal
+                    $cart_stmt = $conn->prepare("
+                        SELECT SUM(price * quantity) as original_subtotal
+                        FROM user_cart_items 
+                        WHERE user_id = ?
+                    ");
+                    $cart_stmt->bind_param("i", $user_id);
+                    $cart_stmt->execute();
+                    $cart_result = $cart_stmt->get_result();
+                    $cart_row = $cart_result->fetch_assoc();
+                    $original_subtotal = floatval($cart_row['original_subtotal'] ?? 0);
+                    $cart_stmt->close();
+
+                    $sales_commission_amount = $original_subtotal * ($sales_commission_rate / 100);
+
+                    error_log("=== PayMongo Sales Commission ===");
+                    error_log("Commission Rate: {$sales_commission_rate}%");
+                    error_log("Commission Amount: ₱" . number_format($sales_commission_amount, 2));
+                }
+                $sales_check->close();
             }
-            $sales_check->close();
         }
+        $user_check->close();
     }
-    $user_check->close();
-}
 
     error_log("=== PAYMONGO SESSION CREATION ===");
-    error_log("Referral Code: " . ($referral_code ?? 'NONE'));
-    error_log("Referral User ID: " . ($referral_user_id ?? 'NONE'));
-    error_log("Referral Discount: ₱" . number_format($referral_discount, 2));
     error_log("Amount: ₱" . number_format($amount, 2));
-    
+
     // Extract order details
     $customer_name = trim($order_details['customer_name'] ?? $_SESSION['checkout_step1']['customer_name'] ?? '');
     $email = trim($order_details['email'] ?? $_SESSION['checkout_step1']['email'] ?? '');
@@ -146,57 +143,57 @@ if (!empty($user_id)) {
     $longitude = !empty($order_details['longitude']) ? floatval($order_details['longitude']) : ($_SESSION['checkout_step2']['longitude'] ?? null);
     $delivery_distance = floatval($order_details['delivery_distance'] ?? ($_SESSION['checkout_step3']['delivery_distance'] ?? 0));
     $delivery_type = $order_details['delivery_type'] ?? ($_SESSION['checkout_step3']['delivery_type'] ?? 'delivery');
-    
-    $assigned_vehicle_id_input = !empty($order_details['assigned_vehicle_id']) 
-        ? intval($order_details['assigned_vehicle_id']) 
-        : (!empty($_SESSION['checkout_step3']['assigned_vehicle_id']) 
-            ? intval($_SESSION['checkout_step3']['assigned_vehicle_id']) 
+
+    $assigned_vehicle_id_input = !empty($order_details['assigned_vehicle_id'])
+        ? intval($order_details['assigned_vehicle_id'])
+        : (!empty($_SESSION['checkout_step3']['assigned_vehicle_id'])
+            ? intval($_SESSION['checkout_step3']['assigned_vehicle_id'])
             : null);
 
     $assigned_vehicle_id = null;
-    $assigned_vehicle_type = $order_details['assigned_vehicle_type'] 
+    $assigned_vehicle_type = $order_details['assigned_vehicle_type']
         ?? ($_SESSION['checkout_step3']['assigned_vehicle_type'] ?? null);
 
-    $total_cubic_meters = !empty($order_details['total_cubic_meters']) 
-        ? floatval($order_details['total_cubic_meters']) 
-        : (!empty($_SESSION['checkout_step3']['total_cubic_meters']) 
-            ? floatval($_SESSION['checkout_step3']['total_cubic_meters']) 
+    $total_cubic_meters = !empty($order_details['total_cubic_meters'])
+        ? floatval($order_details['total_cubic_meters'])
+        : (!empty($_SESSION['checkout_step3']['total_cubic_meters'])
+            ? floatval($_SESSION['checkout_step3']['total_cubic_meters'])
             : 0);
 
-    $total_weight_kg = !empty($order_details['total_weight_kg']) 
-        ? floatval($order_details['total_weight_kg']) 
-        : (!empty($_SESSION['checkout_step3']['total_weight_kg']) 
-            ? floatval($_SESSION['checkout_step3']['total_weight_kg']) 
+    $total_weight_kg = !empty($order_details['total_weight_kg'])
+        ? floatval($order_details['total_weight_kg'])
+        : (!empty($_SESSION['checkout_step3']['total_weight_kg'])
+            ? floatval($_SESSION['checkout_step3']['total_weight_kg'])
             : 0);
 
-    $total_width = !empty($order_details['total_width']) 
-        ? floatval($order_details['total_width']) 
-        : (!empty($_SESSION['checkout_step3']['total_width']) 
-            ? floatval($_SESSION['checkout_step3']['total_width']) 
+    $total_width = !empty($order_details['total_width'])
+        ? floatval($order_details['total_width'])
+        : (!empty($_SESSION['checkout_step3']['total_width'])
+            ? floatval($_SESSION['checkout_step3']['total_width'])
             : 0);
 
-    $total_height = !empty($order_details['total_height']) 
-        ? floatval($order_details['total_height']) 
-        : (!empty($_SESSION['checkout_step3']['total_height']) 
-            ? floatval($_SESSION['checkout_step3']['total_height']) 
+    $total_height = !empty($order_details['total_height'])
+        ? floatval($order_details['total_height'])
+        : (!empty($_SESSION['checkout_step3']['total_height'])
+            ? floatval($_SESSION['checkout_step3']['total_height'])
             : 0);
 
-    $total_length = !empty($order_details['total_length']) 
-        ? floatval($order_details['total_length']) 
-        : (!empty($_SESSION['checkout_step3']['total_length']) 
-            ? floatval($_SESSION['checkout_step3']['total_length']) 
+    $total_length = !empty($order_details['total_length'])
+        ? floatval($order_details['total_length'])
+        : (!empty($_SESSION['checkout_step3']['total_length'])
+            ? floatval($_SESSION['checkout_step3']['total_length'])
             : 0);
 
     // Validate vehicle only if needed
     if ($delivery_type === 'delivery' && !is_null($assigned_vehicle_id_input) && $assigned_vehicle_id_input > 0) {
         error_log("Validating vehicle ID: $assigned_vehicle_id_input");
-        
+
         $vehicle_check = $conn->query("
             SELECT id, vehicle_type FROM transportify_vehicle_list 
             WHERE id = " . intval($assigned_vehicle_id_input) . " 
             LIMIT 1
         ");
-        
+
         if ($vehicle_check && $vehicle_check->num_rows > 0) {
             $vehicle_row = $vehicle_check->fetch_assoc();
             $assigned_vehicle_id = $vehicle_row['id'];
@@ -248,9 +245,9 @@ if (!empty($user_id)) {
         billing_address_id,
         delivery_distance,
         sales_referral_code,
-sales_commission_rate,
-sales_commission_amount,
-sales_user_id
+        sales_commission_rate,
+        sales_commission_amount,
+        sales_user_id
     ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
 
     $stmt = $conn->prepare($insert_sql);
@@ -290,11 +287,11 @@ sales_user_id
         $billing_address_id,
         $delivery_distance,
         $sales_referral_code,
-$sales_commission_rate,
-$sales_commission_amount,
-$sales_user_id
+        $sales_commission_rate,
+        $sales_commission_amount,
+        $sales_user_id
     );
-    
+
     if (!$stmt->execute()) {
         error_log("INSERT FAILED: " . $stmt->error);
         throw new Exception('Execute failed: ' . $stmt->error);
@@ -304,7 +301,7 @@ $sales_user_id
     error_log("✓ Order created: ID=$order_id with status: pending");
     $stmt->close();
 
-    // ✅ GET CART ITEMS - BUT DON'T DEDUCT STOCK YET
+    // ✅ GET CART ITEMS - WITH color_id
     $cart_stmt = $conn->prepare("
         SELECT 
             uci.id,
@@ -356,12 +353,12 @@ $sales_user_id
         throw new Exception('No items found in cart');
     }
 
-    // ✅ INSERT ORDER ITEMS (NO STOCK DEDUCTION HERE)
+    // ✅ INSERT ORDER ITEMS - NOW WITH color_id!
     $item_stmt = $conn->prepare("INSERT INTO order_items (
-        order_id, product_id, variant_id, product_name, codename, type_name, 
+        order_id, product_id, variant_id, color_id, product_name, codename, type_name, 
         variant_color, size, price, quantity, subtotal, 
         descrip6, descrip7, origin
-    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)");
+    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)");
 
     if (!$item_stmt) {
         $conn->query("DELETE FROM order_items WHERE order_id = $order_id");
@@ -371,10 +368,15 @@ $sales_user_id
 
     foreach ($cart_items as $item) {
         $item_subtotal = floatval($item['price']) * intval($item['quantity']);
-        $variant_id = isset($item['variant_id']) && !empty($item['variant_id']) 
-            ? intval($item['variant_id']) 
+        $variant_id = isset($item['variant_id']) && !empty($item['variant_id'])
+            ? intval($item['variant_id'])
             : null;
-        
+
+        // ✅ GET color_id FROM CART ITEM
+        $color_id = isset($item['color_id']) && !empty($item['color_id'])
+            ? intval($item['color_id'])
+            : null;
+
         $product_id = intval($item['product_id']);
         $product_name = $item['variant_name'] ?? $item['product_name'] ?? 'Product';
         $color = $item['color_name'] ?? $item['variant_color'] ?? '';
@@ -385,11 +387,13 @@ $sales_user_id
         $descrip7 = $item['descrip7'] ?? '';
         $origin = $item['origin'] ?? '';
 
+        // ✅ BIND WITH color_id (4th parameter)
         $item_stmt->bind_param(
-            "iiisssssdidsss",
+            "iiiiisssssdidss",
             $order_id,
             $product_id,
             $variant_id,
+            $color_id,
             $product_name,
             $codename,
             $type_name,
@@ -402,14 +406,14 @@ $sales_user_id
             $descrip7,
             $origin
         );
-        
+
         if (!$item_stmt->execute()) {
             error_log("Warning: Failed to insert item: " . $item_stmt->error);
         }
     }
 
     $item_stmt->close();
-    
+
     error_log("✓ Order items created WITHOUT stock deduction (waiting for payment)");
 
     // ✅ CREATE PAYMONGO CHECKOUT SESSION - WITH DYNAMIC URLs
@@ -426,9 +430,9 @@ $sales_user_id
                     "quantity" => 1,
                     "amount" => $amount_in_centavos,
                     "currency" => "PHP",
-                    "description" => "Items: ₱" . number_format($items_without_vat, 2) . 
-                                   " + VAT: ₱" . number_format($vat_amount, 2) . 
-                                   " + Delivery: ₱" . number_format($delivery_fee, 2)
+                    "description" => "Items: ₱" . number_format($items_without_vat, 2) .
+                        " + VAT: ₱" . number_format($vat_amount, 2) .
+                        " + Delivery: ₱" . number_format($delivery_fee, 2)
                 ]],
                 "payment_method_types" => ["gcash", "paymaya", "card", "grab_pay"],
                 "success_url" => $success_url . "?order_id=" . $order_id . "&ref=" . $reference_no,
@@ -504,7 +508,6 @@ $sales_user_id
 
     ob_end_clean();
     echo json_encode($paymongo_response);
-
 } catch (Exception $e) {
     ob_end_clean();
     error_log("PayMongo Error: " . $e->getMessage());
@@ -518,4 +521,3 @@ $sales_user_id
     echo json_encode(['error' => 'Server error']);
     exit;
 }
-?>

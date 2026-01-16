@@ -240,7 +240,7 @@ if ($totalItems > 0) {
         if ($itemType === 'replacement') {
             $hasReplacements = true;
             $totalReplacements++;
-            
+
             // Replacement items: must be in "In Warehouse" status
             if ($status === 'In Warehouse') {
                 $isReady = true;
@@ -281,9 +281,9 @@ $statusDefinitions = [
         'pending' => ['icon' => 'fa-cog', 'color' => 'blue', 'label' => 'pending', 'description' => 'Order confirmed and being prepared', 'progress' => 16],
         'processing' => ['icon' => 'fa-cog', 'color' => 'blue', 'label' => 'Processing', 'description' => 'Order confirmed and being prepared', 'progress' => 16],
         'In Warehouse' => ['icon' => 'fa-warehouse', 'color' => 'indigo', 'label' => 'In Warehouse', 'description' => 'Item received and stored in warehouse', 'progress' => 33],
-'scheduled' => ['icon' => 'fa-calendar-check', 'color' => 'purple', 'label' => 'Scheduled', 'description' => 'Delivery has been scheduled', 'progress' => 50],
-'item_is_loaded' => ['icon' => 'fa-box-open', 'color' => 'teal', 'label' => 'Item Loaded', 'description' => 'Item loaded onto delivery vehicle', 'progress' => 58],
-'ready_for_pickup' => ['icon' => 'fa-truck', 'color' => 'yellow', 'label' => 'Ready for Pickup/Dispatch', 'description' => 'Item ready for local delivery', 'progress' => 66],
+        'scheduled' => ['icon' => 'fa-calendar-check', 'color' => 'purple', 'label' => 'Scheduled', 'description' => 'Delivery has been scheduled', 'progress' => 50],
+        'item_is_loaded' => ['icon' => 'fa-box-open', 'color' => 'teal', 'label' => 'Item Loaded', 'description' => 'Item loaded onto delivery vehicle', 'progress' => 58],
+        'ready_for_pickup' => ['icon' => 'fa-truck', 'color' => 'yellow', 'label' => 'Ready for Pickup/Dispatch', 'description' => 'Item ready for local delivery', 'progress' => 66],
         'out_for_delivery' => ['icon' => 'fa-shipping-fast', 'color' => 'orange', 'label' => 'Out for Delivery', 'description' => 'Courier delivering to customer', 'progress' => 83],
         'delivered' => ['icon' => 'fa-check-circle', 'color' => 'green', 'label' => 'Delivered', 'description' => 'Customer received the item', 'progress' => 100],
         'cancelled' => ['icon' => 'fa-times-circle', 'color' => 'red', 'label' => 'Returned', 'description' => 'Order cancelled or returned', 'progress' => 0]
@@ -295,9 +295,9 @@ $statusDefinitions = [
         'in_transit_international' => ['icon' => 'fa-plane', 'color' => 'yellow', 'label' => 'In Transit (International)', 'description' => 'Item is on the way (by sea/air)', 'progress' => 32],
         'customs_clearance' => ['icon' => 'fa-file-signature', 'color' => 'orange', 'label' => 'Customs Clearance', 'description' => 'Item undergoing customs inspection', 'progress' => 44],
         'In Warehouse' => ['icon' => 'fa-warehouse', 'color' => 'indigo', 'label' => 'In Warehouse', 'description' => 'Item received and stored in local warehouse', 'progress' => 55],
-'scheduled' => ['icon' => 'fa-calendar-check', 'color' => 'purple', 'label' => 'Scheduled', 'description' => 'Delivery has been scheduled', 'progress' => 66],
-'item_is_loaded' => ['icon' => 'fa-box-open', 'color' => 'teal', 'label' => 'Item Loaded', 'description' => 'Item loaded onto delivery vehicle', 'progress' => 71],
-'ready_for_pickup' => ['icon' => 'fa-truck', 'color' => 'yellow', 'label' => 'Ready for Pickup/Dispatch', 'description' => 'Item ready for local delivery', 'progress' => 77],
+        'scheduled' => ['icon' => 'fa-calendar-check', 'color' => 'purple', 'label' => 'Scheduled', 'description' => 'Delivery has been scheduled', 'progress' => 66],
+        'item_is_loaded' => ['icon' => 'fa-box-open', 'color' => 'teal', 'label' => 'Item Loaded', 'description' => 'Item loaded onto delivery vehicle', 'progress' => 71],
+        'ready_for_pickup' => ['icon' => 'fa-truck', 'color' => 'yellow', 'label' => 'Ready for Pickup/Dispatch', 'description' => 'Item ready for local delivery', 'progress' => 77],
         'out_for_delivery' => ['icon' => 'fa-shipping-fast', 'color' => 'orange', 'label' => 'Out for Delivery', 'description' => 'Courier delivering to customer', 'progress' => 88],
         'delivered' => ['icon' => 'fa-check-circle', 'color' => 'green', 'label' => 'Delivered', 'description' => 'Customer received the item', 'progress' => 100],
         'cancelled' => ['icon' => 'fa-times-circle', 'color' => 'red', 'label' => 'Returned', 'description' => 'Order cancelled or returned', 'progress' => 0]
@@ -308,9 +308,9 @@ $replacementStatusDefinitions = [
     'approved' => ['icon' => 'fa-check-circle', 'color' => 'green', 'label' => 'Approved', 'description' => 'Replacement request has been approved', 'progress' => 14],
     'processing' => ['icon' => 'fa-cog', 'color' => 'blue', 'label' => 'Processing', 'description' => 'Replacement being prepared', 'progress' => 28],
     'In Warehouse' => ['icon' => 'fa-warehouse', 'color' => 'indigo', 'label' => 'In Warehouse', 'description' => 'Replacement received and stored in warehouse', 'progress' => 42],
-'scheduled' => ['icon' => 'fa-calendar-check', 'color' => 'purple', 'label' => 'Scheduled', 'description' => 'Replacement delivery scheduled', 'progress' => 57],
-'item_is_loaded' => ['icon' => 'fa-box-open', 'color' => 'teal', 'label' => 'Item Loaded', 'description' => 'Replacement loaded onto delivery vehicle', 'progress' => 64],
-'ready_for_pickup' => ['icon' => 'fa-truck', 'color' => 'yellow', 'label' => 'Ready for Pickup/Dispatch', 'description' => 'Replacement ready for delivery', 'progress' => 71],
+    'scheduled' => ['icon' => 'fa-calendar-check', 'color' => 'purple', 'label' => 'Scheduled', 'description' => 'Replacement delivery scheduled', 'progress' => 57],
+    'item_is_loaded' => ['icon' => 'fa-box-open', 'color' => 'teal', 'label' => 'Item Loaded', 'description' => 'Replacement loaded onto delivery vehicle', 'progress' => 64],
+    'ready_for_pickup' => ['icon' => 'fa-truck', 'color' => 'yellow', 'label' => 'Ready for Pickup/Dispatch', 'description' => 'Replacement ready for delivery', 'progress' => 71],
     'out_for_delivery' => ['icon' => 'fa-shipping-fast', 'color' => 'orange', 'label' => 'Out for Delivery', 'description' => 'Replacement being delivered', 'progress' => 85],
     'delivered' => ['icon' => 'fa-check-circle', 'color' => 'green', 'label' => 'Delivered', 'description' => 'Replacement delivered to customer', 'progress' => 100],
     'cancelled' => ['icon' => 'fa-times-circle', 'color' => 'red', 'label' => 'Cancelled', 'description' => 'Replacement request cancelled', 'progress' => 0]
@@ -318,8 +318,8 @@ $replacementStatusDefinitions = [
 
 // Define selectable statuses (limited as per requirements)
 $selectableStatuses = [
-    'local' => ['pending','processing'], // Only processing can be manually updated (In Warehouse is auto-updated via QR scan)
-    'international' => ['pending','processing', 'shipped_overseas', 'in_transit_international', 'customs_clearance'] // Can edit up to customs_clearance (In Warehouse is auto-updated via QR scan)
+    'local' => ['pending', 'processing'], // Only processing can be manually updated (In Warehouse is auto-updated via QR scan)
+    'international' => ['pending', 'processing', 'shipped_overseas', 'in_transit_international', 'customs_clearance'] // Can edit up to customs_clearance (In Warehouse is auto-updated via QR scan)
 ];
 
 $selectableReplacementStatuses = ['approved', 'processing']; // Only these can be manually updated (In Warehouse is auto-updated via QR scan)
@@ -657,7 +657,7 @@ $selectableReplacementStatuses = ['approved', 'processing']; // Only these can b
         <?php endif; ?>
 
         <!-- Replacement Items Ready Banner -->
-<?php if ($hasReplacements && $allReplacementsReady && !$hasScheduledReplacements): ?>
+        <?php if ($hasReplacements && $allReplacementsReady && !$hasScheduledReplacements): ?>
             <div class="mb-6 bg-red-50 border-2 border-red-300 rounded-xl p-6 shadow-sm">
                 <div class="flex items-start">
                     <div class="bg-red-100 rounded-full p-3 mr-4 animate-pulse">
@@ -773,160 +773,160 @@ $selectableReplacementStatuses = ['approved', 'processing']; // Only these can b
         }
 
         function renderSingleItem($item, $origin, $statusDef, $selectableStatuses, $order_id, $isReplacement)
-{
-    global $conn; // Add this to access database connection
-    
-    $currentStatus = $item['current_status'];
-    $statusInfo = $statusDef[$currentStatus] ?? ($isReplacement ? $statusDef['approved'] : $statusDef['processing']);
+        {
+            global $conn; // Add this to access database connection
 
-    $itemClass = $isReplacement ? 'replacement-item' : '';
-    
-    // Check for defect reports
-    $defectCountSql = "SELECT COUNT(*) as defect_count FROM defect_reports WHERE order_item_id = ?";
-    $defectCountStmt = $conn->prepare($defectCountSql);
-    $defectCountStmt->bind_param("i", $item['id']);
-    $defectCountStmt->execute();
-    $defectCountResult = $defectCountStmt->get_result()->fetch_assoc();
-    $defectCountStmt->close();
-    $hasDefects = (int)$defectCountResult['defect_count'] > 0;
+            $currentStatus = $item['current_status'];
+            $statusInfo = $statusDef[$currentStatus] ?? ($isReplacement ? $statusDef['approved'] : $statusDef['processing']);
 
-    echo "<div class='status-card bg-white rounded-xl p-6 border border-gray-200 cursor-pointer {$itemClass}' onclick=\"openProgressModal('{$item['id']}', '{$origin}', '{$currentStatus}', " . ($isReplacement ? 'true' : 'false') . ")\">";
+            $itemClass = $isReplacement ? 'replacement-item' : '';
 
-    if ($isReplacement) {
-        echo "<div class='mb-4 flex items-center justify-between'>";
-        echo "<div class='flex items-center space-x-2'>";
-        echo "<span class='bg-red-100 text-red-800 px-3 py-1 rounded-full text-sm font-semibold'>";
-        echo "<i class='fas fa-sync-alt mr-1'></i>REPLACEMENT ITEM";
-        echo "</span>";
-        echo "</div>";
-        echo "<div class='text-sm text-gray-600'>";
-        echo "<span class='font-medium'>Reason:</span> " . htmlspecialchars(ucfirst($item['replacement_reason']));
-        echo "</div>";
-        echo "</div>";
-    }
-    
-    // ADD DEFECT WARNING
-    if ($hasDefects) {
-        echo "<div class='mb-4 bg-orange-50 border-l-4 border-orange-500 rounded p-3'>";
-        echo "<div class='flex items-center space-x-2'>";
-        echo "<i class='fas fa-exclamation-triangle text-orange-600 text-lg'></i>";
-        echo "<span class='text-orange-800 font-semibold'>Defect Reported</span>";
-        echo "<button onclick='event.stopPropagation(); viewItemDefects({$item['id']});' class='ml-auto text-orange-600 hover:text-orange-700 underline text-sm'>";
-        echo "View Details";
-        echo "</button>";
-        echo "</div>";
-        echo "</div>";
-    }
+            // Check for defect reports
+            $defectCountSql = "SELECT COUNT(*) as defect_count FROM defect_reports WHERE order_item_id = ?";
+            $defectCountStmt = $conn->prepare($defectCountSql);
+            $defectCountStmt->bind_param("i", $item['id']);
+            $defectCountStmt->execute();
+            $defectCountResult = $defectCountStmt->get_result()->fetch_assoc();
+            $defectCountStmt->close();
+            $hasDefects = (int)$defectCountResult['defect_count'] > 0;
 
-    echo "<div class='flex flex-col lg:flex-row lg:items-center lg:justify-between space-y-4 lg:space-y-0'>";
-    echo "<div class='flex-1 min-w-0'>";
-    echo "<h4 class='font-bold text-gray-900 text-lg mb-2'>" . htmlspecialchars($item['product_name']) . "</h4>";
-    echo "<div class='flex flex-wrap items-center gap-4 text-sm text-gray-600'>";
-    echo "<span class='flex items-center'><i class='fas fa-boxes mr-2'></i>Qty: <strong class='ml-1'>{$item['quantity']}</strong></span>";
-    echo "<span class='flex items-center'><i class='fas fa-peso-sign mr-2'></i>Price: <strong class='ml-1'>" . number_format((float)$item['price'], 2) . "</strong></span>";
-    if ($item['codename']) {
-        echo "<span class='flex items-center'><i class='fas fa-tag mr-2'></i>Code: <strong class='ml-1'>" . htmlspecialchars($item['codename']) . "</strong></span>";
-    }
-    echo "</div>";
-    echo "</div>";
+            echo "<div class='status-card bg-white rounded-xl p-6 border border-gray-200 cursor-pointer {$itemClass}' onclick=\"openProgressModal('{$item['id']}', '{$origin}', '{$currentStatus}', " . ($isReplacement ? 'true' : 'false') . ")\">";
 
-    echo "<div class='flex flex-col sm:flex-row items-start sm:items-center space-y-3 sm:space-y-0 sm:space-x-4' onclick='event.stopPropagation();'>";
+            if ($isReplacement) {
+                echo "<div class='mb-4 flex items-center justify-between'>";
+                echo "<div class='flex items-center space-x-2'>";
+                echo "<span class='bg-red-100 text-red-800 px-3 py-1 rounded-full text-sm font-semibold'>";
+                echo "<i class='fas fa-sync-alt mr-1'></i>REPLACEMENT ITEM";
+                echo "</span>";
+                echo "</div>";
+                echo "<div class='text-sm text-gray-600'>";
+                echo "<span class='font-medium'>Reason:</span> " . htmlspecialchars(ucfirst($item['replacement_reason']));
+                echo "</div>";
+                echo "</div>";
+            }
 
-    // Status badge
-    echo "<div class='text-center'>";
-    echo "<div class='status-badge inline-flex items-center px-4 py-2 rounded-full text-sm font-semibold mb-2' style='--bg-from: rgb(var(--{$statusInfo['color']}-100)); --bg-to: rgb(var(--{$statusInfo['color']}-50));'>";
-    echo "<i class='fas {$statusInfo['icon']} mr-2 text-{$statusInfo['color']}-600'></i>";
-    echo "<span class='text-{$statusInfo['color']}-800'>{$statusInfo['label']}</span>";
-    echo "</div>";
-    echo "<div class='text-xs text-gray-600'>{$statusInfo['description']}</div>";
-    echo "</div>";
+            // ADD DEFECT WARNING
+            if ($hasDefects) {
+                echo "<div class='mb-4 bg-orange-50 border-l-4 border-orange-500 rounded p-3'>";
+                echo "<div class='flex items-center space-x-2'>";
+                echo "<i class='fas fa-exclamation-triangle text-orange-600 text-lg'></i>";
+                echo "<span class='text-orange-800 font-semibold'>Defect Reported</span>";
+                echo "<button onclick='event.stopPropagation(); viewItemDefects({$item['id']});' class='ml-auto text-orange-600 hover:text-orange-700 underline text-sm'>";
+                echo "View Details";
+                echo "</button>";
+                echo "</div>";
+                echo "</div>";
+            }
 
-    echo "<div class='flex flex-col space-y-2'>";
+            echo "<div class='flex flex-col lg:flex-row lg:items-center lg:justify-between space-y-4 lg:space-y-0'>";
+            echo "<div class='flex-1 min-w-0'>";
+            echo "<h4 class='font-bold text-gray-900 text-lg mb-2'>" . htmlspecialchars($item['product_name']) . "</h4>";
+            echo "<div class='flex flex-wrap items-center gap-4 text-sm text-gray-600'>";
+            echo "<span class='flex items-center'><i class='fas fa-boxes mr-2'></i>Qty: <strong class='ml-1'>{$item['quantity']}</strong></span>";
+            echo "<span class='flex items-center'><i class='fas fa-peso-sign mr-2'></i>Price: <strong class='ml-1'>" . number_format((float)$item['price'], 2) . "</strong></span>";
+            if ($item['codename']) {
+                echo "<span class='flex items-center'><i class='fas fa-tag mr-2'></i>Code: <strong class='ml-1'>" . htmlspecialchars($item['codename']) . "</strong></span>";
+            }
+            echo "</div>";
+            echo "</div>";
 
-    // Status update form
-    $canUpdate = false;
-    if ($isReplacement) {
-        global $selectableReplacementStatuses;
-        $canUpdate = in_array($currentStatus, $selectableReplacementStatuses);
-        $statusOptionsToUse = $selectableReplacementStatuses;
-    } else {
-        $canUpdate = in_array($currentStatus, $selectableStatuses);
-        $statusOptionsToUse = $selectableStatuses;
-    }
+            echo "<div class='flex flex-col sm:flex-row items-start sm:items-center space-y-3 sm:space-y-0 sm:space-x-4' onclick='event.stopPropagation();'>";
 
-    if ($canUpdate) {
-        echo "<form method='POST' class='flex items-center space-x-2'>";
-        echo "<input type='hidden' name='item_id' value='{$item['id']}'>";
-        if ($isReplacement) {
-            echo "<input type='hidden' name='item_type' value='replacement'>";
-            echo "<input type='hidden' name='replacement_id' value='{$item['replacement_id']}'>";
-        }
-        echo "<select name='tracking_status' class='px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500'>";
+            // Status badge
+            echo "<div class='text-center'>";
+            echo "<div class='status-badge inline-flex items-center px-4 py-2 rounded-full text-sm font-semibold mb-2' style='--bg-from: rgb(var(--{$statusInfo['color']}-100)); --bg-to: rgb(var(--{$statusInfo['color']}-50));'>";
+            echo "<i class='fas {$statusInfo['icon']} mr-2 text-{$statusInfo['color']}-600'></i>";
+            echo "<span class='text-{$statusInfo['color']}-800'>{$statusInfo['label']}</span>";
+            echo "</div>";
+            echo "<div class='text-xs text-gray-600'>{$statusInfo['description']}</div>";
+            echo "</div>";
 
-        foreach ($statusOptionsToUse as $status) {
-            $info = $statusDef[$status];
-            $selected = ($currentStatus === $status) ? 'selected' : '';
-            echo "<option value='{$status}' {$selected}>{$info['label']}</option>";
-        }
-        echo "</select>";
-        echo "<button type='submit' name='update_status' class='bg-gradient-to-r from-blue-500 to-blue-600 hover:from-blue-600 hover:to-blue-700 text-white px-4 py-2 rounded-lg text-sm font-medium transition-all duration-200 flex items-center space-x-2 hover:scale-105'>";
-        echo "<i class='fas fa-sync-alt'></i>";
-        echo "<span>Update</span>";
-        echo "</button>";
-        echo "</form>";
-    }
-    
-    // ADD RESOLVE DEFECT BUTTON (only for items with unresolved defects)
-if (!$isReplacement && $hasDefects && $currentStatus !== 'cancelled') {
-    // Check defect status
-    $defectStatusSql = "SELECT status FROM defect_reports WHERE order_item_id = ? AND status != 'resolved' LIMIT 1";
-    $defectStatusStmt = $conn->prepare($defectStatusSql);
-    $defectStatusStmt->bind_param("i", $item['id']);
-    $defectStatusStmt->execute();
-    $defectStatusResult = $defectStatusStmt->get_result()->fetch_assoc();
-    $defectStatusStmt->close();
-    
-    if ($defectStatusResult) {
-        echo "<button onclick='event.stopPropagation(); resolveDefect({$item['id']}, {$order_id});' class='bg-orange-500 hover:bg-orange-600 text-white px-3 py-2 rounded-lg text-sm font-medium transition-all duration-200 flex items-center space-x-2'>";
-        echo "<i class='fas fa-check-circle'></i>";
-        echo "<span>Mark Defect as Resolved</span>";
-        echo "</button>";
-    }
-}
+            echo "<div class='flex flex-col space-y-2'>";
 
-    echo "</div>";
-    
-    // ADD P.O. NUMBER GENERATION FOR REPLACEMENTS
-    if ($isReplacement && in_array($currentStatus, ['approved', 'processing'])) {
-        // Check if replacement has P.O. number
-        $replPoCheckSql = "SELECT po_number FROM replacement_requests WHERE id = ?";
-        $replPoCheckStmt = $conn->prepare($replPoCheckSql);
-        $replPoCheckStmt->bind_param("i", $item['replacement_id']);
-        $replPoCheckStmt->execute();
-        $replPoResult = $replPoCheckStmt->get_result()->fetch_assoc();
-        $replPoCheckStmt->close();
-        
-        if (empty($replPoResult['po_number'])) {
-            echo "<button onclick='generateReplacementPO({$item['replacement_id']})' class='w-full bg-green-500 hover:bg-green-600 text-white px-3 py-2 rounded-lg text-sm font-medium transition-all duration-200 flex items-center justify-center space-x-2 mt-2'>";
-            echo "<i class='fas fa-file-invoice'></i>";
-            echo "<span>Generate P.O. Number</span>";
-            echo "</button>";
-        } else {
-            echo "<div class='bg-green-50 border-2 border-green-200 rounded-lg p-3 text-center mt-2'>";
-            echo "<div class='text-xs text-green-700 mb-1 font-semibold'>P.O. Number Generated</div>";
-            echo "<div class='font-mono font-bold text-green-900 text-sm mb-2'>" . htmlspecialchars($replPoResult['po_number']) . "</div>";
-            echo "<a href='view_po_items.php?po_number=" . urlencode($replPoResult['po_number']) . "' class='inline-flex items-center space-x-1 bg-green-600 hover:bg-green-700 text-white px-3 py-1.5 rounded text-xs font-medium transition-colors duration-200'>";
-            echo "<i class='fas fa-qrcode'></i>";
-            echo "<span>Generate QR Code</span>";
-            echo "</a>";
+            // Status update form
+            $canUpdate = false;
+            if ($isReplacement) {
+                global $selectableReplacementStatuses;
+                $canUpdate = in_array($currentStatus, $selectableReplacementStatuses);
+                $statusOptionsToUse = $selectableReplacementStatuses;
+            } else {
+                $canUpdate = in_array($currentStatus, $selectableStatuses);
+                $statusOptionsToUse = $selectableStatuses;
+            }
+
+            if ($canUpdate) {
+                echo "<form method='POST' class='flex items-center space-x-2'>";
+                echo "<input type='hidden' name='item_id' value='{$item['id']}'>";
+                if ($isReplacement) {
+                    echo "<input type='hidden' name='item_type' value='replacement'>";
+                    echo "<input type='hidden' name='replacement_id' value='{$item['replacement_id']}'>";
+                }
+                echo "<select name='tracking_status' class='px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500'>";
+
+                foreach ($statusOptionsToUse as $status) {
+                    $info = $statusDef[$status];
+                    $selected = ($currentStatus === $status) ? 'selected' : '';
+                    echo "<option value='{$status}' {$selected}>{$info['label']}</option>";
+                }
+                echo "</select>";
+                echo "<button type='submit' name='update_status' class='bg-gradient-to-r from-blue-500 to-blue-600 hover:from-blue-600 hover:to-blue-700 text-white px-4 py-2 rounded-lg text-sm font-medium transition-all duration-200 flex items-center space-x-2 hover:scale-105'>";
+                echo "<i class='fas fa-sync-alt'></i>";
+                echo "<span>Update</span>";
+                echo "</button>";
+                echo "</form>";
+            }
+
+            // ADD RESOLVE DEFECT BUTTON (only for items with unresolved defects)
+            if (!$isReplacement && $hasDefects && $currentStatus !== 'cancelled') {
+                // Check defect status
+                $defectStatusSql = "SELECT status FROM defect_reports WHERE order_item_id = ? AND status != 'resolved' LIMIT 1";
+                $defectStatusStmt = $conn->prepare($defectStatusSql);
+                $defectStatusStmt->bind_param("i", $item['id']);
+                $defectStatusStmt->execute();
+                $defectStatusResult = $defectStatusStmt->get_result()->fetch_assoc();
+                $defectStatusStmt->close();
+
+                if ($defectStatusResult) {
+                    echo "<button onclick='event.stopPropagation(); resolveDefect({$item['id']}, {$order_id});' class='bg-orange-500 hover:bg-orange-600 text-white px-3 py-2 rounded-lg text-sm font-medium transition-all duration-200 flex items-center space-x-2'>";
+                    echo "<i class='fas fa-check-circle'></i>";
+                    echo "<span>Mark Defect as Resolved</span>";
+                    echo "</button>";
+                }
+            }
+
+            echo "</div>";
+
+            // ADD P.O. NUMBER GENERATION FOR REPLACEMENTS
+            if ($isReplacement && in_array($currentStatus, ['approved', 'processing'])) {
+                // Check if replacement has P.O. number
+                $replPoCheckSql = "SELECT po_number FROM replacement_requests WHERE id = ?";
+                $replPoCheckStmt = $conn->prepare($replPoCheckSql);
+                $replPoCheckStmt->bind_param("i", $item['replacement_id']);
+                $replPoCheckStmt->execute();
+                $replPoResult = $replPoCheckStmt->get_result()->fetch_assoc();
+                $replPoCheckStmt->close();
+
+                if (empty($replPoResult['po_number'])) {
+                    echo "<button onclick='generateReplacementPO({$item['replacement_id']})' class='w-full bg-green-500 hover:bg-green-600 text-white px-3 py-2 rounded-lg text-sm font-medium transition-all duration-200 flex items-center justify-center space-x-2 mt-2'>";
+                    echo "<i class='fas fa-file-invoice'></i>";
+                    echo "<span>Generate P.O. Number</span>";
+                    echo "</button>";
+                } else {
+                    echo "<div class='bg-green-50 border-2 border-green-200 rounded-lg p-3 text-center mt-2'>";
+                    echo "<div class='text-xs text-green-700 mb-1 font-semibold'>P.O. Number Generated</div>";
+                    echo "<div class='font-mono font-bold text-green-900 text-sm mb-2'>" . htmlspecialchars($replPoResult['po_number']) . "</div>";
+                    echo "<a href='view_po_items.php?po_number=" . urlencode($replPoResult['po_number']) . "' class='inline-flex items-center space-x-1 bg-green-600 hover:bg-green-700 text-white px-3 py-1.5 rounded text-xs font-medium transition-colors duration-200'>";
+                    echo "<i class='fas fa-qrcode'></i>";
+                    echo "<span>Generate QR Code</span>";
+                    echo "</a>";
+                    echo "</div>";
+                }
+            }
+
+            echo "</div>";
+            echo "</div>";
             echo "</div>";
         }
-    }
-    
-    echo "</div>";
-    echo "</div>";
-    echo "</div>";
-}
         ?>
 
         <!-- Local Products Section -->
@@ -1327,61 +1327,61 @@ if (!$isReplacement && $hasDefects && $currentStatus !== 'cancelled') {
             if (!confirm('Generate P.O. number for this replacement item?\n\nThis will allow you to generate QR codes and track this replacement in the warehouse.')) {
                 return;
             }
-            
+
             fetch('warehouse_staff_generate_replacement_po_C1.php', {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                },
-                body: JSON.stringify({
-                    replacement_id: replacementId
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({
+                        replacement_id: replacementId
+                    })
                 })
-            })
-            .then(response => response.json())
-            .then(data => {
-                if (data.success) {
-                    alert('✓ P.O. Number generated successfully!\n\nP.O. Number: ' + data.po_number + '\n\nYou can now search for this P.O. number in "View P.O. Items" to generate QR codes.');
-                    window.location.reload();
-                } else {
-                    alert('✗ Failed to generate P.O. number: ' + (data.error || 'Unknown error'));
-                }
-            })
-            .catch(error => {
-                console.error('Error:', error);
-                alert('✗ Failed to generate P.O. number. Please try again.');
-            });
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success) {
+                        alert('✓ P.O. Number generated successfully!\n\nP.O. Number: ' + data.po_number + '\n\nYou can now search for this P.O. number in "View P.O. Items" to generate QR codes.');
+                        window.location.reload();
+                    } else {
+                        alert('✗ Failed to generate P.O. number: ' + (data.error || 'Unknown error'));
+                    }
+                })
+                .catch(error => {
+                    console.error('Error:', error);
+                    alert('✗ Failed to generate P.O. number. Please try again.');
+                });
         }
 
         // Resolve Defect Function
-function resolveDefect(itemId, orderId) {
-    if (!confirm('Mark this defect as resolved?\n\nThis will allow the item to be marked as "In Warehouse" when scanned.')) {
-        return;
-    }
+        function resolveDefect(itemId, orderId) {
+            if (!confirm('Mark this defect as resolved?\n\nThis will allow the item to be marked as "In Warehouse" when scanned.')) {
+                return;
+            }
 
-    fetch('warehouse_staff_resolve_defect_C2.php', {
-        method: 'POST',
-        headers: {
-            'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-            order_item_id: itemId,
-            order_id: orderId
-        })
-    })
-    .then(response => response.json())
-    .then(data => {
-        if (data.success) {
-            alert('✓ Defect marked as resolved!\n\nThe item can now be marked as "In Warehouse" when scanned.');
-            window.location.reload();
-        } else {
-            alert('✗ Failed to resolve defect: ' + (data.error || 'Unknown error'));
+            fetch('warehouse_staff_resolve_defect_C2.php', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({
+                        order_item_id: itemId,
+                        order_id: orderId
+                    })
+                })
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success) {
+                        alert('✓ Defect marked as resolved!\n\nThe item can now be marked as "In Warehouse" when scanned.');
+                        window.location.reload();
+                    } else {
+                        alert('✗ Failed to resolve defect: ' + (data.error || 'Unknown error'));
+                    }
+                })
+                .catch(error => {
+                    console.error('Error:', error);
+                    alert('✗ Failed to resolve defect. Please try again.');
+                });
         }
-    })
-    .catch(error => {
-        console.error('Error:', error);
-        alert('✗ Failed to resolve defect. Please try again.');
-    });
-}
     </script>
 </body>
 

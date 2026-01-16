@@ -67,7 +67,7 @@ try {
             // ✅ CRITICAL: Check if this is FIRST TIME on success page
             // Use order_id as unique key to prevent duplicate stock deductions
             $stock_deduction_key = 'stock_deducted_' . $order['id'];
-            
+
             if (!isset($_SESSION[$stock_deduction_key])) {
                 error_log("=== FIRST TIME SUCCESS PAGE - DEDUCTING STOCK ===");
                 error_log("Order ID: " . $order['id']);
@@ -93,7 +93,7 @@ try {
 
                 error_log("Total items to process: " . $items_result->num_rows);
 
-                // ✅ STEP 2: Process each item
+                // ✅ STEP 2: Process each item (FIXED)
                 while ($item = $items_result->fetch_assoc()) {
                     $variant_id = $item['variant_id'];
                     $quantity = $item['quantity'];
@@ -102,43 +102,45 @@ try {
                     error_log("Processing: Product #$product_id, Variant #$variant_id, Qty: $quantity");
 
                     if (!empty($variant_id)) {
-                        // PRIMARY: Get color_id from product_variant_colors
-                        $color_check = $conn->prepare("
-                            SELECT color_id FROM product_variant_colors 
-                            WHERE variant_id = ? 
-                            LIMIT 1
-                        ");
+                        // ✅ FIX: Get color_id from order_items (which color customer actually ordered)
+                        // First check if order_items has color_id field
+                        $item_color_check = $conn->prepare("
+            SELECT color_id FROM order_items 
+            WHERE id = ? 
+            LIMIT 1
+        ");
 
-                        if ($color_check) {
-                            $color_check->bind_param("i", $variant_id);
-                            $color_check->execute();
-                            $color_result = $color_check->get_result();
+                        if ($item_color_check) {
+                            $item_color_check->bind_param("i", $item['id']);
+                            $item_color_check->execute();
+                            $item_color_result = $item_color_check->get_result();
 
-                            if ($color_result->num_rows > 0) {
-                                $color_row = $color_result->fetch_assoc();
-                                $color_id = $color_row['color_id'];
+                            if ($item_color_result->num_rows > 0) {
+                                // ✅ Color_id is stored in order_items - USE THIS
+                                $item_color_row = $item_color_result->fetch_assoc();
+                                $color_id = $item_color_row['color_id'];
 
-                                error_log("  Found color_id: $color_id");
+                                error_log("  Found color_id from order_items: $color_id");
 
                                 // Deduct from junction table
                                 $deduct_junction = $conn->prepare("
-                                    UPDATE product_variant_colors 
-                                    SET stock_quantity = GREATEST(0, stock_quantity - ?)
-                                    WHERE variant_id = ? AND color_id = ?
-                                ");
+                    UPDATE product_variant_colors 
+                    SET stock_quantity = GREATEST(0, stock_quantity - ?)
+                    WHERE variant_id = ? AND color_id = ?
+                ");
 
                                 if ($deduct_junction) {
                                     $deduct_junction->bind_param("iii", $quantity, $variant_id, $color_id);
-                                    
+
                                     if ($deduct_junction->execute()) {
                                         error_log("  ✓ Junction table updated - rows: " . $deduct_junction->affected_rows);
-                                        
+
                                         // Check remaining stock
                                         $check = $conn->prepare("
-                                            SELECT stock_quantity 
-                                            FROM product_variant_colors 
-                                            WHERE variant_id = ? AND color_id = ?
-                                        ");
+                            SELECT stock_quantity 
+                            FROM product_variant_colors 
+                            WHERE variant_id = ? AND color_id = ?
+                        ");
                                         $check->bind_param("ii", $variant_id, $color_id);
                                         $check->execute();
                                         $check_res = $check->get_result();
@@ -152,17 +154,73 @@ try {
                                     $deduct_junction->close();
                                 }
                             } else {
-                                error_log("  ✗ No color_id found for variant");
+                                // ✅ FALLBACK: If color_id NOT in order_items, get from variant_color info
+                                error_log("  No color_id in order_items, trying variant_color field...");
+
+                                // Check if order_items has variant_color field (color name)
+                                $variant_color_check = $conn->prepare("
+                    SELECT variant_color FROM order_items 
+                    WHERE id = ? 
+                    LIMIT 1
+                ");
+
+                                if ($variant_color_check) {
+                                    $variant_color_check->bind_param("i", $item['id']);
+                                    $variant_color_check->execute();
+                                    $variant_color_result = $variant_color_check->get_result();
+
+                                    if ($variant_color_result->num_rows > 0) {
+                                        $color_name_row = $variant_color_result->fetch_assoc();
+                                        $color_name = $color_name_row['variant_color'];
+
+                                        // Get color_id from color_name
+                                        $get_color_id = $conn->prepare("
+                            SELECT id FROM product_colors 
+                            WHERE color_name = ? 
+                            LIMIT 1
+                        ");
+
+                                        if ($get_color_id) {
+                                            $get_color_id->bind_param("s", $color_name);
+                                            $get_color_id->execute();
+                                            $get_color_id_result = $get_color_id->get_result();
+
+                                            if ($get_color_id_result->num_rows > 0) {
+                                                $color_id_row = $get_color_id_result->fetch_assoc();
+                                                $color_id = $color_id_row['id'];
+
+                                                error_log("  Found color_id from variant_color name: $color_id");
+
+                                                // Deduct from junction table
+                                                $deduct_junction = $conn->prepare("
+                                    UPDATE product_variant_colors 
+                                    SET stock_quantity = GREATEST(0, stock_quantity - ?)
+                                    WHERE variant_id = ? AND color_id = ?
+                                ");
+
+                                                if ($deduct_junction) {
+                                                    $deduct_junction->bind_param("iii", $quantity, $variant_id, $color_id);
+                                                    if ($deduct_junction->execute()) {
+                                                        error_log("  ✓ Junction table updated");
+                                                    }
+                                                    $deduct_junction->close();
+                                                }
+                                            }
+                                            $get_color_id->close();
+                                        }
+                                    }
+                                    $variant_color_check->close();
+                                }
                             }
-                            $color_check->close();
+                            $item_color_check->close();
                         }
 
                         // FALLBACK: Also deduct from product_variants table
                         $deduct_variant = $conn->prepare("
-                            UPDATE product_variants 
-                            SET stock = GREATEST(0, stock - ?)
-                            WHERE id = ?
-                        ");
+            UPDATE product_variants 
+            SET stock = GREATEST(0, stock - ?)
+            WHERE id = ?
+        ");
 
                         if ($deduct_variant) {
                             $deduct_variant->bind_param("ii", $quantity, $variant_id);
@@ -198,14 +256,13 @@ try {
                 unset($_SESSION['paymongo_order_data']);
 
                 // ✅ STEP 6: Clear referred_by_code after first successful purchase
-if (isset($order['sales_user_id']) && !empty($order['sales_user_id'])) {
-    $clear_referral = $conn->prepare("UPDATE users SET referred_by_code = NULL WHERE id = ?");
-    $clear_referral->bind_param("i", $user_id);
-    $clear_referral->execute();
-    $clear_referral->close();
-    error_log("✓ Cleared referred_by_code for user: $user_id (PayMongo purchase completed)");
-}
-
+                if (isset($order['sales_user_id']) && !empty($order['sales_user_id'])) {
+                    $clear_referral = $conn->prepare("UPDATE users SET referred_by_code = NULL WHERE id = ?");
+                    $clear_referral->bind_param("i", $user_id);
+                    $clear_referral->execute();
+                    $clear_referral->close();
+                    error_log("✓ Cleared referred_by_code for user: $user_id (PayMongo purchase completed)");
+                }
             } else {
                 // Page refresh - don't deduct again
                 error_log("✓ Stock already deducted for order: " . $order['id']);
@@ -222,7 +279,6 @@ if (isset($order['sales_user_id']) && !empty($order['sales_user_id'])) {
             $items_stmt->bind_param("i", $order['id']);
             $items_stmt->execute();
             $order_items = $items_stmt->get_result();
-
         } else {
             $error_message = "Order not found or access denied";
         }
@@ -267,9 +323,12 @@ if ($order && !empty($order['reference_no'])) {
         }
 
         @keyframes successPulse {
-            0%, 100% {
+
+            0%,
+            100% {
                 transform: scale(1);
             }
+
             50% {
                 transform: scale(1.05);
             }
@@ -378,9 +437,7 @@ if ($order && !empty($order['reference_no'])) {
                                 <?php while ($item = $order_items->fetch_assoc()): ?>
                                     <div class="flex justify-between items-start p-4 bg-gray-50 rounded-lg">
                                         <div class="flex-1">
-                                            <h4 class="font-bold text-orange-600 mb-1">
-                                                <?= htmlspecialchars($item['product_name']) ?>
-                                            </h4>
+
                                             <div class="text-sm text-gray-600 space-y-1">
                                                 <?php if (!empty($item['codename'])): ?>
                                                     <div><strong>Code:</strong> <?= htmlspecialchars($item['codename']) ?></div>

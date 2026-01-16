@@ -437,6 +437,32 @@ foreach ($statusCounts as $row) {
     $statusCountsArray[$row['status']] = (int)$row['count'];
     $totalOrders += (int)$row['count'];
 }
+
+// Add this SQL after your main orders query to get item statuses
+$itemStatusSql = "
+    SELECT 
+        o.id,
+        COUNT(*) as total_items,
+        COUNT(CASE WHEN oi.tracking_status = 'pending' THEN 1 END) as pending,
+        COUNT(CASE WHEN oi.tracking_status = 'processing' THEN 1 END) as processing
+    FROM orders o
+    LEFT JOIN order_items oi ON o.id = oi.order_id
+    WHERE o.warehouse_employee_id = ?
+    GROUP BY o.id
+";
+
+$itemStatuses = [];
+if ($stmtStatus = $conn->prepare($itemStatusSql)) {
+    $stmtStatus->bind_param("i", $user_id);
+    $stmtStatus->execute();
+    $resultStatus = $stmtStatus->get_result();
+    if ($resultStatus) {
+        while ($row = $resultStatus->fetch_assoc()) {
+            $itemStatuses[$row['id']] = $row;
+        }
+    }
+    $stmtStatus->close();
+}
 ?>
 
 <!DOCTYPE html>
@@ -728,6 +754,8 @@ foreach ($statusCounts as $row) {
                     $assignmentPercentage = $item_count > 0 ? round(($assignedItems / $item_count) * 100) : 0;
                     $hasPOFiles = $po_attachment_count > 0;
                     $hasReplacements = $approved_replacements_count > 0;
+                        $statuses = $itemStatuses[$order['id']] ?? null;
+
                 ?>
                     <div class="bg-white rounded-lg shadow-sm border border-gray-200 hover:shadow-md transition-shadow duration-200 <?php echo $hasReplacements ? 'border-l-4 border-l-red-500' : ''; ?>">
                         <div class="p-6">
@@ -741,6 +769,7 @@ foreach ($statusCounts as $row) {
                                             </span>
                                         <?php endif; ?>
                                     </div>
+
                                     <div>
                                         <div class="flex items-center flex-wrap gap-2 mb-1">
                                             <h3 class="text-lg font-bold text-gray-900">Order #<?php echo htmlspecialchars($order['id']); ?></h3>
@@ -825,7 +854,25 @@ foreach ($statusCounts as $row) {
                                         </div>
                                     </div>
                                 </div>
-
+                                     <?php if ($statuses && $statuses['total_items'] > 0): ?>
+                <div class="mt-4 pt-4 border-t border-gray-200">
+                    <div class="flex items-center gap-3">
+                        <?php if ($statuses['pending'] > 0): ?>
+                            <div class="bg-yellow-100 text-yellow-800 rounded-lg px-3 py-2 text-center">
+                                <div class="text-sm font-bold"><?php echo $statuses['pending']; ?></div>
+                                <div class="text-xs">Pending</div>
+                            </div>
+                        <?php endif; ?>
+                        
+                        <?php if ($statuses['processing'] > 0): ?>
+                            <div class="bg-blue-100 text-blue-800 rounded-lg px-3 py-2 text-center">
+                                <div class="text-sm font-bold"><?php echo $statuses['processing']; ?></div>
+                                <div class="text-xs">Ready the item</div>
+                            </div>
+                        <?php endif; ?>
+                    </div>
+                </div>
+            <?php endif; ?>
                                 <div class="text-right space-y-2">
                                     <div class="text-lg font-bold text-primary-700">₱<?php echo number_format((float)$order['total'], 2); ?></div>
                                     <div class="flex items-center space-x-2">

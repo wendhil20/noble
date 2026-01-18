@@ -301,7 +301,7 @@ try {
     error_log("✓ Order created: ID=$order_id with status: pending");
     $stmt->close();
 
-    // ✅ GET CART ITEMS - WITH color_id
+ // ✅ GET CART ITEMS - FETCH product_name FROM PRODUCTS TABLE (LIKE OLD CODE)
     $cart_stmt = $conn->prepare("
         SELECT 
             uci.id,
@@ -318,8 +318,10 @@ try {
             uci.codename,
             uci.descrip6,
             uci.descrip7,
+            COALESCE(p.product_name, uci.variant_name, '') as product_name,
             COALESCE(pv.origin, '') as origin
         FROM user_cart_items uci 
+        LEFT JOIN products p ON uci.product_id = p.id
         LEFT JOIN product_variants pv ON uci.variant_id = pv.id 
         WHERE uci.user_id = ?
     ");
@@ -343,7 +345,7 @@ try {
 
     while ($row = $cart_result->fetch_assoc()) {
         $cart_items[] = $row;
-        error_log("Item: Product={$row['product_id']}, Variant={$row['variant_id']}, Color={$row['color_id']}, Qty={$row['quantity']}");
+        error_log("Item: Product={$row['product_id']}, ProductName={$row['product_name']}, Variant={$row['variant_id']}, Color={$row['color_id']}, Qty={$row['quantity']}");
     }
 
     $cart_stmt->close();
@@ -353,7 +355,7 @@ try {
         throw new Exception('No items found in cart');
     }
 
-    // ✅ INSERT ORDER ITEMS - NOW WITH color_id!
+    // ✅ INSERT ORDER ITEMS - WITH color_id!
     $item_stmt = $conn->prepare("INSERT INTO order_items (
         order_id, product_id, variant_id, color_id, product_name, codename, type_name, 
         variant_color, size, price, quantity, subtotal, 
@@ -368,17 +370,21 @@ try {
 
     foreach ($cart_items as $item) {
         $item_subtotal = floatval($item['price']) * intval($item['quantity']);
-        $variant_id = isset($item['variant_id']) && !empty($item['variant_id'])
-            ? intval($item['variant_id'])
+        $variant_id = isset($item['variant_id']) && !empty($item['variant_id']) 
+            ? intval($item['variant_id']) 
             : null;
-
-        // ✅ GET color_id FROM CART ITEM
+        
         $color_id = isset($item['color_id']) && !empty($item['color_id'])
             ? intval($item['color_id'])
             : null;
 
         $product_id = intval($item['product_id']);
-        $product_name = $item['variant_name'] ?? $item['product_name'] ?? 'Product';
+        
+        // ✅ Get product_name from COALESCE query result (from products table)
+        $product_name = !empty($item['product_name']) 
+            ? $item['product_name'] 
+            : 'Product';
+        
         $color = $item['color_name'] ?? $item['variant_color'] ?? '';
         $codename = $item['codename'] ?? '';
         $type_name = $item['type_name'] ?? '';
@@ -387,9 +393,8 @@ try {
         $descrip7 = $item['descrip7'] ?? '';
         $origin = $item['origin'] ?? '';
 
-        // ✅ BIND WITH color_id (4th parameter)
         $item_stmt->bind_param(
-            "iiiiisssssdidss",
+            "iiiisssssdsisss",
             $order_id,
             $product_id,
             $variant_id,
@@ -406,14 +411,16 @@ try {
             $descrip7,
             $origin
         );
-
+        
         if (!$item_stmt->execute()) {
             error_log("Warning: Failed to insert item: " . $item_stmt->error);
+        } else {
+            error_log("✓ Inserted order item: {$product_name} (Qty: {$item['quantity']})");
         }
     }
 
     $item_stmt->close();
-
+    
     error_log("✓ Order items created WITHOUT stock deduction (waiting for payment)");
 
     // ✅ CREATE PAYMONGO CHECKOUT SESSION - WITH DYNAMIC URLs

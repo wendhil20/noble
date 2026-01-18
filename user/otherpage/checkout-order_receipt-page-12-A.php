@@ -716,17 +716,14 @@ $category_names = [
                 <i class="fas fa-file-excel"></i>
                 Export to Excel
             </a>
-            <button onclick="window.print()" 
-                    class="px-6 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition flex items-center gap-2">
-                <i class="fas fa-print"></i>
-                Print Receipt
-            </button>
+
             <a href="order_history" 
                class="px-6 py-3 bg-gray-600 text-white rounded-lg hover:bg-gray-700 transition flex items-center gap-2">
                 <i class="fas fa-arrow-left"></i>
                 Back to Orders
             </a>
         </div>
+        
     </div>
 
     <!-- ============================================================================

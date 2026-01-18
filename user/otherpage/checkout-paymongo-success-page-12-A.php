@@ -437,7 +437,7 @@ if ($order && !empty($order['reference_no'])) {
                                 <?php while ($item = $order_items->fetch_assoc()): ?>
                                     <div class="flex justify-between items-start p-4 bg-gray-50 rounded-lg">
                                         <div class="flex-1">
-
+                                            <div class="font-medium text-gray-800"><?= htmlspecialchars($item['product_name']) ?></div>
                                             <div class="text-sm text-gray-600 space-y-1">
                                                 <?php if (!empty($item['codename'])): ?>
                                                     <div><strong>Code:</strong> <?= htmlspecialchars($item['codename']) ?></div>

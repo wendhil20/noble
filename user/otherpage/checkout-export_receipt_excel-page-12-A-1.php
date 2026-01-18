@@ -97,11 +97,11 @@ $sheet->getStyle('B1')->applyFromArray([
     'font' => [
         'bold' => true,
         'size' => 18,
-        'color' => ['rgb' => 'FFFFFF']
+        'color' => ['rgb' => '000000']
     ],
     'fill' => [
         'fillType' => Fill::FILL_SOLID,
-        'startColor' => ['rgb' => 'EA580C'] // Orange color
+        'startColor' => ['rgb' => 'F0F0F0'] // Light gray background
     ],
     'alignment' => [
         'horizontal' => Alignment::HORIZONTAL_CENTER,
@@ -150,7 +150,7 @@ $sheet->getStyle('A2:H2')->applyFromArray([
     'font' => ['bold' => true],
     'fill' => [
         'fillType' => Fill::FILL_SOLID,
-        'startColor' => ['rgb' => 'FED7AA'] // Light orange
+        'startColor' => ['rgb' => 'CCCCCC'] // Gray background
     ]
 ]);
 
@@ -159,7 +159,7 @@ $sheet->setCellValue('A3', 'Status:');
 $sheet->setCellValue('B3', strtoupper($order['status']));
 $sheet->mergeCells('B3:C3');
 $sheet->getStyle('B3')->applyFromArray([
-    'font' => ['bold' => true, 'color' => ['rgb' => '15803D']], // Green
+    'font' => ['bold' => true, 'color' => ['rgb' => '000000']], // Black
 ]);
 
 // Empty row
@@ -172,7 +172,7 @@ $sheet->getStyle("A{$currentRow}")->applyFromArray([
     'font' => ['bold' => true, 'size' => 12],
     'fill' => [
         'fillType' => Fill::FILL_SOLID,
-        'startColor' => ['rgb' => 'E5E7EB']
+        'startColor' => ['rgb' => 'CCCCCC'] // Gray background
     ]
 ]);
 $currentRow++;
@@ -199,7 +199,7 @@ $sheet->getStyle("A{$currentRow}")->applyFromArray([
     'font' => ['bold' => true, 'size' => 12],
     'fill' => [
         'fillType' => Fill::FILL_SOLID,
-        'startColor' => ['rgb' => 'E5E7EB']
+        'startColor' => ['rgb' => 'CCCCCC'] // Gray background
     ]
 ]);
 $currentRow++;
@@ -219,10 +219,10 @@ $currentRow++;
 $sheet->setCellValue("A{$currentRow}", 'ORDER ITEMS');
 $sheet->mergeCells("A{$currentRow}:H{$currentRow}");
 $sheet->getStyle("A{$currentRow}")->applyFromArray([
-    'font' => ['bold' => true, 'size' => 12, 'color' => ['rgb' => 'FFFFFF']],
+    'font' => ['bold' => true, 'size' => 12, 'color' => ['rgb' => '000000']], // Black text
     'fill' => [
         'fillType' => Fill::FILL_SOLID,
-        'startColor' => ['rgb' => 'EA580C']
+        'startColor' => ['rgb' => '000000'] // Black background
     ],
     'alignment' => ['horizontal' => Alignment::HORIZONTAL_CENTER]
 ]);
@@ -240,10 +240,10 @@ $sheet->setCellValue("G{$currentRow}", 'Unit Price');
 $sheet->setCellValue("H{$currentRow}", 'Subtotal');
 
 $sheet->getStyle("A{$currentRow}:H{$currentRow}")->applyFromArray([
-    'font' => ['bold' => true, 'color' => ['rgb' => 'FFFFFF']],
+    'font' => ['bold' => true, 'color' => ['rgb' => '000000']],
     'fill' => [
         'fillType' => Fill::FILL_SOLID,
-        'startColor' => ['rgb' => '9CA3AF'] // Gray
+        'startColor' => ['rgb' => 'F0F0F0']
     ],
     'alignment' => ['horizontal' => Alignment::HORIZONTAL_CENTER],
     'borders' => [
@@ -272,7 +272,7 @@ foreach ($order_items as $item) {
         'borders' => [
             'allBorders' => [
                 'borderStyle' => Border::BORDER_THIN,
-                'color' => ['rgb' => 'CCCCCC']
+                'color' => ['rgb' => '999999']
             ]
         ],
         'alignment' => [
@@ -320,10 +320,10 @@ $currentRow++;
 $sheet->setCellValue("G{$currentRow}", 'TOTAL:');
 $sheet->setCellValue("H{$currentRow}", '₱' . number_format($final_total, 2));
 $sheet->getStyle("G{$currentRow}:H{$currentRow}")->applyFromArray([
-    'font' => ['bold' => true, 'size' => 12, 'color' => ['rgb' => 'FFFFFF']],
+    'font' => ['bold' => true, 'size' => 12, 'color' => ['rgb' => '000000']],
     'fill' => [
         'fillType' => Fill::FILL_SOLID,
-        'startColor' => ['rgb' => '15803D'] // Green
+        'startColor' => ['rgb' => 'F0F0F0']
     ]
 ]);
 
@@ -346,10 +346,10 @@ $notesStartRow = $currentRow;
 $sheet->setCellValue("A{$currentRow}", 'Important Notes:');
 $sheet->mergeCells("A{$currentRow}:H{$currentRow}");
 $sheet->getStyle("A{$currentRow}")->applyFromArray([
-    'font' => ['bold' => true, 'size' => 12, 'color' => ['rgb' => '92400E']], // Dark brown
+    'font' => ['bold' => true, 'size' => 12, 'color' => ['rgb' => '000000']], // Black text
     'fill' => [
         'fillType' => Fill::FILL_SOLID,
-        'startColor' => ['rgb' => 'FEF3C7'] // Light yellow
+        'startColor' => ['rgb' => 'F0F0F0'] // Light gray
     ],
     'alignment' => ['horizontal' => Alignment::HORIZONTAL_LEFT]
 ]);
@@ -371,9 +371,9 @@ foreach ($notes as $note) {
     $sheet->getStyle("A{$currentRow}")->applyFromArray([
         'fill' => [
             'fillType' => Fill::FILL_SOLID,
-            'startColor' => ['rgb' => 'FEF3C7'] // Light yellow
+            'startColor' => ['rgb' => 'F0F0F0'] // Light gray
         ],
-        'font' => ['color' => ['rgb' => '92400E']], // Dark brown text
+        'font' => ['color' => ['rgb' => '000000']], // Black text
         'alignment' => ['vertical' => Alignment::VERTICAL_TOP]
     ]);
     $currentRow++;
@@ -385,7 +385,7 @@ $sheet->getStyle("A{$notesStartRow}:H{$notesEndRow}")->applyFromArray([
     'borders' => [
         'outline' => [
             'borderStyle' => Border::BORDER_MEDIUM,
-            'color' => ['rgb' => 'D97706'] // Orange border
+            'color' => ['rgb' => '000000'] // Black border
         ]
     ]
 ]);
@@ -396,7 +396,7 @@ $currentRow++;
 $sheet->setCellValue("A{$currentRow}", 'Thank you for choosing our service!');
 $sheet->mergeCells("A{$currentRow}:H{$currentRow}");
 $sheet->getStyle("A{$currentRow}")->applyFromArray([
-    'font' => ['italic' => true, 'color' => ['rgb' => '6B7280']],
+    'font' => ['italic' => true, 'color' => ['rgb' => '666666']],
     'alignment' => ['horizontal' => Alignment::HORIZONTAL_CENTER]
 ]);
 
@@ -404,12 +404,20 @@ $currentRow++;
 $sheet->setCellValue("A{$currentRow}", 'Generated on ' . date('F j, Y g:i A'));
 $sheet->mergeCells("A{$currentRow}:H{$currentRow}");
 $sheet->getStyle("A{$currentRow}")->applyFromArray([
-    'font' => ['italic' => true, 'size' => 9, 'color' => ['rgb' => '9CA3AF']],
+    'font' => ['italic' => true, 'size' => 9, 'color' => ['rgb' => '999999']],
     'alignment' => ['horizontal' => Alignment::HORIZONTAL_CENTER]
 ]);
 
 // Set lastRow variable
 $lastRow = $currentRow;
+
+// Apply light gray background to entire document (A1 to H32)
+$sheet->getStyle("A1:H32")->applyFromArray([
+    'fill' => [
+        'fillType' => Fill::FILL_SOLID,
+        'startColor' => ['rgb' => 'F0F0F0'] // Very light gray background
+    ]
+]);
 
 // Apply outer border to entire document (A to H columns)
 $borderStartRow = 1;

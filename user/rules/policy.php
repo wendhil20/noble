@@ -35,21 +35,25 @@ if (!isset($_SESSION['user_id']) && isset($_COOKIE['remember_token'])) {
 ?>
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
   <meta charset="UTF-8">
   <title>Privacy Policy - NobleHome Depot</title>
   <link rel="stylesheet" href="https://cdn.tailwindcss.com">
+  <link rel="preconnect" href="https://fonts.googleapis.com/css2?family=Montserrat:wght@300;400;600;700&family=Poppins:wght@300;400;600;700&display=swap" rel="stylesheet">
+
 </head>
-<body class="bg-gray-50 text-gray-800 leading-relaxed">
+
+<body class="bg-gray-50 text-gray-800 leading-relaxed" style="font-family: 'Montserrat', sans-serif;">
   <?php include '../navbar/top.php'; ?>
   <div class="max-w-4xl mx-auto p-6">
-<div class="flex items-center justify-between mb-4">
-  <h1 class="text-2xl font-bold">Privacy Policy</h1>
-  <button onclick="window.history.back()" 
-          class="px-4 py-2 bg-gray-200 text-gray-700 rounded-lg hover:bg-gray-300 transition">
-    Back
-  </button>
-</div>
+    <div class="flex items-center justify-between mb-4">
+      <h1 class="text-2xl font-bold">Privacy Policy</h1>
+      <button onclick="window.history.back()"
+        class="px-4 py-2 bg-gray-200 text-gray-700 rounded-lg hover:bg-gray-300 transition">
+        Back
+      </button>
+    </div>
 
 
     <p class="mb-6">At NobleHome Depot, we value your privacy and are committed to protecting your personal information. This Privacy Policy explains what data we collect, how we use it, and how it is protected.</p>
@@ -92,5 +96,9 @@ if (!isset($_SESSION['user_id']) && isset($_COOKIE['remember_token'])) {
     <h2 class="text-xl font-semibold mt-6 mb-2">8. Contact Us</h2>
     <p>If you have privacy concerns, please contact us through our <a href="contact.php" class="text-orange-500 underline">Contact Page</a> or chatbot support.</p>
   </div>
+
+  <!-- Footer -->
+  <?php include '../navbar/footer.php'; ?>
 </body>
+
 </html>

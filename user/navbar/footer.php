@@ -57,7 +57,7 @@
                       <a href="../rules/terms.php" class="block  hover:text-red-500 link-hover transition-all duration-300 ">Terms of use</a>
                       <a href="../rules/policy.php" class="block hover:text-red-500 link-hover transition-all duration-300 ">Privacy Policy</a>
                       <a href="../about/about.php" class="block  hover:text-red-500 link-hover transition-all duration-300 ">About Noblehome</a>
-                      <a href="#" class="block  hover:text-red-500 link-hover transition-all duration-300 ">Help Center</a>
+                      <a href="../rules/customer-services.php" class="block  hover:text-red-500 link-hover transition-all duration-300 ">Help Center</a>
                    
 
                   </nav>
@@ -69,7 +69,7 @@
                      
                   </h3>
                   <ul class="space-y-3 text-xs" style="font-family: 'Montserrat', sans-serif; color: #2f1200">
-                      <a href="../rules/return.php" class="block  hover:text-red-500 link-hover transition-all duration-300 ">Return policy</a>
+                      <a href="../rules/return-policy.php" class="block  hover:text-red-500 link-hover transition-all duration-300 ">Return policy</a>
                       <a href="../rules/payment.php" class="block  hover:text-red-500 link-hover transition-all duration-300 ">Payment policy</a>
                       <a href="#" class="block  hover:text-red-500 link-hover transition-all duration-300 ">Shipping policy</a>
                       <li class="hover:text-orange-300 transition-colors cursor-pointer"></li>

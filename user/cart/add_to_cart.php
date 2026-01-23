@@ -190,7 +190,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 }
                 
                 $_SESSION['guest_cart'][$item_key]['quantity'] = $new_qty;
-                $action_message = "✅ Added {$quantity} more piece(s) to cart. Total: {$new_qty}";
+                $action_message = "Added {$quantity} more piece(s) to cart. Total: {$new_qty}";
                 $final_quantity = $new_qty;
             } else {
                 $_SESSION['guest_cart'][$item_key] = [
@@ -208,7 +208,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                     'price' => $price,
                     'quantity' => $quantity
                 ];
-                $action_message = "✅ Added {$quantity} piece(s) to cart";
+                $action_message = "Added {$quantity} piece(s) to cart";
                 $final_quantity = $quantity;
             }
 
@@ -258,7 +258,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             echo json_encode([
                 'success' => false, 
                 'message' => 'Your account is not verified. Please verify your account to add items to cart.',
-                'error_code' => 'ACCOUNT_NOT_VERIFIED'
+                'error_code' => 'ACCOUNT NOT VERIFIED'
             ]);
             exit;
         }

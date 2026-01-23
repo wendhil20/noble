@@ -385,13 +385,6 @@ $recent_count = $recent_products->num_rows;
                             <i class="fas fa-plus mr-2"></i>Add New Address
                         </button>
                     </div>
-
-                    <!-- Order History Button -->
-                    <div>
-                        <a href="index-order_history-page-13.php" class="w-full inline-flex items-center justify-center px-3 sm:px-4 py-2 sm:py-3 bg-black text-white rounded-lg hover:bg-gray-900 transition-colors text-sm sm:text-base font-medium">
-                            <i class="fas fa-history mr-2"></i>View Order History
-                        </a>
-                    </div>
                 </div>
             </div>
         </div>

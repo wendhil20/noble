@@ -86,6 +86,7 @@ function getUserOnlineStatus($conn, $userId)
   <title>Chat Support</title>
   <script src="https://unpkg.com/alpinejs@3.x.x/dist/cdn.min.js" defer></script>
   <script src="https://cdn.tailwindcss.com"></script>
+  <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700;800&display=swap" rel="stylesheet">
 
   <style>
     #supportChatBox {
@@ -230,8 +231,6 @@ function getUserOnlineStatus($conn, $userId)
 
     /* User indicator badges */
     .user-badge {
-      font-size: 0.65rem;
-      font-weight: 700;
       padding: 0.2rem 0.5rem;
       border-radius: 0.5rem;
       letter-spacing: 0.025em;
@@ -258,9 +257,9 @@ function getUserOnlineStatus($conn, $userId)
 
     /* Input and send button */
     .message-input {
-      border-radius: 1.5rem;
+      border-radius: 0.5rem;
       border: 2px solid #e5e7eb;
-      padding: 1rem 4rem 1rem 1.5rem;
+      padding: 1rem 2rem 1rem 1.5rem;
       background-color: #f9fafb;
       transition: all 0.3s ease;
       font-size: 1rem;
@@ -279,12 +278,13 @@ function getUserOnlineStatus($conn, $userId)
     .send-btn {
       border-radius: 1.25rem;
       min-width: 80px;
-      padding: 0.75rem 1.25rem;
+      padding: 0.75rem 0.25rem;
       font-weight: 600;
       transition: all 0.3s ease;
       display: flex;
       align-items: center;
       justify-content: center;
+     
     }
 
     .send-btn:disabled {
@@ -403,7 +403,7 @@ function getUserOnlineStatus($conn, $userId)
 </head>
 
 
-<body class="">
+<body class="" style="font-family: 'Montserrat', sans-serif;">
 
   <?php include '../navbar/top.php'; ?>
 
@@ -561,11 +561,11 @@ function getUserOnlineStatus($conn, $userId)
                       </svg>
                       <span x-text="sales.email"></span>
                     </div>
-                   <div class="flex items-center gap-2 text-xs">
-                        <div class="w-2 h-2 rounded-full" :class="sales.status_class"></div>
-                        <span x-text="sales.status_text"></span>
-                        <span class="text-gray-600"></span>
-                      </div>
+                    <div class="flex items-center gap-2 text-xs">
+                      <div class="w-2 h-2 rounded-full" :class="sales.status_class"></div>
+                      <span x-text="sales.status_text"></span>
+                      <span class="text-gray-600"></span>
+                    </div>
 
                   </div>
                 </div>
@@ -699,137 +699,130 @@ function getUserOnlineStatus($conn, $userId)
               </div>
             </div>
 
-           <div class="flex-1 flex flex-col bg-gray-50">
-  <!-- Chat Header -->
-  <div class="bg-white border-b border-gray-200 p-3 sm:p-4 flex items-center gap-3">
-    <template x-if="selectedSales">
-      <div class="flex items-center gap-3 animate-slide-in">
-        <div class="w-8 h-8 sm:w-10 sm:h-10 sales-avatar rounded-full flex items-center justify-center text-white font-bold shadow-lg text-xs sm:text-sm">
-          <span x-text="selectedSales.fullname.split(' ').map(n => n[0]).join('').slice(0,2)"></span>
-        </div>
-        <div>
-          <div class="flex items-center gap-2 flex-wrap">
-            <span class="font-semibold text-gray-900 text-sm sm:text-base" x-text="selectedSales.fullname"></span>
-            <span class="sales-badge user-badge hidden sm:inline text-xs">SALES REP</span>
-            <span class="sales-badge user-badge text-xs sm:hidden">SALES</span>
-          </div>
-          <div class="flex items-center gap-1 text-xs">
-            <div class="w-2 h-2 rounded-full" :class="selectedSales.status_class"></div>
-            <span x-text="selectedSales.status_text"></span>
-          </div>
-        </div>
-      </div>
-    </template>
-    <template x-if="!selectedSales">
-      <div class="flex items-center gap-3 text-gray-500">
-        <svg class="w-6 h-6 sm:w-8 sm:h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z"></path>
-        </svg>
-        <span class="text-sm sm:text-lg font-medium">Select a representative to start chatting</span>
-      </div>
-    </template>
-  </div>
-
-  <!-- Messages Area -->
-  <div id="supportChatBox" class="flex-1 overflow-y-auto p-3 sm:p-6 space-y-3 sm:space-y-4 custom-scrollbar">
-    <template x-if="selectedSales && messages.length > 0">
-      <template x-for="msg in messages" :key="msg.id">
-        <div :class="msg.is_me ? 'flex justify-end' : 'flex justify-start'" class="animate-fade-in">
-          <div class="flex items-end gap-2 sm:gap-3 max-w-[85%]">
-            <!-- Sales Avatar -->
-            <div x-show="!msg.is_me" class="flex flex-col items-center gap-1 flex-shrink-0">
-              <div class="w-6 h-6 sm:w-8 sm:h-8 sales-avatar rounded-full flex items-center justify-center text-white font-bold text-xs shadow-md">
-                <span x-text="selectedSales.fullname.split(' ').map(n => n[0]).join('').slice(0,2)"></span>
+            <div class="flex-1 flex flex-col bg-gray-50">
+              <!-- Chat Header -->
+              <div class="bg-white border-b border-gray-200 p-3 sm:p-4 flex items-center gap-3">
+                <template x-if="selectedSales">
+                  <div class="flex items-center gap-3 animate-slide-in">
+                    <div class="w-8 h-8 sm:w-10 sm:h-10 sales-avatar rounded-full flex items-center justify-center text-white font-bold shadow-lg text-xs sm:text-sm">
+                      <span x-text="selectedSales.fullname.split(' ').map(n => n[0]).join('').slice(0,2)"></span>
+                    </div>
+                    <div>
+                      <div class="flex items-center gap-2 flex-wrap">
+                        <span class="font-semibold text-gray-900 text-sm sm:text-base" x-text="selectedSales.fullname"></span>
+                   
+                      </div>
+                      <div class="flex items-center gap-1 text-xs">
+                        <div class="w-2 h-2 rounded-full" :class="selectedSales.status_class"></div>
+                        <span x-text="selectedSales.status_text"></span>
+                      </div>
+                    </div>
+                  </div>
+                </template>
+                <template x-if="!selectedSales">
+                  <div class="flex items-center gap-3 text-gray-500">
+                    <svg class="w-6 h-6 sm:w-8 sm:h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z"></path>
+                    </svg>
+                    <span class="text-sm sm:text-lg font-medium">Select a representative to start chatting</span>
+                  </div>
+                </template>
               </div>
-              <span class="sales-badge user-badge text-xs hidden sm:inline whitespace-nowrap">SALES</span>
-            </div>
 
-            <!-- Message -->
-            <div :class="msg.is_me ? 'message me' : 'message other'" class="px-3 py-2 sm:px-4 sm:py-3 break-words leading-relaxed shadow-lg text-sm sm:text-base rounded-lg min-w-0 flex-1" style="word-wrap: break-word; overflow-wrap: anywhere;">
-              <span x-text="msg.message" class="inline-block w-full"></span>
-            </div>
+              <!-- Messages Area -->
+              <div id="supportChatBox" class="flex-1 overflow-y-auto p-3 sm:p-6 space-y-3 sm:space-y-4 custom-scrollbar">
+                <template x-if="selectedSales && messages.length > 0">
+                  <template x-for="msg in messages" :key="msg.id">
+                    <div :class="msg.is_me ? 'flex justify-end' : 'flex justify-start'" class="animate-fade-in">
+                      <div class="flex items-end gap-2 sm:gap-3 max-w-[85%]">
+                        <!-- Sales Avatar -->
+                        <div x-show="!msg.is_me" class="flex flex-col items-center gap-1 flex-shrink-0">
+                          <div class="w-6 h-6 sm:w-8 sm:h-8 sales-avatar rounded-full flex items-center justify-center text-white font-bold text-xs shadow-md">
+                            <span x-text="selectedSales.fullname.split(' ').map(n => n[0]).join('').slice(0,2)"></span>
+                          </div>
+                          <span class="sales-badge user-badge text-xs hidden sm:inline whitespace-nowrap">SALES</span>
+                        </div>
 
-            <!-- Client Avatar -->
-            <div x-show="msg.is_me" class="flex flex-col items-center gap-1 flex-shrink-0">
-              <div class="w-6 h-6 sm:w-8 sm:h-8 client-avatar rounded-full flex items-center justify-center text-white font-bold text-xs shadow-md overflow-hidden">
-                <?php if ($isLoggedIn && isset($_SESSION['user_picture']) && !empty($_SESSION['user_picture'])): ?>
-                  <img src="<?= htmlspecialchars($_SESSION['user_picture']) ?>" alt="User Avatar" class="w-full h-full object-cover">
-                <?php elseif ($isLoggedIn && isset($_SESSION['user_name'])): ?>
-                  <span><?= strtoupper(substr($_SESSION['user_name'], 0, 1)) ?></span>
-                <?php else: ?>
-                  <svg class="w-3 h-3 sm:w-4 sm:h-4" fill="currentColor" viewBox="0 0 20 20">
-                    <path fill-rule="evenodd" d="M10 9a3 3 0 100-6 3 3 0 000 6zm-7 9a7 7 0 1114 0H3z" clip-rule="evenodd"></path>
-                  </svg>
-                <?php endif; ?>
+                        <!-- Message -->
+                        <div :class="msg.is_me ? 'message me' : 'message other'" class="px-3 py-2 sm:px-4 sm:py-3 break-words leading-relaxed shadow-lg text-sm sm:text-base rounded-lg min-w-0 flex-1" style="word-wrap: break-word; overflow-wrap: anywhere;">
+                          <span x-text="msg.message" class="inline-block w-full"></span>
+                        </div>
+
+                        <!-- Client Avatar -->
+                        <div x-show="msg.is_me" class="flex flex-col items-center gap-1 flex-shrink-0">
+                          <div class="w-6 h-6 sm:w-8 sm:h-8 client-avatar rounded-full flex items-center justify-center text-white font-bold text-xs shadow-md overflow-hidden">
+                            <?php if ($isLoggedIn && isset($_SESSION['user_picture']) && !empty($_SESSION['user_picture'])): ?>
+                              <img src="<?= htmlspecialchars($_SESSION['user_picture']) ?>" alt="User Avatar" class="w-full h-full object-cover">
+                            <?php elseif ($isLoggedIn && isset($_SESSION['user_name'])): ?>
+                              <span><?= strtoupper(substr($_SESSION['user_name'], 0, 1)) ?></span>
+                            <?php else: ?>
+                              <svg class="w-3 h-3 sm:w-4 sm:h-4" fill="currentColor" viewBox="0 0 20 20">
+                                <path fill-rule="evenodd" d="M10 9a3 3 0 100-6 3 3 0 000 6zm-7 9a7 7 0 1114 0H3z" clip-rule="evenodd"></path>
+                              </svg>
+                            <?php endif; ?>
+                          </div>
+                          <span class="client-badge user-badge text-xs hidden sm:inline whitespace-nowrap">CLIENT</span>
+                        </div>
+                      </div>
+                    </div>
+                  </template>
+                </template>
+
+                <!-- Empty States -->
+                <template x-if="selectedSales && messages.length === 0">
+                  <div class="text-center py-8 sm:py-16">
+                    <svg class="w-12 h-12 sm:w-16 sm:h-16 text-gray-300 mx-auto mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z"></path>
+                    </svg>
+                    <p class="text-gray-500 font-semibold text-base sm:text-lg">Start the conversation!</p>
+                    <p class="text-gray-400 mt-1 text-sm">Send a message to get started</p>
+                  </div>
+                </template>
+                <template x-if="!selectedSales">
+                  <div class="text-center py-12 sm:py-20 px-4">
+                    <svg class="w-16 h-16 sm:w-20 sm:h-20 text-gray-300 mx-auto mb-4 sm:mb-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z"></path>
+                    </svg>
+                    <h3 class="text-lg sm:text-xl font-semibold text-gray-500 mb-2">Welcome to Customer Support</h3>
+                    <p class="text-gray-400 text-sm sm:text-base">Choose a sales representative to start your conversation</p>
+                    <div class="lg:hidden mt-4">
+                      <button @click="showMobileSidebar = true" class="inline-flex items-center gap-2 px-4 py-2 bg-orange-500 text-white rounded-lg shadow-md hover:bg-orange-600 transition-colors">
+                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z"></path>
+                        </svg>
+                        Select Sales Representative
+                      </button>
+                    </div>
+                  </div>
+                </template>
               </div>
-              <span class="client-badge user-badge text-xs hidden sm:inline whitespace-nowrap">CLIENT</span>
+
+              <!-- Message Input -->
+              <template x-if="selectedSales">
+                <div class="bg-white border-t border-gray-200 p-3 sm:p-4">
+                  <div class="hidden sm:flex items-center gap-2 mb-3 text-sm text-gray-600">
+                 
+                  </div>
+
+                  <div class="flex items-end gap-2 sm:gap-3">
+                    <div class="flex-1 relative">
+                      <input x-model="newMessage" @keydown.enter="sendMessage()" type="text" placeholder="Type your message..." class="message-input w-full text-sm sm:text-base" autocomplete="off">
+                    </div>
+                    <button @click="sendMessage()" :disabled="!newMessage.trim()" :class="newMessage.trim() ? 'send-btn enabled' : 'send-btn'" class="flex-shrink-0">
+                      <svg class="w-4 h-4 sm:w-5 sm:h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8"></path>
+                      </svg>
+                    </button>
+                  </div>
+                </div>
+              </template>
             </div>
-          </div>
-        </div>
-      </template>
-    </template>
-
-    <!-- Empty States -->
-    <template x-if="selectedSales && messages.length === 0">
-      <div class="text-center py-8 sm:py-16">
-        <svg class="w-12 h-12 sm:w-16 sm:h-16 text-gray-300 mx-auto mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z"></path>
-        </svg>
-        <p class="text-gray-500 font-semibold text-base sm:text-lg">Start the conversation!</p>
-        <p class="text-gray-400 mt-1 text-sm">Send a message to get started</p>
-      </div>
-    </template>
-    <template x-if="!selectedSales">
-      <div class="text-center py-12 sm:py-20 px-4">
-        <svg class="w-16 h-16 sm:w-20 sm:h-20 text-gray-300 mx-auto mb-4 sm:mb-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z"></path>
-        </svg>
-        <h3 class="text-lg sm:text-xl font-semibold text-gray-500 mb-2">Welcome to Customer Support</h3>
-        <p class="text-gray-400 text-sm sm:text-base">Choose a sales representative to start your conversation</p>
-        <div class="lg:hidden mt-4">
-          <button @click="showMobileSidebar = true" class="inline-flex items-center gap-2 px-4 py-2 bg-orange-500 text-white rounded-lg shadow-md hover:bg-orange-600 transition-colors">
-            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z"></path>
-            </svg>
-            Select Sales Representative
-          </button>
-        </div>
-      </div>
-    </template>
-  </div>
-
-  <!-- Message Input -->
-  <template x-if="selectedSales">
-    <div class="bg-white border-t border-gray-200 p-3 sm:p-4">
-      <div class="hidden sm:flex items-center gap-2 mb-3 text-sm text-gray-600">
-        <div class="w-6 h-6 client-avatar rounded-full flex items-center justify-center text-white">
-          <svg class="w-3 h-3" fill="currentColor" viewBox="0 0 20 20">
-            <path fill-rule="evenodd" d="M10 9a3 3 0 100-6 3 3 0 000 6zm-7 9a7 7 0 1114 0H3z" clip-rule="evenodd"></path>
-          </svg>
-        </div>
-        <span class="font-medium">You are chatting as:</span>
-        <span class="client-badge user-badge">CLIENT</span>
-      </div>
-
-      <div class="flex items-end gap-2 sm:gap-3">
-        <div class="flex-1 relative">
-          <input x-model="newMessage" @keydown.enter="sendMessage()" type="text" placeholder="Type your message..." class="message-input w-full text-sm sm:text-base" autocomplete="off">
-        </div>
-        <button @click="sendMessage()" :disabled="!newMessage.trim()" :class="newMessage.trim() ? 'send-btn enabled' : 'send-btn'" class="flex-shrink-0">
-          <svg class="w-4 h-4 sm:w-5 sm:h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8"></path>
-          </svg>
-        </button>
-      </div>
-    </div>
-  </template>
-</div>
           </div>
         </div>
       <?php endif; ?>
     </div>
   </div>
-<?php include '../navbar/footer.php'; ?>
+  <?php include '../navbar/footer.php'; ?>
   <script>
     document.addEventListener('alpine:init', () => {
       Alpine.data('chatSupport', () => ({

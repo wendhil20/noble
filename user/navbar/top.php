@@ -1980,39 +1980,47 @@ $hidden_pages = ['help.php', 'about.php'];
               </div>
             </button>
 
-            <div x-show="profileOpen" x-cloak @click.outside="profileOpen = false" x-transition
-              class="absolute right-0 mt-2 w-44 bg-white border border-gray-200 rounded-md shadow-lg z-50">
-              <div class="py-2 px-3 text-sm text-gray-800 border-b bg-gray-50 rounded-sm">
-                <span class="block truncate font-medium">
-                  <?= htmlspecialchars($_SESSION['user_name']) ?>
-                </span>
-              </div>
+        <div x-show="profileOpen" x-cloak @click.outside="profileOpen = false" x-transition
+     class="absolute right-0 mt-2 w-44 bg-white border border-gray-200 rounded-md shadow-lg z-50">
+     <div class="py-2 px-3 text-sm text-gray-800 border-b bg-gray-50 rounded-sm">
+       <span class="block truncate font-medium">
+         <?= htmlspecialchars($_SESSION['user_name']) ?>
+       </span>
+     </div>
 
-              <a href="../otherpage/index-profilepersonal-page-7.php"
-                class="flex items-center gap-2 w-full text-left px-4 py-2 text-sm text-black hover:bg-red-50">
-                <i class="fas fa-user text-black"></i>
-                <span>Profile</span>
-              </a>
+     <a href="../otherpage/index-profilepersonal-page-7.php"
+       class="flex items-center gap-2 w-full text-left px-4 py-2 text-sm text-black hover:bg-red-50">
+       <i data-lucide="user" class="w-4 h-4"></i>
+       <span>Profile</span>
+     </a>
 
-              <div x-data="chatNotif" x-init="init()" class="relative">
-                <a href="../otherpage/index-chat_main-page-9.php"
-                  class="flex items-center gap-1 px-3 py-1.5  text-black text-sm transition relative">
-                  <i class="fas fa-envelope"></i>Messages
-                  <!-- Badge -->
-                  <template x-if="unreadCount > 0">
-                    <span
-                      class="absolute -top-1 -right-1 bg-red-500 text-white text-xs w-4 h-4 flex items-center justify-center rounded-full"
-                      x-text="unreadCount">
-                    </span>
-                  </template>
-                </a>
-              </div>
-              <a href="../logout.php"
-                class="flex items-center gap-2 w-full text-left px-4 py-2 text-sm text-black hover:bg-red-50">
-                <i class="fas fa-sign-out-alt text-black"></i>
-                <span>Logout</span>
-              </a>
-            </div>
+     <a href="../otherpage/index-order_history-page-13.php"
+       class="flex items-center gap-2 w-full text-left px-4 py-2 text-sm text-black hover:bg-red-50">
+       <i data-lucide="shopping-bag" class="w-4 h-4"></i>
+       <span>Order History</span>
+     </a>
+
+     <div x-data="chatNotif" x-init="init()" class="relative">
+       <a href="../otherpage/index-chat_main-page-9.php"
+         class="flex items-center gap-2 w-full text-left px-4 py-2 text-sm text-black hover:bg-red-50 relative">
+         <i data-lucide="mail" class="w-4 h-4"></i>
+         <span>Messages</span>
+         <!-- Badge -->
+         <template x-if="unreadCount > 0">
+           <span
+             class="absolute -top-1 -right-1 bg-red-500 text-white text-xs w-4 h-4 flex items-center justify-center rounded-full"
+             x-text="unreadCount">
+           </span>
+         </template>
+       </a>
+     </div>
+
+     <a href="../logout.php"
+       class="flex items-center gap-2 w-full text-left px-4 py-2 text-sm text-black hover:bg-red-50">
+       <i data-lucide="log-out" class="w-4 h-4"></i>
+       <span>Logout</span>
+     </a>
+   </div>
           </div>
         <?php else: ?>
           <!-- ===== GUEST MODE ===== -->

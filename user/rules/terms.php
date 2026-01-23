@@ -41,7 +41,8 @@ if (!isset($_SESSION['user_id']) && isset($_COOKIE['remember_token'])) {
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Terms and Conditions - NobleHome Depot</title>
   <script src="https://cdn.tailwindcss.com"></script>
-    <link rel="preconnect" href="https://fonts.googleapis.com/css2?family=Great+Vibes&family=Merriweather:wght@300;400;700&family=Montserrat:wght@300;400;600;700&family=Playfair+Display:wght@400;700;900&family=Poppins:wght@300;400;600;700&family=Roboto:wght@300;400;500;700&family=Inter:wght@300;400;500;600;700&family=Lato:wght@300;400;700&family=Open+Sans:wght@300;400;600;700&family=Source+Sans+Pro:wght@300;400;600;700&family=Raleway:wght@300;400;500;600;700&family=Nunito:wght@300;400;600;700&family=Dancing+Script:wght@400;700&family=Pacifico&family=Lobster&family=Quicksand:wght@300;400;500;600;700&family=Work+Sans:wght@300;400;500;600;700&family=Libre+Baskerville:wght@400;700&family=Crimson+Text:wght@400;600;700&family=EB+Garamond:wght@400;500;600;700&family=Lora:wght@400;500;600;700&family=Oswald:wght@300;400;500;600;700&family=Bebas+Neue&family=Anton&family=Rubik:wght@300;400;500;600;700&family=Fira+Sans:wght@300;400;500;600;700&family=Ubuntu:wght@300;400;500;700&family=Barlow:wght@300;400;500;600;700&family=Manrope:wght@300;400;500;600;700&family=DM+Sans:wght@400;500;700&family=Space+Grotesk:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+   <link rel="preconnect" href="https://fonts.googleapis.com/css2?family=Montserrat:wght@300;400;600;700&family=Poppins:wght@300;400;600;700&display=swap" rel="stylesheet">
+
   <script>
     tailwind.config = {
       theme: {
@@ -56,7 +57,7 @@ if (!isset($_SESSION['user_id']) && isset($_COOKIE['remember_token'])) {
   </script>
 </head>
 
-<body class=" text-white min-h-screen font-mont">
+<body class=" text-white min-h-screen" style="font-family: 'Montserrat', sans-serif;">
   <?php include '../navbar/top.php'; ?>
   <!-- Header Section -->
   <div class="bg-black border-b border-noble-orange">
@@ -283,7 +284,7 @@ if (!isset($_SESSION['user_id']) && isset($_COOKIE['remember_token'])) {
               </svg>
             </div>
             <p class="text-black leading-relaxed">
-            These Terms & Conditions shall be governed by and interpreted in accordance with the laws of the Republic of the Philippines. Any disputes shall be resolved under the exclusive jurisdiction of the courts in Quezon City, Philippines.
+              These Terms & Conditions shall be governed by and interpreted in accordance with the laws of the Republic of the Philippines. Any disputes shall be resolved under the exclusive jurisdiction of the courts in Quezon City, Philippines.
 
             </p>
           </div>
@@ -303,7 +304,7 @@ if (!isset($_SESSION['user_id']) && isset($_COOKIE['remember_token'])) {
             If you have any questions about these Terms and Conditions, we're here to help clarify.
           </p>
           <div class="flex flex-col sm:flex-row gap-4 justify-center items-center">
-            <a href="contact.php" class="inline-flex items-center bg-white text-orange-400 px-6 py-3 rounded-lg font-semibold hover:bg-gray-100 transition-colors duration-200">
+            <a href="customer-services.php" class="inline-flex items-center bg-white text-orange-400 px-6 py-3 rounded-lg font-semibold hover:bg-gray-100 transition-colors duration-200">
               <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8"></path>
               </svg>
@@ -321,15 +322,10 @@ if (!isset($_SESSION['user_id']) && isset($_COOKIE['remember_token'])) {
     </div>
   </div>
 
+
   <!-- Footer -->
-  <div class="bg-gray-900 border-t border-gray-800 py-8 mt-16">
-    <div class="max-w-5xl mx-auto px-6 text-center">
-      <p class="text-gray-400">
-        © <?= date("Y"); ?> NobleHome Depot. All rights reserved. |
-        <span class="text-noble-orange">Terms Updated: <?= date("F j, Y"); ?></span>
-      </p>
-    </div>
-  </div>
+  <?php include '../navbar/footer.php'; ?>
+
 </body>
 
 </html>

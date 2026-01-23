@@ -2546,7 +2546,7 @@ while ($row = $banners_result->fetch_assoc()) {
                     <div class="overflow-hidden ">
                         <img src="../img/gif2.gif"
                             alt="Promo 3"
-                            class="w-full h-[300px] object-cover transition-transform duration-500 group-hover:scale-105">
+                            class="w-full h-auto object-cover transition-transform duration-500 group-hover:scale-105">
                     </div>
                     <h3 class="text-lg font-semibold " style="font-family: 'Montserrat', sans-serif; color: #2f1200">Keep Shopping For Holiday ➜</h3>
                 </a>
@@ -2630,7 +2630,7 @@ while ($row = $banners_result->fetch_assoc()) {
                     updateCartCount(data.cart_count);
 
                     // Simple text feedback - no styling changes
-                    button.textContent = '✓ Added!';
+                    button.textContent = 'Added';
                     button.disabled = true;
 
                     setTimeout(() => {
@@ -2668,7 +2668,7 @@ while ($row = $banners_result->fetch_assoc()) {
                 info: 'bg-blue-500'
             } [type] || 'bg-blue-500';
 
-            notification.className = `fixed top-4 left-1/2 -translate-x-1/2 p-4 rounded-lg z-50 ${bgColor} text-white shadow-lg transform transition-all duration-300`;
+            notification.className = `fixed top-4 left-1/2 -translate-x-1/2 p-2 rounded-lg z-50 ${bgColor} text-white shadow-lg transform transition-all duration-300`;
             notification.textContent = message;
 
             document.body.appendChild(notification);

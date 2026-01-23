@@ -1149,14 +1149,14 @@ $is_guest = !isset($_SESSION['user_id']);
                     <button onclick="shareProduct()"
                       class="flex items-center gap-2 bg-gray-100 px-3 py-2 rounded-xl hover:bg-gray-200 transition">
                       <i class="fas fa-share-alt text-lg text-black"></i>
-                      <span class="hidden sm:inline text-sm font-medium" style="font-family: 'Montserrat', sans-serif; color: #2f1200">Share</span>
+                     
                     </button>
 
                     <!-- Customer Service -->
-                    <button onclick="window.location.href='#contact'"
+                    <button onclick="window.location.href='../rules/customer-services.php'"
                       class="flex items-center gap-2 bg-gray-100 px-3 py-2 rounded-xl hover:bg-gray-200 transition">
                       <i class="fas fa-headset text-lg text-black"></i>
-                      <span class="hidden sm:inline text-sm font-medium" style="font-family: 'Montserrat', sans-serif; color: #2f1200">Customer Service</span>
+                     
                     </button>
 
                   </div>

@@ -11,11 +11,7 @@ header('Expires: Mon, 26 Jul 1997 05:00:00 GMT');
 try {
     // Include database connection
     $connection_paths = [
-        '../../connection/connect.php',
-        '../../../connection/connect.php',
-        '../../connect.php',
-        '../connect.php',
-        'connect.php'
+        '../../connection/connect.php'
     ];
     
     $conn = null;

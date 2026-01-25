@@ -154,9 +154,6 @@ $current_page = basename($_SERVER['PHP_SELF']);
 $hidden_pages = ['help.php', 'about.php'];
 ?>
 
-
-
-
 <!-- Tailwind + Alpine CDN -->
 <script src="https://cdn.tailwindcss.com"></script>
 
@@ -3181,8 +3178,9 @@ $hidden_pages = ['help.php', 'about.php'];
 
 </nav>
 
-<script src="../navbar/js/topcart.obfuscated.js"></script>
+
 <script src="../navbar/js/top-obf.js"></script>
+<script src="../navbar/js/topcart.obfuscated.js"></script>
 <script src="https://unpkg.com/lucide@latest"></script>
 
 <script>

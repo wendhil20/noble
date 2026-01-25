@@ -2668,7 +2668,7 @@ while ($row = $banners_result->fetch_assoc()) {
                 info: 'bg-blue-500'
             } [type] || 'bg-blue-500';
 
-            notification.className = `fixed top-4 left-1/2 -translate-x-1/2 p-2 rounded-lg z-50 ${bgColor} text-white shadow-lg transform transition-all duration-300`;
+            notification.className = `fixed top-4 text-xs left-1/2 -translate-x-1/2 p-2 rounded-lg z-50 ${bgColor} text-white shadow-lg transform transition-all duration-300`;
             notification.textContent = message;
 
             document.body.appendChild(notification);

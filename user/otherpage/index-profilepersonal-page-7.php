@@ -294,9 +294,9 @@ $recent_count = $recent_products->num_rows;
                                         Account Verified
                                     </button>
                                 <?php else: ?>
-                                    <a href="settings.php" class="w-full sm:w-auto inline-flex items-center justify-center gap-3 px-4 sm:px-6 py-2 sm:py-3 bg-primary text-black font-semibold rounded-lg hover:bg-blue-700 transition-all duration-300 shadow-md hover:shadow-lg text-sm sm:text-base">
+                                    <a href="settings.php" class="w-full sm:w-auto inline-flex items-center justify-center gap-3 px-4 sm:px-6 py-2 sm:py-3 bg-red-600 text-white font-semibold rounded-lg hover:bg-blue-700 transition-all duration-300 shadow-md hover:shadow-lg text-sm sm:text-base">
                                         <i class="fas fa-user-cog"></i>
-                                        Complete Verification
+                                        Upgrade to Verification
                                     </a>
                                 <?php endif; ?>
                             </div>

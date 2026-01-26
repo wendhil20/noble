@@ -82,7 +82,7 @@ try {
         $update_stmt->execute();
         
         // Create success notification for user
-        $message = "🎉 Great news! Your account verification has been approved by our admin team. You now have full access to all platform features.";
+        $message = "Great news! Your account verification has been approved by our admin team. You now have full access to all platform features.";
         $notification_query = "INSERT INTO notifications (user_id, actor_id, type, message, is_read, created_at) VALUES (?, ?, 'verification_approved', ?, 0, NOW())";
         $notification_stmt = $conn->prepare($notification_query);
         $notification_stmt->bind_param("iis", $user_id, $admin_id, $message);
@@ -140,7 +140,7 @@ try {
         $update_stmt->execute();
         
         // Create reset notification for user
-        $message = "🔄 Your account verification status has been reset to pending. You will need to re-upload your government ID and complete the verification process again. Our admin team will review your new submission.";
+        $message = " Your account verification status has been reset to pending. You will need to re-upload your government ID and complete the verification process again. Our admin team will review your new submission.";
         $notification_query = "INSERT INTO notifications (user_id, actor_id, type, message, is_read, created_at) VALUES (?, ?, 'verification_reset', ?, 0, NOW())";
         $notification_stmt = $conn->prepare($notification_query);
         $notification_stmt->bind_param("iis", $user_id, $admin_id, $message);

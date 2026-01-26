@@ -235,7 +235,7 @@ if ($pendingApprovalsResult) {
                 <div class="flex items-center space-x-3">
                     <div class="w-10 h-10 bg-noble-orange rounded-lg flex items-center justify-center relative">
                         <i class="fas fa-box text-white text-lg"></i>
-                    
+
                     </div>
                     <div>
                         <h1 class="text-2xl font-bold text-gray-900">Warehouse Orders Overview</h1>
@@ -257,8 +257,6 @@ if ($pendingApprovalsResult) {
 
     <!-- Main Content -->
     <main class="w-full px-6 py-8">
-    
-
         <!-- Filters -->
         <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-6 mb-8">
             <form method="GET" class="space-y-4">
@@ -315,32 +313,32 @@ if ($pendingApprovalsResult) {
                     <?php endforeach; ?>
                 </div>
 
-              <div class="grid grid-cols-1 md:grid-cols-4 gap-3">
-    <div class="md:col-span-2">
-        <label class="block text-sm font-medium text-gray-700 mb-1">Search</label>
-        <div class="flex gap-2">
-            <input type="text" name="search" value="<?php echo htmlspecialchars($search_query); ?>"
-                placeholder="Order ID, Customer, Email..."
-                class="flex-1 px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-noble-orange focus:border-transparent">
-            <button type="submit" class="bg-noble-orange hover:bg-noble-orange-dark text-white px-6 py-2 rounded-md transition-colors duration-200 flex items-center justify-center whitespace-nowrap">
-                <i class="fas fa-search mr-2"></i>
-                Search
-            </button>
-        </div>
-    </div>
-    
-    <div>
-        <label class="block text-sm font-medium text-gray-700 mb-1">Date From</label>
-        <input type="date" name="date_from" value="<?php echo htmlspecialchars($date_from); ?>"
-            class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-noble-orange focus:border-transparent">
-    </div>
-    
-    <div>
-        <label class="block text-sm font-medium text-gray-700 mb-1">Date To</label>
-        <input type="date" name="date_to" value="<?php echo htmlspecialchars($date_to); ?>"
-            class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-noble-orange focus:border-transparent">
-    </div>
-</div>
+                <div class="grid grid-cols-1 md:grid-cols-4 gap-3">
+                    <div class="md:col-span-2">
+                        <label class="block text-sm font-medium text-gray-700 mb-1">Search</label>
+                        <div class="flex gap-2">
+                            <input type="text" name="search" value="<?php echo htmlspecialchars($search_query); ?>"
+                                placeholder="Order ID, Customer, Email..."
+                                class="flex-1 px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-noble-orange focus:border-transparent">
+                            <button type="submit" class="bg-noble-orange hover:bg-noble-orange-dark text-white px-6 py-2 rounded-md transition-colors duration-200 flex items-center justify-center whitespace-nowrap">
+                                <i class="fas fa-search mr-2"></i>
+                                Search
+                            </button>
+                        </div>
+                    </div>
+
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-1">Date From</label>
+                        <input type="date" name="date_from" value="<?php echo htmlspecialchars($date_from); ?>"
+                            class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-noble-orange focus:border-transparent">
+                    </div>
+
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-1">Date To</label>
+                        <input type="date" name="date_to" value="<?php echo htmlspecialchars($date_to); ?>"
+                            class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-noble-orange focus:border-transparent">
+                    </div>
+                </div>
 
             </form>
         </div>
@@ -353,113 +351,115 @@ if ($pendingApprovalsResult) {
             </div>
 
             <?php if (!empty($orders)): ?>
-                <div class="overflow-x-auto">
-                    <table class="min-w-full divide-y divide-gray-200">
-                        <thead class="bg-gray-50">
-                            <tr>
-                                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Order ID</th>
-                                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Customer</th>
-                                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Amount</th>
-                                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Items</th>
-                                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Status</th>
-                                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Warehouse Employee</th>
-                                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">P.O. Files</th>
-                                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Date</th>
-                                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Actions</th>
-                            </tr>
-                        </thead>
-                        <tbody class="bg-white divide-y divide-gray-200">
-                            <?php foreach ($orders as $order): ?>
-                                <tr class="hover:bg-gray-50 transition-colors">
-                                    <td class="px-6 py-4 whitespace-nowrap">
-                                        <span class="bg-gray-100 px-2 py-1 rounded-md text-sm font-medium">#<?php echo $order['id']; ?></span>
-                                    </td>
-                                    <td class="px-6 py-4 whitespace-nowrap">
-                                        <div class="flex items-center">
-                                            <div class="w-8 h-8 bg-blue-100 rounded-full flex items-center justify-center mr-3">
-                                                <span class="text-blue-600 text-xs font-semibold">
-                                                    <?php echo strtoupper(substr($order['customer_name'] ?: 'U', 0, 1)); ?>
-                                                </span>
-                                            </div>
-                                            <div>
-                                                <div class="text-sm font-medium text-gray-900"><?php echo htmlspecialchars($order['customer_name'] ?: 'N/A'); ?></div>
-                                                <div class="text-sm text-gray-500"><?php echo htmlspecialchars($order['email']); ?></div>
-                                            </div>
-                                        </div>
-                                    </td>
-                                    <td class="px-6 py-4 whitespace-nowrap">
-                                        <div class="text-sm font-semibold text-gray-900">₱<?php echo number_format((float)$order['total'], 2); ?></div>
-                                    </td>
-                                    <td class="px-6 py-4 whitespace-nowrap">
-                                        <span class="inline-flex items-center px-2 py-1 text-xs font-medium bg-gray-100 text-gray-800 rounded-full">
-                                            <i class="fas fa-box mr-1"></i>
-                                            <?php echo $order['item_count']; ?> items
+                <div class="overflow-x-auto shadow-md rounded-lg">
+    <div class="max-h-[600px] overflow-y-auto">
+        <table class="min-w-full divide-y divide-gray-200">
+            <thead class="bg-gray-50 sticky top-0 z-10">
+                <tr>
+                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Order ID</th>
+                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Customer</th>
+                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Amount</th>
+                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Items</th>
+                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Status</th>
+                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Warehouse Employee</th>
+                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">P.O. Files</th>
+                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Date</th>
+                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Actions</th>
+                </tr>
+            </thead>
+            <tbody class="bg-white divide-y divide-gray-200">
+                <?php foreach ($orders as $order): ?>
+                    <tr class="hover:bg-gray-50 transition-colors">
+                        <td class="px-6 py-4 whitespace-nowrap">
+                            <span class="bg-gray-100 px-2 py-1 rounded-md text-sm font-medium">#<?php echo $order['id']; ?></span>
+                        </td>
+                        <td class="px-6 py-4 whitespace-nowrap">
+                            <div class="flex items-center">
+                                <div class="w-8 h-8 bg-blue-100 rounded-full flex items-center justify-center mr-3">
+                                    <span class="text-blue-600 text-xs font-semibold">
+                                        <?php echo strtoupper(substr($order['customer_name'] ?: 'U', 0, 1)); ?>
+                                    </span>
+                                </div>
+                                <div>
+                                    <div class="text-sm font-medium text-gray-900"><?php echo htmlspecialchars($order['customer_name'] ?: 'N/A'); ?></div>
+                                    <div class="text-sm text-gray-500"><?php echo htmlspecialchars($order['email']); ?></div>
+                                </div>
+                            </div>
+                        </td>
+                        <td class="px-6 py-4 whitespace-nowrap">
+                            <div class="text-sm font-semibold text-gray-900">₱<?php echo number_format((float)$order['total'], 2); ?></div>
+                        </td>
+                        <td class="px-6 py-4 whitespace-nowrap">
+                            <span class="inline-flex items-center px-2 py-1 text-xs font-medium bg-gray-100 text-gray-800 rounded-full">
+                                <i class="fas fa-box mr-1"></i>
+                                <?php echo $order['item_count']; ?> items
+                            </span>
+                        </td>
+                        <td class="px-6 py-4 whitespace-nowrap">
+                            <?php
+                            $status_colors = [
+                                'pending' => 'bg-yellow-100 text-yellow-800',
+                                'Ongoing' => 'bg-orange-100 text-orange-800',
+                                'processing' => 'bg-blue-100 text-blue-800',
+                                'Ready for Pickup' => 'bg-indigo-100 text-indigo-800',
+                                'Out for Delivery' => 'bg-purple-100 text-purple-800',
+                                'Delivered' => 'bg-green-100 text-green-800',
+                                'completed' => 'bg-green-100 text-green-800',
+                                'cancelled' => 'bg-red-100 text-red-800'
+                            ];
+                            $status_class = $status_colors[$order['status']] ?? 'bg-gray-100 text-gray-800';
+                            ?>
+                            <span class="inline-flex items-center px-2 py-1 text-xs font-semibold rounded-full <?php echo $status_class; ?>">
+                                <?php echo htmlspecialchars(ucfirst($order['status'])); ?>
+                            </span>
+                        </td>
+                        <td class="px-6 py-4 whitespace-nowrap">
+                            <div class="text-sm text-gray-900">
+                                <?php echo $order['warehouse_employee_name'] ? htmlspecialchars($order['warehouse_employee_name']) : '<span class="text-gray-400">Not assigned</span>'; ?>
+                            </div>
+                        </td>
+                        <td class="px-6 py-4 whitespace-nowrap">
+                            <div class="flex items-center space-x-2">
+                                <?php if ($order['po_attachment_count'] > 0): ?>
+                                    <span class="inline-flex items-center px-2 py-1 text-xs font-medium bg-green-100 text-green-800 rounded-full">
+                                        <i class="fas fa-file-excel mr-1"></i>
+                                        <?php echo $order['po_attachment_count']; ?> file(s)
+                                    </span>
+                                    <?php if ($order['pending_approvals'] > 0): ?>
+                                        <span class="inline-flex items-center px-2 py-1 text-xs font-medium bg-orange-100 text-orange-800 rounded-full animate-pulse">
+                                            <i class="fas fa-exclamation-circle mr-1"></i>
+                                            <?php echo $order['pending_approvals']; ?> pending
                                         </span>
-                                    </td>
-                                    <td class="px-6 py-4 whitespace-nowrap">
-                                        <?php
-                                        $status_colors = [
-                                            'pending' => 'bg-yellow-100 text-yellow-800',
-                                            'Ongoing' => 'bg-orange-100 text-orange-800',
-                                            'processing' => 'bg-blue-100 text-blue-800',
-                                            'Ready for Pickup' => 'bg-indigo-100 text-indigo-800',
-                                            'Out for Delivery' => 'bg-purple-100 text-purple-800',
-                                            'Delivered' => 'bg-green-100 text-green-800',
-                                            'completed' => 'bg-green-100 text-green-800',
-                                            'cancelled' => 'bg-red-100 text-red-800'
-                                        ];
-                                        $status_class = $status_colors[$order['status']] ?? 'bg-gray-100 text-gray-800';
-                                        ?>
-                                        <span class="inline-flex items-center px-2 py-1 text-xs font-semibold rounded-full <?php echo $status_class; ?>">
-                                            <?php echo htmlspecialchars(ucfirst($order['status'])); ?>
-                                        </span>
-                                    </td>
-                                    <td class="px-6 py-4 whitespace-nowrap">
-                                        <div class="text-sm text-gray-900">
-                                            <?php echo $order['warehouse_employee_name'] ? htmlspecialchars($order['warehouse_employee_name']) : '<span class="text-gray-400">Not assigned</span>'; ?>
-                                        </div>
-                                    </td>
-                                    <td class="px-6 py-4 whitespace-nowrap">
-                                        <div class="flex items-center space-x-2">
-                                            <?php if ($order['po_attachment_count'] > 0): ?>
-                                                <span class="inline-flex items-center px-2 py-1 text-xs font-medium bg-green-100 text-green-800 rounded-full">
-                                                    <i class="fas fa-file-excel mr-1"></i>
-                                                    <?php echo $order['po_attachment_count']; ?> file(s)
-                                                </span>
-                                                <?php if ($order['pending_approvals'] > 0): ?>
-                                                    <span class="inline-flex items-center px-2 py-1 text-xs font-medium bg-orange-100 text-orange-800 rounded-full animate-pulse">
-                                                        <i class="fas fa-exclamation-circle mr-1"></i>
-                                                        <?php echo $order['pending_approvals']; ?> pending
-                                                    </span>
-                                                <?php endif; ?>
-                                            <?php else: ?>
-                                                <span class="inline-flex items-center px-2 py-1 text-xs font-medium bg-gray-100 text-gray-500 rounded-full">
-                                                    <i class="fas fa-times mr-1"></i>
-                                                    No files
-                                                </span>
-                                            <?php endif; ?>
-                                        </div>
-                                    </td>
-                                    <td class="px-6 py-4 whitespace-nowrap">
-                                        <div class="text-sm text-gray-900"><?php echo date('M d, Y', strtotime($order['created_at'])); ?></div>
-                                        <div class="text-xs text-gray-500"><?php echo date('H:i', strtotime($order['created_at'])); ?></div>
-                                    </td>
-                                    <td class="px-6 py-4 whitespace-nowrap text-sm font-medium">
-                                        <?php if ($order['po_attachment_count'] > 0): ?>
-                                            <a href="accountant_view_po.php?order_id=<?php echo $order['id']; ?>"
-                                                class="inline-flex items-center px-3 py-1 border border-transparent text-xs leading-4 font-medium rounded-md text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500">
-                                                <i class="fas fa-eye mr-1"></i>
-                                                View P.O.
-                                            </a>
-                                        <?php else: ?>
-                                            <span class="text-xs text-gray-400">No P.O. files</span>
-                                        <?php endif; ?>
-                                    </td>
-                                </tr>
-                            <?php endforeach; ?>
-                        </tbody>
-                    </table>
-                </div>
+                                    <?php endif; ?>
+                                <?php else: ?>
+                                    <span class="inline-flex items-center px-2 py-1 text-xs font-medium bg-gray-100 text-gray-500 rounded-full">
+                                        <i class="fas fa-times mr-1"></i>
+                                        No files
+                                    </span>
+                                <?php endif; ?>
+                            </div>
+                        </td>
+                        <td class="px-6 py-4 whitespace-nowrap">
+                            <div class="text-sm text-gray-900"><?php echo date('M d, Y', strtotime($order['created_at'])); ?></div>
+                            <div class="text-xs text-gray-500"><?php echo date('H:i', strtotime($order['created_at'])); ?></div>
+                        </td>
+                        <td class="px-6 py-4 whitespace-nowrap text-sm font-medium">
+                            <?php if ($order['po_attachment_count'] > 0): ?>
+                                <a href="accountant_view_po.php?order_id=<?php echo $order['id']; ?>"
+                                    class="inline-flex items-center px-3 py-1 border border-transparent text-xs leading-4 font-medium rounded-md text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500">
+                                    <i class="fas fa-eye mr-1"></i>
+                                    View P.O.
+                                </a>
+                            <?php else: ?>
+                                <span class="text-xs text-gray-400">No P.O. files</span>
+                            <?php endif; ?>
+                        </td>
+                    </tr>
+                <?php endforeach; ?>
+            </tbody>
+        </table>
+    </div>
+</div>
             <?php else: ?>
                 <div class="px-6 py-12 text-center">
                     <i class="fas fa-inbox text-4xl text-gray-300 mb-4"></i>

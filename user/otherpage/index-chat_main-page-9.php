@@ -635,7 +635,7 @@ function getUserOnlineStatus($conn, $userId)
 
                         <!-- New message indicator -->
                         <template x-if="sales.unread_count && sales.unread_count > 0">
-                          <span class="bg-red-100 text-red-600 text-xs px-2 py-1 rounded-full font-semibold animate-bounce">
+                          <span class="bg-red-100 text-red-600 text-xs px-2 py-1 rounded-full font-semibold">
                             New message
                           </span>
                         </template>

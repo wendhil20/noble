@@ -30,8 +30,8 @@ if ($isLocalhost) {
 }
 
 $client = new Google_Client();
-$client->setClientId('18734920232-4n0taqelo21mjgpljb368b2sumb5865o.apps.googleusercontent.com');
-$client->setClientSecret('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');
+$client->setClientId('733754213464-u3t36puhp1o6ra9uqi6j040em5br1bie.apps.googleusercontent.com');
+$client->setClientSecret('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');
 $client->setRedirectUri($redirectUri);
 $client->addScope("email");
 $client->addScope("profile");

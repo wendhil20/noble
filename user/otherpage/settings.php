@@ -115,32 +115,21 @@ $error = ''; // Initialize error variable
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $user_id = $_SESSION['user_id'];
 
-    // ✅ 1. reCAPTCHA VALIDATION FIRST
+        // ✅ 1. reCAPTCHA VALIDATION FIRST
     if (!isset($_POST['g-recaptcha-response']) || empty($_POST['g-recaptcha-response'])) {
         $error = "Please verify that you are not a robot.";
     } else {
-        $secretKey = "6LcsdlYsAAAAAKCcNhaIMCeKWsq9xR1zq3SUM5z9";
+        $secretKey = "6LfJalcsAAAAADabQF4nGitXvLn0rnQNWKE8rj9D";
         $captchaResponse = $_POST['g-recaptcha-response'];
 
-        // Use curl instead of file_get_contents for better reliability
-        $ch = curl_init();
-        curl_setopt($ch, CURLOPT_URL, "https://www.google.com/recaptcha/api/siteverify");
-        curl_setopt($ch, CURLOPT_POST, 1);
-        curl_setopt($ch, CURLOPT_POSTFIELDS, "secret=" . urlencode($secretKey) . "&response=" . urlencode($captchaResponse));
-        curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
-        curl_setopt($ch, CURLOPT_TIMEOUT, 10);
-        
-        $verifyResponse = curl_exec($ch);
-        curl_close($ch);
+        $verifyResponse = file_get_contents(
+            "https://www.google.com/recaptcha/api/siteverify?secret={$secretKey}&response={$captchaResponse}"
+        );
 
-        if (!$verifyResponse) {
-            $error = "Failed to verify reCAPTCHA. Please try again.";
-        } else {
-            $responseData = json_decode($verifyResponse);
+        $responseData = json_decode($verifyResponse);
 
-            if (!isset($responseData->success) || !$responseData->success) {
-                $error = "reCAPTCHA verification failed. Please try again.";
-            }
+        if (!$responseData->success) {
+            $error = "reCAPTCHA verification failed. Please try again.";
         }
     }
 
@@ -468,7 +457,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
                     <!-- reCAPTCHA -->
                     <div class="flex justify-center mt-8">
-                        <div class="g-recaptcha" data-sitekey="6LcsdlYsAAAAAO8rzGpj4evKZjaJ0pvVMuEV8V2h" data-callback="onReCaptchaSuccess" data-expired-callback="onReCaptchaError"></div>
+                        <div class="g-recaptcha" data-sitekey="6LfJalcsAAAAAOLu1KUDWyoP1voDlxp_Dsl2Vkn3" data-callback="onReCaptchaSuccess" data-expired-callback="onReCaptchaError"></div>
                     </div>
 
                     <input type="hidden" id="recaptchaToken" name="g-recaptcha-response">

@@ -1,8 +1,8 @@
 RewriteEngine On
 
 # Optional: Force HTTPS
-RewriteCond %{HTTPS} off
-RewriteRule ^(.*)$ https://%{HTTP_HOST}%{REQUEST_URI} [L,R=301]
+# RewriteCond %{HTTPS} off
+# RewriteRule ^(.*)$ https://%{HTTP_HOST}%{REQUEST_URI} [L,R=301]
 
 # Hide .php extension
 RewriteCond %{REQUEST_FILENAME} !-d
@@ -17,6 +17,7 @@ RewriteCond %{REQUEST_FILENAME} !-f
 RewriteCond %{REQUEST_FILENAME} !-d
 RewriteCond %{REQUEST_URI} !^/noble/loginpage/admin/
 RewriteRule ^(.*)$ index.php [QSA,L]
+
 
 # Allow iframing - Remove X-Frame-Options header
 <IfModule mod_headers.c>

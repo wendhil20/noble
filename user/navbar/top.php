@@ -547,7 +547,7 @@ $hidden_pages = ['help.php', 'about.php'];
               <button
                 @click.stop="clearHistory()"
                 class="text-xs text-orange-500 hover:text-orange-600 font-medium uppercase">
-                Clear
+                clear
               </button>
             </div>
 

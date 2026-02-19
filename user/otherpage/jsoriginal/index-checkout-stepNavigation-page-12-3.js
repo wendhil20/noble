@@ -1,0 +1,317 @@
+// stepNavigation.js - Step management functionality
+
+function initializeStepNavigation() {
+    // Add CSS for step indicators
+    if (!document.getElementById('stepStyles')) {
+        const style = document.createElement('style');
+        style.id = 'stepStyles';
+        style.textContent = `
+            .step-circle {
+                width: 40px;
+                height: 40px;
+                border-radius: 50%;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                font-weight: bold;
+                transition: all 0.3s ease;
+            }
+            
+            .step-circle:not(.active):not(.completed) {
+                background-color: #e5e7eb;
+                color: #6b7280;
+                border: 2px solid #d1d5db;
+            }
+            
+            .step-circle.active {
+                background-color: #f97316;
+                color: white;
+                border: 2px solid #ea580c;
+                box-shadow: 0 0 0 4px rgba(249, 115, 22, 0.2);
+            }
+            
+            .step-circle.completed {
+                background-color: #10b981;
+                color: white;
+                border: 2px solid #059669;
+            }
+            
+            .step-indicator.active .step-title {
+                color: #f97316;
+                font-weight: 600;
+            }
+            
+            .step-indicator.completed .step-title {
+                color: #10b981;
+                font-weight: 500;
+            }
+        `;
+        document.head.appendChild(style);
+    }
+}
+
+function goToStep(stepNumber) {
+    if (stepNumber < 1 || stepNumber > totalSteps) return;
+
+    // Validate current step before moving
+    if (!validateStep(currentStep) && stepNumber > currentStep) {
+        return;
+    }
+
+    currentStep = stepNumber;
+    showStep(stepNumber);
+    updateStepIndicators();
+
+    // ✅ NEW: Auto-trigger calculation when entering Step 3
+    if (stepNumber === 3) {
+        const deliveryTypeRadio = document.querySelector('input[name="delivery_type"]:checked');
+        
+        // Only auto-calculate if in delivery mode
+        if (deliveryTypeRadio && deliveryTypeRadio.value === 'delivery') {
+            if (selectedAddress && selectedAddress.latitude && selectedAddress.longitude) {
+                console.log('Entering Step 3 - Auto-triggering delivery calculation...');
+                
+                // Trigger auto-calculation after a short delay
+                if (typeof autoCalculateDelivery === 'function') {
+                    setTimeout(() => {
+                        autoCalculateDelivery();
+                    }, 500);
+                } else {
+                    console.warn('autoCalculateDelivery function not available');
+                }
+            } else {
+                console.warn('No valid address selected for auto-calculation');
+            }
+        } else if (deliveryTypeRadio && deliveryTypeRadio.value === 'pickup') {
+            console.log('Pickup mode selected - No calculation needed');
+            
+            // Enable continue button for pickup
+            const continuePaymentBtn = document.getElementById('continueToPayment');
+            if (continuePaymentBtn) {
+                continuePaymentBtn.disabled = false;
+                continuePaymentBtn.classList.remove('bg-gray-400', 'cursor-not-allowed');
+                continuePaymentBtn.classList.add('bg-orange-600', 'hover:bg-orange-700');
+            }
+        }
+    }
+
+    // ✅ NEW: When returning to Step 2, ensure buttons are properly enabled
+    if (stepNumber === 2) {
+        const selectedRadio = document.querySelector('input[name="billing_address_id"]:checked');
+        if (selectedRadio) {
+            // Re-enable Step 2 continue button
+            const continueToDeliveryBtn = document.getElementById('continueToDelivery');
+            if (continueToDeliveryBtn) {
+                continueToDeliveryBtn.disabled = false;
+                continueToDeliveryBtn.classList.remove('bg-gray-400', 'cursor-not-allowed');
+                continueToDeliveryBtn.classList.add('bg-orange-600', 'hover:bg-orange-700');
+            }
+        }
+    }
+
+    // Scroll to top of form
+    document.querySelector('.bg-white.p-6').scrollIntoView({
+        behavior: 'smooth'
+    });
+}
+
+function showStep(stepNumber) {
+    // Hide all steps
+    document.querySelectorAll('.step-content').forEach(step => {
+        step.classList.add('hidden');
+    });
+
+    // Show current step
+    const currentStepElement = document.getElementById(`step${stepNumber}`);
+    if (currentStepElement) {
+        currentStepElement.classList.remove('hidden');
+    }
+}
+
+function updateStepIndicators() {
+    document.querySelectorAll('.step-indicator').forEach((indicator, index) => {
+        const stepNumber = index + 1;
+        const circle = indicator.querySelector('.step-circle');
+
+        // Reset classes
+        indicator.classList.remove('active', 'completed');
+        circle.classList.remove('active', 'completed');
+
+        if (stepNumber < currentStep) {
+            // Completed steps
+            indicator.classList.add('completed');
+            circle.classList.add('completed');
+            circle.innerHTML = `<svg class="w-5 h-5" fill="currentColor" viewBox="0 0 20 20">
+                <path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"></path>
+            </svg>`;
+        } else if (stepNumber === currentStep) {
+            // Current active step
+            indicator.classList.add('active');
+            circle.classList.add('active');
+            circle.textContent = stepNumber;
+        } else {
+            // Future steps
+            circle.textContent = stepNumber;
+        }
+    });
+}
+
+function validateStep(stepNumber) {
+    switch (stepNumber) {
+        case 1:
+            // Customer info is readonly, always valid
+            return true;
+
+        case 2:
+    // Check if address is selected
+    const selectedRadio = document.querySelector('input[name="billing_address_id"]:checked');
+    if (!selectedRadio) {
+        showNotification('Please select a delivery address to continue.', 'error');
+        return false;
+    }
+    
+    // Verify selectedAddress is set
+    if (!selectedAddress || !selectedAddress.latitude || !selectedAddress.longitude) {
+        showNotification('Invalid address data. Please select again.', 'error');
+        return false;
+    }
+    
+    return true;
+
+        case 3:
+    // Check delivery type
+    const deliveryTypeRadio = document.querySelector('input[name="delivery_type"]:checked');
+    
+    if (!deliveryTypeRadio) {
+        showNotification('Please select a delivery method.', 'error');
+        return false;
+    }
+
+    // ✅ NEW: Check if courier is selected (for delivery mode)
+    if (deliveryTypeRadio.value === 'delivery') {
+        const courierSelect = document.getElementById('courierSelection');
+        if (!courierSelect || !courierSelect.value) {
+            showNotification('Please select a courier service.', 'error');
+            return false;
+        }
+    }
+    
+    // If pickup, always valid
+    if (deliveryTypeRadio.value === 'pickup') {
+        return true;
+    }
+    
+    // ✅ For delivery mode, auto-calculation will handle it
+    // Just verify address is selected
+    if (!selectedAddress || !selectedAddress.latitude || !selectedAddress.longitude) {
+        showNotification('Please select a delivery address first.', 'error');
+        return false;
+    }
+    
+    console.log('✓ Step 3 validation passed - Auto-calculation will run');
+    return true;
+
+        case 4:
+            // Check payment method selection
+            const paymentMethod = document.querySelector('input[name="payment_method"]:checked');
+            if (!paymentMethod) {
+                showNotification('Please select a payment method to continue.', 'error');
+                return false;
+            }
+
+            if (paymentMethod.value === 'Bank Transfer') {
+                const selectedBank = document.getElementById('selectedBank').value;
+                const paymentScreenshot = document.querySelector('input[name="payment_screenshot"]');
+
+                if (!selectedBank) {
+                    showNotification('Please select a bank for transfer.', 'error');
+                    return false;
+                }
+
+                if (!paymentScreenshot || !paymentScreenshot.files[0]) {
+                    showNotification('Please upload a payment screenshot.', 'error');
+                    return false;
+                }
+            }
+            // PayPal handles all validation on their side
+            if (paymentMethod.value === 'PayPal') {
+                // Just ensure delivery fee is calculated
+                const deliveryFeeInput = document.getElementById('deliveryFee');
+                const deliveryFee = deliveryFeeInput ? parseFloat(deliveryFeeInput.value) : null;
+
+                if (deliveryFee === null || deliveryFee === undefined) {
+                    showNotification('Please calculate delivery costs first.', 'error');
+                    return false;
+                }
+            }
+
+            return true;
+
+        default:
+            return true;
+    }
+}
+
+function showNotification(message, type = 'info') {
+    // Remove existing notifications
+    const existingNotification = document.getElementById('stepNotification');
+    if (existingNotification) {
+        existingNotification.remove();
+    }
+
+    const colors = {
+        'error': 'bg-red-100 border-red-400 text-red-700',
+        'success': 'bg-green-100 border-green-400 text-green-700',
+        'info': 'bg-blue-100 border-blue-400 text-blue-700',
+        'warning': 'bg-yellow-100 border-yellow-400 text-yellow-700'
+    };
+
+    const notification = document.createElement('div');
+    notification.id = 'stepNotification';
+    notification.className = `fixed top-4 right-4 ${colors[type]} px-6 py-4 rounded-lg border shadow-lg z-50 max-w-md`;
+    notification.innerHTML = `
+        <div class="flex items-center gap-3">
+            <div class="flex-1">${message}</div>
+            <button onclick="this.parentElement.parentElement.remove()" class="text-gray-500 hover:text-gray-700">
+                <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 20 20">
+                    <path fill-rule="evenodd" d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z" clip-rule="evenodd"></path>
+                </svg>
+            </button>
+        </div>
+    `;
+
+    document.body.appendChild(notification);
+
+    // Auto remove after 5 seconds
+    setTimeout(() => {
+        if (notification.parentElement) {
+            notification.remove();
+        }
+    }, 5000);
+}
+
+// ✅ NEW: Helper function to check if delivery calculation is needed
+function isDeliveryCalculationNeeded() {
+    const deliveryTypeRadio = document.querySelector('input[name="delivery_type"]:checked');
+    
+    if (!deliveryTypeRadio || deliveryTypeRadio.value !== 'delivery') {
+        return false;
+    }
+    
+    const deliveryDistanceInput = document.getElementById('deliveryDistance');
+    const deliveryFeeInput = document.getElementById('deliveryFee');
+    
+    if (!deliveryDistanceInput || !deliveryFeeInput) {
+        return true; // Fields not found, calculation needed
+    }
+    
+    const deliveryDistance = parseFloat(deliveryDistanceInput.value || '0');
+    
+    // If distance is 0 or not calculated, calculation is needed
+    return deliveryDistance <= 0;
+}
+
+// ✅ Export to global scope
+window.isDeliveryCalculationNeeded = isDeliveryCalculationNeeded;
+
+console.log('✓ Step navigation with auto-calculation initialized');

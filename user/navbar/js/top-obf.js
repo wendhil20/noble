@@ -1,0 +1,453 @@
+function a0_0x3a8f(_0x5de33c, _0x1f5d6b) {
+  const _0x3e6a51 = a0_0x3e6a();
+  return (
+    (a0_0x3a8f = function (_0x3a8f25, _0x17b9e4) {
+      _0x3a8f25 = _0x3a8f25 - 0xe1;
+      let _0x5ebd45 = _0x3e6a51[_0x3a8f25];
+      return _0x5ebd45;
+    }),
+    a0_0x3a8f(_0x5de33c, _0x1f5d6b)
+  );
+}
+(function (_0x410098, _0xcaa601) {
+  const _0x2570c5 = a0_0x3a8f,
+    _0x2040e = _0x410098();
+  while (!![]) {
+    try {
+      const _0x1df59b =
+        -parseInt(_0x2570c5(0x121)) / 0x1 +
+        (parseInt(_0x2570c5(0x11a)) / 0x2) * (parseInt(_0x2570c5(0xe8)) / 0x3) +
+        parseInt(_0x2570c5(0x102)) / 0x4 +
+        (parseInt(_0x2570c5(0x110)) / 0x5) *
+          (-parseInt(_0x2570c5(0x10b)) / 0x6) +
+        (parseInt(_0x2570c5(0xef)) / 0x7) * (parseInt(_0x2570c5(0xec)) / 0x8) +
+        parseInt(_0x2570c5(0x120)) / 0x9 +
+        -parseInt(_0x2570c5(0x12c)) / 0xa;
+      if (_0x1df59b === _0xcaa601) break;
+      else _0x2040e["push"](_0x2040e["shift"]());
+    } catch (_0x591a45) {
+      _0x2040e["push"](_0x2040e["shift"]());
+    }
+  }
+})(a0_0x3e6a, 0x32a44);
+function a0_0x3e6a() {
+  const _0x5cff14 = [
+    "isEmail",
+    "5626780QzxJWp",
+    "cooldownExpiry",
+    "otpVerified",
+    "location",
+    "resetOTPStates",
+    "otp",
+    "otpLoading",
+    "resumeCooldown",
+    "ohUJi",
+    "then",
+    "otpSent",
+    "application/json",
+    "2|0|4|3|5|1",
+    "password",
+    "lEIxI",
+    "resendTimer",
+    "DqUZd",
+    "ZkmaT",
+    "9RKWWQf",
+    "bFbMN",
+    "Network\x20error\x20occurred.",
+    "PWcVW",
+    "16192xmREFI",
+    "submitLoading",
+    "catch",
+    "1393rjaPSt",
+    "XAxRI",
+    "SaUxP",
+    "../send_otp.php",
+    "startResendCooldown",
+    "clearMessages",
+    "Login\x20failed.",
+    "test",
+    "Please\x20verify\x20your\x20email\x20with\x20OTP\x20first.",
+    "messageTimeout",
+    "SfSRC",
+    "IfPqG",
+    "isMobile",
+    "cooldownDuration",
+    "../login.php",
+    "../verify_otp.php",
+    "form",
+    "message",
+    "Login\x20successful!",
+    "409972ukbTKx",
+    "gfqHf",
+    "OdVfJ",
+    "loginInput",
+    "opCnR",
+    "WbyoH",
+    "stringify",
+    "kpCVH",
+    "errorMessage",
+    "546QPcTrT",
+    "iOKdz",
+    "KPLLE",
+    "ceil",
+    "../otherpage/index.php",
+    "15195wKDLKV",
+    "Please\x20enter\x20a\x20valid\x20OTP",
+    "bOnNT",
+    "etPrF",
+    "length",
+    "now",
+    "tGTHy",
+    "POST",
+    "closest",
+    "json",
+    "102826mdqNFm",
+    "bfhbZ",
+    "cwSSg",
+    "wtKNL",
+    "OTP\x20verified!\x20Please\x20enter\x20your\x20password.",
+    "Failed\x20to\x20send\x20OTP",
+    "3702114kTqgCW",
+    "24199YYcEgJ",
+    "CsSMN",
+    "jLwmq",
+    "Invalid\x20OTP.",
+    "successMessage",
+    "success",
+    "split",
+    "xywBL",
+    "Network\x20error\x20while\x20sending\x20OTP.",
+    "resendCooldown",
+  ];
+  a0_0x3e6a = function () {
+    return _0x5cff14;
+  };
+  return a0_0x3e6a();
+}
+function loginForm() {
+  const _0x316871 = a0_0x3a8f,
+    _0x31e766 = {
+      etPrF: "3|5|2|7|0|1|6|4",
+      OdVfJ: function (_0xdf6fe, _0x29dfae) {
+        return _0xdf6fe(_0x29dfae);
+      },
+      cwSSg: "OTP\x20sent\x20successfully",
+      SaUxP: _0x316871(0x11f),
+      ohUJi: function (_0x193174, _0x313808) {
+        return _0x193174 > _0x313808;
+      },
+      aMhWW: _0x316871(0xf2),
+      DqUZd: _0x316871(0x117),
+      PWcVW: _0x316871(0xea),
+      jLwmq: function (_0x48493b, _0x37930c) {
+        return _0x48493b(_0x37930c);
+      },
+      ZkmaT: _0x316871(0x11e),
+      IQXzu: function (_0x31f233, _0x3b40a4) {
+        return _0x31f233 < _0x3b40a4;
+      },
+      IfPqG: _0x316871(0x111),
+      lEIxI: function (_0x159a0b, _0x3d2b4e, _0x4d7699) {
+        return _0x159a0b(_0x3d2b4e, _0x4d7699);
+      },
+      kpCVH: _0x316871(0xfe),
+      TXokc: _0x316871(0xe1),
+      fYVvV: _0x316871(0x10f),
+      tGTHy: _0x316871(0x101),
+      WbyoH: _0x316871(0xf5),
+      wtKNL: _0x316871(0xf7),
+      gfqHf: "Please\x20enter\x20your\x20password.",
+      bfhbZ: _0x316871(0xff),
+      opCnR: function (_0x497d71, _0xcb04bc, _0xb3116) {
+        return _0x497d71(_0xcb04bc, _0xb3116);
+      },
+      BDYdZ: _0x316871(0xfd),
+      rHWDb: function (_0x3c670c, _0x41049c) {
+        return _0x3c670c <= _0x41049c;
+      },
+      AVHSW: function (_0x5eda30, _0x4f6aad) {
+        return _0x5eda30 - _0x4f6aad;
+      },
+    };
+  return {
+    loginInput: "",
+    password: "",
+    otp: "",
+    isMobile: ![],
+    isEmail: ![],
+    otpSent: ![],
+    otpVerified: ![],
+    otpLoading: ![],
+    submitLoading: ![],
+    errorMessage: "",
+    successMessage: "",
+    messageTimeout: null,
+    resendCooldown: 0x0,
+    resendTimer: null,
+    cooldownDuration: 0x14,
+    init() {
+      const _0xd18646 = _0x316871;
+      this[_0xd18646(0x133)]();
+    },
+    checkLoginType() {
+      const _0x5bf38f = _0x316871,
+        _0x4c6e67 = /^09\d{9}$/,
+        _0xa60716 = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+      (this[_0x5bf38f(0xfb)] = _0x4c6e67[_0x5bf38f(0xf6)](
+        this[_0x5bf38f(0x105)]
+      )),
+        (this[_0x5bf38f(0x12b)] = _0xa60716["test"](this[_0x5bf38f(0x105)])),
+        this[_0x5bf38f(0x130)]();
+    },
+    resetOTPStates() {
+      const _0x4a3df9 = _0x316871,
+        _0x447161 = _0x31e766[_0x4a3df9(0x113)][_0x4a3df9(0x127)]("|");
+      let _0x1aba39 = 0x0;
+      while (!![]) {
+        switch (_0x447161[_0x1aba39++]) {
+          case "0":
+            this["otp"] = "";
+            continue;
+          case "1":
+            this[_0x4a3df9(0xe3)] = "";
+            continue;
+          case "2":
+            this[_0x4a3df9(0x10a)] = "";
+            continue;
+          case "3":
+            this[_0x4a3df9(0x136)] = ![];
+            continue;
+          case "4":
+            this[_0x4a3df9(0xe5)] &&
+              _0x31e766[_0x4a3df9(0x104)](clearInterval, this["resendTimer"]);
+            continue;
+          case "5":
+            this[_0x4a3df9(0x12e)] = ![];
+            continue;
+          case "6":
+            this["resendCooldown"] = 0x0;
+            continue;
+          case "7":
+            this[_0x4a3df9(0x125)] = "";
+            continue;
+        }
+        break;
+      }
+    },
+    sendOTP() {
+      const _0x4577f8 = _0x316871,
+        _0x23a499 = { iOKdz: _0x4577f8(0x129) };
+      if (_0x31e766[_0x4577f8(0x134)](this[_0x4577f8(0x12a)], 0x0)) return;
+      (this[_0x4577f8(0x132)] = !![]),
+        (this[_0x4577f8(0x10a)] = ""),
+        (this[_0x4577f8(0x125)] = ""),
+        fetch(_0x31e766["aMhWW"], {
+          method: _0x31e766["DqUZd"],
+          body: JSON[_0x4577f8(0x108)]({ email: this[_0x4577f8(0x105)] }),
+          headers: { "Content-Type": _0x4577f8(0xe1) },
+        })
+          [_0x4577f8(0x135)]((_0x127662) => _0x127662[_0x4577f8(0x119)]())
+          [_0x4577f8(0x135)]((_0x3727b1) => {
+            const _0x312024 = _0x4577f8;
+            (this[_0x312024(0x132)] = ![]),
+              _0x3727b1[_0x312024(0x126)]
+                ? ((this[_0x312024(0x136)] = !![]),
+                  (this[_0x312024(0x125)] =
+                    _0x3727b1[_0x312024(0x100)] || _0x31e766[_0x312024(0x11c)]),
+                  this[_0x312024(0xf3)]())
+                : (this[_0x312024(0x10a)] =
+                    _0x3727b1[_0x312024(0x100)] || _0x31e766[_0x312024(0xf1)]),
+              this[_0x312024(0xf4)]();
+          })
+          [_0x4577f8(0xee)](() => {
+            const _0x279e45 = _0x4577f8;
+            (this[_0x279e45(0x132)] = ![]),
+              (this["errorMessage"] = _0x23a499[_0x279e45(0x10c)]),
+              this[_0x279e45(0xf4)]();
+          });
+    },
+    verifyOTP() {
+      const _0x2a4752 = _0x316871,
+        _0x2e5160 = {
+          DBzkf: _0x2a4752(0xe2),
+          xywBL: function (_0x952428, _0x42f2eb) {
+            const _0xdd5c04 = _0x2a4752;
+            return _0x31e766[_0xdd5c04(0x123)](_0x952428, _0x42f2eb);
+          },
+          SfSRC: _0x31e766[_0x2a4752(0xe7)],
+          XAxRI: _0x2a4752(0x124),
+        };
+      if (
+        !this[_0x2a4752(0x131)] ||
+        _0x31e766["IQXzu"](this["otp"][_0x2a4752(0x114)], 0x4)
+      ) {
+        (this[_0x2a4752(0x10a)] = _0x31e766[_0x2a4752(0xfa)]),
+          this[_0x2a4752(0xf4)]();
+        return;
+      }
+      (this[_0x2a4752(0xed)] = !![]),
+        (this[_0x2a4752(0x10a)] = ""),
+        (this[_0x2a4752(0x125)] = ""),
+        _0x31e766["lEIxI"](fetch, _0x31e766[_0x2a4752(0x109)], {
+          method: _0x31e766[_0x2a4752(0xe6)],
+          headers: { "Content-Type": _0x31e766["TXokc"] },
+          body: JSON[_0x2a4752(0x108)]({
+            email: this[_0x2a4752(0x105)],
+            otp: this[_0x2a4752(0x131)],
+          }),
+        })
+          [_0x2a4752(0x135)]((_0x4e8474) => _0x4e8474[_0x2a4752(0x119)]())
+          [_0x2a4752(0x135)]((_0x1412d1) => {
+            const _0x26254d = _0x2a4752;
+            this["submitLoading"] = ![];
+            if (_0x1412d1[_0x26254d(0x126)]) {
+              const _0x265cf2 = _0x2e5160["DBzkf"][_0x26254d(0x127)]("|");
+              let _0x3da81b = 0x0;
+              while (!![]) {
+                switch (_0x265cf2[_0x3da81b++]) {
+                  case "0":
+                    this[_0x26254d(0x12e)] = !![];
+                    continue;
+                  case "1":
+                    this[_0x26254d(0xe5)] &&
+                      _0x2e5160[_0x26254d(0x128)](
+                        clearInterval,
+                        this["resendTimer"]
+                      );
+                    continue;
+                  case "2":
+                    this[_0x26254d(0x125)] = _0x2e5160[_0x26254d(0xf9)];
+                    continue;
+                  case "3":
+                    this[_0x26254d(0x131)] = "";
+                    continue;
+                  case "4":
+                    this[_0x26254d(0x136)] = ![];
+                    continue;
+                  case "5":
+                    this[_0x26254d(0x12a)] = 0x0;
+                    continue;
+                }
+                break;
+              }
+            } else
+              this[_0x26254d(0x10a)] =
+                _0x1412d1[_0x26254d(0x100)] || _0x2e5160[_0x26254d(0xf0)];
+            this[_0x26254d(0xf4)]();
+          })
+          [_0x2a4752(0xee)](() => {
+            const _0x1ebb57 = _0x2a4752;
+            (this[_0x1ebb57(0xed)] = ![]),
+              (this[_0x1ebb57(0x10a)] = _0x31e766[_0x1ebb57(0xeb)]),
+              this["clearMessages"]();
+          });
+    },
+    cancelOTP() {
+      const _0xbfdccb = _0x316871;
+      this[_0xbfdccb(0x130)]();
+    },
+    handleLogin(_0x540404) {
+      const _0x3bbcf8 = _0x316871,
+        _0x16457d = {
+          KPLLE: _0x31e766["fYVvV"],
+          bOnNT: _0x31e766[_0x3bbcf8(0x116)],
+          bFbMN: function (_0x4b7d5f, _0x1d2e51, _0x34ca46) {
+            const _0x158bd4 = _0x3bbcf8;
+            return _0x31e766[_0x158bd4(0xe4)](_0x4b7d5f, _0x1d2e51, _0x34ca46);
+          },
+          CsSMN: _0x31e766[_0x3bbcf8(0x107)],
+        };
+      if (this[_0x3bbcf8(0x12b)] && !this[_0x3bbcf8(0x12e)]) {
+        (this["errorMessage"] = _0x31e766[_0x3bbcf8(0x11d)]),
+          this["clearMessages"]();
+        return;
+      }
+      if (!this[_0x3bbcf8(0xe3)]) {
+        (this[_0x3bbcf8(0x10a)] = _0x31e766[_0x3bbcf8(0x103)]),
+          this["clearMessages"]();
+        return;
+      }
+      (this[_0x3bbcf8(0xed)] = !![]),
+        (this[_0x3bbcf8(0x10a)] = ""),
+        (this[_0x3bbcf8(0x125)] = "");
+      const _0x475be6 = _0x540404["target"][_0x3bbcf8(0x118)](
+          _0x31e766[_0x3bbcf8(0x11b)]
+        ),
+        _0x38ffd4 = new FormData(_0x475be6);
+      _0x31e766[_0x3bbcf8(0x106)](fetch, _0x31e766["BDYdZ"], {
+        method: _0x31e766[_0x3bbcf8(0xe6)],
+        body: _0x38ffd4,
+      })
+        ["then"]((_0x2a20f4) => _0x2a20f4["json"]())
+        [_0x3bbcf8(0x135)]((_0x44f8ed) => {
+          const _0x28756b = _0x3bbcf8;
+          (this[_0x28756b(0xed)] = ![]),
+            _0x44f8ed[_0x28756b(0x126)]
+              ? ((this[_0x28756b(0x125)] = _0x16457d[_0x28756b(0x112)]),
+                _0x16457d[_0x28756b(0xe9)](
+                  setTimeout,
+                  () => {
+                    const _0xf39a68 = _0x28756b;
+                    window[_0xf39a68(0x12f)]["href"] =
+                      _0x44f8ed["redirect"] || _0x16457d[_0xf39a68(0x10d)];
+                  },
+                  0x3e8
+                ))
+              : ((this["errorMessage"] =
+                  _0x44f8ed[_0x28756b(0x100)] || _0x16457d[_0x28756b(0x122)]),
+                this[_0x28756b(0xf4)]());
+        })
+        [_0x3bbcf8(0xee)](() => {
+          const _0x32712b = _0x3bbcf8;
+          (this[_0x32712b(0xed)] = ![]),
+            (this[_0x32712b(0x10a)] = _0x31e766[_0x32712b(0xeb)]),
+            this[_0x32712b(0xf4)]();
+        });
+    },
+    startResendCooldown() {
+      const _0x488c1a = _0x316871;
+      this[_0x488c1a(0x12a)] = this[_0x488c1a(0xfc)];
+      const _0x1c2b31 = Date["now"]() + this[_0x488c1a(0xfc)] * 0x3e8;
+      this["cooldownExpiry"] = _0x1c2b31;
+      if (this[_0x488c1a(0xe5)])
+        _0x31e766["jLwmq"](clearInterval, this["resendTimer"]);
+      this["resendTimer"] = _0x31e766[_0x488c1a(0xe4)](
+        setInterval,
+        () => {
+          const _0x479223 = _0x488c1a;
+          this["resendCooldown"]--,
+            _0x31e766["rHWDb"](this[_0x479223(0x12a)], 0x0) &&
+              (clearInterval(this[_0x479223(0xe5)]),
+              (this["cooldownExpiry"] = null));
+        },
+        0x3e8
+      );
+    },
+    resumeCooldown() {
+      const _0x30db9b = _0x316871;
+      if (this[_0x30db9b(0x12d)]) {
+        const _0x3985b4 = Math[_0x30db9b(0x10e)](
+          _0x31e766["AVHSW"](this[_0x30db9b(0x12d)], Date[_0x30db9b(0x115)]()) /
+            0x3e8
+        );
+        _0x3985b4 > 0x0
+          ? ((this["resendCooldown"] = _0x3985b4),
+            (this[_0x30db9b(0x136)] = !![]),
+            this[_0x30db9b(0xf3)]())
+          : (this[_0x30db9b(0x12d)] = null);
+      }
+    },
+    clearMessages() {
+      const _0x552b4e = _0x316871;
+      if (this[_0x552b4e(0xf8)]) clearTimeout(this[_0x552b4e(0xf8)]);
+      this[_0x552b4e(0xf8)] = _0x31e766[_0x552b4e(0xe4)](
+        setTimeout,
+        () => {
+          const _0x3aec99 = _0x552b4e;
+          (this[_0x3aec99(0x125)] = ""), (this["errorMessage"] = "");
+        },
+        0xbb8
+      );
+    },
+  };
+}

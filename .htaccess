@@ -1,0 +1,22 @@
+RewriteEngine On
+
+# Optional: Force HTTPS
+# RewriteCond %{HTTPS} off
+# RewriteRule ^(.*)$ https://%{HTTP_HOST}%{REQUEST_URI} [L,R=301]
+
+# Hide .php extension
+RewriteCond %{REQUEST_FILENAME} !-d
+RewriteCond %{REQUEST_FILENAME}\.php -f
+RewriteRule ^([^\.]+)$ $1.php [NC,L]
+
+# Custom route: /orders → /user/otherpage/index-page-1-A-B-C-D-E.php
+RewriteRule ^orders/?$ user/otherpage/index-page-1-A-B-C-D-E.php [L,QSA]
+
+# Default route (index.php)
+RewriteCond %{REQUEST_FILENAME} !-f
+RewriteCond %{REQUEST_FILENAME} !-d
+RewriteCond %{REQUEST_URI} !^/noble/loginpage/admin/
+RewriteRule ^(.*)$ index.php [QSA,L]
+
+Header always set X-Frame-Options "DENY"
+Header always set Content-Security-Policy "frame-ancestors 'none'"

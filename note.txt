@@ -1,0 +1,5 @@
+javascript-obfuscator myscript.js --output myscript-obf.js --compact true --control-flow-flattening true
+npx terser main.js -o main.min.js -c -m
+
+index-page-1-A-B-C-D-E.php
+- picture size 2000 x 677

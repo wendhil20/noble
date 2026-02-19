@@ -17,7 +17,7 @@ try {
 
     error_log("QRPh: Creating QR for Order #$order_id, Amount: ₱$amount");
 
-    $paymongo_secret_key = 'sk_live_EZ28DgdAquZ2YhHkBX4rxHC3';
+    $paymongo_secret_key = getenv('PAYMONGO_SECRET_KEY');
 
     // ✅ OFFICIAL PAYMONGO ENDPOINT
     $ch = curl_init('https://api.paymongo.com/v1/qrph/generate');

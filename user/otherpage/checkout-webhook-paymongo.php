@@ -52,7 +52,10 @@ try {
 
     // ✅ STEP 4: Verify PayMongo webhook signature
     // PayMongo sends: X-PayMongo-Signature: t=<timestamp>,te=<test_sig>,li=<live_sig>
-    $webhook_secret = 'whsk_2X4t6KJh8gtDoro1jfNrnWDY';
+
+    // do NOT commit the actual secret
+$webhook_secret = getenv('PAYMONGO_WEBHOOK_SECRET');
+
     $raw_signature  = $_SERVER['HTTP_X_PAYMONGO_SIGNATURE'] ?? '';
 
     error_log("Raw signature header: " . (empty($raw_signature) ? 'NONE' : $raw_signature));

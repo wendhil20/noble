@@ -51,15 +51,16 @@ if ($isLocalhost) {
 $paymongo_success_url = $protocol . $host . $basePath . '/checkout-paymongo-succes-page-12-A.php';
 $paymongo_cancel_url = $protocol . $host . $basePath . '/index-checkout-page-12-3.php';
 
-// PayMongo config
+
 $paymongo_config = [
-    'mode' => 'test',
-    'secret_key' => 'sk_live_EZ28DgdAquZ2YhHkBX4rxHC3',
-    'public_key' => 'pk_live_KEp9KioEDwGwWRDSfx1fiFSt',
-    'currency' => 'PHP',
+    'mode' => 'live',
+    'secret_key' => getenv('PAYMONGO_SECRET_KEY'),
+    'public_key' => getenv('PAYMONGO_PUBLIC_KEY'),
+     'currency' => 'PHP',
     'success_url' => $paymongo_success_url,
     'cancel_url' => $paymongo_cancel_url
 ];
+
 
 // Get cart items
 $cart_items = [];

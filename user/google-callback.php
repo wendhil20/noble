@@ -1,11 +1,25 @@
 <?php
-//google-callback.php
+//google-callback.php - FIXED: Using .env for OAuth credentials
 session_name("nobleuser");
 session_start();
+
+// ✅ LOAD ENVIRONMENT VARIABLES
+require_once '../.env.php';
 require_once '../vendor/autoload.php';
 require_once '../connection/connect.php';
 
 use Google\Service\PeopleService;
+
+// ✅ GET OAUTH CREDENTIALS FROM ENVIRONMENT
+$clientId = getenv('GOOGLE_CLIENT_ID');
+$clientSecret = getenv('GOOGLE_CLIENT_SECRET');
+
+if (empty($clientId) || empty($clientSecret)) {
+    error_log('❌ Google OAuth credentials not configured in .env');
+    $_SESSION['login_needed'] = 'OAuth service not configured. Please try again later.';
+    header("Location: otherpage/index-page-1-A-B-C-D-E.php");
+    exit;
+}
 
 // Build dynamic redirect URI
 $protocol = (!empty($_SERVER['HTTPS']) && $_SERVER['HTTPS'] !== 'off') ? 'https://' : 'http://';
@@ -21,8 +35,8 @@ if ($isLocalhost) {
 }
 
 $client = new Google_Client();
-$client->setClientId('18734920232-sbid4r1pnchssoioq8e6e3e1kgqrdho4.apps.googleusercontent.com');
-$client->setClientSecret('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');
+$client->setClientId($clientId);
+$client->setClientSecret($clientSecret);
 $client->setRedirectUri($redirectUri);
 $client->addScope("email");
 $client->addScope("profile");

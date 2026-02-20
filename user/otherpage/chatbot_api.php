@@ -1,14 +1,23 @@
 <?php
-// chatbot_api.php
+// chatbot_api.php - FIXED: Using .env for API keys
 header('Content-Type: application/json');
 header('Access-Control-Allow-Origin: *');
 header('Access-Control-Allow-Methods: POST');
 header('Access-Control-Allow-Headers: Content-Type');
 
+// ✅ LOAD ENVIRONMENT VARIABLES
+require_once '../../.env.php';
 include '../../connection/connect.php';
 
-// Load API Key (put this in .env or config file in real system)
-$apiKey = "AIzaSyB5DtWDZE_NNBJIEgLooOkGjqRCvLtLE9Q";
+// ✅ GET API KEY FROM ENVIRONMENT
+$apiKey = getenv('GOOGLE_GEMINI_API_KEY');
+
+if (empty($apiKey)) {
+    error_log('❌ Google Gemini API Key not configured in .env');
+    http_response_code(500);
+    echo json_encode(['error' => 'API service not configured']);
+    exit;
+}
 
 // Get user question
 $data = json_decode(file_get_contents("php://input"), true);
@@ -236,3 +245,4 @@ Product Database:\n" . $productContext . "\n\nUser's question: $userQuestion\n\n
         ]
     ]);
 }
+?>

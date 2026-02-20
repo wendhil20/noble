@@ -3,8 +3,14 @@
 session_name("nobleuser");
 session_start();
 include '../../connection/connect.php';
+require_once '../../.env.php';
+
 
 header('Content-Type: application/json');
+
+if (empty($secretKey)) {
+    throw new Exception('PayMongo secret key not configured');
+}
 
 try {
     $data     = json_decode(file_get_contents('php://input'), true);
@@ -16,7 +22,13 @@ try {
     }
 
     $amount_in_centavos  = intval($amount * 100);
-    $paymongo_secret_key = 'sk_live_EZ28DgdAquZ2YhHkBX4rxHC3';
+   // ✅ GET SECRET KEY FROM ENVIRONMENT
+    $paymongo_secret_key = getenv('PAYMONGO_SECRET_KEY');
+    
+    if (empty($paymongo_secret_key)) {
+        error_log('❌ PayMongo secret key not configured in .env');
+        throw new Exception('Payment service not configured');
+    }
 
     error_log("QRPh Checkout Session: Order #$order_id, ₱$amount ({$amount_in_centavos} centavos)");
 

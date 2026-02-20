@@ -4,6 +4,9 @@ session_name("nobleuser");
 session_start();
 include '../../connection/connect.php';
 
+require_once '../../.env.php';
+
+
 // Check if user is logged in
 if (!isset($_SESSION['user_id'])) {
     header('Location: ../google-callback.php');
@@ -27,6 +30,7 @@ if (!isset($_SESSION['checkout_step3']) || !$_SESSION['checkout_step3']['complet
 }
 
 $user_id = $_SESSION['user_id'];
+
 
 // Get data from previous steps
 $customer_data = $_SESSION['checkout_step1'];
@@ -56,7 +60,7 @@ $paymongo_config = [
     'mode' => 'live',
     'secret_key' => getenv('PAYMONGO_SECRET_KEY'),
     'public_key' => getenv('PAYMONGO_PUBLIC_KEY'),
-     'currency' => 'PHP',
+    'currency' => 'PHP',
     'success_url' => $paymongo_success_url,
     'cancel_url' => $paymongo_cancel_url
 ];

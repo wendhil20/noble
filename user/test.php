@@ -1,395 +1,533 @@
 <!DOCTYPE html>
-<html lang="en">
+<html>
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Real-time Address Search</title>
+    <meta charset='utf-8' />
+    <title>Mapbox Search - Coordinates Finder</title>
+    <meta name='viewport' content='initial-scale=1,maximum-scale=1,user-scalable=no' />
+    <script src='https://api.mapbox.com/mapbox-gl-js/v3.0.0/mapbox-gl.js'></script>
+    <link href='https://api.mapbox.com/mapbox-gl-js/v3.0.0/mapbox-gl.css' rel='stylesheet' />
     <script src="https://cdn.tailwindcss.com"></script>
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.css" />
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.js"></script>
     <style>
-        .suggestions-dropdown {
-            position: absolute;
-            top: 100%;
-            left: 0;
-            right: 0;
-            background: white;
-            border: 2px solid #e5e7eb;
-            border-radius: 0.75rem;
-            box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1);
-            max-height: 20rem;
-            overflow-y: auto;
-            margin-top: 0.5rem;
-            z-index: 50;
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(-10px); }
+            to { opacity: 1; transform: translateY(0); }
         }
-
-        .suggestion-item {
-            padding: 12px 16px;
-            cursor: pointer;
-            border-bottom: 1px solid #f3f4f6;
-            transition: all 0.2s ease;
+        .animate-fade-in {
+            animation: fadeIn 0.3s ease-in;
         }
-
-        .suggestion-item:hover,
-        .suggestion-item.active {
-            background-color: #dbeafe;
-            padding-left: 20px;
+        #map {
+            cursor: crosshair !important;
         }
-
-        .suggestion-item.active {
-            background-color: #3b82f6;
-            color: white;
-        }
-
-        .suggestion-item.active .location-text {
-            color: #dbeafe;
-        }
-
-        .loading-spinner {
-            display: inline-block;
-            width: 16px;
-            height: 16px;
-            border: 2px solid #f3f3f3;
-            border-top: 2px solid #3b82f6;
-            border-radius: 50%;
-            animation: spin 1s linear infinite;
-        }
-
-        @keyframes spin {
-            0% { transform: rotate(0deg); }
-            100% { transform: rotate(360deg); }
-        }
-
-        .map-container {
-            height: 400px;
-            border-radius: 1rem;
-            overflow: hidden;
-            position: relative;
+        #map:active {
+            cursor: pointer !important;
         }
     </style>
 </head>
-<body class="bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-100 min-h-screen p-6">
+<body class="bg-gray-100">
 
-    <div class="max-w-3xl mx-auto">
-        <h1 class="text-4xl font-bold text-gray-900 mb-2">Real-time Address Search</h1>
-        <p class="text-gray-600 mb-8">Type instantly - suggestions appear as you type (like Google Maps)</p>
-
-        <div class="bg-white rounded-2xl shadow-lg p-8">
-            <!-- Search Input -->
-            <div class="mb-8">
-                <label class="block text-sm font-semibold text-gray-700 mb-3">Search Your Address</label>
-                <div class="relative">
-                    <input
-                        type="text"
-                        id="addressSearch"
-                        placeholder="Try: 'SM North EDSA', 'Barangay 1 Caloocan', 'Makati'..."
-                        class="w-full px-5 py-4 text-lg border-2 border-gray-300 rounded-xl focus:border-blue-500 focus:outline-none transition-all"
-                        autocomplete="off">
-                    
-                    <!-- Loading Spinner -->
-                    <div id="loadingSpinner" class="absolute right-4 top-1/2 transform -translate-y-1/2" style="display: none;">
-                        <div class="loading-spinner"></div>
-                    </div>
-
-                    <!-- Search Icon -->
-                    <svg id="searchIcon" class="absolute right-4 top-1/2 transform -translate-y-1/2 w-5 h-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
-                    </svg>
-
-                    <!-- Suggestions Dropdown -->
-                    <div id="suggestions" class="suggestions-dropdown hidden"></div>
-                </div>
-            </div>
-
-            <!-- Map -->
-            <div class="mb-8">
-                <label class="block text-sm font-semibold text-gray-700 mb-3">Or Click on Map</label>
-                <div id="map" class="map-container border-2 border-gray-300 rounded-xl"></div>
-            </div>
-
-            <!-- Selected Address Display -->
-            <div id="resultContainer" style="display: none;">
-                <div class="bg-green-50 border-2 border-green-300 rounded-lg p-6">
-                    <h3 class="text-lg font-bold text-green-900 mb-4">✓ Address Selected</h3>
-                    
-                    <div class="space-y-3 text-sm">
-                        <div>
-                            <p class="text-green-700 font-semibold">Full Address:</p>
-                            <p class="text-green-900" id="resultAddress"></p>
-                        </div>
-                        <div class="grid grid-cols-2 gap-4">
-                            <div>
-                                <p class="text-green-700 font-semibold">City:</p>
-                                <p class="text-green-900" id="resultCity"></p>
-                            </div>
-                            <div>
-                                <p class="text-green-700 font-semibold">Province:</p>
-                                <p class="text-green-900" id="resultState"></p>
-                            </div>
-                        </div>
-                        <div class="grid grid-cols-2 gap-4">
-                            <div>
-                                <p class="text-green-700 font-semibold">Coordinates:</p>
-                                <p class="text-green-900 text-xs" id="resultCoords"></p>
-                            </div>
-                            <div>
-                                <p class="text-green-700 font-semibold">Postal Code:</p>
-                                <p class="text-green-900" id="resultPostal"></p>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            </div>
+<div class="flex h-screen">
+    <!-- Map -->
+    <div id="map" class="flex-1 relative"></div>
+    
+    <!-- Sidebar -->
+    <div class="w-96 bg-white overflow-y-auto shadow-2xl z-10">
+        <!-- Header -->
+        <div class="bg-gradient-to-r from-blue-600 to-blue-800 p-6 text-white sticky top-0 shadow-lg">
+            <h2 class="text-2xl font-bold flex items-center gap-2">🔍 Search Address</h2>
+            <p class="text-blue-100 text-sm mt-1">Find coordinates for any location</p>
         </div>
-
-        <!-- Tips -->
-        <div class="mt-8 bg-blue-50 border-2 border-blue-200 rounded-lg p-4">
-            <h3 class="font-semibold text-blue-900 mb-2">💡 Search Tips:</h3>
-            <ul class="text-sm text-blue-800 space-y-1">
-                <li>✓ Start typing - suggestions appear instantly (no 800ms delay!)</li>
-                <li>✓ Arrow keys to navigate, Enter to select</li>
-                <li>✓ Try: "Quezon City", "Makati", "BGY 1", "Rizal Ave Manila"</li>
-            </ul>
+        
+        <!-- Clickable Map Tip -->
+        <div class="bg-blue-50 border-l-4 border-blue-500 p-4 mx-6 mt-6 rounded-lg">
+            <p class="text-blue-900 text-sm font-semibold">💡 Tip: Click anywhere on the map to auto-fill coordinates!</p>
+            <p class="text-blue-700 text-xs mt-1">Or use the search box below to find locations</p>
+        </div>
+        
+        <div class="p-6 space-y-6">
+            <!-- Search Box with Autocomplete -->
+            <div class="relative">
+                <div class="flex gap-2">
+                    <input 
+                        type="text" 
+                        id="searchInput" 
+                        placeholder="Search address or place..." 
+                        class="flex-1 px-4 py-3 border-2 border-gray-300 rounded-lg focus:outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-200 transition"
+                        oninput="handleSearchInput()"
+                    />
+                    <button 
+                        onclick="searchAddress()" 
+                        class="px-6 py-3 bg-blue-600 text-white font-bold rounded-lg hover:bg-blue-700 transition transform hover:scale-105 active:scale-95"
+                    >
+                        Go
+                    </button>
+                </div>
+                
+                <!-- Autocomplete Suggestions Dropdown -->
+                <div id="suggestions" class="absolute top-full left-0 right-0 mt-2 bg-white border-2 border-gray-200 rounded-lg shadow-2xl max-h-64 overflow-y-auto z-50 hidden" style="display:none;">
+                    <div id="suggestionsList"></div>
+                </div>
+            </div>
+            
+            <!-- Message Alert -->
+            <div id="message" class="hidden p-3 rounded-lg text-sm font-medium animate-fade-in"></div>
+            
+            <!-- Coordinates Info Card -->
+            <div id="coordinatesInfo" class="hidden bg-gradient-to-br from-blue-50 to-blue-100 border-2 border-blue-400 rounded-lg p-4 shadow-lg">
+                <h3 class="text-blue-700 font-bold mb-4 flex items-center gap-2 text-lg">📍 Coordinates</h3>
+                
+                <div class="space-y-3">
+                    <!-- Place Name -->
+                    <div class="bg-white p-3 rounded-lg shadow-sm border-l-4 border-blue-500">
+                        <label class="text-gray-600 font-semibold text-sm block">Place Name</label>
+                        <p id="placeName" class="font-mono text-blue-600 font-bold break-all text-sm mt-1">-</p>
+                    </div>
+                    
+                    <!-- Longitude -->
+                    <div class="bg-white p-3 rounded-lg shadow-sm border-l-4 border-green-500">
+                        <label class="text-gray-600 font-semibold text-sm block">Longitude (X)</label>
+                        <div class="flex items-center justify-between mt-1">
+                            <p id="longitude" class="font-mono text-green-600 font-bold text-sm flex-1">-</p>
+                            <button onclick="copyToClipboard('longitude')" class="ml-2 px-3 py-1 bg-green-500 text-white text-xs font-bold rounded hover:bg-green-600 transition">Copy</button>
+                        </div>
+                    </div>
+                    
+                    <!-- Latitude -->
+                    <div class="bg-white p-3 rounded-lg shadow-sm border-l-4 border-orange-500">
+                        <label class="text-gray-600 font-semibold text-sm block">Latitude (Y)</label>
+                        <div class="flex items-center justify-between mt-1">
+                            <p id="latitude" class="font-mono text-orange-600 font-bold text-sm flex-1">-</p>
+                            <button onclick="copyToClipboard('latitude')" class="ml-2 px-3 py-1 bg-green-500 text-white text-xs font-bold rounded hover:bg-green-600 transition">Copy</button>
+                        </div>
+                    </div>
+                    
+                    <!-- Full Coordinates -->
+                    <div class="bg-white p-3 rounded-lg shadow-sm border-l-4 border-purple-500">
+                        <label class="text-gray-600 font-semibold text-sm block">Full Coordinates</label>
+                        <div class="flex items-center justify-between mt-1">
+                            <p id="fullCoords" class="font-mono text-purple-600 font-bold text-xs break-all flex-1">-</p>
+                            <button onclick="copyToClipboard('fullCoords')" class="ml-2 px-3 py-1 bg-green-500 text-white text-xs font-bold rounded hover:bg-green-600 transition whitespace-nowrap">Copy</button>
+                        </div>
+                    </div>
+                    
+                    <!-- Accuracy/Type -->
+                    <div class="bg-white p-3 rounded-lg shadow-sm border-l-4 border-indigo-500">
+                        <label class="text-gray-600 font-semibold text-sm block">Accuracy/Type</label>
+                        <p id="accuracy" class="font-mono text-indigo-600 font-bold text-sm mt-1">-</p>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Orders List -->
+            <div class="mt-6">
+                <h3 class="text-lg font-bold text-gray-800 mb-4 flex items-center gap-2">📦 Sample Orders</h3>
+                <div id="ordersList" class="space-y-2 max-h-64 overflow-y-auto"></div>
+            </div>
         </div>
     </div>
+</div>
 
-    <script>
-        let map, marker;
-        let currentResults = [];
-        let highlightedIndex = -1;
-        let abortController = null;
-
-        // Initialize Map
-        function initMap() {
-            const defaultLat = 14.5995;
-            const defaultLng = 120.9842;
-
-            map = L.map('map').setView([defaultLat, defaultLng], 12);
-
-            L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-                attribution: '© OpenStreetMap contributors',
-                maxZoom: 19
-            }).addTo(map);
-
-            const customIcon = L.divIcon({
-                className: 'custom-div-icon',
-                html: '<div style="background-color: #3B82F6; width: 24px; height: 24px; border-radius: 50%; border: 3px solid white; box-shadow: 0 2px 6px rgba(0,0,0,0.3);"></div>',
-                iconSize: [24, 24],
-                iconAnchor: [12, 12]
-            });
-
-            marker = L.marker([defaultLat, defaultLng], { icon: customIcon, draggable: true }).addTo(map);
-
-            map.on('click', (e) => {
-                selectLocation(e.latlng.lat, e.latlng.lng);
-            });
-
-            marker.on('dragend', () => {
-                selectLocation(marker.getLatLng().lat, marker.getLatLng().lng);
-            });
-
-            // Try to get user location
-            if (navigator.geolocation) {
-                navigator.geolocation.getCurrentPosition((pos) => {
-                    const lat = pos.coords.latitude;
-                    const lng = pos.coords.longitude;
-                    map.setView([lat, lng], 14);
-                    marker.setLatLng([lat, lng]);
-                });
-            }
-        }
-
-        // REAL-TIME Search - NO DELAY!
-        document.getElementById('addressSearch').addEventListener('input', async (e) => {
-            const query = e.target.value.trim();
-            highlightedIndex = -1;
-
-            // Abort previous request
-            if (abortController) {
-                abortController.abort();
-            }
-
-            if (query.length < 2) {
-                document.getElementById('suggestions').classList.add('hidden');
-                return;
-            }
-
-            // Show loading spinner
-            document.getElementById('loadingSpinner').style.display = 'block';
-            document.getElementById('searchIcon').style.display = 'none';
-
-            try {
-                abortController = new AbortController();
-
-                // Search with Philippines restriction
-                const url = 'https://nominatim.openstreetmap.org/search?' + new URLSearchParams({
-                    q: `${query}, Philippines`,
-                    format: 'json',
-                    addressdetails: 1,
-                    limit: 8,
-                    countrycodes: 'ph',
-                    viewbox: '119.0,4.5,131.0,21.0',
-                    bounded: 1,
-                });
-
-                const response = await fetch(url, { signal: abortController.signal });
-                currentResults = await response.json();
-
-                // If no results, try without Philippines suffix
-                if (currentResults.length === 0) {
-                    const url2 = 'https://nominatim.openstreetmap.org/search?' + new URLSearchParams({
-                        q: query,
-                        format: 'json',
-                        addressdetails: 1,
-                        limit: 8,
-                        countrycodes: 'ph',
-                    });
-                    currentResults = await fetch(url2, { signal: abortController.signal }).then(r => r.json());
-                }
-
-                displaySuggestions(currentResults);
-
-            } catch (error) {
-                if (error.name !== 'AbortError') {
-                    console.error('Search error:', error);
-                }
-            } finally {
-                document.getElementById('loadingSpinner').style.display = 'none';
-                document.getElementById('searchIcon').style.display = 'block';
-            }
-        });
-
-        // Display Suggestions
-        function displaySuggestions(results) {
-            const suggestionsDiv = document.getElementById('suggestions');
-            suggestionsDiv.innerHTML = '';
-
-            if (results.length === 0) {
-                suggestionsDiv.innerHTML = `
-                    <div class="p-4 text-center text-gray-600">
-                        <p class="font-medium">No results found</p>
-                        <p class="text-xs text-gray-500 mt-1">Try: City name, Barangay, Street, or Landmark</p>
-                    </div>
-                `;
-                suggestionsDiv.classList.remove('hidden');
-                return;
-            }
-
-            results.forEach((place, index) => {
-                const address = place.address || {};
-                const mainName = address.road || address.suburb || address.neighbourhood || place.name || place.display_name.split(',')[0];
-                const locationDetails = [address.city || address.municipality, address.state || address.province].filter(Boolean).join(', ');
-
-                const item = document.createElement('div');
-                item.className = 'suggestion-item';
-                item.setAttribute('data-index', index);
-                item.innerHTML = `
-                    <div class="flex items-start gap-3">
-                        <svg class="w-5 h-5 text-blue-500 flex-shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
-                        </svg>
-                        <div>
-                            <div class="font-semibold text-gray-900">${mainName}</div>
-                            <div class="text-xs location-text text-gray-600">${locationDetails}</div>
-                        </div>
-                    </div>
-                `;
-
-                item.addEventListener('click', () => selectAddress(place));
-                suggestionsDiv.appendChild(item);
-            });
-
-            suggestionsDiv.classList.remove('hidden');
-        }
-
-        // Select Address
-        function selectAddress(place) {
-            const address = place.address || {};
-            const lat = parseFloat(place.lat);
-            const lng = parseFloat(place.lon);
-
-            // Update map
-            map.setView([lat, lng], 16);
-            marker.setLatLng([lat, lng]);
-
-            // Populate form
-            const fullAddress = [address.house_number, address.road, address.suburb || address.neighbourhood].filter(Boolean).join(' ') || place.display_name.split(',')[0];
+<script>
+    // ⚠️ REPLACE WITH YOUR NEW MAPBOX TOKEN (REGENERATE THIS!)
+    mapboxgl.accessToken = 'pk.eyJ1Ijoid2VuZGhpbCIsImEiOiJjbWx1NmIzMDgwM25kM2RyMnVuOTNuMzhrIn0.45jN2HjKO_iRMlF-8gWcwQ';
+    
+    const map = new mapboxgl.Map({
+        container: 'map',
+        style: 'mapbox://styles/mapbox/streets-v12',
+        center: [120.9742, 14.5533],
+        zoom: 12
+    });
+    
+    let currentMarker = null;
+    let suggestionsTimeout;
+    
+    // Add instruction overlay on map
+    map.on('load', () => {
+        const mapElement = document.getElementById('map');
+        const instruction = document.createElement('div');
+        instruction.className = 'absolute top-4 left-4 bg-white px-4 py-2 rounded-lg shadow-lg text-sm font-semibold text-gray-700 flex items-center gap-2 z-20 animate-pulse';
+        instruction.innerHTML = '👆 Click on map to select location';
+        mapElement.appendChild(instruction);
+        
+        // Remove after 5 seconds
+        setTimeout(() => {
+            instruction.style.opacity = '0.5';
+        }, 5000);
+    });
+    
+    // Handle map clicks to auto-fill form
+    map.on('click', async (e) => {
+        const lng = e.lngLat.lng;
+        const lat = e.lngLat.lat;
+        
+        showMessage('Getting location details...', '');
+        
+        try {
+            // Reverse geocoding - get address from coordinates
+            const response = await fetch(
+                `https://api.mapbox.com/geocoding/v5/mapbox.places/${lng},${lat}.json?access_token=${mapboxgl.accessToken}`
+            );
             
-            document.getElementById('addressSearch').value = fullAddress;
-            document.getElementById('suggestions').classList.add('hidden');
-
-            // Show results
-            document.getElementById('resultContainer').style.display = 'block';
-            document.getElementById('resultAddress').textContent = fullAddress;
-            document.getElementById('resultCity').textContent = address.city || address.municipality || 'N/A';
-            document.getElementById('resultState').textContent = address.state || address.province || 'N/A';
-            document.getElementById('resultPostal').textContent = address.postcode || 'N/A';
-            document.getElementById('resultCoords').textContent = `${lat.toFixed(4)}, ${lng.toFixed(4)}`;
-
-            // Scroll to results
-            document.getElementById('resultContainer').scrollIntoView({ behavior: 'smooth' });
-        }
-
-        // Click on map
-        function selectLocation(lat, lng) {
-            marker.setLatLng([lat, lng]);
-            reverseGeocode(lat, lng);
-        }
-
-        // Reverse Geocode (click on map)
-        async function reverseGeocode(lat, lng) {
-            try {
-                const url = `https://nominatim.openstreetmap.org/reverse?format=json&lat=${lat}&lon=${lng}`;
-                const response = await fetch(url);
-                const data = await response.json();
-                selectAddress(data);
-            } catch (error) {
-                console.error('Reverse geocode error:', error);
+            const data = await response.json();
+            
+            if (data.features && data.features.length > 0) {
+                const feature = data.features[0];
+                const placeName = feature.place_name;
+                const relevance = Math.round(feature.relevance * 100);
+                const placeType = feature.place_type[0];
+                
+                // Auto-fill the form
+                document.getElementById('searchInput').value = placeName;
+                document.getElementById('placeName').textContent = placeName;
+                document.getElementById('longitude').textContent = lng.toFixed(8);
+                document.getElementById('latitude').textContent = lat.toFixed(8);
+                document.getElementById('fullCoords').textContent = `${lng.toFixed(8)}, ${lat.toFixed(8)}`;
+                document.getElementById('accuracy').textContent = `${placeType.toUpperCase()} (${relevance}% match) - Map Click`;
+                document.getElementById('coordinatesInfo').classList.remove('hidden');
+                document.getElementById('suggestions').style.display = 'none';
+                
+                // Add marker
+                addMarker(lng, lat, placeName);
+                
+                showMessage('✅ Location selected! Coordinates auto-filled.', 'success');
+            } else {
+                // If no address found, still show coordinates
+                document.getElementById('placeName').textContent = 'Location (No address found)';
+                document.getElementById('longitude').textContent = lng.toFixed(8);
+                document.getElementById('latitude').textContent = lat.toFixed(8);
+                document.getElementById('fullCoords').textContent = `${lng.toFixed(8)}, ${lat.toFixed(8)}`;
+                document.getElementById('accuracy').textContent = 'Map Click - Unknown Location';
+                document.getElementById('coordinatesInfo').classList.remove('hidden');
+                
+                addMarker(lng, lat, `${lat.toFixed(4)}, ${lng.toFixed(4)}`);
+                showMessage('✅ Coordinates captured (address not found)', 'success');
             }
+            
+        } catch (error) {
+            console.error('Reverse geocoding error:', error);
+            
+            // Still show coordinates even if reverse geocoding fails
+            document.getElementById('placeName').textContent = 'Location (Click)';
+            document.getElementById('longitude').textContent = lng.toFixed(8);
+            document.getElementById('latitude').textContent = lat.toFixed(8);
+            document.getElementById('fullCoords').textContent = `${lng.toFixed(8)}, ${lat.toFixed(8)}`;
+            document.getElementById('accuracy').textContent = 'Map Click - Offline Mode';
+            document.getElementById('coordinatesInfo').classList.remove('hidden');
+            
+            addMarker(lng, lat, 'Clicked Location');
+            showMessage('✅ Coordinates captured (from map click)', 'success');
         }
-
-        // Keyboard Navigation
-        document.getElementById('addressSearch').addEventListener('keydown', (e) => {
-            if (currentResults.length === 0) return;
-
-            const suggestionsDiv = document.getElementById('suggestions');
-            const items = suggestionsDiv.querySelectorAll('.suggestion-item');
-
-            switch (e.key) {
-                case 'ArrowDown':
-                    e.preventDefault();
-                    highlightedIndex = Math.min(highlightedIndex + 1, items.length - 1);
-                    updateHighlight(items);
-                    break;
-                case 'ArrowUp':
-                    e.preventDefault();
-                    highlightedIndex = Math.max(highlightedIndex - 1, -1);
-                    updateHighlight(items);
-                    break;
-                case 'Enter':
-                    e.preventDefault();
-                    if (highlightedIndex >= 0) {
-                        selectAddress(currentResults[highlightedIndex]);
-                    }
-                    break;
-                case 'Escape':
-                    suggestionsDiv.classList.add('hidden');
-                    break;
+    });
+    let isClickingMap = false;
+    
+    // Map click event - auto fill coordinates
+    map.on('click', async (e) => {
+        const lng = e.lngLat.lng;
+        const lat = e.lngLat.lat;
+        
+        showMessage('📍 Getting location details...', '');
+        
+        try {
+            // Reverse geocoding - get address from coordinates
+            const response = await fetch(
+                `https://api.mapbox.com/geocoding/v5/mapbox.places/${lng},${lat}.json?access_token=${mapboxgl.accessToken}`
+            );
+            
+            const data = await response.json();
+            let placeName = 'Unknown Location';
+            
+            if (data.features && data.features.length > 0) {
+                placeName = data.features[0].place_name;
             }
+            
+            // Auto-fill the form
+            document.getElementById('searchInput').value = placeName;
+            document.getElementById('placeName').textContent = placeName;
+            document.getElementById('longitude').textContent = lng.toFixed(8);
+            document.getElementById('latitude').textContent = lat.toFixed(8);
+            document.getElementById('fullCoords').textContent = `${lng.toFixed(8)}, ${lat.toFixed(8)}`;
+            document.getElementById('accuracy').textContent = '📍 Clicked Location';
+            document.getElementById('coordinatesInfo').classList.remove('hidden');
+            document.getElementById('suggestions').style.display = 'none';
+            
+            // Add marker
+            addMarker(lng, lat, placeName);
+            
+            // Center map
+            map.flyTo({ center: [lng, lat], zoom: 15, duration: 1000 });
+            
+            showMessage('✅ Location selected! Click anywhere on the map to select another location.', 'success');
+            
+        } catch (error) {
+            console.error('Reverse geocoding error:', error);
+            // Still fill coordinates even if address lookup fails
+            document.getElementById('searchInput').value = `${lat.toFixed(4)}, ${lng.toFixed(4)}`;
+            document.getElementById('placeName').textContent = 'Coordinates Location';
+            document.getElementById('longitude').textContent = lng.toFixed(8);
+            document.getElementById('latitude').textContent = lat.toFixed(8);
+            document.getElementById('fullCoords').textContent = `${lng.toFixed(8)}, ${lat.toFixed(8)}`;
+            document.getElementById('accuracy').textContent = '📍 Clicked Location';
+            document.getElementById('coordinatesInfo').classList.remove('hidden');
+            addMarker(lng, lat, 'Selected Location');
+            showMessage('✅ Location coordinates saved!', 'success');
+        }
+    });
+    
+    // Change cursor on map hover
+    map.on('mouseenter', 'places-label', () => {
+        map.getCanvas().style.cursor = 'pointer';
+    });
+    map.on('mouseleave', 'places-label', () => {
+        map.getCanvas().style.cursor = 'grab';
+    });
+    map.getCanvas().style.cursor = 'crosshair';
+    
+    // Sample orders data
+    const orders = [
+        { id: 1, address: 'SM Mall of Asia', lng: 120.9742, lat: 14.5533, status: 'In Transit' },
+        { id: 2, address: 'Robinsons Manila', lng: 120.9850, lat: 14.5950, status: 'Delivered' },
+        { id: 3, address: 'Makati CBD', lng: 121.0055, lat: 14.5549, status: 'Pending' },
+        { id: 4, address: 'Ayala Center Cebu', lng: 123.8854, lat: 10.3157, status: 'In Transit' },
+        { id: 5, address: 'SM Lanang Davao', lng: 125.5892, lat: 7.0755, status: 'Delivered' },
+    ];
+    
+    // Display orders list
+    function displayOrders() {
+        const ordersList = document.getElementById('ordersList');
+        ordersList.innerHTML = '';
+        orders.forEach(order => {
+            const statusConfig = {
+                'In Transit': { colors: 'from-yellow-100 to-yellow-50 border-l-yellow-500', badge: 'bg-yellow-300 text-yellow-900' },
+                'Delivered': { colors: 'from-green-100 to-green-50 border-l-green-500', badge: 'bg-green-300 text-green-900' },
+                'Pending': { colors: 'from-red-100 to-red-50 border-l-red-500', badge: 'bg-red-300 text-red-900' }
+            };
+            
+            const config = statusConfig[order.status];
+            const div = document.createElement('div');
+            div.className = `bg-gradient-to-r ${config.colors} border-l-4 p-3 rounded-lg cursor-pointer hover:shadow-lg transition transform hover:scale-105 active:scale-95`;
+            div.innerHTML = `
+                <strong class="text-blue-700 text-sm block">#${order.id} - ${order.address}</strong>
+                <div class="text-gray-600 text-xs mt-1">📍 ${order.lng.toFixed(4)}, ${order.lat.toFixed(4)}</div>
+                <span class="inline-block mt-2 text-xs font-bold px-2 py-1 rounded ${config.badge}">${order.status}</span>
+            `;
+            div.onclick = () => selectOrder(order);
+            ordersList.appendChild(div);
         });
-
-        function updateHighlight(items) {
-            items.forEach((item, i) => {
-                item.classList.toggle('active', i === highlightedIndex);
-            });
-            if (highlightedIndex >= 0) {
-                items[highlightedIndex].scrollIntoView({ block: 'nearest' });
-            }
+    }
+    
+    // Handle real-time search input (autocomplete)
+    async function handleSearchInput() {
+        const query = document.getElementById('searchInput').value.trim();
+        clearTimeout(suggestionsTimeout);
+        
+        if (!query || query.length < 2) {
+            document.getElementById('suggestions').style.display = 'none';
+            return;
         }
-
-        // Initialize
-        document.addEventListener('DOMContentLoaded', initMap);
-    </script>
+        
+        suggestionsTimeout = setTimeout(() => {
+            fetchSuggestions(query);
+        }, 300);
+    }
+    
+    // Fetch autocomplete suggestions
+    async function fetchSuggestions(query) {
+        try {
+            const response = await fetch(
+                `https://api.mapbox.com/geocoding/v5/mapbox.places/${encodeURIComponent(query)}.json?access_token=${mapboxgl.accessToken}&proximity=120.9742,14.5533&country=ph&limit=8`
+            );
+            
+            const data = await response.json();
+            
+            if (!data.features || data.features.length === 0) {
+                document.getElementById('suggestions').style.display = 'none';
+                return;
+            }
+            
+            displaySuggestions(data.features);
+            
+        } catch (error) {
+            console.error('Suggestions error:', error);
+        }
+    }
+    
+    // Display suggestions dropdown
+    function displaySuggestions(features) {
+        const suggestionsList = document.getElementById('suggestionsList');
+        suggestionsList.innerHTML = '';
+        document.getElementById('suggestions').style.display = 'block';
+        
+        features.forEach((feature) => {
+            const div = document.createElement('div');
+            div.className = 'px-4 py-3 cursor-pointer hover:bg-blue-50 border-b last:border-b-0 transition flex items-center gap-3 text-sm animate-fade-in';
+            
+            const icon = getPlaceIcon(feature.place_type[0]);
+            const relevance = Math.round(feature.relevance * 100);
+            
+            div.innerHTML = `
+                <span class="text-xl">${icon}</span>
+                <div class="flex-1">
+                    <div class="font-semibold text-gray-800">${feature.place_name}</div>
+                    <div class="text-xs text-gray-500">Match: ${relevance}%</div>
+                </div>
+                <span class="text-xs bg-blue-100 text-blue-700 px-2 py-1 rounded">${feature.place_type[0]}</span>
+            `;
+            
+            div.onclick = () => selectSearchResult(feature);
+            suggestionsList.appendChild(div);
+        });
+    }
+    
+    // Get icon based on place type
+    function getPlaceIcon(placeType) {
+        const icons = {
+            'address': '🏠',
+            'place': '🏪',
+            'poi': '🎯',
+            'region': '🌍',
+            'country': '🗺️'
+        };
+        return icons[placeType] || '📍';
+    }
+    
+    // Select order
+    function selectOrder(order) {
+        document.getElementById('placeName').textContent = `Order #${order.id} - ${order.address}`;
+        document.getElementById('longitude').textContent = order.lng.toFixed(8);
+        document.getElementById('latitude').textContent = order.lat.toFixed(8);
+        document.getElementById('fullCoords').textContent = `${order.lng.toFixed(8)}, ${order.lat.toFixed(8)}`;
+        document.getElementById('accuracy').textContent = 'Sample Order Data';
+        document.getElementById('coordinatesInfo').classList.remove('hidden');
+        
+        map.flyTo({ center: [order.lng, order.lat], zoom: 15, duration: 1000 });
+        addMarker(order.lng, order.lat, `Order #${order.id}`);
+    }
+    
+    // Search address (full search)
+    async function searchAddress() {
+        const query = document.getElementById('searchInput').value.trim();
+        
+        if (!query) {
+            showMessage('Please enter an address', 'error');
+            return;
+        }
+        
+        showMessage('Searching...', '');
+        document.getElementById('suggestions').style.display = 'none';
+        
+        try {
+            const response = await fetch(
+                `https://api.mapbox.com/geocoding/v5/mapbox.places/${encodeURIComponent(query)}.json?access_token=${mapboxgl.accessToken}&proximity=120.9742,14.5533&country=ph`
+            );
+            
+            const data = await response.json();
+            
+            if (!data.features || data.features.length === 0) {
+                showMessage('No results found. Try a different address.', 'error');
+                return;
+            }
+            
+            selectSearchResult(data.features[0]);
+            showMessage('✅ Address found! Coordinates displayed.', 'success');
+            
+        } catch (error) {
+            console.error('Search error:', error);
+            showMessage('Error searching address', 'error');
+        }
+    }
+    
+    // Select search result
+    function selectSearchResult(feature) {
+        const coords = feature.geometry.coordinates;
+        const lng = coords[0];
+        const lat = coords[1];
+        const relevance = Math.round(feature.relevance * 100);
+        const placeType = feature.place_type[0];
+        
+        document.getElementById('placeName').textContent = feature.place_name;
+        document.getElementById('longitude').textContent = lng.toFixed(8);
+        document.getElementById('latitude').textContent = lat.toFixed(8);
+        document.getElementById('fullCoords').textContent = `${lng.toFixed(8)}, ${lat.toFixed(8)}`;
+        document.getElementById('accuracy').textContent = `${placeType.toUpperCase()} (${relevance}% match)`;
+        document.getElementById('coordinatesInfo').classList.remove('hidden');
+        document.getElementById('suggestions').style.display = 'none';
+        document.getElementById('searchInput').value = feature.place_name;
+        
+        map.flyTo({ center: [lng, lat], zoom: 15, duration: 1000 });
+        addMarker(lng, lat, feature.place_name);
+    }
+    
+    // Add marker on map
+    function addMarker(lng, lat, title) {
+        if (currentMarker) currentMarker.remove();
+        
+        const popup = new mapboxgl.Popup()
+            .setHTML(`
+                <div class="font-semibold text-gray-800">${title}</div>
+                <div class="text-xs text-gray-600 mt-1">📍 ${lat.toFixed(6)}, ${lng.toFixed(6)}</div>
+            `);
+        
+        currentMarker = new mapboxgl.Marker({ color: '#EF4444' })
+            .setLngLat([lng, lat])
+            .setPopup(popup)
+            .addTo(map);
+        
+        popup.addTo(map);
+    }
+    
+    // Copy to clipboard
+    function copyToClipboard(elementId) {
+        const element = document.getElementById(elementId);
+        const text = element.textContent;
+        
+        navigator.clipboard.writeText(text).then(() => {
+            const btn = event.target;
+            const originalText = btn.textContent;
+            btn.textContent = '✓ Copied!';
+            btn.classList.add('bg-green-600');
+            setTimeout(() => {
+                btn.textContent = originalText;
+                btn.classList.remove('bg-green-600');
+            }, 2000);
+        });
+    }
+    
+    // Show message
+    function showMessage(msg, type) {
+        const messageDiv = document.getElementById('message');
+        messageDiv.textContent = msg;
+        messageDiv.classList.remove('hidden', 'bg-red-100', 'text-red-800', 'bg-green-100', 'text-green-800', 'text-gray-600');
+        
+        if (type === 'error') {
+            messageDiv.classList.add('bg-red-100', 'text-red-800');
+        } else if (type === 'success') {
+            messageDiv.classList.add('bg-green-100', 'text-green-800');
+        } else {
+            messageDiv.classList.add('text-gray-600');
+        }
+    }
+    
+    // Keyboard events
+    document.getElementById('searchInput').addEventListener('keypress', (e) => {
+        if (e.key === 'Enter') {
+            document.getElementById('suggestions').style.display = 'none';
+            searchAddress();
+        }
+    });
+    
+    // Close suggestions on outside click
+    document.addEventListener('click', (e) => {
+        const searchInput = document.getElementById('searchInput');
+        const suggestions = document.getElementById('suggestions');
+        
+        if (!searchInput.contains(e.target) && !suggestions.contains(e.target)) {
+            suggestions.style.display = 'none';
+        }
+    });
+    
+    // Initialize
+    displayOrders();
+    addMarker(120.9742, 14.5533, 'Manila');
+</script>
 
 </body>
 </html>

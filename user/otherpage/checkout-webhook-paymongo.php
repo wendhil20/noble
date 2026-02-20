@@ -13,7 +13,7 @@ ob_start();
 
 try {
     require_once '../../connection/connect.php';
-
+    require_once '../../.env.php';
     // ✅ STEP 1: Get raw payload BEFORE any processing
     $payload = file_get_contents('php://input');
 

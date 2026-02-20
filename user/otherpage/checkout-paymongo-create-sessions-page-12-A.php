@@ -15,6 +15,10 @@ header('Access-Control-Allow-Headers: Content-Type');
 
 ob_start();
 
+
+require_once '../../.env.php'; // Or use a proper .env loader
+
+
 if ($_SERVER['REQUEST_METHOD'] === 'OPTIONS') {
     ob_end_clean();
     exit(0);
@@ -425,7 +429,7 @@ try {
 
     // ✅ CREATE PAYMONGO CHECKOUT SESSION - WITH DYNAMIC URLs
     $amount_in_centavos = intval($amount * 100);
-    $secretKey = "sk_test_AJdRkkXWfGW9W5DHV6UNNECZ";
+    $secretKey = $_ENV['PAYMONGO_SECRET_KEY'] ?? getenv('PAYMONGO_SECRET_KEY');
 
     $checkout_data = [
         "data" => [

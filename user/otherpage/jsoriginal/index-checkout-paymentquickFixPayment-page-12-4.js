@@ -1,4 +1,4 @@
-// index-checkout-paymentquickFixPayment-page-12-4.js - UPDATED (QRPh now uses Checkout Session)
+// index-checkout-paymentquickFixPayment-page-12-4.js - FIXED (Correct order of API calls)
 console.log('Loading Payment System with QRPh Support...');
 
 // ============================================================
@@ -33,8 +33,18 @@ let qrphPollCount       = 0;
 let qrphMaxPolls        = 120;
 
 // ============================================================
-// QR PH - NOW USES CHECKOUT SESSION (fixed amount, no typing!)
+// QR PH - PAYMENT-FIRST FLOW
+// ✅ ORDER SEQUENCE:
+// 1. Create checkout session (get session_id)
+// 2. Validate order & store checkout data (pass session_id)
+// 3. Redirect to PayMongo
+// 4. User pays → Webhook creates order in DB
 // ============================================================
+// generateQRPh() - RESTORED (Create order first, then session)
+
+// QRPh generateQRPh() - FIXED: No premature order creation
+// Order is created by webhook ONLY when payment.paid fires
+
 async function generateQRPh() {
     const loadingEl = document.getElementById('qrphLoading');
     const contentEl = document.getElementById('qrphContent');
@@ -46,50 +56,29 @@ async function generateQRPh() {
     if (errorEl)   errorEl.classList.add('hidden');
     if (successEl) successEl.classList.add('hidden');
 
-    if (qrphPollInterval)      clearInterval(qrphPollInterval);
-    if (qrphCountdownInterval) clearInterval(qrphCountdownInterval);
-    qrphPollCount = 0;
-
     try {
-        // STEP 1: Create order
-        console.log('🚀 Step 1: Creating order...');
+        // ✅ ONE STEP ONLY: Create checkout session (order created later by webhook)
+        console.log('🚀 Creating QRPh Checkout Session...');
         const deliveryFee = parseFloat(window.deliveryFee) || 0;
-
-        const orderRes  = await fetch('checkout-qrph-create-order.php', {
-            method:  'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body:    JSON.stringify({ amount: window.grandTotal, delivery_fee: deliveryFee })
-        });
-
-        const orderData = await orderRes.json();
-        console.log('Order Response:', orderData);
-
-        if (orderData.error || !orderData.order_id) {
-            throw new Error(orderData.error || 'Order creation failed');
-        }
-
-        currentOrderId = orderData.order_id;
-        console.log('✓ Order created: ID=' + currentOrderId);
-
-        // STEP 2: Create Checkout Session (QRPh only - FIXED AMOUNT)
-        console.log('🚀 Step 2: Creating QRPh Checkout Session...');
 
         const qrRes  = await fetch('checkout-qrph-create.php', {
             method:  'POST',
             headers: { 'Content-Type': 'application/json' },
-            body:    JSON.stringify({ amount: window.grandTotal, order_id: currentOrderId })
+            body:    JSON.stringify({
+                amount:       window.grandTotal,
+                delivery_fee: deliveryFee
+            })
         });
 
         const qrData = await qrRes.json();
-        console.log('QRPh Session:', qrData);
+        console.log('QRPh Session Response:', qrData);
 
         if (qrData.error || !qrData.checkout_url) {
             throw new Error(qrData.error || 'Failed to create QRPh session');
         }
 
-        // STEP 3: Redirect to PayMongo QRPh checkout page
-        // Fixed amount na — hindi na mag-type ang user!
-        console.log('✓ Redirecting to PayMongo QRPh checkout...');
+        // ✅ Redirect to PayMongo QRPh checkout
+        console.log('✓ Redirecting to:', qrData.checkout_url);
         showNotification('Redirecting to payment page...', 'info', 2000);
 
         if (loadingEl) loadingEl.classList.add('hidden');
@@ -106,9 +95,14 @@ async function generateQRPh() {
     }
 }
 
-// Kept for compatibility but no longer used in new flow
-function startCountdown(seconds) {}
-function startPolling(qrId, orderId) {}
+// Kept for compatibility (not used in new payment-first flow)
+function startCountdown(seconds) {
+    console.log('startCountdown called (deprecated)');
+}
+
+function startPolling(qrId, orderId) {
+    console.log('startPolling called (deprecated)');
+}
 
 // ============================================================
 // PAYMENT SYSTEM CLASS
@@ -135,7 +129,7 @@ class PaymentSystem {
     }
 
     switchPaymentMethod(method) {
-        console.log('Switching to:', method);
+        console.log('Switching to payment method:', method);
 
         const paymongoFields = document.getElementById('paymongoFields');
         const qrphFields     = document.getElementById('qrphFields');
@@ -244,7 +238,10 @@ class PaymentSystem {
         this.isSubmitting = true;
 
         const placeOrderBtn = document.getElementById('placeOrderBtn');
-        if (placeOrderBtn) { placeOrderBtn.disabled = true; placeOrderBtn.textContent = 'Creating session...'; }
+        if (placeOrderBtn) { 
+            placeOrderBtn.disabled = true; 
+            placeOrderBtn.textContent = 'Creating session...'; 
+        }
 
         try {
             const grandTotalElement = document.getElementById('grandTotalDisplay');
@@ -289,7 +286,10 @@ class PaymentSystem {
         } catch (error) {
             console.error('❌ PayMongo error:', error);
             showNotification('Payment error: ' + error.message, 'error', 5000);
-            if (placeOrderBtn) { placeOrderBtn.disabled = false; placeOrderBtn.textContent = 'Pay with PayMongo'; }
+            if (placeOrderBtn) { 
+                placeOrderBtn.disabled = false; 
+                placeOrderBtn.textContent = 'Pay with PayMongo'; 
+            }
             this.isSubmitting = false;
         }
     }
@@ -311,4 +311,6 @@ if (document.readyState === 'loading') {
 } else {
     initializePaymentSystem();
 }
+
+// Ensure initialization happens
 setTimeout(initializePaymentSystem, 500);

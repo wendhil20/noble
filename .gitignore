@@ -4,7 +4,7 @@ noble.rar
 /vendor
 /node_modules
 
-#
+# .env
 .env
 
 # Snyk Security Extension - AI Rules (auto-generated)

@@ -168,6 +168,7 @@ foreach ($subcategories as $sub) {
                 OR pv.sub_subcategory_ids LIKE CONCAT('[', ?, ']')
                 OR pv.sub_subcategory_id = ?
             )
+            AND p.is_archived = 0
             GROUP BY p.id
             ORDER BY p.product_name ASC
             LIMIT 8

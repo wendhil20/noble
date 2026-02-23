@@ -352,6 +352,7 @@ $stmt = $conn->prepare("
   LEFT JOIN product_ratings r ON r.product_id = p.id
   LEFT JOIN sold_items si ON si.product_id = p.id
   WHERE p.codename = ? AND p.id != ?
+  AND p.is_archived = 0
   GROUP BY p.id
   ORDER BY p.view_count DESC, RAND()
   LIMIT 10

@@ -409,10 +409,13 @@ while ($subsub = $sub_subcategory_result->fetch_assoc()) {
   <title>Manage Product Variants - Multiple Subcategories</title>
   <script src="https://cdn.tailwindcss.com"></script>
   <script>
-    // Add this to your script section - for clickable table rows
-
     const subcategoriesData = <?= json_encode($subcategories_with_category) ?>;
     const subSubcategoriesData = <?= json_encode($sub_subcategories_with_parent) ?>;
+
+    // Drag-to-select variables
+    let isSelecting = false;
+    let startIndex = -1;
+    let selectionStartState = false;
 
     function toggleSelectAll(source) {
       document.querySelectorAll('.variant-checkbox').forEach(cb => {
@@ -424,7 +427,6 @@ while ($subsub = $sub_subcategory_result->fetch_assoc()) {
     }
 
     function toggleRowSelection(event, checkboxId) {
-      // Don't toggle if clicking on checkbox directly
       if (event.target.type === 'checkbox') return;
 
       const checkbox = document.getElementById(checkboxId);
@@ -501,11 +503,49 @@ while ($subsub = $sub_subcategory_result->fetch_assoc()) {
       const checkboxes = document.querySelectorAll('.variant-checkbox');
       const rows = document.querySelectorAll('tbody tr');
 
+      // DRAG-TO-SELECT FUNCTIONALITY
+      checkboxes.forEach(function(checkbox, index) {
+        checkbox.addEventListener('mousedown', function(e) {
+          e.preventDefault();
+          isSelecting = true;
+          startIndex = index;
+          selectionStartState = !checkbox.checked;
+          checkbox.checked = selectionStartState;
+          updateRowVisualState(document.getElementById('row-' + checkbox.value), selectionStartState);
+        });
+
+        checkbox.addEventListener('mouseenter', function(e) {
+          if (isSelecting && startIndex !== -1) {
+            const currentIndex = Array.from(checkboxes).indexOf(this);
+            const minIndex = Math.min(startIndex, currentIndex);
+            const maxIndex = Math.max(startIndex, currentIndex);
+
+            checkboxes.forEach(function(cb, idx) {
+              if (idx >= minIndex && idx <= maxIndex) {
+                cb.checked = selectionStartState;
+                const row = document.getElementById('row-' + cb.value);
+                updateRowVisualState(row, selectionStartState);
+              }
+            });
+          }
+        });
+      });
+
+      document.addEventListener('mouseup', function() {
+        if (isSelecting) {
+          isSelecting = false;
+          startIndex = -1;
+          updateSelectAllState();
+        }
+      });
+
       // Add click handlers to rows
       rows.forEach(function(row) {
         row.style.cursor = 'pointer';
         row.addEventListener('click', function(e) {
-          toggleRowSelection(e, 'checkbox-' + this.id.replace('row-', ''));
+          if (e.target.type !== 'checkbox') {
+            toggleRowSelection(e, 'checkbox-' + this.id.replace('row-', ''));
+          }
         });
       });
 
@@ -562,6 +602,10 @@ while ($subsub = $sub_subcategory_result->fetch_assoc()) {
         <span class="text-blue-600">⏰ With Lead Time: <?= $leadtime_counts['with_leadtime_count'] ?></span>
         <span class="text-gray-600">⚫ Without Lead Time: <?= $leadtime_counts['without_leadtime_count'] ?></span>
       </div>
+    </div>
+
+    <div class="bg-yellow-50 border border-yellow-300 rounded-lg p-3 mb-6">
+      <p class="text-yellow-800 text-sm"><strong>💡 Tip:</strong> Drag your mouse across the checkboxes to select/deselect multiple rows quickly!</p>
     </div>
 
     <form method="GET" class="flex flex-wrap gap-4 items-center mb-6">
@@ -670,7 +714,7 @@ while ($subsub = $sub_subcategory_result->fetch_assoc()) {
     <form method="POST">
       <div class="mb-4 flex justify-between items-center">
         <label class="flex items-center gap-2">
-          <input type="checkbox" onclick="toggleSelectAll(this)" class="form-checkbox">
+          <input type="checkbox" id="select-all" class="w-4 h-4" onchange="toggleSelectAll(this)">
           <span class="text-sm font-medium text-gray-700">Select All</span>
         </label>
         <div class="flex gap-2 flex-wrap">
@@ -763,7 +807,7 @@ while ($subsub = $sub_subcategory_result->fetch_assoc()) {
         </div>
       </div>
 
-    <table class="w-full border-collapse bg-white">
+      <table class="w-full border-collapse bg-white">
         <thead class="bg-gray-100 sticky top-0">
           <tr class="border-b-2 border-gray-300">
             <th class="p-3 text-left text-xs font-semibold text-gray-700 w-12">

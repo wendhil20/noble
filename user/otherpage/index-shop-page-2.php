@@ -46,15 +46,18 @@ $where_conditions = ['1=1'];
 $params = [];
 $types = '';
 
+
+$where_conditions = ['p.is_archived = 0']; // ✅ ADD THIS - Start with archive filter
+
 if (!empty($selected_categories)) {
     $placeholders = str_repeat('?,', count($selected_categories) - 1) . '?';
-    $where_conditions[] = "codename IN ($placeholders)";
+    $where_conditions[] = "p.codename IN ($placeholders)";
     $params = array_merge($params, $selected_categories);
     $types .= str_repeat('s', count($selected_categories));
 }
 
 if (!empty($search_keyword)) {
-    $where_conditions[] = "(product_name LIKE ? OR description LIKE ?)";
+    $where_conditions[] = "(p.product_name LIKE ? OR p.description LIKE ?)";
     $search_param = '%' . $search_keyword . '%';
     $params[] = $search_param;
     $params[] = $search_param;
@@ -62,24 +65,24 @@ if (!empty($search_keyword)) {
 }
 
 $sort_options = [
-    'name_asc' => 'product_name ASC',
-    'name_desc' => 'product_name DESC',
-    'newest' => 'id DESC',
-    'oldest' => 'id ASC'
+    'name_asc' => 'p.product_name ASC',
+    'name_desc' => 'p.product_name DESC',
+    'newest' => 'p.id DESC',
+    'oldest' => 'p.id ASC'
 ];
-$order_by = $sort_options[$sort_by] ?? 'product_name ASC';
+$order_by = $sort_options[$sort_by] ?? 'p.product_name ASC';
 
 $where_clause = implode(' AND ', $where_conditions);
 
-// Get total count
-$count_stmt = $conn->prepare("SELECT COUNT(*) as total FROM products WHERE $where_clause");
+// ✅ FIX #2: Get total count - Add table alias
+$count_stmt = $conn->prepare("SELECT COUNT(*) as total FROM products p WHERE $where_clause");
 if (!empty($params)) $count_stmt->bind_param($types, ...$params);
 $count_stmt->execute();
 $total_products = $count_stmt->get_result()->fetch_assoc()['total'];
 $count_stmt->close();
 
-// Get products
-$stmt = $conn->prepare("SELECT id, product_name, main_image, description, codename FROM products WHERE $where_clause ORDER BY $order_by LIMIT ? OFFSET ?");
+// ✅ FIX #3: Get products - Add table alias and archive filter
+$stmt = $conn->prepare("SELECT p.id, p.product_name, p.main_image, p.description, p.codename FROM products p WHERE $where_clause ORDER BY $order_by LIMIT ? OFFSET ?");
 $final_params = array_merge($params, [$per_page, $offset]);
 $final_types = $types . 'ii';
 if (!empty($final_params)) $stmt->bind_param($final_types, ...$final_params);
@@ -104,10 +107,10 @@ $all_categories = [
     'aacblock' => 'AAC BLOCKS'
 ];
 
-// Get category counts
+// ✅ FIX #4: Get category counts - Add archive filter
 $category_counts = [];
 foreach ($all_categories as $cat_key => $cat_name) {
-    $cat_stmt = $conn->prepare("SELECT COUNT(*) as count FROM products WHERE codename = ?");
+    $cat_stmt = $conn->prepare("SELECT COUNT(*) as count FROM products p WHERE p.codename = ? AND p.is_archived = 0");
     $cat_stmt->bind_param("s", $cat_key);
     $cat_stmt->execute();
     $category_counts[$cat_key] = $cat_stmt->get_result()->fetch_assoc()['count'];

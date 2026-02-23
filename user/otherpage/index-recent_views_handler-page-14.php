@@ -183,6 +183,7 @@ function getRecentViews($conn, $limit = 10)
             LEFT JOIN product_ratings r ON r.product_id = p.id
             LEFT JOIN sold_items si ON si.product_id = p.id
             WHERE rv.session_id = ?
+            AND p.is_archived = 0
             GROUP BY p.id
             ORDER BY viewed_at DESC
             LIMIT ?";
@@ -240,6 +241,7 @@ function getRecommendedProducts($conn, $limit = 10)
             LEFT JOIN sold_items si ON si.product_id = p.id
             INNER JOIN recent_views rv ON p.id = rv.product_id
             WHERE rv.viewed_at > DATE_SUB(NOW(), INTERVAL 30 DAY)
+            AND p.is_archived = 0
             GROUP BY p.id
             ORDER BY recent_views DESC, p.view_count DESC
             LIMIT ?";
@@ -320,6 +322,7 @@ function getTrendingProducts($conn, $limit = 10)
             LEFT JOIN product_colors pc ON p.id = pc.product_id
             INNER JOIN recent_views rv ON p.id = rv.product_id
             WHERE rv.viewed_at > DATE_SUB(NOW(), INTERVAL 14 DAY)
+            AND p.is_archived = 0
             GROUP BY p.id
             HAVING views_last_7d >= 3
             ORDER BY trending_score DESC

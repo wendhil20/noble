@@ -55,6 +55,7 @@ $material_query = "
     LEFT JOIN product_colors pc ON p.id = pc.product_id
     LEFT JOIN product_variants pv ON p.id = pv.product_id
     WHERE pc.id IS NOT NULL
+    AND p.is_archived = 0
     GROUP BY p.id, pc.id
     ORDER BY p.id DESC, pc.id ASC
 ";

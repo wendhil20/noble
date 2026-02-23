@@ -320,9 +320,9 @@ try {
     $products = [];
 }
 
-// Split products
-$displayedProducts = array_slice($products, 0, 3, true);
-$remainingProducts = array_slice($products, 3, null, true);
+// ✅ NO PAGINATION - All products will be displayed with JavaScript pagination
+$displayedProducts = $products; // All products
+$remainingProducts = []; // No sidebar
 
 $page_label = ($show_sale == 1) ? 'SALE ITEMS' : 'ALL PRODUCTS';
 $filter_description = ($show_sale == 1) ? 'discounted' : '';
@@ -469,9 +469,9 @@ $filter_description = ($show_sale == 1) ? 'discounted' : '';
             </div>
         </div>
 
-        <!-- Products Grid -->
+        <!-- Products Grid - Display all products -->
         <?php if (!empty($products)): ?>
-            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-6">
+            <div class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-2 md:gap-4 lg:gap-6" id="productsGrid">
                 <?php foreach ($displayedProducts as $product): ?>
                     <?php
                     // Get first variant for display
@@ -497,7 +497,7 @@ $filter_description = ($show_sale == 1) ? 'discounted' : '';
                     }
                     ?>
                     
-                    <div class="group relative bg-white rounded-lg overflow-hidden transition-all duration-300">
+                    <div class="group relative bg-white rounded-lg overflow-hidden transition-all duration-300 product-card">
                         <!-- Sale Badge -->
                         <?php if ($show_sale && $firstVariant && $firstVariant['discount'] > 0): ?>
                             <div class="absolute top-2 left-2 z-20 bg-red-600 text-white px-2 py-0.5 rounded-full text-[10px] font-bold shadow">
@@ -506,7 +506,7 @@ $filter_description = ($show_sale == 1) ? 'discounted' : '';
                         <?php endif; ?>
 
                         <!-- Product Image -->
-                        <div class="relative overflow-hidden bg-gray-50" style="height: 180px;">
+                        <div class="relative overflow-hidden bg-gray-50" style="height: 120px;min-height: 120px;">
                             <img src="../../<?php echo htmlspecialchars($product['main_image']); ?>"
                                 alt="<?php echo htmlspecialchars($product['product_name']); ?>"
                                 class="w-full h-full object-contain group-hover:scale-105 transition-transform duration-500"
@@ -515,42 +515,42 @@ $filter_description = ($show_sale == 1) ? 'discounted' : '';
                         </div>
 
                         <!-- Product Details -->
-                        <div class="p-3">
-                            <h3 class="text-sm font-medium text-gray-900 mb-2 line-clamp-2 leading-relaxed">
+                        <div class="p-2 md:p-3">
+                            <h3 class="text-xs md:text-sm font-medium text-gray-900 mb-1 md:mb-2 line-clamp-2 leading-tight md:leading-relaxed">
                                 <?php echo htmlspecialchars($product['product_name']); ?>
                                 <?php if ($firstVariant): ?>
                                     <?php if ($firstVariant['size']): ?>
-                                        <span class="text-gray-600"> [<?php echo htmlspecialchars($firstVariant['size']); ?>]</span>
+                                        <span class="text-gray-600 text-[10px] md:text-xs"> [<?php echo htmlspecialchars($firstVariant['size']); ?>]</span>
                                     <?php endif; ?>
                                     <?php if ($firstVariant['color']): ?>
-                                        <span class="text-gray-600"> [<?php echo htmlspecialchars($firstVariant['color']); ?>]</span>
+                                        <span class="text-gray-600 text-[10px] md:text-xs"> [<?php echo htmlspecialchars($firstVariant['color']); ?>]</span>
                                     <?php endif; ?>
                                 <?php endif; ?>
                             </h3>
 
-                            <p class="text-[14px] text-gray-500 mb-2 line-clamp-1">
+                            <p class="text-[11px] md:text-[13px] text-gray-500 mb-1 md:mb-2 line-clamp-1 hidden md:block">
                                 <?php echo htmlspecialchars(substr($product['description'], 0, 50)) . '...'; ?>
                             </p>
 
                             <?php if ($firstVariant): ?>
                                 <div class="mb-2">
                                     <?php if ($show_sale && $firstVariant['discount'] > 0): ?>
-                                        <div class="flex items-baseline gap-1.5 mb-0.5">
-                                            <p class="text-sm font-bold text-red-600">
+                                        <div class="flex items-baseline gap-1 md:gap-1.5 mb-0.5">
+                                            <p class="text-xs md:text-sm font-bold text-red-600">
                                                 ₱<?php echo number_format($discountedPrice, 2); ?>
                                             </p>
-                                            <p class="text-[10px] text-gray-400 line-through">
+                                            <p class="text-[8px] md:text-[10px] text-gray-400 line-through">
                                                 ₱<?php echo number_format($originalPrice, 2); ?>
                                             </p>
-                                            <span class="text-[9px] font-semibold text-red-600 bg-red-50 px-1 py-0.5 rounded">
+                                            <span class="text-[7px] md:text-[9px] font-semibold text-red-600 bg-red-50 px-0.5 md:px-1 py-0.5 rounded">
                                                 -<?php echo $firstVariant['discount']; ?>%
                                             </span>
                                         </div>
-                                        <p class="text-[9px] text-green-600 font-medium">
+                                        <p class="text-[7px] md:text-[9px] text-green-600 font-medium hidden md:block">
                                             Save ₱<?php echo number_format($originalPrice - $discountedPrice, 2); ?>
                                         </p>
                                     <?php else: ?>
-                                        <p class="text-sm font-bold text-gray-900">
+                                        <p class="text-xs md:text-sm font-bold text-gray-900">
                                             ₱<?php echo number_format($totalPrice, 2); ?>
                                         </p>
                                     <?php endif; ?>
@@ -591,7 +591,7 @@ $filter_description = ($show_sale == 1) ? 'discounted' : '';
                                 ?>
 
                                 <?php if ($view_count > 0 || $total_sold > 0): ?>
-                                    <div class="text-[9px] text-gray-500 font-medium mb-2">
+                                    <div class="text-[7px] md:text-[9px] text-gray-500 font-medium mb-2 hidden md:block">
                                         <?php if ($view_count > 0): ?>
                                             <?php echo number_format($view_count); ?> viewing
                                         <?php endif; ?>
@@ -605,44 +605,43 @@ $filter_description = ($show_sale == 1) ? 'discounted' : '';
 
                             <form action="index-product_view-page-4-AA.php" method="GET">
                                 <input type="hidden" name="id" value="<?php echo (int)$product['id']; ?>">
-                                <button type="submit" class="w-full bg-black text-white py-1.5 rounded text-[11px] uppercase hover:bg-gray-700 transition-colors">
-                                    VIEW DETAILS
+                                <button type="submit" class="w-full bg-black text-white py-1 md:py-1.5 px-2 rounded text-[9px] md:text-[11px] uppercase hover:bg-gray-700 transition-colors font-semibold">
+                                    VIEW
                                 </button>
                             </form>
                         </div>
                     </div>
                 <?php endforeach; ?>
-
-                <!-- Load More Card -->
-                <?php if (!empty($remainingProducts)): ?>
-                    <div class="bg-gradient-to-br from-gray-900 to-black rounded-lg overflow-hidden hover:shadow-2xl transition-all duration-300 flex items-center justify-center p-6 cursor-pointer group relative" id="loadMoreCard">
-                        <div class="absolute inset-0 bg-gradient-to-br from-<?php echo $show_sale ? 'red' : 'blue'; ?>-600 to-<?php echo $show_sale ? 'orange' : 'purple'; ?>-600 opacity-0 group-hover:opacity-20 transition-opacity"></div>
-                        <div class="text-center relative z-10">
-                            <div class="w-16 h-16 bg-white rounded-full flex items-center justify-center mx-auto mb-4 group-hover:scale-110 transition-transform shadow-lg">
-                                <i class="fas fa-plus-circle text-<?php echo $show_sale ? 'red' : 'gray'; ?>-600 text-3xl"></i>
-                            </div>
-                            <h3 class="text-white font-bold text-xl mb-2">Load More</h3>
-                            <p class="text-gray-300 text-sm mb-3">
-                                <i class="fas fa-box mr-1"></i>
-                                <?php echo count($remainingProducts); ?> more products
-                            </p>
-                            <div class="inline-flex items-center text-white text-sm font-semibold bg-white bg-opacity-10 px-4 py-2 rounded-full group-hover:bg-opacity-20 transition-all">
-                                <span>View All</span>
-                                <i class="fas fa-arrow-right ml-2 group-hover:translate-x-1 transition-transform"></i>
-                            </div>
-                        </div>
-                    </div>
-                <?php endif; ?>
             </div>
 
-            <?php if (!empty($remainingProducts)): ?>
-                <div class="text-center mt-8 md:hidden">
-                    <button id="loadMoreBtnMobile" class="inline-flex items-center px-8 py-4 bg-<?php echo $show_sale ? 'red' : 'gray'; ?>-600 text-white font-bold rounded-lg hover:bg-<?php echo $show_sale ? 'red' : 'gray'; ?>-700 transition-colors shadow-lg">
-                        <i class="fas fa-plus-circle mr-2"></i>
-                        Load More Products (<?php echo count($remainingProducts); ?>)
-                    </button>
+            <!-- Pagination Controls -->
+            <div class="mt-12 flex justify-center items-center gap-2">
+                <!-- Previous Button -->
+                <button id="prevBtn" class="inline-flex items-center px-4 py-2 bg-gray-800 text-white rounded-lg hover:bg-gray-900 transition-colors font-semibold disabled:opacity-50 disabled:cursor-not-allowed">
+                    <i class="fas fa-chevron-left mr-2"></i>
+                    Prev
+                </button>
+
+                <!-- Page Numbers -->
+                <div class="flex items-center gap-1" id="paginationNumbers">
+                    <!-- Generated by JavaScript -->
                 </div>
-            <?php endif; ?>
+
+                <!-- Next Button -->
+                <button id="nextBtn" class="inline-flex items-center px-4 py-2 bg-gray-800 text-white rounded-lg hover:bg-gray-900 transition-colors font-semibold disabled:opacity-50 disabled:cursor-not-allowed">
+                   Next
+                    <i class="fas fa-chevron-right ml-2"></i>
+                </button>
+            </div>
+
+            <!-- Page Info -->
+            <div class="mt-6 text-center">
+                <p class="text-gray-600 font-medium">
+                    Showing <span class="font-bold text-gray-900" id="showingCount">10</span> of 
+                    <span class="font-bold text-gray-900"><?php echo count($products); ?></span> products
+                    <span class="text-gray-500">(Page <span id="currentPage">1</span> of <span id="totalPages">1</span>)</span>
+                </p>
+            </div>
 
         <?php else: ?>
             <div class="text-center py-20 bg-white rounded-lg shadow-sm">
@@ -671,110 +670,7 @@ $filter_description = ($show_sale == 1) ? 'discounted' : '';
         <?php endif; ?>
     </div>
 
-    <!-- Sidebar for More Products -->
-    <div id="productSidebar" class="fixed top-0 right-0 h-full w-full md:w-[28rem] bg-white transform translate-x-full transition-transform duration-300 z-50 overflow-y-auto">
-        <div class="sticky top-0 bg-gradient-to-r from-gray-900 to-black text-white border-b border-gray-700 p-5 flex justify-between items-center z-10">
-            <div>
-                <h3 class="text-xl font-bold">More <?php echo $show_sale ? 'Sale' : ''; ?> Products</h3>
-                <p class="text-sm text-gray-300 mt-1">
-                    <i class="fas fa-box mr-1"></i>
-                    <?php echo count($remainingProducts); ?> items available
-                </p>
-            </div>
-            <button id="closeSidebar" class="text-white hover:text-gray-300 transition-colors">
-                <i class="fas fa-times text-2xl"></i>
-            </button>
-        </div>
 
-        <div class="p-4 space-y-3">
-            <?php foreach ($remainingProducts as $product): ?>
-                <?php
-                // Get first variant for sidebar display
-                $firstVariant = !empty($product['variants']) ? $product['variants'][0] : null;
-                
-                if ($firstVariant) {
-                    $variantPrice = $firstVariant['price'];
-                    $colorPrice = 0;
-
-                    if (!empty($firstVariant['color']) && isset($product['color_prices'][$firstVariant['color']])) {
-                        $colorPrice = $product['color_prices'][$firstVariant['color']];
-                    } elseif (!empty($product['color_prices'])) {
-                        $colorPrice = reset($product['color_prices']);
-                    }
-
-                    $totalPrice = $variantPrice + $colorPrice;
-                    
-                    if ($firstVariant['discount'] > 0) {
-                        $discountedPrice = $totalPrice * (1 - ($firstVariant['discount'] / 100));
-                        $originalPrice = $totalPrice;
-                    }
-                }
-                ?>
-                
-                <div class="bg-white rounded-lg border border-gray-200 overflow-hidden hover:shadow-lg transition-all duration-300 group relative">
-                    <?php if ($show_sale && $firstVariant && $firstVariant['discount'] > 0): ?>
-                        <div class="absolute top-2 left-2 z-10 bg-red-600 text-white px-2 py-1 rounded-full text-xs font-bold shadow-lg">
-                            <i class="fas fa-tag mr-1"></i>
-                            <?php echo $firstVariant['discount']; ?>% OFF
-                        </div>
-                    <?php endif; ?>
-
-                    <div class="flex gap-3 p-3">
-                        <div class="w-28 h-28 flex-shrink-0 overflow-hidden bg-gray-50 rounded-lg border border-gray-100">
-                            <img src="../../<?php echo htmlspecialchars($product['main_image']); ?>"
-                                alt="<?php echo htmlspecialchars($product['product_name']); ?>"
-                                class="w-full h-full object-contain group-hover:scale-110 transition-transform duration-300"
-                                loading="lazy"
-                                onerror="this.src='../../uploads/placeholder.jpg'">
-                        </div>
-
-                        <div class="flex-1 min-w-0">
-                            <h4 class="text-sm font-bold text-gray-900 mb-1 line-clamp-2 uppercase">
-                                <?php echo htmlspecialchars($product['product_name']); ?>
-                            </h4>
-
-                            <p class="text-black line-clamp-2 text-xs mb-2">
-                                <?php echo htmlspecialchars(substr($product['description'], 0, 60)) . '...'; ?>
-                            </p>
-
-                            <?php if ($firstVariant): ?>
-                                <div class="mb-2">
-                                    <?php if ($show_sale && $firstVariant['discount'] > 0): ?>
-                                        <div class="flex items-baseline gap-2 mb-1">
-                                            <p class="text-red-600 font-bold text-base">
-                                                ₱<?php echo number_format($discountedPrice, 2); ?>
-                                            </p>
-                                            <p class="text-gray-400 text-xs line-through">
-                                                ₱<?php echo number_format($originalPrice, 2); ?>
-                                            </p>
-                                        </div>
-                                        <p class="text-xs text-green-600 font-semibold">
-                                            <i class="fas fa-piggy-bank mr-1"></i>
-                                            Save ₱<?php echo number_format($originalPrice - $discountedPrice, 2); ?>
-                                        </p>
-                                    <?php else: ?>
-                                        <p class="text-black font-bold text-base">
-                                            ₱<?php echo number_format($totalPrice, 2); ?>
-                                        </p>
-                                    <?php endif; ?>
-                                </div>
-                            <?php endif; ?>
-                            
-                            <form action="index-product_view-page-4-AA.php" method="GET">
-                                <input type="hidden" name="id" value="<?php echo (int)$product['id']; ?>">
-                                <button type="submit" class="w-full bg-black text-white py-2 px-3 rounded-lg hover:bg-<?php echo $show_sale ? 'red' : 'gray'; ?>-700 transition-colors duration-200 text-xs font-bold uppercase">
-                                    <i class="fa-solid fa-shopping-cart mr-1"></i>
-                                    View Product
-                                </button>
-                            </form>
-                        </div>
-                    </div>
-                </div>
-            <?php endforeach; ?>
-        </div>
-    </div>
-
-    <div id="sidebarOverlay" class="fixed inset-0 bg-black bg-opacity-50 z-40 hidden transition-opacity"></div>
 
     <?php 
     // Safe include footer
@@ -785,49 +681,110 @@ $filter_description = ($show_sale == 1) ? 'discounted' : '';
     ?>
 
     <script>
-        const loadMoreCard = document.getElementById('loadMoreCard');
-        const loadMoreBtnMobile = document.getElementById('loadMoreBtnMobile');
-        const sidebar = document.getElementById('productSidebar');
-        const closeSidebarBtn = document.getElementById('closeSidebar');
-        const overlay = document.getElementById('sidebarOverlay');
+        // JavaScript Pagination System - 10 products per page
+        const productsPerPage = 10;
+        const allProductCards = document.querySelectorAll('.product-card');
+        const totalProducts = allProductCards.length;
+        const totalPages = Math.ceil(totalProducts / productsPerPage);
+        let currentPage = 1;
 
-        function openSidebar() {
-            if (sidebar && overlay) {
-                sidebar.classList.remove('translate-x-full');
-                overlay.classList.remove('hidden');
-                document.body.style.overflow = 'hidden';
+        const prevBtn = document.getElementById('prevBtn');
+        const nextBtn = document.getElementById('nextBtn');
+        const paginationNumbers = document.getElementById('paginationNumbers');
+        const currentPageSpan = document.getElementById('currentPage');
+        const totalPagesSpan = document.getElementById('totalPages');
+        const showingCountSpan = document.getElementById('showingCount');
+
+        function hideAllProducts() {
+            allProductCards.forEach(card => card.style.display = 'none');
+        }
+
+        function showProductsForPage(page) {
+            hideAllProducts();
+            const startIndex = (page - 1) * productsPerPage;
+            const endIndex = Math.min(startIndex + productsPerPage, totalProducts);
+            
+            for (let i = startIndex; i < endIndex; i++) {
+                allProductCards[i].style.display = 'block';
+            }
+
+            // Update page info
+            const productsShown = endIndex - startIndex;
+            currentPageSpan.textContent = page;
+            totalPagesSpan.textContent = totalPages;
+            showingCountSpan.textContent = productsShown;
+        }
+
+        function updatePaginationButtons() {
+            prevBtn.disabled = currentPage === 1;
+            nextBtn.disabled = currentPage === totalPages;
+        }
+
+        function generatePaginationNumbers() {
+            paginationNumbers.innerHTML = '';
+            
+            for (let i = 1; i <= totalPages; i++) {
+                // Show first 3, last 3, and around current page
+                if (i <= 3 || i >= totalPages - 2 || (i >= currentPage - 1 && i <= currentPage + 1)) {
+                    const pageBtn = document.createElement('button');
+                    pageBtn.className = i === currentPage 
+                        ? 'inline-flex items-center justify-center w-10 h-10 bg-red-600 text-white rounded-lg font-bold cursor-default'
+                        : 'inline-flex items-center justify-center w-10 h-10 bg-gray-200 text-gray-800 rounded-lg hover:bg-gray-300 transition-colors font-semibold';
+                    pageBtn.textContent = i;
+                    pageBtn.disabled = i === currentPage;
+                    
+                    pageBtn.addEventListener('click', () => {
+                        currentPage = i;
+                        showProductsForPage(currentPage);
+                        updatePaginationButtons();
+                        generatePaginationNumbers();
+                        window.scrollTo({ top: 0, behavior: 'smooth' });
+                    });
+                    
+                    paginationNumbers.appendChild(pageBtn);
+                } else if (i === 4 && currentPage > 5) {
+                    const ellipsis = document.createElement('span');
+                    ellipsis.className = 'px-2 text-gray-600';
+                    ellipsis.textContent = '...';
+                    paginationNumbers.appendChild(ellipsis);
+                    i = currentPage - 2;
+                } else if (i === totalPages - 3 && currentPage < totalPages - 4) {
+                    const ellipsis = document.createElement('span');
+                    ellipsis.className = 'px-2 text-gray-600';
+                    ellipsis.textContent = '...';
+                    paginationNumbers.appendChild(ellipsis);
+                    i = totalPages - 3;
+                }
             }
         }
 
-        if (loadMoreCard) {
-            loadMoreCard.addEventListener('click', openSidebar);
-        }
-
-        if (loadMoreBtnMobile) {
-            loadMoreBtnMobile.addEventListener('click', openSidebar);
-        }
-
-        function closeSidebar() {
-            if (sidebar && overlay) {
-                sidebar.classList.add('translate-x-full');
-                overlay.classList.add('hidden');
-                document.body.style.overflow = '';
-            }
-        }
-
-        if (closeSidebarBtn) {
-            closeSidebarBtn.addEventListener('click', closeSidebar);
-        }
-
-        if (overlay) {
-            overlay.addEventListener('click', closeSidebar);
-        }
-
-        document.addEventListener('keydown', (e) => {
-            if (e.key === 'Escape') {
-                closeSidebar();
+        // Event Listeners
+        prevBtn?.addEventListener('click', () => {
+            if (currentPage > 1) {
+                currentPage--;
+                showProductsForPage(currentPage);
+                updatePaginationButtons();
+                generatePaginationNumbers();
+                window.scrollTo({ top: 0, behavior: 'smooth' });
             }
         });
+
+        nextBtn?.addEventListener('click', () => {
+            if (currentPage < totalPages) {
+                currentPage++;
+                showProductsForPage(currentPage);
+                updatePaginationButtons();
+                generatePaginationNumbers();
+                window.scrollTo({ top: 0, behavior: 'smooth' });
+            }
+        });
+
+        // Initialize
+        if (totalPages > 0) {
+            showProductsForPage(1);
+            generatePaginationNumbers();
+            updatePaginationButtons();
+        }
     </script>
 </body>
 </html>

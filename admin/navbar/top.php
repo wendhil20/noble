@@ -736,6 +736,14 @@ if (!isset($_SESSION['noble_name']) || !isset($_SESSION['noble_lvl']) || !isset(
                                                         </a>
                                                     <?php endif; ?>
 
+                                                      <?php if (hasAnyRole(['']) || !hasSubrole(['document_controller'])): ?>
+                                                        <a href="../accountant/accounting_sales_commission.php"
+                                                            class="quick-action-item flex items-center space-x-3 px-3 py-2.5 text-sm text-gray-700 hover:bg-orange-50 hover:text-orange-600 rounded-lg transition-all duration-150">
+                                                            <i class="ri-archive-line text-lg"></i>
+                                                            <span>Comminsion management</span>
+                                                        </a>
+                                                    <?php endif; ?>
+
                                                     <!-- HIDDEN: Only show for superadmin -->
                                                     <?php if (hasAnyRole([''])): ?>
                                                         <a href="../accountant/accountant_view_orders"
@@ -752,6 +760,8 @@ if (!isset($_SESSION['noble_name']) || !isset($_SESSION['noble_lvl']) || !isset(
                                                         <i class="ri-file-text-line text-lg"></i>
                                                         <span>Project Document</span>
                                                     </a>
+
+
                                                     <?php if (hasAnyRole(['']) || !hasSubrole(['document_controller'])): ?>
                                                         <a href="../accountant/accountantdashboard.php"
                                                             class="quick-action-item flex items-center space-x-3 px-3 py-2.5 text-sm text-gray-700 

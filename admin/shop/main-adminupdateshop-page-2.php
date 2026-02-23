@@ -13,116 +13,135 @@ if (!isset($_SESSION['noble_user'])) {
   exit();
 }
 
-// DELETE LOGIC
-if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['delete_id'])) {
-  $deleteId = (int) $_POST['delete_id'];
+// ARCHIVE/RESTORE/DELETE LOGIC
+if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action'])) {
+  $action = $_POST['action'];
+  $productId = (int) $_POST['product_id'];
 
   try {
     $conn->begin_transaction();
 
-    $imagesToDelete = [];
+    if ($action === 'archive') {
+      // Archive the product (hide from store)
+      $stmt = $conn->prepare("UPDATE products SET is_archived = 1 WHERE id = ?");
+      $stmt->bind_param("i", $productId);
+      $stmt->execute();
+      $stmt->close();
+    } elseif ($action === 'restore') {
+      // Restore the product (show in store again)
+      $stmt = $conn->prepare("UPDATE products SET is_archived = 0 WHERE id = ?");
+      $stmt->bind_param("i", $productId);
+      $stmt->execute();
+      $stmt->close();
+    } elseif ($action === 'permanent_delete') {
+      // Permanent delete - removes everything
+      $imagesToDelete = [];
 
-    // Main image and sub_images
-    $res = $conn->prepare("SELECT main_image, sub_images FROM products WHERE id = ?");
-    $res->bind_param("i", $deleteId);
-    $res->execute();
-    $res->bind_result($mainImage, $subImages);
-    $res->fetch();
-    if ($mainImage && file_exists("../../" . $mainImage)) $imagesToDelete[] = "../../" . $mainImage;
+      // Main image and sub_images
+      $res = $conn->prepare("SELECT main_image, sub_images FROM products WHERE id = ?");
+      $res->bind_param("i", $productId);
+      $res->execute();
+      $res->bind_result($mainImage, $subImages);
+      $res->fetch();
+      if ($mainImage && file_exists("../../" . $mainImage)) $imagesToDelete[] = "../../" . $mainImage;
 
-    if (!empty($subImages)) {
-      $subImagesArray = json_decode($subImages, true);
-      if (is_array($subImagesArray)) {
-        foreach ($subImagesArray as $subImage) {
-          if (!empty($subImage)) {
-            $cleanPath = ltrim($subImage, './');
-            $possiblePaths = [
-              "../../" . $cleanPath,
-              $subImage,
-              "./" . $cleanPath,
-            ];
+      if (!empty($subImages)) {
+        $subImagesArray = json_decode($subImages, true);
+        if (is_array($subImagesArray)) {
+          foreach ($subImagesArray as $subImage) {
+            if (!empty($subImage)) {
+              $cleanPath = ltrim($subImage, './');
+              $possiblePaths = [
+                "../../" . $cleanPath,
+                $subImage,
+                "./" . $cleanPath,
+              ];
 
-            foreach ($possiblePaths as $filePath) {
-              if (file_exists($filePath)) {
-                $imagesToDelete[] = $filePath;
-                break;
+              foreach ($possiblePaths as $filePath) {
+                if (file_exists($filePath)) {
+                  $imagesToDelete[] = $filePath;
+                  break;
+                }
               }
             }
           }
         }
       }
-    }
-    $res->close();
+      $res->close();
 
-    // Color images
-    $res = $conn->prepare("SELECT image FROM product_colors WHERE product_id = ?");
-    $res->bind_param("i", $deleteId);
-    $res->execute();
-    $result = $res->get_result();
-    while ($row = $result->fetch_assoc()) {
-      if (!empty($row['image']) && file_exists("../../" . $row['image'])) $imagesToDelete[] = "../../" . $row['image'];
-    }
-    $res->close();
-
-    // Type images
-    $typeIds = [];
-    $res = $conn->prepare("SELECT id, type_image FROM product_types WHERE product_id = ?");
-    $res->bind_param("i", $deleteId);
-    $res->execute();
-    $result = $res->get_result();
-    while ($row = $result->fetch_assoc()) {
-      $typeIds[] = $row['id'];
-      if (!empty($row['type_image']) && file_exists("../../" . $row['type_image'])) $imagesToDelete[] = "../../" . $row['type_image'];
-    }
-    $res->close();
-
-    foreach ($typeIds as $typeId) {
-      $res = $conn->prepare("SELECT image FROM product_variants WHERE type_id = ?");
-      $res->bind_param("i", $typeId);
+      // Color images
+      $res = $conn->prepare("SELECT image FROM product_colors WHERE product_id = ?");
+      $res->bind_param("i", $productId);
       $res->execute();
       $result = $res->get_result();
       while ($row = $result->fetch_assoc()) {
         if (!empty($row['image']) && file_exists("../../" . $row['image'])) $imagesToDelete[] = "../../" . $row['image'];
       }
       $res->close();
+
+      // Type images
+      $typeIds = [];
+      $res = $conn->prepare("SELECT id, type_image FROM product_types WHERE product_id = ?");
+      $res->bind_param("i", $productId);
+      $res->execute();
+      $result = $res->get_result();
+      while ($row = $result->fetch_assoc()) {
+        $typeIds[] = $row['id'];
+        if (!empty($row['type_image']) && file_exists("../../" . $row['type_image'])) $imagesToDelete[] = "../../" . $row['type_image'];
+      }
+      $res->close();
+
+      foreach ($typeIds as $typeId) {
+        $res = $conn->prepare("SELECT image FROM product_variants WHERE type_id = ?");
+        $res->bind_param("i", $typeId);
+        $res->execute();
+        $result = $res->get_result();
+        while ($row = $result->fetch_assoc()) {
+          if (!empty($row['image']) && file_exists("../../" . $row['image'])) $imagesToDelete[] = "../../" . $row['image'];
+        }
+        $res->close();
+      }
+
+      // Delete all collected images
+      foreach ($imagesToDelete as $filePath) @unlink($filePath);
+
+      // Delete database records
+      foreach ($typeIds as $typeId) {
+        $stmt = $conn->prepare("DELETE FROM product_variants WHERE type_id = ?");
+        $stmt->bind_param("i", $typeId);
+        $stmt->execute();
+        $stmt->close();
+      }
+
+      $stmt1 = $conn->prepare("DELETE FROM product_colors WHERE product_id = ?");
+      $stmt1->bind_param("i", $productId);
+      $stmt1->execute();
+      $stmt1->close();
+
+      $stmt2 = $conn->prepare("DELETE FROM product_types WHERE product_id = ?");
+      $stmt2->bind_param("i", $productId);
+      $stmt2->execute();
+      $stmt2->close();
+
+      $stmt3 = $conn->prepare("DELETE FROM products WHERE id = ?");
+      $stmt3->bind_param("i", $productId);
+      $stmt3->execute();
+      $stmt3->close();
     }
-
-    // Delete all collected images
-    foreach ($imagesToDelete as $filePath) @unlink($filePath);
-
-    // Delete database records
-    foreach ($typeIds as $typeId) {
-      $stmt = $conn->prepare("DELETE FROM product_variants WHERE type_id = ?");
-      $stmt->bind_param("i", $typeId);
-      $stmt->execute();
-      $stmt->close();
-    }
-
-    $stmt1 = $conn->prepare("DELETE FROM product_colors WHERE product_id = ?");
-    $stmt1->bind_param("i", $deleteId);
-    $stmt1->execute();
-    $stmt1->close();
-
-    $stmt2 = $conn->prepare("DELETE FROM product_types WHERE product_id = ?");
-    $stmt2->bind_param("i", $deleteId);
-    $stmt2->execute();
-    $stmt2->close();
-
-    $stmt3 = $conn->prepare("DELETE FROM products WHERE id = ?");
-    $stmt3->bind_param("i", $deleteId);
-    $stmt3->execute();
-    $stmt3->close();
 
     $conn->commit();
     header("Location: " . $_SERVER['PHP_SELF']);
     exit();
   } catch (Exception $e) {
     $conn->rollback();
-    echo "Error deleting product: " . $e->getMessage();
+    echo "Error processing product: " . $e->getMessage();
   }
 }
 
-// ✅ UPDATED QUERY - Get stock from product_variant_colors (stock_quantity)
+// ✅ SHOW ACTIVE PRODUCTS ONLY (unless viewing archived)
+$showArchived = isset($_GET['show']) && $_GET['show'] === 'archived';
+$archivedCondition = $showArchived ? "IS_ARCHIVED = 1" : "is_archived = 0";
+
 $products = $conn->query("
   SELECT 
     p.id, 
@@ -132,6 +151,7 @@ $products = $conn->query("
     p.main_image, 
     p.created_at, 
     p.updated_at,
+    p.is_archived,
     COALESCE(SUM(pc.stock), 0) as total_color_stock,
     COALESCE(SUM(pvc.stock_quantity), 0) as total_size_stock,
     COUNT(DISTINCT pc.id) as color_count,
@@ -140,7 +160,8 @@ $products = $conn->query("
   LEFT JOIN product_colors pc ON p.id = pc.product_id
   LEFT JOIN product_variants pv ON p.id = pv.product_id
   LEFT JOIN product_variant_colors pvc ON pv.id = pvc.variant_id
-  GROUP BY p.id, p.product_name, p.codename, p.quantity, p.main_image, p.created_at, p.updated_at
+  WHERE $archivedCondition
+  GROUP BY p.id, p.product_name, p.codename, p.quantity, p.main_image, p.created_at, p.updated_at, p.is_archived
   ORDER BY p.product_name
 ");
 
@@ -175,6 +196,10 @@ $products = $conn->query("
       background: #f9fafb;
       border-radius: 0.5rem;
     }
+    .archived-row {
+      opacity: 0.6;
+      background-color: #fef3f2;
+    }
   </style>
 </head>
 
@@ -198,12 +223,23 @@ $products = $conn->query("
             <i class="fas fa-edit"></i>
             Update New Item
           </a>
-             <a href="main-adminshop-page-1" class="inline-flex items-center gap-2 bg-gray-600 hover:bg-gray-700 text-white px-6 py-2 rounded-lg transition shadow-sm">
-        
-        Back 
-      </a>
+          <a href="main-adminshop-page-1" class="inline-flex items-center gap-2 bg-gray-600 hover:bg-gray-700 text-white px-6 py-2 rounded-lg transition shadow-sm">
+            Back 
+          </a>
         </div>
       </div>
+    </div>
+
+    <!-- Archive Status Tabs -->
+    <div class="mb-6 flex gap-2 border-b border-gray-200">
+      <a href="?show=active" 
+         class="px-4 py-3 font-medium text-sm <?= !$showArchived ? 'border-b-2 border-orange-600 text-orange-600' : 'text-gray-600 hover:text-gray-900' ?> transition">
+        <i class="fas fa-eye mr-2"></i>Active Products
+      </a>
+      <a href="?show=archived" 
+         class="px-4 py-3 font-medium text-sm <?= $showArchived ? 'border-b-2 border-orange-600 text-orange-600' : 'text-gray-600 hover:text-gray-900' ?> transition">
+        <i class="fas fa-archive mr-2"></i>Archived Products
+      </a>
     </div>
 
     <!-- Filters Section -->
@@ -257,21 +293,18 @@ $products = $conn->query("
                 $createdAt = strtotime($product['created_at']);
                 $updatedAt = strtotime($product['updated_at']);
                 
-                // ✅ UPDATED LOGIC - Check if ANY color OR size has stock
+                // Check if product has stock
                 $totalStock = $product['total_color_stock'] + $product['total_size_stock'];
-                $isInStock = ($totalStock > 0); // Simple check: if total stock > 0, then IN STOCK
-                
-                // Alternative detailed check (optional):
-                // $isInStock = ($product['total_color_stock'] > 0 || $product['total_size_stock'] > 0);
+                $isInStock = ($totalStock > 0);
                 ?>
-                <tr class="table-row-hover border-b border-gray-100 product-row " 
+                <tr class="table-row-hover border-b border-gray-100 product-row <?= $product['is_archived'] ? 'archived-row' : '' ?>"
                     data-name="<?= htmlspecialchars(strtolower($product['product_name'])) ?>"
                     data-code="<?= htmlspecialchars(strtolower($product['codename'])) ?>"
                     data-stock="<?= $totalStock ?>">
                   
                   <!-- Product Image -->
                   <td class="px-6 py-4">
-                    <div class="flex items-center justify-center">
+                    <div class="flex items-center justify-center relative">
                       <?php if (!empty($product['main_image'])): ?>
                         <img src="../../<?= htmlspecialchars($product['main_image']) ?>"
                           alt="<?= htmlspecialchars($product['product_name']) ?>"
@@ -279,6 +312,11 @@ $products = $conn->query("
                       <?php else: ?>
                         <div class="w-14 h-14 bg-gray-200 rounded flex items-center justify-center">
                           <i class="fas fa-image text-gray-400 text-lg"></i>
+                        </div>
+                      <?php endif; ?>
+                      <?php if ($product['is_archived']): ?>
+                        <div class="absolute inset-0 flex items-center justify-center bg-black/40 rounded">
+                          <i class="fas fa-lock text-white text-sm"></i>
                         </div>
                       <?php endif; ?>
                     </div>
@@ -297,7 +335,6 @@ $products = $conn->query("
                       <?= htmlspecialchars($product['codename']) ?>
                     </span>
                   </td>
-
 
                   <!-- Size Stock -->
                   <td class="px-6 py-4 text-center">
@@ -329,22 +366,52 @@ $products = $conn->query("
                   <!-- Actions -->
                   <td class="px-6 py-4">
                     <div class="flex gap-2 justify-center flex-wrap">
-                      <a href="update_product-page-2-A.php?id=<?= $product['id'] ?>"
-                        class="bg-orange-600 hover:bg-orange-700 text-white px-3 py-1.5 rounded text-xs font-medium transition flex items-center gap-1 whitespace-nowrap"
-                        title="Edit Product">
-                        <i class="fas fa-edit"></i>
-                        Edit
-                      </a>
-                
-                      <form method="POST" class="inline" onsubmit="return confirm('⚠️ Delete this product permanently?');">
-                        <input type="hidden" name="delete_id" value="<?= $product['id'] ?>">
+                      <?php if (!$product['is_archived']): ?>
+                        <a href="update_product-page-2-A.php?id=<?= $product['id'] ?>"
+                          class="bg-orange-600 hover:bg-orange-700 text-white px-3 py-1.5 rounded text-xs font-medium transition flex items-center gap-1 whitespace-nowrap"
+                          title="Edit Product">
+                          <i class="fas fa-edit"></i>
+                          Edit
+                        </a>
+                      <?php endif; ?>
+
+                      <!-- Archive/Restore Button -->
+                      <form method="POST" class="inline">
+                        <input type="hidden" name="product_id" value="<?= $product['id'] ?>">
+                        <input type="hidden" name="action" value="<?= $product['is_archived'] ? 'restore' : 'archive' ?>">
                         <button type="submit"
-                          class="bg-red-600 hover:bg-red-700 text-white px-3 py-1.5 rounded text-xs font-medium transition flex items-center gap-1 whitespace-nowrap"
-                          title="Delete Product">
-                          <i class="fas fa-trash"></i>
-                          Delete
+                          class="<?= $product['is_archived'] ? 'bg-green-600 hover:bg-green-700' : 'bg-yellow-600 hover:bg-yellow-700' ?> text-white px-3 py-1.5 rounded text-xs font-medium transition flex items-center gap-1 whitespace-nowrap"
+                          title="<?= $product['is_archived'] ? 'Restore Product' : 'Archive Product' ?>">
+                          <i class="fas fa-<?= $product['is_archived'] ? 'redo' : 'archive' ?>"></i>
+                          <?= $product['is_archived'] ? 'Restore' : 'Archive' ?>
                         </button>
                       </form>
+
+                      <!-- Delete Button (only for active products) -->
+                      <?php if (!$product['is_archived']): ?>
+                        <form method="POST" class="inline" onsubmit="return confirm('⚠️ This will permanently delete the product. Archive it instead if you want to restore later.\n\nContinue with permanent deletion?');">
+                          <input type="hidden" name="product_id" value="<?= $product['id'] ?>">
+                          <input type="hidden" name="action" value="permanent_delete">
+                          <button type="submit"
+                            class="bg-red-600 hover:bg-red-700 text-white px-3 py-1.5 rounded text-xs font-medium transition flex items-center gap-1 whitespace-nowrap"
+                            title="Permanently Delete Product">
+                            <i class="fas fa-trash"></i>
+                            Delete
+                          </button>
+                        </form>
+                      <?php else: ?>
+                        <!-- Permanent delete button for archived products -->
+                        <form method="POST" class="inline" onsubmit="return confirm('⚠️ Permanently delete this archived product? This cannot be undone!');">
+                          <input type="hidden" name="product_id" value="<?= $product['id'] ?>">
+                          <input type="hidden" name="action" value="permanent_delete">
+                          <button type="submit"
+                            class="bg-red-600 hover:bg-red-700 text-white px-3 py-1.5 rounded text-xs font-medium transition flex items-center gap-1 whitespace-nowrap"
+                            title="Permanently Delete Product">
+                            <i class="fas fa-trash"></i>
+                            Delete
+                          </button>
+                        </form>
+                      <?php endif; ?>
                     </div>
                   </td>
                 </tr>
@@ -358,11 +425,17 @@ $products = $conn->query("
       <!-- Empty State -->
       <div class="bg-white rounded-xl shadow-sm p-12 text-center border border-gray-100">
         <i class="fas fa-inbox text-gray-300 text-5xl mb-4 block"></i>
-        <p class="text-gray-600 text-lg font-medium mb-2">No Products Yet</p>
-        <p class="text-gray-500 mb-6">Start adding products to your store</p>
-        <a href="additem-page.php" class="inline-block bg-orange-600 hover:bg-orange-700 text-white px-6 py-2 rounded-lg font-medium transition">
-          <i class="fas fa-plus mr-2"></i>Add Your First Product
-        </a>
+        <p class="text-gray-600 text-lg font-medium mb-2">
+          <?= $showArchived ? 'No Archived Products' : 'No Products Yet' ?>
+        </p>
+        <p class="text-gray-500 mb-6">
+          <?= $showArchived ? 'Your archived products will appear here' : 'Start adding products to your store' ?>
+        </p>
+        <?php if (!$showArchived): ?>
+          <a href="additem-page.php" class="inline-block bg-orange-600 hover:bg-orange-700 text-white px-6 py-2 rounded-lg font-medium transition">
+            <i class="fas fa-plus mr-2"></i>Add Your First Product
+          </a>
+        <?php endif; ?>
       </div>
     <?php endif; ?>
 

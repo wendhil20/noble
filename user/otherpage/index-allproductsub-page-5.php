@@ -114,6 +114,7 @@ try {
                WHERE pc2.product_id = p.id
            )
         WHERE pv.discount > 0
+        AND p.is_archived = 0
         GROUP BY pv.id
         ORDER BY p.view_count DESC, RAND()
         LIMIT 10

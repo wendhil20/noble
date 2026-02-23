@@ -79,6 +79,7 @@ $SYCJ_query = "
     LEFT JOIN product_ratings r ON r.product_id = p.id
     LEFT JOIN sold_items si ON si.product_id = p.id
     WHERE p.codename = 'furniture' 
+    AND p.is_archived = 0
     GROUP BY p.id
     ORDER BY p.id DESC
 ";
@@ -120,6 +121,7 @@ $material_querys = "
            WHERE pc2.product_id = p.id
        )
     WHERE pv.discount > 0
+    AND p.is_archived = 0
     GROUP BY pv.id
     ORDER BY p.view_count DESC, RAND()
     LIMIT 10
@@ -175,6 +177,7 @@ $material_querysone = "
             WHERE pc2.product_id = p.id
         )
     WHERE pv.discount BETWEEN 1 AND 5
+    AND p.is_archived = 0
     GROUP BY p.id
     ORDER BY pv.percent ASC, p.view_count DESC, p.id ASC
 ";
@@ -210,6 +213,7 @@ $material_querystwo = "
     LEFT JOIN sold_items si ON si.product_id = p.id
     LEFT JOIN product_colors pc ON p.id = pc.product_id
     WHERE pv.status = 'new'
+    AND p.is_archived = 0
     GROUP BY pv.id
     ORDER BY RAND()
     LIMIT 10
@@ -247,6 +251,7 @@ $discount_result = mysqli_query(
      LEFT JOIN sold_items si ON si.product_id = p.id
      LEFT JOIN product_colors pc ON p.id = pc.product_id
      WHERE pv.discount IS NULL OR pv.discount = 0
+     AND p.is_archived = 0
      GROUP BY pv.id
      ORDER BY p.view_count DESC, RAND()
      LIMIT 10"
@@ -282,6 +287,7 @@ $query = "
     LEFT JOIN product_ratings r ON r.product_id = p.id
     LEFT JOIN sold_items si ON si.product_id = p.id
     WHERE p.codename = ?
+    AND p.is_archived = 0
     GROUP BY p.id
     ORDER BY p.view_count DESC, RAND()
     LIMIT 10";
@@ -324,6 +330,7 @@ $query = "
     LEFT JOIN product_ratings r ON r.product_id = p.id
     LEFT JOIN sold_items si ON si.product_id = p.id
     WHERE p.codename = ?
+    AND p.is_archived = 0
     GROUP BY p.id
     ORDER BY p.view_count DESC, RAND()
     LIMIT 10
@@ -368,6 +375,7 @@ $query = "
     LEFT JOIN product_ratings r ON r.product_id = p.id
     LEFT JOIN sold_items si ON si.product_id = p.id
     WHERE p.codename = ?
+    AND p.is_archived = 0
     GROUP BY p.id
     ORDER BY p.view_count DESC, RAND()
     LIMIT 10
@@ -1036,7 +1044,8 @@ while ($row = $banners_result->fetch_assoc()) {
         }
 
         // Get rating
-        $rating_q = $conn->prepare("SELECT ROUND(AVG(rating), 1) AS avg_rating, COUNT(*) AS total_raters FROM product_ratings WHERE product_id = ?");
+        $rating_q = $conn->prepare("SELECT ROUND(AVG(rating), 1) AS avg_rating, COUNT(*) AS total_raters FROM product_ratings WHERE product_id = ? 
+");
         $rating_q->bind_param("i", $product_id);
         $rating_q->execute();
         $rating_result = $rating_q->get_result()->fetch_assoc();
@@ -1048,7 +1057,8 @@ while ($row = $banners_result->fetch_assoc()) {
         $sold_q = $conn->prepare("
         SELECT SUM(quantity) as total_sold 
         FROM sold_items 
-        WHERE product_id = ?
+        WHERE product_id = ? 
+
     ");
         $sold_q->bind_param("i", $product_id);
         $sold_q->execute();

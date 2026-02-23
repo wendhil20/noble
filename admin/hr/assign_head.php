@@ -143,7 +143,7 @@ while ($r = mysqli_fetch_assoc($res)) {
                       <button type="button" class="upload-signature inline-flex items-center gap-2 px-3 py-1 rounded-md bg-purple-600 text-white text-sm" data-id="<?= $id ?>">
                         <i class="fas fa-upload"></i>Signature
                       </button>
-                      <?php if ($dept !== 'sales'): ?>
+                     <?php if ($dept === 'sales' || $dept === 'accountant' || $dept === 'hr' || $dept === 'superadmin' || $dept === 'warehouse' || $dept === 'logistic'): ?>
                         <button type="button" class="edit-subrole inline-flex items-center gap-2 px-3 py-1 rounded-md bg-blue-600 text-white text-sm" data-id="<?= $id ?>" data-subrole="<?= htmlspecialchars($m['subrole'] ?? '') ?>">Edit Role</button>
                       <?php else: ?>
                         <button type="button" class="edit-commission inline-flex items-center gap-2 px-3 py-1 rounded-md bg-green-600 text-white text-sm" data-id="<?= $id ?>" data-commission="<?= htmlspecialchars($m['commission_rate'] ?? '0.00') ?>">Edit Commission</button>

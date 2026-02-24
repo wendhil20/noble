@@ -713,7 +713,7 @@ if ($replacement_id > 0) {
             }
 
             // Send to server with item_type specified
-            fetch('update_location.php', {
+            fetch('receiver_update_location_A3.php', {
                     method: 'POST',
                     headers: {
                         'Content-Type': 'application/json',

@@ -79,9 +79,17 @@ try {
         exit();
     }
     
-    // Update the status
-    $stmt = $conn->prepare("UPDATE replacement_requests SET status = ? WHERE id = ?");
-    $stmt->bind_param("si", $newStatus, $replacementId);
+    // If marking as In Warehouse, also update received_status to received
+    $isInWarehouse = ($newStatus === 'In Warehouse');
+
+    if ($isInWarehouse) {
+        $stmt = $conn->prepare("UPDATE replacement_requests SET status = ?, received_status = 'received', received_by = ?, received_at = NOW() WHERE id = ?");
+        $receiverId = $_SESSION['noble_id'] ?? 0;
+        $stmt->bind_param("sii", $newStatus, $receiverId, $replacementId);
+    } else {
+        $stmt = $conn->prepare("UPDATE replacement_requests SET status = ? WHERE id = ?");
+        $stmt->bind_param("si", $newStatus, $replacementId);
+    }
     
     if ($stmt->execute()) {
         $affectedRows = $stmt->affected_rows;
@@ -101,7 +109,8 @@ try {
             'message' => 'Replacement status updated successfully',
             'replacement_id' => $replacementId,
             'old_status' => $currentStatus,
-            'new_status' => $newStatus
+            'new_status' => $newStatus,
+            'received_status_updated' => $isInWarehouse
         ]);
     } else {
         throw new Exception('Failed to execute update query: ' . $stmt->error);

@@ -907,20 +907,46 @@ $selectableReplacementStatuses = ['approved', 'processing']; // Only these can b
                 $replPoCheckStmt->close();
 
                 if (empty($replPoResult['po_number'])) {
-                    echo "<button onclick='generateReplacementPO({$item['replacement_id']})' class='w-full bg-green-500 hover:bg-green-600 text-white px-3 py-2 rounded-lg text-sm font-medium transition-all duration-200 flex items-center justify-center space-x-2 mt-2'>";
-                    echo "<i class='fas fa-file-invoice'></i>";
-                    echo "<span>Generate P.O. Number</span>";
-                    echo "</button>";
-                } else {
-                    echo "<div class='bg-green-50 border-2 border-green-200 rounded-lg p-3 text-center mt-2'>";
-                    echo "<div class='text-xs text-green-700 mb-1 font-semibold'>P.O. Number Generated</div>";
-                    echo "<div class='font-mono font-bold text-green-900 text-sm mb-2'>" . htmlspecialchars($replPoResult['po_number']) . "</div>";
-                    echo "<a href='receiver_view_po_items_A.php?po_number=" . urlencode($replPoResult['po_number']) . "' class='inline-flex items-center space-x-1 bg-green-600 hover:bg-green-700 text-white px-3 py-1.5 rounded text-xs font-medium transition-colors duration-200'>";
-                    echo "<i class='fas fa-qrcode'></i>";
-                    echo "<span>Generate QR Code</span>";
-                    echo "</a>";
-                    echo "</div>";
-                }
+    echo "<button onclick='generateReplacementPO({$item['replacement_id']})' class='w-full bg-green-500 hover:bg-green-600 text-white px-3 py-2 rounded-lg text-sm font-medium transition-all duration-200 flex items-center justify-center space-x-2 mt-2'>";
+    echo "<i class='fas fa-file-invoice'></i>";
+    echo "<span>Generate P.O. Number</span>";
+    echo "</button>";
+} else {
+    // Check if receiver already assigned
+    $replReceiverSql = "SELECT rr.receiver_id, na.fullname as receiver_name 
+                        FROM replacement_requests rr
+                        LEFT JOIN nobleaccount na ON rr.receiver_id = na.id
+                        WHERE rr.id = ?";
+    $replReceiverStmt = $conn->prepare($replReceiverSql);
+    $replReceiverStmt->bind_param("i", $item['replacement_id']);
+    $replReceiverStmt->execute();
+    $replReceiverResult = $replReceiverStmt->get_result()->fetch_assoc();
+    $replReceiverStmt->close();
+
+    if (!empty($replReceiverResult['receiver_id'])) {
+        // Receiver already assigned — show info + QR link
+        echo "<div class='bg-green-50 border-2 border-green-200 rounded-lg p-3 text-center mt-2'>";
+        echo "<div class='text-xs text-green-700 mb-1 font-semibold'>P.O. Number Generated</div>";
+        echo "<div class='font-mono font-bold text-green-900 text-sm mb-1'>" . htmlspecialchars($replPoResult['po_number']) . "</div>";
+        echo "<div class='text-xs text-gray-600 mb-2'><i class='fas fa-user mr-1'></i>Receiver: <strong>" . htmlspecialchars($replReceiverResult['receiver_name']) . "</strong></div>";
+        echo "<a href='receiver_view_po_items_A.php?po_number=" . urlencode($replPoResult['po_number']) . "' class='inline-flex items-center space-x-1 bg-green-600 hover:bg-green-700 text-white px-3 py-1.5 rounded text-xs font-medium transition-colors duration-200'>";
+        echo "<i class='fas fa-qrcode'></i>";
+        echo "<span>View QR Codes</span>";
+        echo "</a>";
+        echo "</div>";
+    } else {
+        // P.O. generated but no receiver yet — show assign form
+        echo "<div class='bg-blue-50 border-2 border-blue-200 rounded-lg p-3 mt-2'>";
+        echo "<div class='text-xs text-blue-700 mb-1 font-semibold'>P.O. Number Generated</div>";
+        echo "<div class='font-mono font-bold text-blue-900 text-sm mb-2'>" . htmlspecialchars($replPoResult['po_number']) . "</div>";
+        echo "<div class='text-xs text-blue-700 mb-2'>Assign a warehouse receiver to process this replacement:</div>";
+        echo "<button onclick='openAssignReceiverModal({$item['replacement_id']}, \"" . htmlspecialchars($replPoResult['po_number'], ENT_QUOTES) . "\")' class='w-full bg-blue-600 hover:bg-blue-700 text-white px-3 py-1.5 rounded text-xs font-medium transition-colors duration-200 flex items-center justify-center space-x-1'>";
+        echo "<i class='fas fa-user-check'></i>";
+        echo "<span>Assign Receiver</span>";
+        echo "</button>";
+        echo "</div>";
+    }
+}
             }
 
             echo "</div>";
@@ -1088,6 +1114,59 @@ $selectableReplacementStatuses = ['approved', 'processing']; // Only these can b
             </div>
         </div>
     </div>
+
+    <!-- Assign Receiver Modal for Replacement -->
+<div id="assignReceiverModal" class="fixed inset-0 bg-black bg-opacity-50 z-50 hidden flex items-center justify-center p-4">
+    <div class="bg-white rounded-2xl shadow-2xl max-w-md w-full">
+        <div class="flex items-center justify-between p-6 border-b border-gray-200 bg-gradient-to-r from-blue-50 to-indigo-50">
+            <h3 class="text-xl font-bold text-gray-900 flex items-center">
+                <i class="fas fa-user-check mr-3 text-blue-600"></i>
+                Assign Warehouse Receiver
+            </h3>
+            <button onclick="closeAssignReceiverModal()" class="text-gray-500 hover:text-gray-700 p-2 hover:bg-gray-100 rounded-full">
+                <i class="fas fa-times text-xl"></i>
+            </button>
+        </div>
+        <div class="p-6">
+            <div class="mb-4">
+                <div class="text-sm text-gray-600 mb-1">P.O. Number:</div>
+                <div id="assignModalPoNumber" class="font-mono font-bold text-gray-900 text-sm bg-gray-50 px-3 py-2 rounded border"></div>
+            </div>
+            <div class="mb-6">
+                <label class="block text-sm font-medium text-gray-700 mb-2">
+                    <i class="fas fa-user-check mr-1"></i>
+                    Select Receiver <span class="text-red-500">*</span>
+                </label>
+                <select id="assignReceiverSelect"
+                    class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500">
+                    <option value="">-- Select Receiver --</option>
+                    <?php
+                    $receiversSql = "SELECT id, fullname FROM nobleaccount 
+                                     WHERE subrole = 'warehouse_receiver' AND status = 'active'
+                                     ORDER BY fullname ASC";
+                    $receiversResult = $conn->query($receiversSql);
+                    if ($receiversResult) {
+                        while ($recv = $receiversResult->fetch_assoc()) {
+                            echo '<option value="' . $recv['id'] . '">' . htmlspecialchars($recv['fullname']) . '</option>';
+                        }
+                    }
+                    ?>
+                </select>
+            </div>
+            <div class="flex space-x-3">
+                <button onclick="submitAssignReceiver()"
+                    class="flex-1 bg-blue-600 hover:bg-blue-700 text-white px-4 py-3 rounded-lg font-medium transition-colors duration-200 flex items-center justify-center space-x-2">
+                    <i class="fas fa-user-check"></i>
+                    <span>Assign Receiver</span>
+                </button>
+                <button onclick="closeAssignReceiverModal()"
+                    class="flex-1 bg-gray-200 hover:bg-gray-300 text-gray-700 px-4 py-3 rounded-lg font-medium transition-colors duration-200">
+                    Cancel
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
 
     <script>
         // Status definitions for JavaScript
@@ -1321,6 +1400,62 @@ $selectableReplacementStatuses = ['approved', 'processing']; // Only these can b
                 closeDefectsModal();
             }
         });
+
+        let currentAssignReplacementId = null;
+let currentAssignPoNumber = null;
+
+function openAssignReceiverModal(replacementId, poNumber) {
+    currentAssignReplacementId = replacementId;
+    currentAssignPoNumber = poNumber;
+    document.getElementById('assignModalPoNumber').textContent = poNumber;
+    document.getElementById('assignReceiverSelect').value = '';
+    document.getElementById('assignReceiverModal').classList.remove('hidden');
+    document.body.classList.add('overflow-hidden');
+}
+
+function closeAssignReceiverModal() {
+    document.getElementById('assignReceiverModal').classList.add('hidden');
+    document.body.classList.remove('overflow-hidden');
+    currentAssignReplacementId = null;
+    currentAssignPoNumber = null;
+}
+
+function submitAssignReceiver() {
+    const receiverId = document.getElementById('assignReceiverSelect').value;
+    if (!receiverId) {
+        alert('Please select a receiver.');
+        return;
+    }
+
+    fetch('warehouse_staff_assign_replacement_receiver_C3.php', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+            replacement_id: currentAssignReplacementId,
+            receiver_id: receiverId,
+            po_number: currentAssignPoNumber
+        })
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            alert('✓ Receiver assigned successfully!');
+            closeAssignReceiverModal();
+            window.location.reload();
+        } else {
+            alert('✗ Failed to assign receiver: ' + (data.error || 'Unknown error'));
+        }
+    })
+    .catch(error => {
+        console.error('Error:', error);
+        alert('✗ Failed to assign receiver. Please try again.');
+    });
+}
+
+// Close assign modal on outside click
+document.getElementById('assignReceiverModal').addEventListener('click', function(e) {
+    if (e.target === this) closeAssignReceiverModal();
+});
 
         // ADD THIS NEW FUNCTION
         function generateReplacementPO(replacementId) {

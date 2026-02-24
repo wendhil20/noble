@@ -36,6 +36,7 @@ if (!$user_id && isset($_SESSION['noble_id'])) {
 }
 
 $po_number = isset($_GET['po_number']) ? trim($_GET['po_number']) : '';
+$is_replacement_context = isset($_GET['replacement_id']); // came from replacement card
 $orderItems = [];
 $orderInfo = null;
 $supplierInfo = null;
@@ -349,6 +350,31 @@ if (!empty($po_number)) {
                             <span class="mx-2">•</span>
                             <span><?php echo date('M j, Y g:i A'); ?></span>
                         </div>
+                        <?php
+                        $replAssignSql = "SELECT COUNT(*) as cnt FROM replacement_requests 
+                                          WHERE po_number = ? AND receiver_id = ?";
+                        $replAssignStmt = $conn->prepare($replAssignSql);
+                        $replAssignStmt->bind_param("si", $po_number, $user_id);
+                        $replAssignStmt->execute();
+                        $replAssignCount = $replAssignStmt->get_result()->fetch_assoc()['cnt'];
+                        $replAssignStmt->close();
+
+                        if ($replAssignCount > 0): ?>
+                            <div class="mt-3 inline-flex items-center space-x-2 bg-red-50 border border-red-200 px-4 py-2 rounded-lg">
+                                <i class="fas fa-sync-alt text-red-600"></i>
+                                <span class="text-sm font-medium text-red-800">
+                                    You are assigned as receiver for <?php echo $replAssignCount; ?> replacement item(s) in this P.O.
+                                </span>
+                            </div>
+                        <?php endif; ?>
+                        <?php if ($is_replacement_context): ?>
+                            <div class="mt-3 inline-flex items-center space-x-2 bg-red-50 border-2 border-red-300 px-4 py-2 rounded-lg">
+                                <i class="fas fa-sync-alt text-red-600 text-lg"></i>
+                                <span class="text-sm font-bold text-red-800">
+                                    You are viewing this P.O. as a Replacement Receiver
+                                </span>
+                            </div>
+                        <?php endif; ?>
                     </div>
                 </div>
 
@@ -412,7 +438,7 @@ if (!empty($po_number)) {
                 echo "<!-- DEBUG: user_id=$current_user_id, po_number=$po_number, assignment_status=" . ($assignmentStatus['status'] ?? 'null') . ", alreadyMarkedComplete=" . ($alreadyMarkedComplete ? 'true' : 'false') . " -->";
                 ?>
 
-                <?php if ($someItemsReceived || $alreadyMarkedComplete): ?>
+                <?php if (($someItemsReceived || $alreadyMarkedComplete) && !$is_replacement_context): ?>
                     <!-- Reception Progress Card -->
                     <div class="bg-gradient-to-r from-<?php echo $alreadyMarkedComplete ? 'green' : ($allItemsReceived ? 'green' : 'blue'); ?>-50 to-<?php echo $alreadyMarkedComplete ? 'emerald' : ($allItemsReceived ? 'emerald' : 'indigo'); ?>-50 border-2 border-<?php echo $alreadyMarkedComplete ? 'green' : ($allItemsReceived ? 'green' : 'blue'); ?>-300 rounded-xl shadow-lg p-6 mb-6">
                         <div class="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
@@ -479,6 +505,24 @@ if (!empty($po_number)) {
                         </div>
                     </div>
                 <?php endif; ?>
+
+                <?php if ($is_replacement_context && $someItemsReceived): ?>
+                    <div class="bg-green-50 border-2 border-green-300 rounded-xl shadow-lg p-6 mb-6">
+                        <div class="flex items-center space-x-4">
+                            <div class="bg-green-500 p-3 rounded-lg">
+                                <i class="fas fa-check-double text-white text-2xl"></i>
+                            </div>
+                            <div>
+                                <h3 class="text-xl font-bold text-green-900">Replacement Completed</h3>
+                                <p class="text-sm text-green-700 mt-1">
+                                    <i class="fas fa-sync-alt mr-1"></i>
+                                    This replacement item has been received and stored in the warehouse.
+                                </p>
+                            </div>
+                        </div>
+                    </div>
+                <?php endif; ?>
+
                 <!-- Items Grid -->
                 <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                     <?php foreach ($orderItems as $index => $item): ?>
@@ -570,7 +614,7 @@ if (!empty($po_number)) {
                                                 <i class="fas fa-download"></i>
                                                 <span>Download</span>
                                             </button>
-                                            <button onclick="openEditLocationModal(<?php echo $item['item_id']; ?>, '<?php echo htmlspecialchars($item['warehouse_location'] ?? '', ENT_QUOTES); ?>', '<?php echo htmlspecialchars($item['product_name'], ENT_QUOTES); ?>')"
+                                            <button onclick="openEditLocationModal(<?php echo $item['item_id']; ?>, '<?php echo htmlspecialchars($item['warehouse_location'] ?? '', ENT_QUOTES); ?>', '<?php echo htmlspecialchars($item['product_name'], ENT_QUOTES); ?>', '<?php echo $item['item_type']; ?>')"
                                                 class="bg-amber-500 hover:bg-amber-600 text-white px-3 py-2 rounded-lg transition-colors duration-200 flex items-center justify-center space-x-1 text-sm">
                                                 <i class="fas fa-map-marker-alt"></i>
                                                 <span>Location</span>
@@ -842,18 +886,19 @@ if (!empty($po_number)) {
                 });
         }
 
-        function openEditLocationModal(itemId, currentLocation, productName) {
-            currentItemId = itemId;
+        function openEditLocationModal(itemId, currentLocation, productName, itemType = 'original') {
+    currentItemId = itemId;
+    window.currentEditItemType = itemType;
 
-            // Set product name
-            document.getElementById('editModalItemName').textContent = productName;
+    // Set product name
+    document.getElementById('editModalItemName').textContent = productName;
 
-            // Set current location
-            document.getElementById('editWarehouseLocation').value = currentLocation;
+    // Set current location
+    document.getElementById('editWarehouseLocation').value = currentLocation;
 
-            // Show modal
-            document.getElementById('editLocationModal').classList.add('active');
-        }
+    // Show modal
+    document.getElementById('editLocationModal').classList.add('active');
+}
 
         function closeEditLocationModal() {
             document.getElementById('editLocationModal').classList.remove('active');
@@ -861,29 +906,30 @@ if (!empty($po_number)) {
         }
 
         function updateLocation() {
-            const location = document.getElementById('editWarehouseLocation').value.trim();
+    const location = document.getElementById('editWarehouseLocation').value.trim();
 
-            if (!location) {
-                alert('Please enter warehouse location');
-                return;
-            }
+    if (!location) {
+        alert('Please enter warehouse location');
+        return;
+    }
 
-            if (!currentItemId) {
-                alert('Error: Missing item data');
-                return;
-            }
+    if (!currentItemId) {
+        alert('Error: Missing item data');
+        return;
+    }
 
-            // Send to server
-            fetch('receiver_update_location_A3.php', {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json',
-                    },
-                    body: JSON.stringify({
-                        item_id: currentItemId,
-                        warehouse_location: location
-                    })
-                })
+    // Send to server
+    fetch('receiver_update_location_A3.php', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({
+                item_id: currentItemId,
+                warehouse_location: location,
+                item_type: window.currentEditItemType || 'original'
+            })
+        })
                 .then(response => response.json())
                 .then(data => {
                     if (data.success) {

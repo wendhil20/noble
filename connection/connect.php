@@ -16,7 +16,7 @@ if ($isLocal) {
     $host = getenv('DB_HOST_LOCAL') ?: 'localhost:3306';
     $username = getenv('DB_USER_LOCAL') ?: 'root';
     $password = getenv('DB_PASSWORD_LOCAL') ?: '';
-    $database = getenv('DB_NAME_LOCAL') ?: 'no';
+    $database = getenv('DB_NAME_LOCAL') ?: 'noblehomedata';
 } else {
     // Production Configuration
     $host = getenv('DB_HOST_PROD') ?: 'localhost';

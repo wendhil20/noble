@@ -1,23 +1,23 @@
 
- -- Procedure structure for procedure `record_order_as_sold`
-DELIMITER $$
-CREATE DEFINER=`root`@`localhost` PROCEDURE `record_order_as_sold`(IN p_order_id INT) 
+ DELIMITER $$
+CREATE DEFINER=`u318146187_nh`@`127.0.0.1` PROCEDURE `record_order_as_sold`(IN `p_order_id` INT)
 BEGIN
     DECLARE v_sold_order_id INT;
     DECLARE v_order_exists INT;
+    DECLARE v_error_msg VARCHAR(255);
     
-    DECLARE EXIT HANDLER FOR SQLEXCEPTION
-    BEGIN
-        SIGNAL SQLSTATE '45000' SET MESSAGE_TEXT = 'Error recording order as sold';
-    END;
+    -- NO transaction control here — let caller handle it
+    -- or rely on the trigger's implicit transaction
     
-    -- Check if order exists and is delivered
+    -- Check if order exists and has valid status
     SELECT COUNT(*) INTO v_order_exists 
     FROM orders 
-    WHERE id = p_order_id AND status = 'Delivered';
+    WHERE id = p_order_id 
+    AND status IN ('Delivered', 'Picked Up', 'delivered', 'picked_up');
     
     IF v_order_exists = 0 THEN
-        SIGNAL SQLSTATE '45000' SET MESSAGE_TEXT = 'Order not found or not delivered';
+        SIGNAL SQLSTATE '45000' 
+            SET MESSAGE_TEXT = 'Order not found or not in delivered/picked up status';
     END IF;
     
     -- Check if already recorded as sold
@@ -26,10 +26,11 @@ BEGIN
     WHERE order_id = p_order_id;
     
     IF v_order_exists > 0 THEN
-        SIGNAL SQLSTATE '45000' SET MESSAGE_TEXT = 'Order already recorded as sold';
+        SIGNAL SQLSTATE '45000' 
+            SET MESSAGE_TEXT = 'Order already recorded as sold';
     END IF;
     
-    -- Insert order sa sold_orders table
+    -- Insert into sold_orders
     INSERT INTO sold_orders (
         order_id, user_id, emp_id, warehouse_employee_id,
         customer_name, email, mobile,
@@ -37,9 +38,8 @@ BEGIN
         address, zipcode, latitude, longitude, delivery_distance, delivery_type,
         assigned_vehicle_id, assigned_vehicle_type,
         total_cubic_meters, total_weight_kg, total_width, total_height, total_length,
-        mode_payment, payment_status, bank_type, payment_screenshot,
+        mode_payment, payment_status,
         reference_no, reference_number, verified_by,
-        paypal_order_id, paypal_capture_id, paypal_payer_email, paypal_payer_name,
         paymongo_session_id, billing_address_id,
         order_date, confirmed_at, completed_at, delivered_at
     )
@@ -50,18 +50,16 @@ BEGIN
         address, zipcode, latitude, longitude, delivery_distance, delivery_type,
         assigned_vehicle_id, assigned_vehicle_type,
         total_cubic_meters, total_weight_kg, total_width, total_height, total_length,
-        mode_payment, payment_status, bank_type, payment_screenshot,
+        mode_payment, payment_status,
         reference_no, reference_number, verified_by,
-        paypal_order_id, paypal_capture_id, paypal_payer_email, paypal_payer_name,
         paymongo_session_id, billing_address_id,
-        created_at, confirmed_at, completed_at, 
-        COALESCE(completed_at, NOW())
+        created_at, confirmed_at, completed_at, NOW()
     FROM orders
     WHERE id = p_order_id;
     
     SET v_sold_order_id = LAST_INSERT_ID();
     
-    -- Insert order items sa sold_items table
+    -- Insert into sold_items
     INSERT INTO sold_items (
         sold_order_id, original_order_item_id, order_id,
         product_id, product_name, codename, type_name, variant_color, size,
@@ -81,7 +79,7 @@ BEGIN
         lt_from, lt_to
     FROM order_items
     WHERE order_id = p_order_id;
-    
+
 END$$
 DELIMITER ;
 

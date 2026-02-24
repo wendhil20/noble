@@ -915,7 +915,7 @@ $selectableReplacementStatuses = ['approved', 'processing']; // Only these can b
                     echo "<div class='bg-green-50 border-2 border-green-200 rounded-lg p-3 text-center mt-2'>";
                     echo "<div class='text-xs text-green-700 mb-1 font-semibold'>P.O. Number Generated</div>";
                     echo "<div class='font-mono font-bold text-green-900 text-sm mb-2'>" . htmlspecialchars($replPoResult['po_number']) . "</div>";
-                    echo "<a href='view_po_items.php?po_number=" . urlencode($replPoResult['po_number']) . "' class='inline-flex items-center space-x-1 bg-green-600 hover:bg-green-700 text-white px-3 py-1.5 rounded text-xs font-medium transition-colors duration-200'>";
+                    echo "<a href='receiver_view_po_items_A.php?po_number=" . urlencode($replPoResult['po_number']) . "' class='inline-flex items-center space-x-1 bg-green-600 hover:bg-green-700 text-white px-3 py-1.5 rounded text-xs font-medium transition-colors duration-200'>";
                     echo "<i class='fas fa-qrcode'></i>";
                     echo "<span>Generate QR Code</span>";
                     echo "</a>";

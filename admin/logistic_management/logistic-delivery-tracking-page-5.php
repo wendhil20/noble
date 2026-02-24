@@ -1,5 +1,5 @@
 <?php
-// delivery_tracking.php
+// delivery_tracking.php - FIXED VERSION
 session_name("nobleadmin");
 session_start();
 
@@ -141,51 +141,63 @@ $dispatchersResult = $conn->query($dispatchersSql);
 $dispatchers = $dispatchersResult->fetch_all(MYSQLI_ASSOC);
 
 
-// REPLACE the createDeliveryNotification function with THIS
-
 function createDeliveryNotification($conn, $booking_id, $order_id, $booking_type)
 {
-    // Get customer ID
-    $stmt = $conn->prepare("SELECT user_id FROM orders WHERE id = ?");
-    $stmt->bind_param("i", $order_id);
-    $stmt->execute();
-    $result = $stmt->get_result()->fetch_assoc();
-    $stmt->close();
+    try {
+        // Get customer ID
+        $stmt = $conn->prepare("SELECT user_id FROM orders WHERE id = ?");
+        if (!$stmt) {
+            error_log("Prepare error: " . $conn->error);
+            return false;
+        }
+        $stmt->bind_param("i", $order_id);
+        $stmt->execute();
+        $result = $stmt->get_result()->fetch_assoc();
+        $stmt->close();
 
-    if (!$result || !$result['user_id']) {
+        if (!$result || !$result['user_id']) {
+            error_log("No user_id found for order: $order_id");
+            return false;
+        }
+
+        $customer_id = (int)$result['user_id'];
+
+        // Message
+        if ($booking_type === 'pickup') {
+            $message = "Your order #$order_id has been picked up!";
+            $type = "PICKUP_COMPLETED";
+        } else {
+            $message = "Your order #$order_id has been delivered! Please review the products";
+            $type = "DELIVERY_COMPLETED";
+        }
+
+        // Insert
+        $sql = "INSERT INTO notifications (user_id, actor_id, type, message, created_at) 
+                VALUES (?, ?, ?, ?, NOW())";
+        $stmt = $conn->prepare($sql);
+        
+        if (!$stmt) {
+            error_log("Prepare error for notification insert: " . $conn->error);
+            return false;
+        }
+
+        $actor_id = null;
+        $stmt->bind_param("iiss", $customer_id, $actor_id, $type, $message);
+        $success = $stmt->execute();
+        
+        if (!$success) {
+            error_log("Notification insert error: " . $stmt->error);
+        }
+        
+        $stmt->close();
+        return $success ? true : false;
+
+    } catch (Exception $e) {
+        error_log("Exception in createDeliveryNotification: " . $e->getMessage());
         return false;
     }
-
-    $customer_id = (int)$result['user_id'];
-
-    // Message
-    if ($booking_type === 'pickup') {
-        $message = "Your order #$order_id has been picked up!";
-        $type = "PICKUP_COMPLETED";
-    } else {
-        $message = "Your order #$order_id has been delivered! Please review the products";
-        $type = "DELIVERY_COMPLETED";
-    }
-
-    // Insert
-    $sql = "INSERT INTO notifications (user_id, actor_id, type, message, created_at) 
-            VALUES (?, ?, ?, ?, NOW())";
-    $stmt = $conn->prepare($sql);
-    
-    if (!$stmt) {
-        return false;
-    }
-
-    $actor_id = null; // NULL - system notification
-    $stmt->bind_param("iiss", $customer_id, $actor_id, $type, $message);
-    $success = $stmt->execute();
-    $stmt->close();
-
-    return $success ? true : false;
 }
 
-
-// Replace this entire POST handler section in your delivery_tracking.php
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action'])) {
 
@@ -253,25 +265,33 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action'])) {
         error_log("=== UPLOAD_PROOF HANDLER STARTED ===");
         error_log("Files received: " . print_r($_FILES, true));
 
-        if (isset($_FILES['delivery_proof']) && $_FILES['delivery_proof']['error'] === UPLOAD_ERR_OK) {
-            error_log("File upload check: PASSED");
+        try {
+            if (!isset($_FILES['delivery_proof']) || $_FILES['delivery_proof']['error'] !== UPLOAD_ERR_OK) {
+                error_log("File upload error: " . $_FILES['delivery_proof']['error']);
+                throw new Exception("No file uploaded or upload error occurred");
+            }
 
             $upload_dir = '../../uploads/delivery_proofs/';
 
             if (!file_exists($upload_dir)) {
-                mkdir($upload_dir, 0755, true);
+                if (!mkdir($upload_dir, 0755, true)) {
+                    throw new Exception("Failed to create upload directory");
+                }
             }
 
             $file = $_FILES['delivery_proof'];
-            $filename = 'proof_' . $booking_id . '_' . time();
-            $webp_filename = $filename . '.webp';
-            $webp_path = $upload_dir . $webp_filename;
+            
+            // Validate file is actually an image
+            $image_info = @getimagesize($file['tmp_name']);
+            if ($image_info === false) {
+                throw new Exception("Invalid image file");
+            }
 
-            $image_info = getimagesize($file['tmp_name']);
             $mime_type = $image_info['mime'];
-
             error_log("Image MIME type: $mime_type");
 
+            // Create image resource
+            $image = null;
             switch ($mime_type) {
                 case 'image/jpeg':
                     $image = imagecreatefromjpeg($file['tmp_name']);
@@ -286,144 +306,203 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action'])) {
                     $image = imagecreatefromwebp($file['tmp_name']);
                     break;
                 default:
-                    error_log("Unsupported image format: $mime_type");
-                    $_SESSION['error_message'] = "Unsupported image format";
-                    header("Location: logistic-delivery-tracking-page-5.php?booking_id=" . $booking_id);
-                    exit();
+                    throw new Exception("Unsupported image format: $mime_type");
             }
 
-            if (imagewebp($image, $webp_path, 85)) {
+            if ($image === false) {
+                throw new Exception("Failed to create image resource from uploaded file");
+            }
+
+            $filename = 'proof_' . $booking_id . '_' . time();
+            $webp_filename = $filename . '.webp';
+            $webp_path = $upload_dir . $webp_filename;
+
+            if (!imagewebp($image, $webp_path, 85)) {
                 imagedestroy($image);
-                error_log("WebP conversion: SUCCESS");
+                throw new Exception("Failed to convert image to WebP format");
+            }
 
-                // Get old status for audit trail
-                $oldStatusStmt = $conn->prepare("SELECT booking_status FROM delivery_bookings WHERE id = ?");
-                $oldStatusStmt->bind_param("i", $booking_id);
-                $oldStatusStmt->execute();
-                $oldStatusResult = $oldStatusStmt->get_result()->fetch_assoc();
-                $old_status = $oldStatusResult['booking_status'];
-                $oldStatusStmt->close();
+            imagedestroy($image);
+            error_log("WebP conversion: SUCCESS - " . $webp_filename);
 
-                error_log("Old booking status: $old_status");
+            // Get old status for audit trail
+            $oldStatusStmt = $conn->prepare("SELECT booking_status FROM delivery_bookings WHERE id = ?");
+            if (!$oldStatusStmt) {
+                throw new Exception("Prepare error: " . $conn->error);
+            }
+            $oldStatusStmt->bind_param("i", $booking_id);
+            $oldStatusStmt->execute();
+            $oldStatusResult = $oldStatusStmt->get_result()->fetch_assoc();
+            $old_status = $oldStatusResult['booking_status'];
+            $oldStatusStmt->close();
 
-                // Update delivery booking with proof
-                $updateProof = $conn->prepare("
+            error_log("Old booking status: $old_status");
+
+            // Determine new status
+            $new_status = ($booking['booking_type'] === 'pickup') ? 'picked_up' : 'delivered';
+
+            // Update delivery booking with proof - FIX: Use CASE statement properly
+            $updateProof = $conn->prepare("
                 UPDATE delivery_bookings 
                 SET delivery_proof_image = ?,
-                    booking_status = CASE 
-                        WHEN booking_type = 'pickup' THEN 'picked_up'
-                        ELSE 'delivered'
-                    END,
+                    booking_status = ?,
                     actual_delivery_time = CURRENT_TIMESTAMP
                 WHERE id = ?
             ");
-                $updateProof->bind_param("si", $webp_filename, $booking_id);
-
-                if ($updateProof->execute()) {
-                    error_log("Delivery booking updated successfully");
-                    $new_status = ($booking['booking_type'] === 'pickup') ? 'picked_up' : 'delivered';
-
-                    // Log audit trail
-                    logAuditTrail(
-                        $conn,
-                        'UPLOAD_DELIVERY_PROOF',
-                        'delivery_bookings',
-                        $booking_id,
-                        $booking['order_id'],
-                        null,
-                        json_encode(['old_status' => $old_status, 'proof_image' => null]),
-                        json_encode(['new_status' => $new_status, 'proof_image' => $webp_filename]),
-                        ($booking['booking_type'] === 'pickup' ? 'Pickup' : 'Delivery') .
-                            " proof uploaded and status updated from '$old_status' to '$new_status'" .
-                            ($isReplacement ? ' (Replacement)' : '')
-                    );
-                    error_log("Audit trail logged");
-
-                    // ===== CREATE NOTIFICATION FOR CUSTOMER =====
-                    error_log("STEP 1: About to create notification");
-                    error_log("Order ID: " . $booking['order_id']);
-                    error_log("Booking Type: " . $booking['booking_type']);
-                    error_log("Booking ID: $booking_id");
-
-                    $notif_created = createDeliveryNotification($conn, $booking_id, $booking['order_id'], $booking['booking_type']);
-
-                    if ($notif_created) {
-                        error_log("STEP 2: ✓ Notification successfully created");
-                    } else {
-                        error_log("STEP 2: ✗ Notification failed to create");
-                    }
-                    // ===== END NOTIFICATION =====
-
-                    if ($isReplacement) {
-                        error_log("Updating replacement items (Replacement flow)");
-
-                        $replacement_final_status = ($booking['booking_type'] === 'pickup') ? 'picked_up' : 'delivered';
-                        $updateReplacement = $conn->prepare("
-                        UPDATE replacement_requests 
-                        SET status = ?,
-                            updated_at = CURRENT_TIMESTAMP
-                        WHERE delivery_schedule_id = (SELECT delivery_schedule_id FROM delivery_bookings WHERE id = ?)
-                    ");
-                        $updateReplacement->bind_param("si", $replacement_final_status, $booking_id);
-                        $updateReplacement->execute();
-                        $updateReplacement->close();
-
-                        $order_final_status = ($booking['booking_type'] === 'pickup') ? 'Picked Up' : 'Delivered';
-                        $updateOrder = $conn->prepare("UPDATE orders SET status = ? WHERE id = ?");
-                        $updateOrder->bind_param("si", $order_final_status, $booking['order_id']);
-                        $updateOrder->execute();
-                        $updateOrder->close();
-
-                        $item_status = ($booking['booking_type'] === 'pickup') ? 'picked_up' : 'delivered';
-                        $updateReplacementItem = $conn->prepare("
-                        UPDATE order_items 
-                        SET tracking_status = ? 
-                        WHERE id IN (
-                            SELECT order_item_id 
-                            FROM replacement_requests 
-                            WHERE delivery_schedule_id = (SELECT delivery_schedule_id FROM delivery_bookings WHERE id = ?)
-                        )
-                    ");
-                        $updateReplacementItem->bind_param("si", $item_status, $booking_id);
-                        $updateReplacementItem->execute();
-                        $updateReplacementItem->close();
-
-                        $_SESSION['success_message'] = "Replacement " . ($booking['booking_type'] === 'pickup' ? 'pickup' : 'delivery') . " completed successfully!";
-                        error_log("Replacement flow completed");
-                    } else {
-                        error_log("Updating order items (Regular flow)");
-
-                        $final_status = ($booking['booking_type'] === 'pickup') ? 'Picked Up' : 'Delivered';
-                        $updateOrder = $conn->prepare("UPDATE orders SET status = ? WHERE id = ?");
-                        $updateOrder->bind_param("si", $final_status, $booking['order_id']);
-                        $updateOrder->execute();
-                        $updateOrder->close();
-
-                        $item_status = ($booking['booking_type'] === 'pickup') ? 'picked_up' : 'delivered';
-                        $updateItems = $conn->prepare("UPDATE order_items SET tracking_status = ? WHERE order_id = ?");
-                        $updateItems->bind_param("si", $item_status, $booking['order_id']);
-                        $updateItems->execute();
-                        $updateItems->close();
-
-                        $_SESSION['success_message'] = "Delivery proof uploaded successfully!";
-                        error_log("Regular flow completed");
-                    }
-                } else {
-                    error_log("ERROR: Failed to update booking with proof - " . $updateProof->error);
-                    $_SESSION['error_message'] = "Failed to update booking with proof";
-                }
-                $updateProof->close();
-            } else {
-                imagedestroy($image);
-                error_log("ERROR: Failed to convert image to WebP");
-                $_SESSION['error_message'] = "Failed to convert image to WebP";
+            
+            if (!$updateProof) {
+                throw new Exception("Prepare error: " . $conn->error);
             }
-        } else {
-            error_log("ERROR: File upload failed - " . $_FILES['delivery_proof']['error']);
-            $_SESSION['error_message'] = "No file uploaded or upload error";
+
+            $updateProof->bind_param("ssi", $webp_filename, $new_status, $booking_id);
+
+            if (!$updateProof->execute()) {
+                throw new Exception("Failed to update delivery booking: " . $updateProof->error);
+            }
+
+            error_log("Delivery booking updated successfully");
+            $updateProof->close();
+
+            // Log audit trail
+            logAuditTrail(
+                $conn,
+                'UPLOAD_DELIVERY_PROOF',
+                'delivery_bookings',
+                $booking_id,
+                $booking['order_id'],
+                null,
+                json_encode(['old_status' => $old_status, 'proof_image' => null]),
+                json_encode(['new_status' => $new_status, 'proof_image' => $webp_filename]),
+                ($booking['booking_type'] === 'pickup' ? 'Pickup' : 'Delivery') .
+                    " proof uploaded and status updated from '$old_status' to '$new_status'" .
+                    ($isReplacement ? ' (Replacement)' : '')
+            );
+            error_log("Audit trail logged");
+
+            // CREATE NOTIFICATION FOR CUSTOMER
+            error_log("Creating notification for customer");
+            $notif_created = createDeliveryNotification($conn, $booking_id, $booking['order_id'], $booking['booking_type']);
+
+            if ($notif_created) {
+                error_log("✓ Notification successfully created");
+            } else {
+                error_log("✗ Notification failed to create");
+            }
+
+            if ($isReplacement) {
+                error_log("Updating replacement items");
+
+                $replacement_final_status = ($booking['booking_type'] === 'pickup') ? 'picked_up' : 'delivered';
+                
+                $updateReplacement = $conn->prepare("
+                    UPDATE replacement_requests 
+                    SET status = ?,
+                        updated_at = CURRENT_TIMESTAMP
+                    WHERE delivery_schedule_id = (SELECT delivery_schedule_id FROM delivery_bookings WHERE id = ?)
+                ");
+                
+                if (!$updateReplacement) {
+                    throw new Exception("Prepare error for replacement_requests: " . $conn->error);
+                }
+
+                $updateReplacement->bind_param("si", $replacement_final_status, $booking_id);
+                
+                if (!$updateReplacement->execute()) {
+                    throw new Exception("Failed to update replacement_requests: " . $updateReplacement->error);
+                }
+
+                $updateReplacement->close();
+                error_log("Updated replacement_requests to: $replacement_final_status");
+
+                $order_final_status = ($booking['booking_type'] === 'pickup') ? 'Picked Up' : 'Delivered';
+                $updateOrder = $conn->prepare("UPDATE orders SET status = ? WHERE id = ?");
+                
+                if (!$updateOrder) {
+                    throw new Exception("Prepare error for orders: " . $conn->error);
+                }
+
+                $updateOrder->bind_param("si", $order_final_status, $booking['order_id']);
+                
+                if (!$updateOrder->execute()) {
+                    throw new Exception("Failed to update orders: " . $updateOrder->error);
+                }
+
+                $updateOrder->close();
+                error_log("Updated order status to: $order_final_status");
+
+                $item_status = ($booking['booking_type'] === 'pickup') ? 'picked_up' : 'delivered';
+                $updateReplacementItem = $conn->prepare("
+                    UPDATE order_items 
+                    SET tracking_status = ? 
+                    WHERE id IN (
+                        SELECT order_item_id 
+                        FROM replacement_requests 
+                        WHERE delivery_schedule_id = (SELECT delivery_schedule_id FROM delivery_bookings WHERE id = ?)
+                    )
+                ");
+                
+                if (!$updateReplacementItem) {
+                    throw new Exception("Prepare error for order_items: " . $conn->error);
+                }
+
+                $updateReplacementItem->bind_param("si", $item_status, $booking_id);
+                
+                if (!$updateReplacementItem->execute()) {
+                    throw new Exception("Failed to update order_items: " . $updateReplacementItem->error);
+                }
+
+                $updateReplacementItem->close();
+                error_log("Updated order_items tracking_status to: $item_status");
+
+                $_SESSION['success_message'] = "Replacement " . ($booking['booking_type'] === 'pickup' ? 'pickup' : 'delivery') . " completed successfully!";
+                error_log("Replacement flow completed successfully");
+
+            } else {
+                error_log("Updating regular order items");
+
+                $final_status = ($booking['booking_type'] === 'pickup') ? 'Picked Up' : 'Delivered';
+                $updateOrder = $conn->prepare("UPDATE orders SET status = ? WHERE id = ?");
+                
+                if (!$updateOrder) {
+                    throw new Exception("Prepare error for orders: " . $conn->error);
+                }
+
+                $updateOrder->bind_param("si", $final_status, $booking['order_id']);
+                
+                if (!$updateOrder->execute()) {
+                    throw new Exception("Failed to update orders: " . $updateOrder->error);
+                }
+
+                $updateOrder->close();
+                error_log("Updated order status to: $final_status");
+
+                $item_status = ($booking['booking_type'] === 'pickup') ? 'picked_up' : 'delivered';
+                $updateItems = $conn->prepare("UPDATE order_items SET tracking_status = ? WHERE order_id = ?");
+                
+                if (!$updateItems) {
+                    throw new Exception("Prepare error for order_items: " . $conn->error);
+                }
+
+                $updateItems->bind_param("si", $item_status, $booking['order_id']);
+                
+                if (!$updateItems->execute()) {
+                    throw new Exception("Failed to update order_items: " . $updateItems->error);
+                }
+
+                $updateItems->close();
+                error_log("Updated order_items tracking_status to: $item_status");
+
+                $_SESSION['success_message'] = "Delivery proof uploaded successfully!";
+                error_log("Regular flow completed successfully");
+            }
+
+            error_log("=== UPLOAD_PROOF HANDLER ENDED - SUCCESS ===");
+
+        } catch (Exception $e) {
+            error_log("ERROR in upload_proof: " . $e->getMessage());
+            $_SESSION['error_message'] = "Error: " . $e->getMessage();
         }
 
-        error_log("=== UPLOAD_PROOF HANDLER ENDED - Redirecting ===");
         header("Location: logistic-delivery-tracking-page-5.php?booking_id=" . $booking_id);
         exit();
     }

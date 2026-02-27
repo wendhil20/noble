@@ -1336,7 +1336,9 @@ class ProductSelector {
           data.message || "Product added to cart!",
           "success"
         );
-        this.updateCartCount(data.cart_count);
+       
+       // ✅ Direct badge update - no extra fetch
+        if (window.updateCartBadge) window.updateCartBadge(data.cart_count);
       } else {
         if (data.message === "You must be logged in to pre-order.") {
           this.showNotification("Please log in to pre-order.", "error");
@@ -1448,18 +1450,18 @@ class ProductSelector {
   }
 
   updateCartCount(newCount) {
-    const cartCountElements = document.querySelectorAll(
-      ".cart-count, #cartCount"
-    );
-    cartCountElements.forEach((element) => {
-      if (element) {
-        element.textContent = newCount;
-        element.classList.add("animate-bounce");
-        setTimeout(() => {
-          element.classList.remove("animate-bounce");
-        }, 1000);
-      }
-    });
+    // const cartCountElements = document.querySelectorAll(
+    //   ".cart-count, #cartCount"
+    // );
+    // cartCountElements.forEach((element) => {
+    //   if (element) {
+    //     element.textContent = newCount;
+    //     element.classList.add("animate-bounce");
+    //     setTimeout(() => {
+    //       element.classList.remove("animate-bounce");
+    //     }, 1000);
+    //   }
+    // });
   }
 }
 

@@ -1,31 +1,77 @@
 <?php
 session_name("nobleuser");
-session_start();
+if (session_status() === PHP_SESSION_NONE) session_start();
 
+if (ob_get_level()) ob_end_clean();
 ob_start();
-ob_clean();
 
 header('Content-Type: application/json');
 header('Cache-Control: no-cache, must-revalidate');
 
-require_once '../../connection/connect.php';
+function sendEmptyCart() {
+    $empty_html = '<div class="text-center py-8">
+        <i class="fas fa-shopping-cart text-4xl text-gray-300 mb-3"></i>
+        <p class="text-gray-500 text-sm">Your cart is empty</p>
+        <a href="index-shop-page-2.php" class="inline-block mt-3 text-orange-600 hover:text-orange-700 text-sm font-medium">Start Shopping</a>
+    </div>';
+    if (ob_get_level()) ob_end_clean();
+    echo json_encode([
+        'success'     => true,
+        'total_items' => 0,   // SUM of quantity = 0
+        'cart_html'   => $empty_html,
+        'footer_html' => '',
+        'total'       => '0.00'
+    ]);
+    exit;
+}
 
 $user_id = $_SESSION['user_id'] ?? null;
+if (!$user_id) sendEmptyCart();
 
-if (!$user_id) {
-    echo json_encode(['success' => false, 'message' => 'User not logged in']);
+$possible_paths = [
+    '../../connection/connect.php',
+    '../connection/connect.php',
+    'connection/connect.php',
+    '../../../connection/connect.php',
+];
+
+$conn_loaded = false;
+foreach ($possible_paths as $path) {
+    if (file_exists($path)) {
+        require_once $path;
+        $conn_loaded = true;
+        break;
+    }
+}
+
+if (!$conn_loaded) {
+    if (ob_get_level()) ob_end_clean();
+    echo json_encode(['success' => false, 'message' => 'DB connection not found']);
     exit;
 }
 
 try {
-    // UPDATED: Added product_colors join for color image
+    // STEP 1: Quick SUM check - if 0 qty total, cart is empty
+    // PALITAN NG:
+$count_stmt = $conn->prepare("SELECT COUNT(*) as total_qty FROM user_cart_items WHERE user_id = ?");
+    $count_stmt->bind_param("i", $user_id);
+    $count_stmt->execute();
+    $count_row = $count_stmt->get_result()->fetch_assoc();
+    $count_stmt->close();
+
+    $total_qty_quick = (int)($count_row['total_qty'] ?? 0);
+
+    // EARLY RETURN IF EMPTY - stops any polling loop
+    if ($total_qty_quick === 0) sendEmptyCart();
+
+    // STEP 2: Full query only when cart has items
     $stmt = $conn->prepare("
-        SELECT 
-            c.*, 
-            t.type_image, 
-            p.descrip6, 
-            p.descrip7, 
-            p.product_name, 
+        SELECT
+            c.*,
+            t.type_image,
+            p.descrip6,
+            p.descrip7,
+            p.product_name,
             p.main_image,
             pc.image as pc_image
         FROM user_cart_items c
@@ -35,173 +81,112 @@ try {
         WHERE c.user_id = ?
         ORDER BY c.added_at DESC
     ");
-    
     $stmt->bind_param("i", $user_id);
     $stmt->execute();
     $result = $stmt->get_result();
-    
+
     $cart_items = [];
-    $total = 0;
-    
+    $total      = 0;
+    $total_qty  = 0; // SUM of all quantities
+
     while ($row = $result->fetch_assoc()) {
         $cart_items[] = $row;
-        $total += floatval($row['price']) * intval($row['quantity']);
+        $qty    = intval($row['quantity']);
+        $total += floatval($row['price']) * $qty;
+      $total_qty += 1; // <-- COUNT ng products lang
     }
-    
     $stmt->close();
-    
-    // Generate cart HTML
+
+    // Generate cart items HTML
     ob_start();
-    
-  if (count($cart_items) > 0) {
-    echo '<div class="space-y-3" style="/* Better cart scroll fix */
-#cart-items-container {
-    max-height: 400px; /* Increase from 240px/256px */
-    overflow-y: auto;
-    scroll-behavior: smooth;
-    scrollbar-width: thin;
-    scrollbar-color: #d1d5db #f3f4f6;
-}
-
-/* WebKit browsers scrollbar */
-#cart-items-container::-webkit-scrollbar {
-    width: 6px;
-}
-
-#cart-items-container::-webkit-scrollbar-track {
-    background: #f3f4f6;
-    border-radius: 10px;
-}
-
-#cart-items-container::-webkit-scrollbar-thumb {
-    background: #d1d5db;
-    border-radius: 10px;
-}
-
-#cart-items-container::-webkit-scrollbar-thumb:hover {
-    background: #9ca3af;
-}
-
-/* Mobile responsive */
-@media (max-width: 640px) {
-    #cart-items-container {
-        max-height: 350px;
-    }
-}
-
-@media (max-width: 480px) {
-    #cart-items-container {
-        max-height: 300px;
-    }
-}
-
-@media (max-width: 375px) {
-    #cart-items-container {
-        max-height: 250px;
-    }
-}">';
+    if (count($cart_items) > 0) {
+        echo '<div class="space-y-3">';
         foreach ($cart_items as $item) {
-            $unit_price = floatval($item['price']);
-            $quantity = intval($item['quantity']);
+            $unit_price   = floatval($item['price']);
+            $quantity     = intval($item['quantity']);
             $display_name = htmlspecialchars($item['product_name'] ?? $item['codename'] ?? 'Product');
-            ?>
-            <div class="flex items-center gap-2 sm:gap-3 p-2 sm:p-3 border border-gray-100 rounded-lg hover:bg-gray-50 transition cart-item-slide">
-                <?php if (!empty($item['pc_image'])): ?>
-                    <img src="../../<?= htmlspecialchars($item['pc_image']) ?>" alt="Product" class="w-10 h-10 sm:w-12 sm:h-12 object-contain rounded-lg flex-shrink-0">
-                <?php elseif (!empty($item['type_image'])): ?>
-                    <img src="../../<?= htmlspecialchars($item['type_image']) ?>" alt="Product" class="w-10 h-10 sm:w-12 sm:h-12 object-contain rounded-lg flex-shrink-0">
-                <?php elseif (!empty($item['main_image'])): ?>
-                    <img src="../../<?= htmlspecialchars($item['main_image']) ?>" alt="Product" class="w-10 h-10 sm:w-12 sm:h-12 object-contain rounded-lg flex-shrink-0">
-                <?php else: ?>
-                    <div class="w-10 h-10 sm:w-12 sm:h-12 bg-gray-200 rounded-lg flex items-center justify-center flex-shrink-0">
-                        <i class="fas fa-image text-gray-400 text-xs"></i>
-                    </div>
-                <?php endif; ?>
 
-                <div class="flex-1 min-w-0">
-                    <h4 class="font-medium text-xs sm:text-sm text-gray-800 truncate"><?= $display_name ?></h4>
-                    <p class="text-[10px] sm:text-xs text-gray-500 truncate">
-                        <?= htmlspecialchars($item['variant_name'] ?? '') ?>
-                        <?= !empty($item['color_name']) ? ', ' . htmlspecialchars($item['color_name']) : '' ?>
-                        <?= !empty($item['size']) ? ', ' . htmlspecialchars($item['size']) : '' ?>
-                    </p>
-                    
-                    <!-- Display descrip6 and descrip7 if available -->
-                    <?php if (!empty($item['descrip6']) || !empty($item['descrip7'])): ?>
-                        <p class="text-[9px] sm:text-[10px] text-gray-400 truncate mt-1">
-                            <?= htmlspecialchars($item['descrip6'] ?: '') ?>
-                            <?= !empty($item['descrip6']) && !empty($item['descrip7']) ? ' • ' : '' ?>
-                            <?= htmlspecialchars($item['descrip7'] ?: '') ?>
-                        </p>
-                    <?php endif; ?>
-                    
-                    <div class="flex items-center justify-between mt-1">
-                        <span class="text-xs sm:text-sm text-black">₱<?= number_format($unit_price, 2) ?></span>
-                        <span class="text-[10px] sm:text-xs text-gray-500">Qty: <?= $quantity ?></span>
-                    </div>
-                </div>
+            if (!empty($item['pc_image'])) {
+                $img_html = '<img src="../../' . htmlspecialchars($item['pc_image']) . '" alt="Product" class="w-10 h-10 sm:w-12 sm:h-12 object-contain rounded-lg flex-shrink-0">';
+            } elseif (!empty($item['type_image'])) {
+                $img_html = '<img src="../../' . htmlspecialchars($item['type_image']) . '" alt="Product" class="w-10 h-10 sm:w-12 sm:h-12 object-contain rounded-lg flex-shrink-0">';
+            } elseif (!empty($item['main_image'])) {
+                $img_html = '<img src="../../' . htmlspecialchars($item['main_image']) . '" alt="Product" class="w-10 h-10 sm:w-12 sm:h-12 object-contain rounded-lg flex-shrink-0">';
+            } else {
+                $img_html = '<div class="w-10 h-10 sm:w-12 sm:h-12 bg-gray-200 rounded-lg flex items-center justify-center flex-shrink-0"><i class="fas fa-image text-gray-400 text-xs"></i></div>';
+            }
 
-                <a href="javascript:void(0)" onclick="removeFromCart(<?= intval($item['id']) ?>)" class="text-red-500 hover:text-red-700 transition p-1 flex-shrink-0">
-                    <i class="fas fa-times text-xs"></i>
-                </a>
-            </div>
-            <?php
+            $variant_parts = [];
+            if (!empty($item['variant_name'])) $variant_parts[] = htmlspecialchars($item['variant_name']);
+            if (!empty($item['color_name']))   $variant_parts[] = htmlspecialchars($item['color_name']);
+            if (!empty($item['size']))         $variant_parts[] = htmlspecialchars($item['size']);
+            $variant_text = implode(', ', $variant_parts);
+
+            $descrip_parts = [];
+            if (!empty($item['descrip6'])) $descrip_parts[] = htmlspecialchars($item['descrip6']);
+            if (!empty($item['descrip7'])) $descrip_parts[] = htmlspecialchars($item['descrip7']);
+            $descrip_html = !empty($descrip_parts)
+                ? '<p class="text-[9px] sm:text-[10px] text-gray-400 truncate mt-1">' . implode(' &bull; ', $descrip_parts) . '</p>'
+                : '';
+
+            echo '
+<div class="flex items-center gap-2 sm:gap-3 p-2 sm:p-3 border border-gray-100 rounded-lg hover:bg-gray-50 transition cart-item-slide">
+    ' . $img_html . '
+    <div class="flex-1 min-w-0">
+        <h4 class="font-medium text-xs sm:text-sm text-gray-800 truncate">' . $display_name . '</h4>
+        <p class="text-[10px] sm:text-xs text-gray-500 truncate">' . $variant_text . '</p>
+        ' . $descrip_html . '
+        <div class="flex items-center justify-between mt-1">
+            <span class="text-xs sm:text-sm text-orange-600">&#8369;' . number_format($unit_price, 2) . '</span>
+            <span class="text-[10px] sm:text-xs text-gray-500">Qty: ' . $quantity . '</span>
+        </div>
+    </div>
+    <a href="javascript:void(0)" onclick="removeFromCart(' . intval($item['id']) . ')" class="text-red-500 hover:text-red-700 transition p-1 flex-shrink-0">
+        <i class="fas fa-times text-xs"></i>
+    </a>
+</div>';
         }
         echo '</div>';
     } else {
-        ?>
-        <div class="text-center py-8">
+        echo '<div class="text-center py-8">
             <i class="fas fa-shopping-cart text-4xl text-gray-300 mb-3"></i>
             <p class="text-gray-500 text-sm">Your cart is empty</p>
-            <a href="index-shop-page-2.php" class="inline-block mt-3 text-orange-600 hover:text-orange-700 text-sm font-medium">
-                Start Shopping
-            </a>
-        </div>
-        <?php
+            <a href="index-shop-page-2.php" class="inline-block mt-3 text-orange-600 hover:text-orange-700 text-sm font-medium">Start Shopping</a>
+        </div>';
     }
-    
     $cart_html = ob_get_clean();
-    
+
     // Generate footer HTML
     $footer_html = '';
     if (count($cart_items) > 0) {
-        ob_start();
-        ?>
-        <div class="flex justify-between items-center mb-3">
-            <span class="text-sm text-gray-700">Total:</span>
-            <span class="text-base sm:text-lg text-black" id="cart-total">
-                ₱<?= number_format($total, 2) ?>
-            </span>
-        </div>
-
-        <div class="grid grid-cols-2 gap-2">
-            <a href="../otherpage/index-cart_view-page-8.php"
-                class="text-white px-3 py-2 text-xs sm:text-sm text-center transition bg-black">
-                View Cart
-            </a>
-            <a href="../otherpage/index-checkout-page-12.php"
-                class="text-white px-3 py-2 text-xs sm:text-sm text-center transition bg-black" >
-                Checkout
-            </a>
-        </div>
-        <?php
-        $footer_html = ob_get_clean();
+        $footer_html = '
+<div class="flex justify-between items-center mb-3">
+    <span class="text-sm text-gray-700">Total:</span>
+    <span class="text-base sm:text-lg text-orange-600" id="cart-total">&#8369;' . number_format($total, 2) . '</span>
+</div>
+<div class="grid grid-cols-2 gap-2">
+    <a href="../otherpage/index-cart_view-page-8.php" class="bg-black hover:bg-gray-800 text-white px-3 py-2 text-xs sm:text-sm text-center rounded transition">View Cart</a>
+    <a href="javascript:void(0)" onclick="proceedToCheckout()" class="bg-orange-500 hover:bg-orange-600 text-white px-3 py-2 text-xs sm:text-sm text-center rounded transition">Checkout</a>
+</div>';
     }
-    
+
+    // Discard stray output
+    $stray = ob_get_clean();
+    if (!empty(trim($stray))) error_log("refresh_cart stray: " . substr($stray, 0, 200));
+
+    // Return JSON with total_qty as badge count (SUM of quantities)
     echo json_encode([
-        'success' => true,
-        'total_items' => count($cart_items),
-        'cart_html' => $cart_html,
+        'success'     => true,
+        'total_items' => $total_qty,  // SUM of all quantities (e.g. 5)
+        'cart_html'   => $cart_html,
         'footer_html' => $footer_html,
-        'total' => number_format($total, 2)
+        'total'       => number_format($total, 2)
     ]);
-    
+
 } catch (Exception $e) {
     error_log("Cart refresh error: " . $e->getMessage());
-    
-    echo json_encode([
-        'success' => false,
-        'message' => 'Database error: ' . $e->getMessage()
-    ]);
+    if (ob_get_level()) ob_end_clean();
+    header('Content-Type: application/json');
+    echo json_encode(['success' => false, 'message' => 'Database error']);
 }
 ?>

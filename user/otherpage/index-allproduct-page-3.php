@@ -1346,9 +1346,11 @@ if (siblings.length > 1) {
                     const data = await response.json();
 
                     if (data.success) {
-                        this.showNotification(data.message || 'Added to cart!', 'success');
-                        this.updateCartCount(data.cart_count || data.total_items);
-
+                     
+        this.showNotification(data.message || 'Added to cart!', 'success');
+        const newCount = data.cart_count;
+      
+        this.updateCartCount(newCount);
                         button.innerHTML = '✓ Added!';
                         setTimeout(() => {
                             button.innerHTML = originalContent;
@@ -1365,25 +1367,17 @@ if (siblings.length > 1) {
                 }
             }
 
-            updateCartCount(count) {
-                const cartCountElements = document.querySelectorAll('[data-cart-count], .cart-count');
-                cartCountElements.forEach(el => {
-                    el.textContent = count;
-                    const badge = el.closest('.cart-count');
-                    if (badge) {
-                        if (count > 0) {
-                            badge.classList.remove('hidden');
-                        } else {
-                            badge.classList.add('hidden');
-                        }
-                    }
-                });
+updateCartCount(count) {
+    if (typeof window.updateCartBadge === 'function') {
+        window.updateCartBadge(count); // ← direct badge update
+    }
+    setTimeout(() => {
+        if (typeof window.updateCartGlobally === 'function') {
+            window.updateCartGlobally(); // ← fetch from DB para ma-sync modal
+        }
+    }, 800);
+}
 
-                const modalCartCount = document.getElementById('modal-cart-count');
-                if (modalCartCount) {
-                    modalCartCount.textContent = `${count} items`;
-                }
-            }
 
             showNotification(message, type) {
                 const container = document.getElementById('notificationContainer');

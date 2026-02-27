@@ -18,7 +18,8 @@ $user_picture = $_SESSION['user_picture'] ?? null;
 
 // Get cart items count and data
 if ($user_id) {
-  $count_stmt = $conn->prepare("SELECT COUNT(*) as count FROM user_cart_items WHERE user_id = ?");
+// PALITAN NG - COUNT ng products:
+$count_stmt = $conn->prepare("SELECT COUNT(*) as count FROM user_cart_items WHERE user_id = ?");
   $count_stmt->bind_param("i", $user_id);
   $count_stmt->execute();
   $count_result = $count_stmt->get_result();
@@ -621,7 +622,7 @@ $hidden_pages = ['help.php', 'about.php'];
           class="relative p-2 hover:bg-gray-100 rounded-full transition">
           <img src="../img/ecommerce.png" alt="Cart" class="w-5 h-5 object-contain" />
           <span class="cart-count absolute -top-1 -right-1 bg-red-500 text-white text-xs px-1.5 py-0.5 rounded-full font-bold leading-none <?= $total_cart_items > 0 ? '' : 'hidden' ?>">
-            <span class="cart-count" data-cart-count><?= $total_cart_items ?></span>
+         
           </span>
         </a>
 
@@ -1410,8 +1411,8 @@ $hidden_pages = ['help.php', 'about.php'];
               id="cart-link">
               <i class="fas fa-shopping-cart fa-md"></i>
               Cart
-              <span id="cart-count-bubble" class="cart-count absolute -top-1 -right-2 bg-red-500 text-white text-[10px] px-1.5 py-0.5 rounded-full leading-none <?= $total_cart_items > 0 ? '' : 'hidden' ?>">
-                <span class="cart-count" data-cart-count><?= $total_cart_items ?></span>
+            <span id="cart-count-bubble" class="absolute top-0 right-0 w-2.5 h-2.5 bg-red-500 rounded-full <?= $total_cart_items > 0 ? '' : 'hidden' ?>"></span>
+                
               </span>
             </a>
           <?php endif; ?>
@@ -1531,7 +1532,6 @@ $hidden_pages = ['help.php', 'about.php'];
             pc.image as pc_image
           FROM user_cart_items c
           LEFT JOIN product_types t ON t.product_id = c.product_id AND t.type_name = c.type_name
-          LEFT JOIN product_variants v ON c.variant_id = v.id
           LEFT JOIN products p ON c.product_id = p.id
           LEFT JOIN product_colors pc ON pc.id = c.color_id
           WHERE c.user_id = ?
@@ -3175,8 +3175,8 @@ $hidden_pages = ['help.php', 'about.php'];
 </nav>
 
 
-<script src="../navbar/js/top-obf.js"></script>
-<script src="../navbar/js/topcart.obfuscated.js"></script>
+ <script src="../navbar/js/top-obf.js?v=<?= filemtime('../navbar/js/top-obf.js') ?>"></script>
+ <script src="../navbar/js/topcart.obfuscated.js?v=<?= filemtime('../navbar/js/topcart.obfuscated.js') ?>"></script>
 <script src="https://unpkg.com/lucide@latest"></script>
 
 <script>

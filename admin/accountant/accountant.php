@@ -1,5 +1,6 @@
 <?php
 //accountant.php
+date_default_timezone_set('Asia/Manila');
 session_name("nobleadmin");
 session_start();
 
@@ -77,7 +78,7 @@ $error_message   = $_SESSION['error_message'] ?? '';
 unset($_SESSION['success_message'], $_SESSION['error_message']);
 
 // ============================================================
-// AJAX HANDLER: verify / reject
+// AJAX HANDLER: verify only
 // ============================================================
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action'])) {
     if (ob_get_level()) ob_clean();
@@ -120,47 +121,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action'])) {
                 $conn->rollback();
                 echo json_encode(['success' => false, 'message' => $e->getMessage()]);
             }
-        } elseif ($_POST['action'] === 'reject_payment') {
-            $order_id = filter_input(INPUT_POST, 'order_id', FILTER_VALIDATE_INT);
-            $reason   = trim($_POST['rejection_reason'] ?? '');
-            if (!$order_id || $order_id <= 0) {
-                echo json_encode(['success' => false, 'message' => 'Invalid order ID.']);
-                exit();
-            }
-            if ($reason === '') {
-                echo json_encode(['success' => false, 'message' => 'Rejection reason is required.']);
-                exit();
-            }
-            $conn->begin_transaction();
-            try {
-                $q = $conn->prepare("SELECT user_id, customer_name, total, payment_status FROM orders WHERE id = ? LIMIT 1");
-                if (!$q) throw new Exception("DB prepare failed");
-                $q->bind_param("i", $order_id);
-                $q->execute();
-                $od = $q->get_result()->fetch_assoc();
-                $q->close();
-                if (!$od) throw new Exception("Order not found");
-                if ($od['payment_status'] === 'rejected') throw new Exception("Order is already rejected");
-                $s = $conn->prepare("UPDATE orders SET payment_status='rejected', rejection_reason=?, rejection_date=CURRENT_TIMESTAMP, rejected_at=CURRENT_TIMESTAMP, rejected_by=? WHERE id=?");
-                if (!$s) throw new Exception("DB prepare failed for rejection");
-                $s->bind_param("sii", $reason, $current_user_id, $order_id);
-                $s->execute();
-                $s->close();
-                if (!empty($od['user_id'])) {
-                    $msg = "Your payment for Order #$order_id has been rejected by {$current_user['name']}. Reason: $reason. Please resubmit your payment.";
-                    $n = $conn->prepare("INSERT INTO notifications (user_id, actor_id, type, message, created_at) VALUES (?,?,'payment_rejected',?,NOW())");
-                    if ($n) {
-                        $n->bind_param("iis", $od['user_id'], $current_user_id, $msg);
-                        $n->execute();
-                        $n->close();
-                    }
-                }
-                $conn->commit();
-                echo json_encode(['success' => true, 'message' => 'Payment rejected successfully', 'rejected_by' => $current_user['name']]);
-            } catch (Exception $e) {
-                $conn->rollback();
-                echo json_encode(['success' => false, 'message' => $e->getMessage()]);
-            }
         } else {
             echo json_encode(['success' => false, 'message' => 'Invalid action.']);
         }
@@ -172,9 +132,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action'])) {
 
 // ============================================================
 // PAGE LOAD — filter + stats
-// NOTE: "For Verification" now fetches payment_status = 'paid'
-//       (all payment methods — QR, Bank Transfer, PayMongo, etc.)
-//       PayPal tab removed entirely.
 // ============================================================
 $filter = $_GET['filter'] ?? 'pending';
 $payment_method_filter = $_GET['method']    ?? null;
@@ -185,17 +142,14 @@ $qr_type_filter        = $_GET['qr_type']   ?? null;
 $pending_payments    = 0;
 $verified_today      = 0;
 $total_revenue_today = 0;
-$rejected_payments   = 0;
 $paymongo_pending    = 0;
 $qr_pending          = 0;
-$bank_pending        = 0;
 
 $r = $conn->query("SELECT mode_payment, COUNT(*) as count FROM orders WHERE payment_status = 'paid' GROUP BY mode_payment");
 if ($r) {
     while ($row = $r->fetch_assoc()) {
-        if ($row['mode_payment'] === 'PayMongo')      $paymongo_pending = $row['count'];
-        elseif ($row['mode_payment'] === 'QR Payment')    $qr_pending   = $row['count'];
-        elseif ($row['mode_payment'] === 'Bank Transfer') $bank_pending  = $row['count'];
+        if ($row['mode_payment'] === 'PayMongo')       $paymongo_pending = $row['count'];
+        elseif ($row['mode_payment'] === 'QR Payment') $qr_pending       = $row['count'];
     }
 }
 
@@ -208,22 +162,16 @@ if ($r) $verified_today = $r->fetch_assoc()['c'] ?? 0;
 $r = $conn->query("SELECT COALESCE(SUM(final_total),0) as t FROM orders WHERE payment_status = 'verified' AND DATE(confirmed_at) = CURDATE()");
 if ($r) $total_revenue_today = $r->fetch_assoc()['t'] ?? 0;
 
-$r = $conn->query("SELECT COUNT(*) as c FROM orders WHERE payment_status = 'rejected'");
-if ($r) $rejected_payments = $r->fetch_assoc()['c'] ?? 0;
-
 // Build WHERE clause
 $where = "";
 switch ($filter) {
     case 'pending':
         $where = "WHERE o.payment_status = 'paid'";
         if ($payment_method_filter) {
-            if ($payment_method_filter === 'paymongo')    $where .= " AND o.mode_payment = 'PayMongo'";
+            if ($payment_method_filter === 'paymongo') $where .= " AND o.mode_payment = 'PayMongo'";
             elseif ($payment_method_filter === 'qr') {
                 $where .= " AND o.mode_payment = 'QR Payment'";
                 if ($qr_type_filter) $where .= " AND o.bank_type = '" . $conn->real_escape_string($qr_type_filter) . "'";
-            } elseif ($payment_method_filter === 'bank') {
-                $where .= " AND o.mode_payment = 'Bank Transfer'";
-                if ($bank_type_filter) $where .= " AND o.bank_type = '" . $conn->real_escape_string($bank_type_filter) . "'";
             }
         }
         break;
@@ -234,46 +182,28 @@ switch ($filter) {
             elseif ($payment_method_filter === 'qr') {
                 $where .= " AND o.mode_payment = 'QR Payment'";
                 if ($qr_type_filter) $where .= " AND o.bank_type = '" . $conn->real_escape_string($qr_type_filter) . "'";
-            } elseif ($payment_method_filter === 'bank') {
-                $where .= " AND o.mode_payment = 'Bank Transfer'";
-                if ($bank_type_filter) $where .= " AND o.bank_type = '" . $conn->real_escape_string($bank_type_filter) . "'";
-            }
-        }
-        break;
-    case 'rejected':
-        $where = "WHERE o.payment_status = 'rejected'";
-        if ($payment_method_filter) {
-            if ($payment_method_filter === 'paymongo') $where .= " AND o.mode_payment = 'PayMongo'";
-            elseif ($payment_method_filter === 'qr') {
-                $where .= " AND o.mode_payment = 'QR Payment'";
-                if ($qr_type_filter) $where .= " AND o.bank_type = '" . $conn->real_escape_string($qr_type_filter) . "'";
-            } elseif ($payment_method_filter === 'bank') {
-                $where .= " AND o.mode_payment = 'Bank Transfer'";
-                if ($bank_type_filter) $where .= " AND o.bank_type = '" . $conn->real_escape_string($bank_type_filter) . "'";
             }
         }
         break;
     case 'paymongo':
-        break; // dedicated section
+        break;
     default:
-        $where = "WHERE o.payment_status IN ('paid','verified','rejected')";
+        $where = "WHERE o.payment_status IN ('paid','verified')";
         break;
 }
 
 $orders_result = null;
 if ($filter !== 'paymongo') {
     $orders_result = $conn->query("
-        SELECT o.*, vb.fullname as verified_by_name, rb.fullname as rejected_by_name
+        SELECT o.*, vb.fullname as verified_by_name
         FROM orders o
         LEFT JOIN nobleaccount vb ON o.verified_by = vb.id
-        LEFT JOIN nobleaccount rb ON o.rejected_by = rb.id
         $where
-        ORDER BY CASE o.payment_status WHEN 'paid' THEN 1 WHEN 'verified' THEN 2 WHEN 'rejected' THEN 3 END, o.created_at DESC
+        ORDER BY CASE o.payment_status WHEN 'paid' THEN 1 WHEN 'verified' THEN 2 END, o.created_at DESC
         LIMIT 100
     ");
 }
 
-// Helper: active tab class
 function tabClass($current, $target)
 {
     return $current === $target
@@ -304,21 +234,9 @@ function tabClass($current, $target)
         }
     </script>
     <style>
-        html,
-        body {
-            overflow-x: hidden;
-            max-width: 100%;
-        }
-
-        .order-row-clickable {
-            cursor: pointer;
-            transition: all 0.2s ease;
-        }
-
-        .order-row-clickable:hover {
-            background-color: #f3f4f6 !important;
-            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.08);
-        }
+        html, body { overflow-x: hidden; max-width: 100%; }
+        .order-row-clickable { cursor: pointer; transition: all 0.2s ease; }
+        .order-row-clickable:hover { background-color: #f3f4f6 !important; box-shadow: 0 2px 4px rgba(0,0,0,0.08); }
     </style>
 </head>
 
@@ -356,16 +274,13 @@ function tabClass($current, $target)
         <div class="bg-white rounded-xl shadow-sm mb-6">
             <div class="border-b border-gray-200">
                 <nav class="-mb-px flex space-x-6 px-6 overflow-x-auto">
-                    <a href="?filter=pending" class="<?php echo tabClass($filter, 'pending');  ?> whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm flex items-center">
+                    <a href="?filter=pending" class="<?php echo tabClass($filter, 'pending'); ?> whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm flex items-center">
                         <i class="fas fa-clock mr-2"></i>For Verification (<?php echo number_format($pending_payments); ?>)
                     </a>
                     <a href="?filter=verified" class="<?php echo tabClass($filter, 'verified'); ?> whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm flex items-center">
                         <i class="fas fa-check-circle mr-2"></i>Verified
                     </a>
-                    <a href="?filter=rejected" class="<?php echo tabClass($filter, 'rejected'); ?> whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm flex items-center">
-                        <i class="fas fa-times-circle mr-2"></i>Rejected (<?php echo number_format($rejected_payments); ?>)
-                    </a>
-                    <a href="?filter=all" class="<?php echo tabClass($filter, 'all');      ?> whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm flex items-center">
+                    <a href="?filter=all" class="<?php echo tabClass($filter, 'all'); ?> whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm flex items-center">
                         <i class="fas fa-list mr-2"></i>All
                     </a>
                     <a href="?filter=paymongo" class="<?php echo tabClass($filter, 'paymongo'); ?> whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm flex items-center">
@@ -379,12 +294,11 @@ function tabClass($current, $target)
         <?php if ($filter === 'pending'): ?>
             <div class="bg-white rounded-xl shadow-sm mb-6 p-6">
                 <h3 class="text-sm font-semibold text-gray-700 mb-4">Filter by Payment Method:</h3>
-                <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <?php
                     $methods = [
-                        'paymongo' => ['label' => 'PayMongo',      'count' => $paymongo_pending, 'icon' => 'fas fa-mobile-alt',  'color_active' => 'bg-green-500 border-green-600',   'color_icon' => 'text-green-600',   'color_hover' => 'hover:border-green-500 hover:bg-green-50'],
-                        'qr'       => ['label' => 'QR Payment',    'count' => $qr_pending,       'icon' => 'fas fa-qrcode',      'color_active' => 'bg-indigo-500 border-indigo-600', 'color_icon' => 'text-indigo-600',  'color_hover' => 'hover:border-indigo-500 hover:bg-indigo-50'],
-                        'bank'     => ['label' => 'Bank Transfer',  'count' => $bank_pending,     'icon' => 'fas fa-university',  'color_active' => 'bg-purple-500 border-purple-600', 'color_icon' => 'text-purple-600',  'color_hover' => 'hover:border-purple-500 hover:bg-purple-50'],
+                        'paymongo' => ['label' => 'PayMongo',   'count' => $paymongo_pending, 'icon' => 'fas fa-mobile-alt', 'color_active' => 'bg-green-500 border-green-600',   'color_icon' => 'text-green-600',  'color_hover' => 'hover:border-green-500 hover:bg-green-50'],
+                        'qr'       => ['label' => 'QR Payment', 'count' => $qr_pending,       'icon' => 'fas fa-qrcode',     'color_active' => 'bg-indigo-500 border-indigo-600', 'color_icon' => 'text-indigo-600', 'color_hover' => 'hover:border-indigo-500 hover:bg-indigo-50'],
                     ];
                     foreach ($methods as $key => $m):
                         $active = isset($_GET['method']) && $_GET['method'] === $key;
@@ -406,24 +320,6 @@ function tabClass($current, $target)
                 <?php endif; ?>
             </div>
 
-            <!-- Bank sub-filter -->
-            <?php if ($payment_method_filter === 'bank'):
-                $bres = $conn->query("SELECT DISTINCT bank_type, COUNT(*) as c FROM orders WHERE payment_status='paid' AND mode_payment='Bank Transfer' AND bank_type IS NOT NULL GROUP BY bank_type");
-            ?>
-                <div class="bg-white rounded-xl shadow-sm mb-6 p-4">
-                    <h3 class="text-sm font-semibold text-gray-700 mb-3"><i class="fas fa-filter mr-2 text-purple-600"></i>Filter by Specific Bank:</h3>
-                    <div class="flex flex-wrap gap-2">
-                        <a href="?filter=pending&method=bank" class="<?php echo !$bank_type_filter ? 'bg-purple-500 text-white' : 'bg-gray-100 text-gray-700 hover:bg-gray-200'; ?> px-4 py-2 rounded-lg text-sm font-medium">All Banks</a>
-                        <?php if ($bres) while ($row = $bres->fetch_assoc()): ?>
-                            <a href="?filter=pending&method=bank&bank_type=<?php echo urlencode($row['bank_type']); ?>"
-                                class="<?php echo $bank_type_filter === $row['bank_type'] ? 'bg-purple-500 text-white' : 'bg-gray-100 text-gray-700 hover:bg-gray-200'; ?> px-4 py-2 rounded-lg text-sm font-medium">
-                                <?php echo htmlspecialchars($row['bank_type']); ?> <span class="text-xs opacity-75">(<?php echo $row['c']; ?>)</span>
-                            </a>
-                        <?php endwhile; ?>
-                    </div>
-                </div>
-            <?php endif; ?>
-
             <!-- QR sub-filter -->
             <?php if ($payment_method_filter === 'qr'):
                 $qres = $conn->query("SELECT DISTINCT REPLACE(o.bank_type,'QR_','') as qr_id, pqc.payment_method, COUNT(*) as c FROM orders o LEFT JOIN payment_qr_codes pqc ON REPLACE(o.bank_type,'QR_','')=pqc.id WHERE o.payment_status='paid' AND o.mode_payment='QR Payment' AND o.bank_type IS NOT NULL AND o.bank_type LIKE 'QR_%' GROUP BY o.bank_type, pqc.payment_method");
@@ -441,23 +337,19 @@ function tabClass($current, $target)
                     </div>
                 </div>
             <?php endif; ?>
-        <?php endif; // end if pending 
-        ?>
+        <?php endif; ?>
 
         <!-- ===== VERIFIED TAB METHOD FILTERS ===== -->
-        <?php if ($filter === 'verified'): ?>
+        <?php if ($filter === 'verified'):
+            $vmethods = [
+                'paymongo' => ['label' => 'PayMongo',   'icon' => 'fas fa-mobile-alt', 'aclass' => 'bg-green-500 border-green-600',   'iclass' => 'text-green-600',  'hclass' => 'hover:border-green-500 hover:bg-green-50'],
+                'qr'       => ['label' => 'QR Payment', 'icon' => 'fas fa-qrcode',     'aclass' => 'bg-indigo-500 border-indigo-600', 'iclass' => 'text-indigo-600', 'hclass' => 'hover:border-indigo-500 hover:bg-indigo-50'],
+            ];
+        ?>
             <div class="bg-white rounded-xl shadow-sm mb-6 p-6">
                 <h3 class="text-sm font-semibold text-gray-700 mb-4">Filter Verified Payments by Method:</h3>
-                <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
-                    <?php
-                    $vmethods = [
-                        'paymongo' => ['label' => 'PayMongo',     'icon' => 'fas fa-mobile-alt', 'aclass' => 'bg-green-500 border-green-600',   'iclass' => 'text-green-600',  'hclass' => 'hover:border-green-500 hover:bg-green-50'],
-                        'qr'       => ['label' => 'QR Payment',   'icon' => 'fas fa-qrcode',     'aclass' => 'bg-indigo-500 border-indigo-600', 'iclass' => 'text-indigo-600', 'hclass' => 'hover:border-indigo-500 hover:bg-indigo-50'],
-                        'bank'     => ['label' => 'Bank Transfer', 'icon' => 'fas fa-university', 'aclass' => 'bg-purple-500 border-purple-600', 'iclass' => 'text-purple-600', 'hclass' => 'hover:border-purple-500 hover:bg-purple-50'],
-                    ];
-                    foreach ($vmethods as $key => $m):
-                        $active = $payment_method_filter === $key;
-                    ?>
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <?php foreach ($vmethods as $key => $m): $active = $payment_method_filter === $key; ?>
                         <a href="?filter=verified&method=<?php echo $key; ?>"
                             class="<?php echo $active ? $m['aclass'] . ' text-white' : 'bg-white text-gray-700 border-gray-300 ' . $m['hclass']; ?> border-2 rounded-lg p-4 text-center transition-all transform hover:scale-105 shadow-sm">
                             <i class="<?php echo $m['icon']; ?> text-3xl mb-2 <?php echo $active ? 'text-white' : $m['iclass']; ?>"></i>
@@ -469,18 +361,6 @@ function tabClass($current, $target)
                     <div class="mt-4 text-center"><a href="?filter=verified" class="inline-flex items-center px-4 py-2 bg-gray-200 text-gray-700 rounded-lg hover:bg-gray-300 text-sm font-medium"><i class="fas fa-times mr-2"></i>Clear Filter</a></div>
                 <?php endif; ?>
             </div>
-            <?php if ($payment_method_filter === 'bank'):
-                $bv = $conn->query("SELECT DISTINCT bank_type, COUNT(*) as c FROM orders WHERE payment_status='verified' AND mode_payment='Bank Transfer' AND bank_type IS NOT NULL GROUP BY bank_type"); ?>
-                <div class="bg-white rounded-xl shadow-sm mb-6 p-4">
-                    <h3 class="text-sm font-semibold text-gray-700 mb-3"><i class="fas fa-filter mr-2 text-purple-600"></i>Filter by Specific Bank:</h3>
-                    <div class="flex flex-wrap gap-2">
-                        <a href="?filter=verified&method=bank" class="<?php echo !$bank_type_filter ? 'bg-purple-500 text-white' : 'bg-gray-100 text-gray-700 hover:bg-gray-200'; ?> px-4 py-2 rounded-lg text-sm font-medium">All Banks</a>
-                        <?php if ($bv) while ($row = $bv->fetch_assoc()): ?>
-                            <a href="?filter=verified&method=bank&bank_type=<?php echo urlencode($row['bank_type']); ?>" class="<?php echo $bank_type_filter === $row['bank_type'] ? 'bg-purple-500 text-white' : 'bg-gray-100 text-gray-700 hover:bg-gray-200'; ?> px-4 py-2 rounded-lg text-sm font-medium"><?php echo htmlspecialchars($row['bank_type']); ?> <span class="text-xs opacity-75">(<?php echo $row['c']; ?>)</span></a>
-                        <?php endwhile; ?>
-                    </div>
-                </div>
-            <?php endif; ?>
             <?php if ($payment_method_filter === 'qr'):
                 $qv = $conn->query("SELECT DISTINCT REPLACE(o.bank_type,'QR_','') as qr_id, pqc.payment_method, COUNT(*) as c FROM orders o LEFT JOIN payment_qr_codes pqc ON REPLACE(o.bank_type,'QR_','')=pqc.id WHERE o.payment_status='verified' AND o.mode_payment='QR Payment' AND o.bank_type LIKE 'QR_%' GROUP BY o.bank_type, pqc.payment_method"); ?>
                 <div class="bg-white rounded-xl shadow-sm mb-6 p-4">
@@ -493,52 +373,7 @@ function tabClass($current, $target)
                     </div>
                 </div>
             <?php endif; ?>
-        <?php endif; // end verified 
-        ?>
-
-        <!-- ===== REJECTED TAB METHOD FILTERS ===== -->
-        <?php if ($filter === 'rejected'): ?>
-            <div class="bg-white rounded-xl shadow-sm mb-6 p-6">
-                <h3 class="text-sm font-semibold text-gray-700 mb-4">Filter Rejected Payments by Method:</h3>
-                <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
-                    <?php foreach ($vmethods as $key => $m): $active = $payment_method_filter === $key; ?>
-                        <a href="?filter=rejected&method=<?php echo $key; ?>"
-                            class="<?php echo $active ? $m['aclass'] . ' text-white' : 'bg-white text-gray-700 border-gray-300 ' . $m['hclass']; ?> border-2 rounded-lg p-4 text-center transition-all transform hover:scale-105 shadow-sm">
-                            <i class="<?php echo $m['icon']; ?> text-3xl mb-2 <?php echo $active ? 'text-white' : $m['iclass']; ?>"></i>
-                            <div class="font-semibold text-sm"><?php echo $m['label']; ?></div>
-                        </a>
-                    <?php endforeach; ?>
-                </div>
-                <?php if ($payment_method_filter): ?>
-                    <div class="mt-4 text-center"><a href="?filter=rejected" class="inline-flex items-center px-4 py-2 bg-gray-200 text-gray-700 rounded-lg hover:bg-gray-300 text-sm font-medium"><i class="fas fa-times mr-2"></i>Clear Filter</a></div>
-                <?php endif; ?>
-            </div>
-            <?php if ($payment_method_filter === 'bank'):
-                $brj = $conn->query("SELECT DISTINCT bank_type, COUNT(*) as c FROM orders WHERE payment_status='rejected' AND mode_payment='Bank Transfer' AND bank_type IS NOT NULL GROUP BY bank_type"); ?>
-                <div class="bg-white rounded-xl shadow-sm mb-6 p-4">
-                    <h3 class="text-sm font-semibold text-gray-700 mb-3"><i class="fas fa-filter mr-2 text-purple-600"></i>Filter by Specific Bank:</h3>
-                    <div class="flex flex-wrap gap-2">
-                        <a href="?filter=rejected&method=bank" class="<?php echo !$bank_type_filter ? 'bg-purple-500 text-white' : 'bg-gray-100 text-gray-700 hover:bg-gray-200'; ?> px-4 py-2 rounded-lg text-sm font-medium">All Banks</a>
-                        <?php if ($brj) while ($row = $brj->fetch_assoc()): ?>
-                            <a href="?filter=rejected&method=bank&bank_type=<?php echo urlencode($row['bank_type']); ?>" class="<?php echo $bank_type_filter === $row['bank_type'] ? 'bg-purple-500 text-white' : 'bg-gray-100 text-gray-700 hover:bg-gray-200'; ?> px-4 py-2 rounded-lg text-sm font-medium"><?php echo htmlspecialchars($row['bank_type']); ?> <span class="text-xs opacity-75">(<?php echo $row['c']; ?>)</span></a>
-                        <?php endwhile; ?>
-                    </div>
-                </div>
-            <?php endif; ?>
-            <?php if ($payment_method_filter === 'qr'):
-                $qrj = $conn->query("SELECT DISTINCT REPLACE(o.bank_type,'QR_','') as qr_id, pqc.payment_method, COUNT(*) as c FROM orders o LEFT JOIN payment_qr_codes pqc ON REPLACE(o.bank_type,'QR_','')=pqc.id WHERE o.payment_status='rejected' AND o.mode_payment='QR Payment' AND o.bank_type LIKE 'QR_%' GROUP BY o.bank_type, pqc.payment_method"); ?>
-                <div class="bg-white rounded-xl shadow-sm mb-6 p-4">
-                    <h3 class="text-sm font-semibold text-gray-700 mb-3"><i class="fas fa-filter mr-2 text-indigo-600"></i>Filter by QR Method:</h3>
-                    <div class="flex flex-wrap gap-2">
-                        <a href="?filter=rejected&method=qr" class="<?php echo !$qr_type_filter ? 'bg-indigo-500 text-white' : 'bg-gray-100 text-gray-700 hover:bg-gray-200'; ?> px-4 py-2 rounded-lg text-sm font-medium">All QR Methods</a>
-                        <?php if ($qrj) while ($row = $qrj->fetch_assoc()): ?>
-                            <a href="?filter=rejected&method=qr&qr_type=QR_<?php echo urlencode($row['qr_id']); ?>" class="<?php echo $qr_type_filter === 'QR_' . $row['qr_id'] ? 'bg-indigo-500 text-white' : 'bg-gray-100 text-gray-700 hover:bg-gray-200'; ?> px-4 py-2 rounded-lg text-sm font-medium"><?php echo htmlspecialchars($row['payment_method'] ?: 'QR'); ?> <span class="text-xs opacity-75">(<?php echo $row['c']; ?>)</span></a>
-                        <?php endwhile; ?>
-                    </div>
-                </div>
-            <?php endif; ?>
-        <?php endif; // end rejected 
-        ?>
+        <?php endif; ?>
 
         <!-- ===== MAIN ORDERS TABLE ===== -->
         <?php if ($filter !== 'paymongo'): ?>
@@ -550,7 +385,7 @@ function tabClass($current, $target)
                         <h2 class="text-lg font-semibold text-gray-900">Payment Verification Queue</h2>
                         <p class="text-sm text-gray-600 mt-1">Review and verify customer payments</p>
                     </div>
-                    <div class="lg:w-3/4 grid grid-cols-2 lg:grid-cols-4 gap-4">
+                    <div class="lg:w-3/4 grid grid-cols-2 lg:grid-cols-3 gap-4">
                         <div class="p-4 rounded-lg bg-yellow-50">
                             <div class="flex items-center">
                                 <div class="w-10 h-10 bg-yellow-100 rounded-lg flex items-center justify-center mr-3"><i class="fas fa-clock text-yellow-600"></i></div>
@@ -578,15 +413,6 @@ function tabClass($current, $target)
                                 </div>
                             </div>
                         </div>
-                        <div class="p-4 rounded-lg bg-red-50">
-                            <div class="flex items-center">
-                                <div class="w-10 h-10 bg-red-100 rounded-lg flex items-center justify-center mr-3"><i class="fas fa-times-circle text-red-600"></i></div>
-                                <div>
-                                    <p class="text-xs text-gray-600">Rejected</p>
-                                    <p class="text-xl font-bold text-gray-900"><?php echo number_format($rejected_payments); ?></p>
-                                </div>
-                            </div>
-                        </div>
                     </div>
                 </div>
 
@@ -600,7 +426,7 @@ function tabClass($current, $target)
                                 <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Payment Method</th>
                                 <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Reference</th>
                                 <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Status</th>
-                                <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Processed By</th>
+                                <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Verified By</th>
                                 <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Date</th>
                                 <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Actions</th>
                             </tr>
@@ -614,7 +440,7 @@ function tabClass($current, $target)
                                         <!-- Order ID -->
                                         <td class="px-6 py-4 whitespace-nowrap">
                                             <span class="bg-gray-100 px-2 py-1 rounded-md inline-flex items-center text-sm font-medium">
-                                               </i>#<?php echo $order['id']; ?>
+                                                #<?php echo $order['id']; ?>
                                             </span>
                                         </td>
 
@@ -640,9 +466,10 @@ function tabClass($current, $target)
                                         <!-- Payment Method -->
                                         <td class="px-6 py-4 whitespace-nowrap">
                                             <div class="text-sm text-gray-900 flex items-center">
-                                                <?php if ($order['mode_payment'] === 'PayMongo'): ?><i class="fas fa-mobile-alt text-green-600 mr-2"></i>
-                                                <?php elseif ($order['mode_payment'] === 'QR Payment'): ?><i class="fas fa-qrcode text-indigo-600 mr-2"></i>
-                                                <?php elseif ($order['mode_payment'] === 'Bank Transfer'): ?><i class="fas fa-university text-purple-600 mr-2"></i>
+                                                <?php if ($order['mode_payment'] === 'PayMongo'): ?>
+                                                    <i class="fas fa-mobile-alt text-green-600 mr-2"></i>
+                                                <?php elseif ($order['mode_payment'] === 'QR Payment'): ?>
+                                                    <i class="fas fa-qrcode text-indigo-600 mr-2"></i>
                                                 <?php endif; ?>
                                                 <?php echo htmlspecialchars($order['mode_payment'] ?: 'N/A'); ?>
                                             </div>
@@ -677,65 +504,37 @@ function tabClass($current, $target)
                                             $sm = [
                                                 'paid'     => ['cls' => 'bg-yellow-100 text-yellow-800 border-yellow-200', 'icon' => 'fas fa-clock',        'lbl' => 'Paid'],
                                                 'verified' => ['cls' => 'bg-green-100 text-green-800 border-green-200',   'icon' => 'fas fa-check-circle', 'lbl' => 'Verified'],
-                                                'rejected' => ['cls' => 'bg-red-100 text-red-800 border-red-200',         'icon' => 'fas fa-times-circle', 'lbl' => 'Rejected'],
                                             ];
                                             $s = $sm[$order['payment_status']] ?? ['cls' => 'bg-gray-100 text-gray-800 border-gray-200', 'icon' => 'fas fa-question', 'lbl' => ucfirst($order['payment_status'])];
                                             ?>
                                             <span class="inline-flex items-center px-2 py-1 text-xs font-semibold rounded-full border <?php echo $s['cls']; ?>">
                                                 <i class="<?php echo $s['icon']; ?> mr-1"></i><?php echo $s['lbl']; ?>
                                             </span>
-                                            <?php if ($order['payment_status'] === 'rejected' && $order['rejection_reason']): ?>
-                                                <div class="text-xs text-red-600 mt-1" title="<?php echo htmlspecialchars($order['rejection_reason']); ?>">
-                                                    <i class="fas fa-info-circle mr-1"></i><?php echo htmlspecialchars(substr($order['rejection_reason'], 0, 25)) . (strlen($order['rejection_reason']) > 25 ? '...' : ''); ?>
-                                                </div>
-                                            <?php endif; ?>
                                         </td>
 
-                                        <!-- Processed By -->
+                                        <!-- Verified By -->
                                         <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                                            <?php
-                                            if ($order['payment_status'] === 'verified' && $order['verified_by_name']) echo htmlspecialchars($order['verified_by_name']);
-                                            elseif ($order['payment_status'] === 'rejected' && $order['rejected_by_name']) echo htmlspecialchars($order['rejected_by_name']);
-                                            else echo 'N/A';
-                                            ?>
+                                            <?php echo htmlspecialchars($order['verified_by_name'] ?: 'N/A'); ?>
                                             <?php if ($order['confirmed_at'] && $order['payment_status'] === 'verified'): ?>
-                                                <div class="text-xs text-gray-500"><?php echo date('M d, H:i', strtotime($order['confirmed_at'])); ?></div>
-                                            <?php elseif ($order['rejected_at'] && $order['payment_status'] === 'rejected'): ?>
-                                                <div class="text-xs text-gray-500"><?php echo date('M d, H:i', strtotime($order['rejected_at'])); ?></div>
+                                                <div class="text-xs text-gray-500"><?php echo date('M d, g:i A', strtotime($order['confirmed_at'])); ?></div>
                                             <?php endif; ?>
                                         </td>
 
                                         <!-- Date -->
                                         <td class="px-6 py-4 whitespace-nowrap">
                                             <div class="text-sm text-gray-900"><?php echo date('M d, Y', strtotime($order['created_at'])); ?></div>
-                                            <div class="text-xs text-gray-500"><?php echo date('H:i', strtotime($order['created_at'])); ?></div>
+                                            <div class="text-xs text-gray-500"><?php echo date('g:i A', strtotime($order['created_at'])); ?></div>
                                         </td>
 
-                                        <!-- Actions — only paid orders get Verify/Reject buttons -->
+                                        <!-- Actions — only paid orders get Verify button -->
                                         <td class="px-6 py-4 whitespace-nowrap text-sm" onclick="event.stopPropagation()">
                                             <?php if ($order['payment_status'] === 'paid'): ?>
-                                                <div class="flex flex-wrap gap-1">
-                                                    <!-- Payment method badge -->
-                                                    <?php if ($order['mode_payment'] === 'PayMongo'): ?>
-                                                        <span class="inline-flex items-center px-2 py-1 text-xs font-medium text-green-800 bg-green-100 rounded-full"><i class="fas fa-mobile-alt mr-1"></i>PayMongo</span>
-                                                    <?php elseif ($order['mode_payment'] === 'QR Payment'): ?>
-                                                        <span class="inline-flex items-center px-2 py-1 text-xs font-medium text-indigo-800 bg-indigo-100 rounded-full"><i class="fas fa-qrcode mr-1"></i>QR Paid</span>
-                                                    <?php elseif ($order['mode_payment'] === 'Bank Transfer'): ?>
-                                                        <span class="inline-flex items-center px-2 py-1 text-xs font-medium text-purple-800 bg-purple-100 rounded-full"><i class="fas fa-university mr-1"></i>Bank</span>
-                                                    <?php endif; ?>
-                                                    <!-- Verify -->
-                                                    <button onclick="verifyPayment(<?php echo $order['id']; ?>)"
-                                                        class="inline-flex items-center px-3 py-1 border border-transparent text-xs font-medium rounded-md text-white bg-green-600 hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-green-500">
-                                                        <i class="fas fa-check mr-1"></i>Verify
-                                                    </button>
-                                                    <!-- Reject -->
-                                                    <button onclick="showRejectModal(<?php echo $order['id']; ?>)"
-                                                        class="inline-flex items-center px-3 py-1 border border-transparent text-xs font-medium rounded-md text-white bg-red-600 hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-red-500">
-                                                        <i class="fas fa-times mr-1"></i>Reject
-                                                    </button>
-                                                </div>
+                                                <button onclick="verifyPayment(<?php echo $order['id']; ?>)"
+                                                    class="inline-flex items-center px-3 py-1 border border-transparent text-xs font-medium rounded-md text-white bg-green-600 hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-green-500">
+                                                    <i class="fas fa-check mr-1"></i>Verify
+                                                </button>
                                             <?php else: ?>
-                                                <span class="text-xs text-gray-400 italic">Processed</span>
+                                                <span class="text-xs text-gray-400 italic">Verified</span>
                                             <?php endif; ?>
                                         </td>
                                     </tr>
@@ -748,7 +547,6 @@ function tabClass($current, $target)
                                             <?php
                                             if ($filter === 'pending') echo 'No payments awaiting verification.';
                                             elseif ($filter === 'verified') echo 'No verified payments found.';
-                                            elseif ($filter === 'rejected') echo 'No rejected payments found.';
                                             else echo 'No payment records found.';
                                             ?>
                                         </p>
@@ -759,8 +557,7 @@ function tabClass($current, $target)
                     </table>
                 </div>
             </div>
-        <?php endif; // end not paymongo 
-        ?>
+        <?php endif; ?>
 
         <!-- ===== PAYMONGO HISTORY TAB ===== -->
         <?php if ($filter === 'paymongo'):
@@ -809,19 +606,19 @@ function tabClass($current, $target)
                                         </td>
                                         <td class="px-6 py-4 whitespace-nowrap">
                                             <?php $ps = $t['payment_status'];
-                                            $sm = ['paid' => 'bg-yellow-100 text-yellow-800 border-yellow-200', 'verified' => 'bg-green-100 text-green-800 border-green-200', 'rejected' => 'bg-red-100 text-red-800 border-red-200'];
-                                            $si = ['paid' => 'fas fa-clock', 'verified' => 'fas fa-check-circle', 'rejected' => 'fas fa-times-circle']; ?>
+                                            $sm = ['paid' => 'bg-yellow-100 text-yellow-800 border-yellow-200', 'verified' => 'bg-green-100 text-green-800 border-green-200'];
+                                            $si = ['paid' => 'fas fa-clock', 'verified' => 'fas fa-check-circle']; ?>
                                             <span class="inline-flex items-center px-2 py-1 text-xs font-semibold rounded-full border <?php echo $sm[$ps] ?? 'bg-gray-100 text-gray-800 border-gray-200'; ?>">
                                                 <i class="<?php echo $si[$ps] ?? 'fas fa-question'; ?> mr-1"></i><?php echo ucfirst($ps); ?>
                                             </span>
                                         </td>
                                         <td class="px-6 py-4 whitespace-nowrap">
                                             <div class="text-sm text-gray-900"><?php echo htmlspecialchars($t['verified_by_name'] ?: 'N/A'); ?></div>
-                                            <?php if ($t['confirmed_at']): ?><div class="text-xs text-gray-500"><?php echo date('M d, H:i', strtotime($t['confirmed_at'])); ?></div><?php endif; ?>
+                                            <?php if ($t['confirmed_at']): ?><div class="text-xs text-gray-500"><?php echo date('M d, g:i A', strtotime($t['confirmed_at'])); ?></div><?php endif; ?>
                                         </td>
                                         <td class="px-6 py-4 whitespace-nowrap">
                                             <div class="text-sm text-gray-900"><?php echo date('M d, Y', strtotime($t['created_at'])); ?></div>
-                                            <div class="text-xs text-gray-500"><?php echo date('H:i', strtotime($t['created_at'])); ?></div>
+                                            <div class="text-xs text-gray-500"><?php echo date('g:i A', strtotime($t['created_at'])); ?></div>
                                         </td>
                                     </tr>
                                 <?php endwhile;
@@ -838,29 +635,6 @@ function tabClass($current, $target)
 
     </main>
 
-    <!-- Rejection Modal -->
-    <div id="rejectionModal" class="fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full hidden z-50">
-        <div class="relative top-20 mx-auto p-5 border w-11/12 md:w-1/2 shadow-lg rounded-md bg-white">
-            <div class="flex items-center justify-between pb-3 border-b">
-                <h3 class="text-lg font-bold text-gray-900">Reject Payment — Order #<span id="rejectOrderId"></span></h3>
-                <button onclick="closeRejectModal()" class="text-gray-400 hover:text-gray-600"><i class="fas fa-times text-xl"></i></button>
-            </div>
-            <div class="mt-4">
-                <label for="rejectionReason" class="block text-sm font-medium text-gray-700 mb-2">Rejection Reason <span class="text-red-500">*</span></label>
-                <textarea id="rejectionReason" rows="4" maxlength="500"
-                    class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-noble-orange"
-                    placeholder="Please provide a clear reason for rejecting this payment..."></textarea>
-                <div class="text-xs text-gray-500 mt-1"><span id="reasonCharCount">0</span>/500 characters</div>
-            </div>
-            <div class="flex items-center justify-end pt-4 border-t space-x-3">
-                <button onclick="closeRejectModal()" class="px-4 py-2 bg-gray-300 text-gray-700 rounded-md hover:bg-gray-400">Cancel</button>
-                <button onclick="submitRejection()" id="submitRejectBtn" class="px-4 py-2 bg-red-600 text-white rounded-md hover:bg-red-700">
-                    <i class="fas fa-times mr-2"></i>Reject Payment
-                </button>
-            </div>
-        </div>
-    </div>
-
     <!-- Loading Overlay -->
     <div id="loadingOverlay" class="fixed inset-0 bg-gray-600 bg-opacity-50 flex items-center justify-center z-50 hidden">
         <div class="bg-white rounded-lg p-6 shadow-xl flex items-center space-x-3">
@@ -870,32 +644,10 @@ function tabClass($current, $target)
     </div>
 
     <script>
-        let currentOrderId = null;
-
         function viewOrderDetails(id) {
-            const w = 1200,
-                h = 800,
-                l = (screen.width - w) / 2,
-                t = (screen.height - h) / 2;
+            const w = 1200, h = 800, l = (screen.width - w) / 2, t = (screen.height - h) / 2;
             window.open('order_details.php?id=' + id, 'OrderDetails', `width=${w},height=${h},left=${l},top=${t},scrollbars=yes,resizable=yes`);
         }
-
-        function showRejectModal(id) {
-            currentOrderId = id;
-            document.getElementById('rejectOrderId').textContent = id;
-            document.getElementById('rejectionReason').value = '';
-            document.getElementById('reasonCharCount').textContent = '0';
-            document.getElementById('rejectionModal').classList.remove('hidden');
-        }
-
-        function closeRejectModal() {
-            document.getElementById('rejectionModal').classList.add('hidden');
-            currentOrderId = null;
-        }
-
-        document.getElementById('rejectionReason').addEventListener('input', function() {
-            document.getElementById('reasonCharCount').textContent = this.value.length;
-        });
 
         function verifyPayment(id) {
             if (!confirm('Are you sure you want to verify this payment? This cannot be undone.')) return;
@@ -903,10 +655,7 @@ function tabClass($current, $target)
             const fd = new FormData();
             fd.append('action', 'verify_payment');
             fd.append('order_id', id);
-            fetch(window.location.href, {
-                    method: 'POST',
-                    body: fd
-                })
+            fetch(window.location.href, { method: 'POST', body: fd })
                 .then(r => r.text())
                 .then(text => {
                     hideLoading();
@@ -920,128 +669,36 @@ function tabClass($current, $target)
                         showAlert('error', 'Invalid server response');
                     }
                 })
-                .catch(e => {
-                    hideLoading();
-                    showAlert('error', 'Network error: ' + e.message);
-                });
+                .catch(e => { hideLoading(); showAlert('error', 'Network error: ' + e.message); });
         }
 
-        function submitRejection() {
-            const reason = document.getElementById('rejectionReason').value.trim();
-            if (!reason) {
-                showAlert('error', 'Please provide a rejection reason');
-                return;
-            }
-            const btn = document.getElementById('submitRejectBtn');
-            btn.disabled = true;
-            btn.innerHTML = '<i class="fas fa-spinner fa-spin mr-2"></i>Rejecting...';
-            const fd = new FormData();
-            fd.append('action', 'reject_payment');
-            fd.append('order_id', currentOrderId);
-            fd.append('rejection_reason', reason);
-            fetch(window.location.href, {
-                    method: 'POST',
-                    body: fd
-                })
-                .then(r => r.text())
-                .then(text => {
-                    try {
-                        const d = JSON.parse(text);
-                        if (d.success) {
-                            showAlert('success', d.message);
-                            updateRow(currentOrderId, 'rejected', d.rejected_by, reason);
-                            closeRejectModal();
-                        } else showAlert('error', d.message || 'Failed to reject payment');
-                    } catch (e) {
-                        showAlert('error', 'Invalid server response');
-                    }
-                })
-                .catch(e => showAlert('error', 'Network error: ' + e.message))
-                .finally(() => {
-                    btn.disabled = false;
-                    btn.innerHTML = '<i class="fas fa-times mr-2"></i>Reject Payment';
-                });
-        }
-
-        function updateRow(id, status, by, reason = null) {
+        function updateRow(id, status, by) {
             const row = document.getElementById('order-row-' + id);
             if (!row) return;
             // Status cell (index 5)
-            const sc = row.cells[5];
-            const map = {
-                verified: {
-                    cls: 'bg-green-100 text-green-800 border-green-200',
-                    icon: 'fas fa-check-circle',
-                    lbl: 'Verified'
-                },
-                rejected: {
-                    cls: 'bg-red-100 text-red-800 border-red-200',
-                    icon: 'fas fa-times-circle',
-                    lbl: 'Rejected'
-                },
-            };
-            const s = map[status];
-            let html = `<span class="inline-flex items-center px-2 py-1 text-xs font-semibold rounded-full border ${s.cls}"><i class="${s.icon} mr-1"></i>${s.lbl}</span>`;
-            if (status === 'rejected' && reason) html += `<div class="text-xs text-red-600 mt-1" title="${reason}"><i class="fas fa-info-circle mr-1"></i>${reason.substring(0,25)}${reason.length>25?'...':''}</div>`;
-            sc.innerHTML = html;
-            // Processed by (index 6)
-            const now = new Date().toLocaleString('en-US', {
-                month: 'short',
-                day: '2-digit',
-                hour: '2-digit',
-                minute: '2-digit',
-                hour12: false
-            });
+            row.cells[5].innerHTML = `<span class="inline-flex items-center px-2 py-1 text-xs font-semibold rounded-full border bg-green-100 text-green-800 border-green-200"><i class="fas fa-check-circle mr-1"></i>Verified</span>`;
+            // Verified by (index 6)
+            const now = new Date().toLocaleString('en-US', { month: 'short', day: '2-digit', hour: '2-digit', minute: '2-digit', hour12: true });
             row.cells[6].innerHTML = `<div class="text-sm text-gray-900">${by}</div><div class="text-xs text-gray-500">${now}</div>`;
             // Actions (index 8)
-            row.cells[8].innerHTML = '<span class="text-xs text-gray-400 italic">Processed</span>';
-            row.classList.add('bg-yellow-50');
-            setTimeout(() => row.classList.remove('bg-yellow-50'), 2500);
+            row.cells[8].innerHTML = '<span class="text-xs text-gray-400 italic">Verified</span>';
+            row.classList.add('bg-green-50');
+            setTimeout(() => row.classList.remove('bg-green-50'), 2500);
         }
 
-        function showLoading() {
-            document.getElementById('loadingOverlay').classList.remove('hidden');
-        }
-
-        function hideLoading() {
-            document.getElementById('loadingOverlay').classList.add('hidden');
-        }
+        function showLoading() { document.getElementById('loadingOverlay').classList.remove('hidden'); }
+        function hideLoading() { document.getElementById('loadingOverlay').classList.add('hidden'); }
 
         function showAlert(type, msg) {
             document.querySelectorAll('.alert-msg').forEach(a => a.remove());
-            const c = {
-                success: 'bg-green-50 border-green-200 text-green-800',
-                error: 'bg-red-50 border-red-200 text-red-800',
-                warning: 'bg-yellow-50 border-yellow-200 text-yellow-800'
-            };
-            const i = {
-                success: 'fas fa-check-circle',
-                error: 'fas fa-exclamation-triangle',
-                warning: 'fas fa-exclamation-circle'
-            };
+            const c = { success: 'bg-green-50 border-green-200 text-green-800', error: 'bg-red-50 border-red-200 text-red-800' };
+            const i = { success: 'fas fa-check-circle', error: 'fas fa-exclamation-triangle' };
             const el = document.createElement('div');
             el.className = `alert-msg mb-6 ${c[type]} border px-4 py-3 rounded-lg flex items-center justify-between`;
             el.innerHTML = `<span><i class="${i[type]} mr-2"></i>${msg}</span><button onclick="this.parentElement.remove()"><i class="fas fa-times"></i></button>`;
             document.querySelector('main').prepend(el);
-            setTimeout(() => {
-                el.style.transition = 'opacity .5s';
-                el.style.opacity = '0';
-                setTimeout(() => el.remove(), 500);
-            }, 5000);
+            setTimeout(() => { el.style.transition = 'opacity .5s'; el.style.opacity = '0'; setTimeout(() => el.remove(), 500); }, 5000);
         }
-
-        document.addEventListener('keydown', e => {
-            if (e.key === 'Escape') closeRejectModal();
-        });
-        document.getElementById('rejectionModal').addEventListener('click', e => {
-            if (e.target === document.getElementById('rejectionModal')) closeRejectModal();
-        });
-        document.getElementById('rejectionReason').addEventListener('keydown', e => {
-            if (e.key === 'Enter' && !e.shiftKey) {
-                e.preventDefault();
-                submitRejection();
-            }
-        });
     </script>
 </body>
 

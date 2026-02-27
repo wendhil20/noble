@@ -177,8 +177,8 @@ $ordersSql = "
             THEN oi.id 
         END) as assigned_count,
         COUNT(DISTINCT poa.id) as po_attachment_count,
-        COUNT(DISTINCT CASE WHEN rr.status IN ('approved', 'processing') THEN rr.id END) as approved_replacements_count,
-        COUNT(DISTINCT CASE WHEN rr.status = 'In Warehouse' THEN rr.id END) as warehouse_replacements_count,
+      COUNT(DISTINCT CASE WHEN rr.status IN ('pending', 'approved', 'processing', 'In Warehouse') THEN rr.id END) as approved_replacements_count,
+COUNT(DISTINCT CASE WHEN rr.status = 'In Warehouse' THEN rr.id END) as warehouse_replacements_count,
         COUNT(DISTINCT CASE WHEN dr.status != 'resolved' THEN dr.id END) as unresolved_defects_count,
         COUNT(DISTINCT ds.id) as scheduled_deliveries_count
     FROM orders o
@@ -329,6 +329,14 @@ if (count($orders) > 0) {
             position: relative;
             height: 300px;
         }
+        
+        .badge-completed {
+    background: linear-gradient(135deg, #f59e0b, #d97706);
+    color: white;
+    box-shadow: 0 2px 4px rgba(217, 119, 6, 0.4);
+    font-weight: 700;
+    letter-spacing: 0.05em;
+}
     </style>
 </head>
 
@@ -551,16 +559,17 @@ if (count($orders) > 0) {
                         
                         $hasIssues = $approved_replacements_count > 0 || $unresolved_defects_count > 0;
                         
-                        $statusColors = [
-                            'Pending' => 'bg-yellow-100 text-yellow-800',
-                            'Ongoing' => 'bg-orange-100 text-orange-800',
-                            'processing' => 'bg-blue-100 text-blue-800',
-                            'Ready for Pickup' => 'bg-indigo-100 text-indigo-800',
-                            'Out for Delivery' => 'bg-purple-100 text-purple-800',
-                            'Out for Pickup' => 'bg-pink-100 text-pink-800',
-                            'Delivered' => 'bg-green-100 text-green-800',
-                            'Picked Up' => 'bg-teal-100 text-teal-800'
-                        ];
+$statusColors = [
+    'Pending' => 'bg-yellow-100 text-yellow-800',
+    'Ongoing' => 'bg-orange-100 text-orange-800',
+    'processing' => 'bg-blue-100 text-blue-800',
+    'Ready for Pickup' => 'bg-indigo-100 text-indigo-800',
+    'Out for Delivery' => 'bg-purple-100 text-purple-800',
+    'Out for Pickup' => 'bg-pink-100 text-pink-800',
+    'Delivered' => 'bg-green-100 text-green-800',
+    'Picked Up' => 'bg-teal-100 text-teal-800',
+    'Completed' => '' // handled separately
+];
                         $statusColor = $statusColors[$order['status']] ?? 'bg-gray-100 text-gray-800';
                     ?>
                         <div class="border <?php echo $hasIssues ? 'border-l-4 border-l-red-500 border-gray-200' : 'border-gray-200'; ?> bg-white rounded-lg p-3 hover:shadow-md transition-shadow">
@@ -581,31 +590,54 @@ if (count($orders) > 0) {
                                 </div>
                                 
                                 <!-- Middle: Status & Badges -->
-                                <div class="flex items-center space-x-2">
-                                    <span class="inline-flex items-center px-2 py-1 rounded text-xs font-semibold <?php echo $statusColor; ?>">
-                                        <?php echo htmlspecialchars($order['status']); ?>
-                                    </span>
-                                    
-                                    <?php if ($approved_replacements_count > 0): ?>
-                                        <span class="inline-flex items-center px-2 py-1 rounded text-xs font-bold bg-red-600 text-white">
-                                            <i class="fas fa-sync-alt mr-1"></i><?php echo $approved_replacements_count; ?>
-                                        </span>
-                                    <?php endif; ?>
-                                    
-                                    <?php if ($unresolved_defects_count > 0): ?>
-                                        <span class="inline-flex items-center px-2 py-1 rounded text-xs font-bold bg-orange-600 text-white">
-                                            <i class="fas fa-exclamation-triangle mr-1"></i><?php echo $unresolved_defects_count; ?>
-                                        </span>
-                                    <?php endif; ?>
-                                    
-                                    <span class="text-xs text-gray-500">
-                                        <?php echo $item_count; ?> items
-                                    </span>
-                                    
-                                    <span class="text-xs font-semibold <?php echo ($assignmentPercentage === 100) ? 'text-green-600' : (($assignmentPercentage > 0) ? 'text-yellow-600' : 'text-red-600'); ?>">
-                                        <?php echo $assignmentPercentage; ?>%
-                                    </span>
-                                </div>
+<div class="flex items-center space-x-2 flex-wrap gap-y-1">
+    
+    <?php if ($order['status'] === 'Completed'): ?>
+        <span class="inline-flex items-center px-3 py-1 rounded text-xs badge-completed">
+            COMPLETED
+        </span>
+    <?php else: ?>
+        <span class="inline-flex items-center px-2 py-1 rounded text-xs font-semibold <?php echo $statusColor; ?>">
+            <?php echo htmlspecialchars($order['status']); ?>
+        </span>
+    <?php endif; ?>
+
+<?php if ($approved_replacements_count > 0): ?>
+    <span class="inline-flex items-center px-2 py-1 rounded text-xs font-bold bg-red-600 text-white" 
+          title="<?php echo $approved_replacements_count; ?> replacement(s)">
+        <i class="fas fa-sync-alt mr-1"></i>
+        <?php echo $approved_replacements_count; ?> Replacement<?php echo $approved_replacements_count > 1 ? 's' : ''; ?>
+    </span>
+<?php endif; ?>
+
+    <!-- Warehouse Replacements -->
+    <?php 
+    $warehouse_replacements = (int)($order['warehouse_replacements_count'] ?? 0);
+    if ($warehouse_replacements > 0): ?>
+        <span class="inline-flex items-center px-2 py-1 rounded text-xs font-bold bg-amber-500 text-white"
+              title="<?php echo $warehouse_replacements; ?> replacement(s) in warehouse">
+            <i class="fas fa-warehouse mr-1"></i>
+            <?php echo $warehouse_replacements; ?> In Warehouse
+        </span>
+    <?php endif; ?>
+
+    <!-- Defects Badge -->
+    <?php if ($unresolved_defects_count > 0): ?>
+        <span class="inline-flex items-center px-2 py-1 rounded text-xs font-bold bg-orange-600 text-white"
+              title="<?php echo $unresolved_defects_count; ?> unresolved defect(s)">
+            <i class="fas fa-exclamation-triangle mr-1"></i>
+            <?php echo $unresolved_defects_count; ?> Defect<?php echo $unresolved_defects_count > 1 ? 's' : ''; ?>
+        </span>
+    <?php endif; ?>
+
+    <span class="text-xs text-gray-500">
+        <?php echo $item_count; ?> item<?php echo $item_count > 1 ? 's' : ''; ?>
+    </span>
+
+    <span class="text-xs font-semibold <?php echo ($assignmentPercentage === 100) ? 'text-green-600' : (($assignmentPercentage > 0) ? 'text-yellow-600' : 'text-red-600'); ?>">
+        <?php echo $assignmentPercentage; ?>%
+    </span>
+</div>
                                 
                                 <!-- Right: Amount & Action -->
                                 <div class="flex items-center space-x-4 ml-4">

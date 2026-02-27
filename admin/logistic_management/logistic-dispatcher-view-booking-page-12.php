@@ -309,6 +309,7 @@ if ($booking['item_type'] === 'replacement') {
     $isInTransit = $booking['booking_status'] === 'in_transit';
     $isCompleted = in_array($booking['booking_status'], ['delivered', 'picked_up']);
     $allLoaded = $booking['loaded_items'] === $booking['total_items'] && $booking['total_items'] > 0;
+    
     ?>
 
     <!DOCTYPE html>
@@ -993,27 +994,99 @@ if ($booking['item_type'] === 'replacement') {
                     }
                 </script>
 
-                <!-- Main Content -->
-
-                <!-- Items Loading -->
-                <div class="flex items-center justify-between mb-3">
+<!-- Items Loading Header -->
+<div class="flex items-center justify-between mb-3 flex-wrap gap-2">
     <h3 class="text-lg font-bold text-gray-900 flex items-center">
-        <i class="fas fa-boxes <?php echo $isReplacement ? 'text-orange-600' : 'text-orange-600'; ?> mr-2"></i>
-        <?php echo $isReplacement ? 'Replacement Item' : 'Items to Load'; ?>
+        <i class="fas fa-boxes text-orange-600 mr-2"></i>
+        <?php echo $isReplacement ? 'Replacement Items' : 'Items to Load'; ?>
     </h3>
 
-    <?php if (!$allLoaded && !$isCompleted && !$isInTransit): ?>
-        <form method="POST" class="inline" onsubmit="return confirm('Mark all items as loaded?');">
-            <input type="hidden" name="action" value="mark_all_loaded">
-            <button type="submit"
-                class="bg-green-500 hover:bg-green-600 text-white px-4 py-2 rounded-lg transition-colors font-semibold text-sm">
-                <i class="fas fa-check-double mr-1"></i>
-                Mark All Loaded
-            </button>
-        </form>
-    <?php endif; ?>
+    <div class="flex items-center gap-2 flex-wrap">
+
+        <!-- ✅ PRINT STICKER BUTTON + DOWNLOADED INDICATOR -->
+        <div class="flex items-center gap-2">
+
+            <!-- Downloaded Indicator (hidden by default, shown after print) -->
+            <div id="stickerPrintedBadge" class="hidden items-center gap-1.5 bg-green-100 border border-green-300 text-green-700 text-xs font-semibold px-3 py-1.5 rounded-full">
+                <i class="fas fa-check-circle text-green-500"></i>
+                <span id="stickerPrintedText">Sticker Printed</span>
+            </div>
+
+            <!-- Not Yet Printed Indicator (shown by default) -->
+            <div id="stickerNotPrintedBadge" class="flex items-center gap-1.5 bg-yellow-100 border border-yellow-300 text-yellow-700 text-xs font-semibold px-3 py-1.5 rounded-full">
+                <i class="fas fa-exclamation-circle text-yellow-500"></i>
+                <span>Sticker Not Yet Printed</span>
+            </div>
+
+            <!-- Print Sticker Button -->
+            <a href="generate_shipping_sticker.php?booking_id=<?php echo $booking_id; ?>"
+               target="_blank"
+               id="printStickerBtn"
+               onclick="markStickerOpened()"
+               class="inline-flex items-center gap-2 bg-indigo-600 hover:bg-indigo-700 text-white px-4 py-2 rounded-lg transition-colors font-semibold text-sm shadow-sm">
+                <i class="fas fa-tag"></i>
+                Print Sticker
+            </a>
+        </div>
+
+        <!-- Mark All Loaded Button (existing) -->
+        <?php if (!$allLoaded && !$isCompleted && !$isInTransit): ?>
+            <form method="POST" class="inline" onsubmit="return confirm('Mark all items as loaded?');">
+                <input type="hidden" name="action" value="mark_all_loaded">
+                <button type="submit"
+                    class="bg-green-500 hover:bg-green-600 text-white px-4 py-2 rounded-lg transition-colors font-semibold text-sm">
+                    <i class="fas fa-check-double mr-1"></i>
+                    Mark All Loaded
+                </button>
+            </form>
+        <?php endif; ?>
+    </div>
 </div>
 
+<script>
+(function() {
+    const printedBadge    = document.getElementById('stickerPrintedBadge');
+    const notPrintedBadge = document.getElementById('stickerNotPrintedBadge');
+    const printedText     = document.getElementById('stickerPrintedText');
+
+    function showPrinted(timestamp) {
+        printedBadge.classList.remove('hidden');
+        printedBadge.style.display = 'flex';
+        notPrintedBadge.classList.add('hidden');
+        if (timestamp) {
+            printedText.textContent = 'Printed: ' + timestamp;
+        }
+    }
+
+    // Fetch print status from DB on page load
+    fetch('get_sticker_print_status.php?booking_id=<?php echo $booking_id; ?>')
+        .then(res => res.json())
+        .then(data => {
+            if (data.printed_at) {
+                showPrinted(data.printed_at_formatted);
+            }
+        })
+        .catch(err => console.error('Failed to fetch sticker status:', err));
+
+    // Poll every 3s while page is open (in case user prints in new tab)
+    const pollInterval = setInterval(function() {
+        fetch('get_sticker_print_status.php?booking_id=<?php echo $booking_id; ?>')
+            .then(res => res.json())
+            .then(data => {
+                if (data.printed_at) {
+                    showPrinted(data.printed_at_formatted);
+                    clearInterval(pollInterval);
+                }
+            });
+    }, 3000);
+})();
+
+function markStickerOpened() {
+    const notPrintedBadge = document.getElementById('stickerNotPrintedBadge');
+    notPrintedBadge.innerHTML = '<i class="fas fa-external-link-alt text-blue-500 mr-1"></i><span class="text-blue-700">Sticker Page Opened</span>';
+    notPrintedBadge.className = 'flex items-center gap-1.5 bg-blue-100 border border-blue-300 text-blue-700 text-xs font-semibold px-3 py-1.5 rounded-full';
+}
+</script>
                     <!-- Progress Bar -->
                     <div class="mb-3">
                         <div class="flex justify-between text-xs text-gray-600 mb-1">

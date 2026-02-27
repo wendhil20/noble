@@ -711,11 +711,11 @@ $category_names = [
              ACTION BUTTONS - Export, Print, Back
              ============================================================================ -->
         <div class="mt-6 flex gap-4 justify-center no-print">
-            <a href="checkout-export_receipt_excel-page-12-A-1.php?order_id=<?= $order_id ?>" 
-               class="px-6 py-3 bg-green-600 text-white rounded-lg hover:bg-green-700 transition flex items-center gap-2">
-                <i class="fas fa-file-excel"></i>
-                Export to Excel
-            </a>
+            <!--<a href="checkout-export_receipt_excel-page-12-A-1.php?order_id=<?= $order_id ?>" -->
+            <!--   class="px-6 py-3 bg-green-600 text-white rounded-lg hover:bg-green-700 transition flex items-center gap-2">-->
+            <!--    <i class="fas fa-file-excel"></i>-->
+            <!--    Export to Excel-->
+            <!--</a>-->
 
             <a href="order_history" 
                class="px-6 py-3 bg-gray-600 text-white rounded-lg hover:bg-gray-700 transition flex items-center gap-2">
@@ -735,7 +735,7 @@ $category_names = [
             <span id="notification-message"></span>
         </div>
     </div>
-
+    <?php include '../navbar/footer.php'; ?>
     <!-- ============================================================================
          JAVASCRIPT - Rating system and notification handling
          ============================================================================ -->

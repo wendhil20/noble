@@ -55,20 +55,77 @@ $stmt->close();
 $orders = [];
 
 while ($order = $orders_result->fetch_assoc()) {
-    // format the date exactly as your front-end expects
     $order['created_at'] = date('M j, Y g:i A', strtotime($order['created_at']));
 
-    // Check if this order has any replacement requests
-    $replaceStmt = $conn->prepare("SELECT COUNT(*) as request_count FROM replacement_requests WHERE order_id = ?");
+    // ✅ Fetch replacement requests WITH full status details per request
+    $replaceStmt = $conn->prepare("
+        SELECT 
+            id,
+            order_item_id,
+            user_email,
+            reason,
+            details,
+            replacement_quantity,
+            po_number,
+            qr_code,
+            warehouse_location,
+            received_status,
+            received_by,
+            received_at,
+            defect_image_overview,
+            defect_image_closeup,
+            defect_image_detail,
+            status,
+            admin_notes,
+            created_at,
+            updated_at,
+            delivery_schedule_id,
+            receiver_id
+        FROM replacement_requests
+        WHERE order_id = ?
+        ORDER BY created_at DESC
+    ");
     $replaceStmt->bind_param("i", $order['id']);
     $replaceStmt->execute();
     $replaceResult = $replaceStmt->get_result();
-    $replaceData = $replaceResult->fetch_assoc();
-    $order['has_replacement_requests'] = ($replaceData['request_count'] > 0);
-    $order['replacement_count'] = $replaceData['request_count'];
+
+    $replacements = [];
+    $statusSummary = [
+        'pending'      => 0,
+        'approved'     => 0,
+        'processing'   => 0,
+        'in_warehouse' => 0,
+        'delivered'    => 0,
+        'other'        => 0,
+    ];
+
+    while ($rep = $replaceResult->fetch_assoc()) {
+        // Normalize status key for counting
+        $rawStatus = strtolower(trim($rep['status'] ?? 'pending'));
+        $normalizedStatus = str_replace(' ', '_', $rawStatus); // "In Warehouse" → "in_warehouse"
+
+        if (array_key_exists($normalizedStatus, $statusSummary)) {
+            $statusSummary[$normalizedStatus]++;
+        } else {
+            $statusSummary['other']++;
+        }
+
+        $rep['status_normalized'] = $normalizedStatus;
+        $replacements[] = $rep;
+    }
     $replaceStmt->close();
 
-    // 4. For each order, fetch its items WITH SUPPLIER INFO (hybrid supplier system)
+    $order['has_replacement_requests'] = count($replacements) > 0;
+    $order['replacement_count']        = count($replacements);
+    $order['replacements']             = $replacements;         // ✅ Full replacement details
+    $order['replacement_status_summary'] = $statusSummary;     // ✅ Count per status
+
+    // ✅ Is everything delivered?
+    $totalReplacements = count($replacements);
+    $deliveredCount    = $statusSummary['delivered'];
+    $order['all_replacements_delivered'] = ($totalReplacements > 0 && $deliveredCount === $totalReplacements);
+
+    // 4. For each order, fetch its items WITH SUPPLIER INFO
     $itemStmt = $conn->prepare("
         SELECT 
             oi.product_name,
@@ -126,34 +183,28 @@ while ($order = $orders_result->fetch_assoc()) {
 
     $items = [];
     while ($it = $itemsRes->fetch_assoc()) {
-        // ensure numeric formatting matches JS expectations
-        $it['price']    = number_format((float)$it['price'], 2, '.', '');
-        $it['subtotal'] = number_format((float)$it['subtotal'], 2, '.', '');
-        $it['delivery_fee_per_item'] = number_format((float)$it['delivery_fee_per_item'], 2, '.', '');
-        $it['item_total_delivery'] = number_format((float)$it['item_total_delivery'], 2, '.', '');
-        
-        // Add additional supplier information for display (only available for database suppliers)
-        $it['supplier_contact'] = $it['primary_contact_name'] ?? '';
-        $it['supplier_email'] = $it['supplier_email'] ?? '';
-        $it['supplier_phone'] = $it['supplier_phone'] ?? '';
-        $it['supplier_type'] = $it['business_type'] ?? '';
+        $it['price']                  = number_format((float)$it['price'], 2, '.', '');
+        $it['subtotal']               = number_format((float)$it['subtotal'], 2, '.', '');
+        $it['delivery_fee_per_item']  = number_format((float)$it['delivery_fee_per_item'], 2, '.', '');
+        $it['item_total_delivery']    = number_format((float)$it['item_total_delivery'], 2, '.', '');
+
+        $it['supplier_contact']  = $it['primary_contact_name'] ?? '';
+        $it['supplier_email']    = $it['supplier_email'] ?? '';
+        $it['supplier_phone']    = $it['supplier_phone'] ?? '';
+        $it['supplier_type']     = $it['business_type'] ?? '';
         $it['supplier_location'] = $it['country_region'] ?? '';
-        
-        // Add supplier source information for frontend logic
-        $it['is_manual_supplier'] = ($it['supplier_source'] === 'manual');
+
+        $it['is_manual_supplier']   = ($it['supplier_source'] === 'manual');
         $it['is_database_supplier'] = ($it['supplier_source'] === 'database');
-        $it['has_supplier'] = ($it['supplier_source'] !== 'none');
-        
+        $it['has_supplier']         = ($it['supplier_source'] !== 'none');
+
         $items[] = $it;
     }
     $itemStmt->close();
 
-    // 5. Attach as `items` (not `products`)
     $order['items'] = $items;
-
     $orders[] = $order;
 }
 
-// 6. Return a JSON **array** — front-end does `orders.filter(...)`, so passing an array is critical
 echo json_encode($orders);
-?>
+?> 

@@ -570,15 +570,11 @@ if ($order && !empty($order['reference_no'])) {
             </div>
 
             <div class="flex flex-col sm:flex-row gap-4 justify-center">
-                <a href="order_receipt.php?order_id=<?= $order['id'] ?>"
-                    class="bg-blue-600 text-white px-8 py-3 rounded-lg hover:bg-blue-700 transition font-medium text-center">
-                    View Full Receipt
-                </a>
                 <a href="../index.php"
                     class="bg-gray-600 text-white px-8 py-3 rounded-lg hover:bg-gray-700 transition font-medium text-center">
                     Continue Shopping
                 </a>
-                <a href="profile.php"
+                <a href="index-profile-page-6.php"
                     class="bg-orange-600 text-white px-8 py-3 rounded-lg hover:bg-orange-700 transition font-medium text-center">
                     View Orders
                 </a>

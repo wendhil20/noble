@@ -278,21 +278,29 @@ function calculate_price($variant_price, $color_price, $percent = 0, $discount =
             top: 0;
             left: 0;
         }
+        
+        .notification.error {
+    background-color: #dc2626;
+    color: #fff;
+    padding: 12px 16px;
+    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.15);
+    font-weight: 500;
+}
 
-        @media (hover: hover) {
-            .product-image {
-                opacity: 1;
-            }
-            .product-image-2 {
-                opacity: 0;
-            }
-            .product-card:hover .product-image {
-                opacity: 0;
-            }
-            .product-card:hover .product-image-2 {
-                opacity: 1;
-            }
-        }
+        /*@media (hover: hover) { this is for switch image2 output */
+        /*    .product-image {*/
+        /*        opacity: 1;*/
+        /*    }*/
+        /*    .product-image-2 {*/
+        /*        opacity: 0;*/
+        /*    }*/
+        /*    .product-card:hover .product-image {*/
+        /*        opacity: 0;*/
+        /*    }*/
+        /*    .product-card:hover .product-image-2 {*/
+        /*        opacity: 1;*/
+        /*    }*/
+        /*}*/
     </style>
 </head>
 
@@ -490,7 +498,7 @@ function calculate_price($variant_price, $color_price, $percent = 0, $discount =
                         );
 
                         $color_image_path = !empty($row['color_image']) ? '../../' . $row['color_image'] : '../img/placeholder.jpg';
-                        $color_image2_path = !empty($row['color_image2']) ? '../../' . $row['color_image2'] : null;
+                        // $color_image2_path = !empty($row['color_image2']) ? '../../' . $row['color_image2'] : null;
 
                         $product = [
                             'id' => (int)$row['product_id'],
@@ -500,7 +508,7 @@ function calculate_price($variant_price, $color_price, $percent = 0, $discount =
                             'color_code' => safe_output($row['color_code']),
                             'color_price' => (float)$row['color_price'],
                             'color_image' => safe_output($color_image_path),
-                            'color_image2' => safe_output($color_image2_path),
+                            // 'color_image2' => safe_output($color_image2_path),
                             'variants' => $variants,
                             'initial_variant' => [
                                 'variant_id' => (int)$first_variant['variant_id'],
@@ -556,11 +564,24 @@ function calculate_price($variant_price, $color_price, $percent = 0, $discount =
             }
         };
 
-        const allProducts = [];
-        document.querySelectorAll('.product-data-item').forEach(item => {
-            const productData = JSON.parse(item.getAttribute('data-product'));
-            allProducts.push(productData);
-        });
+const allProducts = [];
+const productGroups = {};
+
+document.querySelectorAll('.product-data-item').forEach(item => {
+    const productData = JSON.parse(item.getAttribute('data-product'));
+
+    // Group by product_id
+    if (!productGroups[productData.id]) {
+        productGroups[productData.id] = [];
+    }
+    productGroups[productData.id].push(productData);
+});
+
+// ✅ One entry per product_id only (first color as default)
+Object.values(productGroups).forEach(group => {
+    allProducts.push(group[0]); // only push the first color
+});
+        
 
         class MobileFilterManager {
             constructor() {
@@ -620,7 +641,7 @@ function calculate_price($variant_price, $color_price, $percent = 0, $discount =
                     origin: 'all',
                     discount: 'all',
                     minPrice: 0,
-                    maxPrice: 10000,
+                    maxPrice: 10000000,
                     sort: 'default'
                 };
 
@@ -852,16 +873,20 @@ function calculate_price($variant_price, $color_price, $percent = 0, $discount =
                 this.totalCount.textContent = this.filteredProducts.length;
 
                 if (this.filteredProducts.length === 0) {
-                    this.noResults.classList.remove('hidden');
-                    this.grid.classList.add('hidden');
-                    this.paginationContainer.classList.add('hidden');
-                } else {
-                    this.noResults.classList.add('hidden');
-                    this.grid.classList.remove('hidden');
-                    this.paginationContainer.classList.remove('hidden');
-                }
+    this.noResults.classList.remove('hidden');
+    this.grid.classList.add('hidden');
+    this.paginationContainer.classList.add('hidden');
+} else {
+    this.noResults.classList.add('hidden');
+    this.grid.classList.remove('hidden');
+    this.paginationContainer.classList.remove('hidden');
+}
 
-                this.renderPagination(totalPages);
+if (totalPages > 1) {
+    this.renderPagination(totalPages);
+} else {
+    this.paginationContainer.innerHTML = '';
+}
 
                 window.scrollTo({
                     top: 0,
@@ -870,10 +895,7 @@ function calculate_price($variant_price, $color_price, $percent = 0, $discount =
             }
 
             renderPagination(totalPages) {
-                if (totalPages <= 1) {
-                    this.paginationContainer.innerHTML = '';
-                    return;
-                }
+            
 
                 let paginationHTML = `
                     <button class="pagination-btn" ${this.currentPage === 1 ? 'disabled' : ''} 
@@ -1011,8 +1033,91 @@ function calculate_price($variant_price, $color_price, $percent = 0, $discount =
 
                 const colorDiv = document.createElement('div');
                 colorDiv.className = 'text-xs text-gray-600 mt-1 hidden sm:block';
-                colorDiv.innerHTML = `<span class="font-medium">${product.color_name}</span>`;
+                colorDiv.innerHTML = `<span class="font-medium color-label">${product.color_name}</span>`;
                 infoSection.appendChild(colorDiv);
+                
+                // --- COLOR SWATCHES ---
+const siblings = productGroups[product.id] || [product];
+
+if (siblings.length > 1) {
+    const colorRow = document.createElement('div');
+    colorRow.className = 'flex gap-1 flex-wrap items-center px-2 pt-1';
+
+    const VISIBLE_COLORS = 3; // show 3 swatches max
+    let hiddenColorCount = 0;
+
+    siblings.forEach((colorVariant, idx) => {
+        if (idx >= VISIBLE_COLORS) {
+            hiddenColorCount++;
+            return; // skip rendering this swatch
+        }
+        const swatch = document.createElement('button');
+        swatch.type = 'button';
+        swatch.title = colorVariant.color_name;
+        swatch.className = `w-5 h-5 rounded-full border-2 transition-all ${idx === 0 ? 'border-black scale-110' : 'border-gray-300 hover:border-gray-500'}`;
+        swatch.style.backgroundColor = colorVariant.color_code || '#ccc';
+
+        swatch.addEventListener('click', (e) => {
+            e.preventDefault();
+
+            // Swap image
+            img.src = colorVariant.color_image;
+            if (product.color_image2 && colorVariant.color_image2) {
+                const img2El = imageContainer.querySelector('.product-image-2');
+                if (img2El) img2El.src = colorVariant.color_image2;
+            }
+
+            // Swap product name color label
+            const colorLabel = infoSection.querySelector('.color-label');
+            if (colorLabel) colorLabel.textContent = colorVariant.color_name;
+
+            // Swap hidden form inputs
+            const form = card.querySelector('.productForm');
+            if (form) {
+                form.querySelector('.color-id-input').value = colorVariant.color_id;
+                form.querySelector('.color-name-input').value = colorVariant.color_name;
+                form.querySelector('.color-price-input').value = colorVariant.color_price;
+            }
+
+            // Update view form product id (colors share same product id so no change needed)
+
+            // Recalculate price for selected size using new color_price
+            const activeSizeBtn = card.querySelector('.size-btn.bg-black');
+            if (activeSizeBtn) {
+                const newPrice = parseFloat(activeSizeBtn.dataset.variantPrice || 0) + parseFloat(colorVariant.color_price);
+                activeSizeBtn.dataset.price = newPrice;
+                const priceEl = card.querySelector('.final-price');
+                if (priceEl) priceEl.textContent = `₱${newPrice.toLocaleString()}`;
+                if (form) form.querySelector('.total-price-input').value = newPrice;
+                form.querySelector('.color-price-input').value = colorVariant.color_price;
+            }
+
+            // Update active swatch styles
+            colorRow.querySelectorAll('button').forEach(s => {
+                s.classList.remove('border-black', 'scale-110');
+                s.classList.add('border-gray-300');
+            });
+            swatch.classList.add('border-black', 'scale-110');
+            swatch.classList.remove('border-gray-300');
+        });
+
+        colorRow.appendChild(swatch);
+    });
+    // +N badge kung may hidden colors
+    if (hiddenColorCount > 0) {
+        const colorBadge = document.createElement('span');
+        colorBadge.className = 'border border-gray-200 rounded-full text-xs font-bold bg-gray-50 text-gray-700';
+        colorBadge.textContent = `+${hiddenColorCount}`;
+        colorBadge.style.display = 'inline-flex';
+        colorBadge.style.alignItems = 'center';
+        colorBadge.style.justifyContent = 'center';
+        colorBadge.style.minWidth = '22px';
+        colorBadge.style.minHeight = '22px';
+        colorRow.appendChild(colorBadge);
+    }
+
+    infoSection.appendChild(colorRow);
+}
 
                 const finalPrice = document.createElement('p');
                 finalPrice.className = 'text-lg font-bold text-black mt-2 final-price';

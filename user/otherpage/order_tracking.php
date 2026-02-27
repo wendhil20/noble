@@ -1771,6 +1771,8 @@
             <!-- Mobile-friendly spacing at bottom -->
             <div class="pb-6 sm:pb-0"></div>
         </div>
+        
+        <?php include '../navbar/footer.php'?>
 
         <!-- Leaflet JavaScript -->
         <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"
@@ -1850,7 +1852,7 @@
                         .addTo(map)
                         .bindPopup(`
                         <div style="min-width: 200px;">
-                            <h3 style="margin: 0 0 8px 0; color: #10B981; font-weight: bold;">📦 Warehouse</h3>
+                            <h3 style="margin: 0 0 8px 0; color: #10B981; font-weight: bold;">Warehouse</h3>
                             <p style="margin: 0; font-size: 12px; color: #666;">
                                 <?= htmlspecialchars($delivery_settings['location_name']) ?>
                             </p>
@@ -1863,7 +1865,7 @@
                         .addTo(map)
                         .bindPopup(`
                         <div style="min-width: 200px;">
-                            <h3 style="margin: 0 0 8px 0; color: #3B82F6; font-weight: bold;">🏠 Delivery Address</h3>
+                            <h3 style="margin: 0 0 8px 0; color: #3B82F6; font-weight: bold;">Delivery Address</h3>
                             <p style="margin: 0 0 4px 0; font-weight: bold;"><?= htmlspecialchars($order['customer_name']) ?></p>
                             <p style="margin: 0; font-size: 12px; color: #666;">
                                 <?= htmlspecialchars($order['delivery_address']) ?>, <?= htmlspecialchars($order['delivery_city']) ?>

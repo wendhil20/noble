@@ -333,8 +333,7 @@
 
     // ── 1. CONNECT TO WEBSOCKET SERVER ────────────────────
     // Change this URL if your Node.js server is on a different port
-    const socket = io('http://localhost:3000');
-
+    const socket = io('https://support.noblehomedepot.com');
     const messagesEl   = document.getElementById('messagesContainer');
     const msgInput     = document.getElementById('msgInput');
     const sendBtn      = document.getElementById('sendBtn');

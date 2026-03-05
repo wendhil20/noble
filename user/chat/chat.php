@@ -373,9 +373,13 @@ $user_picture = $_SESSION['user_picture'] ?? null;
     document.getElementById('sendBtn').disabled = true;
   });
 
-  // ── ADMIN LIST ───────────────────────────────────────────
+  // ── ADMIN LIST (+ handle admin going offline while in chat) ─
   socket.on('admins:list', (admins) => {
     renderAdminList(admins);
+    if (selectedAdmin) {
+      const stillOnline = admins.find(a => a.adminId == selectedAdmin.adminId);
+      updateChatStatus(!!stillOnline);
+    }
   });
 
   // ── HISTORY ──────────────────────────────────────────────
@@ -414,30 +418,25 @@ $user_picture = $_SESSION['user_picture'] ?? null;
     clearTimeout(typingHideTimer);
   });
 
-  // ── ADMIN GOES OFFLINE ───────────────────────────────────
-  socket.on('admins:list', (admins) => {
-    renderAdminList(admins);
-    // If currently chatting with someone who went offline, update status
-    if (selectedAdmin) {
-      const stillOnline = admins.find(a => a.adminId == selectedAdmin.adminId);
-      updateChatStatus(!!stillOnline);
-    }
-  });
-
   // ── RENDER ADMIN LIST ────────────────────────────────────
   function renderAdminList(admins) {
     const container = document.getElementById('adminListContainer');
-    const noMsg     = document.getElementById('noAdminsMsg');
+    const noMsg = document.getElementById('noAdminsMsg');
 
     if (!admins || admins.length === 0) {
-      container.innerHTML = '';
-      container.appendChild(noMsg);
-      noMsg.style.display = 'flex';
+      // Remove all cards but keep noAdminsMsg in DOM
+      Array.from(container.children).forEach(child => {
+        if (child.id !== 'noAdminsMsg') child.remove();
+      });
+      if (noMsg) noMsg.style.display = 'flex';
       return;
     }
 
-    noMsg.style.display = 'none';
-    container.innerHTML = '';
+    // Hide no-admins message, remove old cards only
+    if (noMsg) noMsg.style.display = 'none';
+    Array.from(container.children).forEach(child => {
+      if (child.id !== 'noAdminsMsg') child.remove();
+    });
 
     admins.forEach(admin => {
       const color = getColor(admin.adminId);

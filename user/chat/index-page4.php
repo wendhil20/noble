@@ -42,10 +42,6 @@ $user_picture = $_SESSION['user_picture'] ?? null;
 
 ?>
 
-
-
-
-
 <!DOCTYPE html>
 <html lang="en">
 <head>

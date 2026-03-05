@@ -1,120 +1,156 @@
-// ============================================
-//  MESSENGER - Express + Socket.io Server
-//  Run: node server.js
-//  Port: process.env.PORT || 3000
-// ============================================
-
 const express = require('express');
 const http = require('http');
 const { Server } = require('socket.io');
-const path = require('path');
 
 const app = express();
-// Serve public folder (your HTML/CSS/JS files)
-app.use(express.static(path.join(__dirname, 'public')));
-app.get('/', (req, res) => {
-  res.sendFile(path.join(__dirname, 'public', 'index.html'));
-});
-
 const httpServer = http.createServer(app);
+const io = new Server(httpServer, { cors: { origin: '*' } });
 
-const io = new Server(httpServer, {
-  cors: {
-    origin: '*', // Allow XAMPP (localhost) to connect
-    methods: ['GET', 'POST']
-  }
-});
+const onlineUsers    = {};   // socket.id → { id, name, role }
+const conversations  = {};   // userId   → [ msg, msg, ... ]
 
-// In-memory message store (resets on server restart)
-// Para persistent, palitan mo ng MySQL (see comments below)
-const messages = [];
-const onlineUsers = {};
+// ── HELPERS ──────────────────────────────────────────────
+
+function buildConversationList() {
+  return Object.entries(conversations).map(([userId, msgs]) => {
+    const last   = msgs[msgs.length - 1];
+    const unread = msgs.filter(m => !m.read && m.from === 'user').length;
+    const isOnline = Object.values(onlineUsers).some(u => u.id == userId && u.role === 'user');
+    return {
+      userId,
+      userName:    last?.userName || 'Unknown',
+      lastMessage: last?.text     || '',
+      lastTime:    last?.timestamp || new Date(0).toISOString(),
+      unread,
+      isOnline
+    };
+  }).sort((a, b) => new Date(b.lastTime) - new Date(a.lastTime));
+}
+
+function roomName(userId) { return `conv_${userId}`; }
+
+function isAnyAdminOnline() {
+  return Object.values(onlineUsers).some(u => u.role === 'admin');
+}
+
+// ── SOCKET EVENTS ─────────────────────────────────────────
 
 io.on('connection', (socket) => {
-  console.log(`✅ User connected: ${socket.id}`);
 
-  // ── 1. USER JOINS ──────────────────────────────────────
-  socket.on('user:join', (username) => {
-    socket.username = username;
-    onlineUsers[socket.id] = username;
+  socket.on('user:join', ({ userId, userName, role }) => {
+    if (!userId || !userName || !role) return;
 
-    console.log(`👤 ${username} joined`);
+    socket.userId   = userId;
+    socket.userName = userName;
+    socket.role     = role;
+    onlineUsers[socket.id] = { id: userId, name: userName, role };
 
-    // Send existing message history to the newly joined user
-    socket.emit('history', messages);
+    socket.join(roomName(userId));
 
-    // Broadcast updated online users list to everyone
-    io.emit('users:online', Object.values(onlineUsers));
-
-    // Notify others that someone joined
-    socket.broadcast.emit('user:joined', {
-      username,
-      timestamp: new Date().toISOString()
-    });
-  });
-
-  // ── 2. SEND MESSAGE ────────────────────────────────────
-  socket.on('message:send', (data) => {
-    const message = {
-      id: Date.now(),
-      user: socket.username || 'Anonymous',
-      text: data.text,
-      timestamp: new Date().toISOString()
-    };
-
-    // Save to in-memory store
-    messages.push(message);
-
-    // Keep only last 100 messages in memory
-    if (messages.length > 100) messages.shift();
-
-    console.log(`💬 [${message.user}]: ${message.text}`);
-
-    // Broadcast to ALL connected users (including sender)
-    io.emit('message:new', message);
-
-    /*
-    ── OPTIONAL: Save to MySQL instead ──────────────────
-    const mysql = require('mysql2');
-    const db = mysql.createConnection({
-      host: 'localhost', user: 'root', password: '', database: 'messenger'
-    });
-    db.query(
-      'INSERT INTO messages (user, text, timestamp) VALUES (?, ?, NOW())',
-      [message.user, message.text]
-    );
-    */
-  });
-
-  // ── 3. TYPING INDICATOR ────────────────────────────────
-  socket.on('typing:start', () => {
-    socket.broadcast.emit('typing:show', socket.username);
-  });
-
-  socket.on('typing:stop', () => {
-    socket.broadcast.emit('typing:hide', socket.username);
-  });
-
-  // ── 4. DISCONNECT ──────────────────────────────────────
-  socket.on('disconnect', () => {
-    const username = onlineUsers[socket.id];
-    delete onlineUsers[socket.id];
-
-    console.log(`❌ ${username || socket.id} disconnected`);
-
-    io.emit('users:online', Object.values(onlineUsers));
-
-    if (username) {
-      io.emit('user:left', {
-        username,
-        timestamp: new Date().toISOString()
-      });
+    if (role === 'admin') {
+      socket.join('admins');
+      Object.keys(conversations).forEach(uid => socket.join(roomName(uid)));
+      socket.emit('admin:conversations', buildConversationList());
+      io.to('users').emit('admin:online');
+      console.log(`[ADMIN] ${userName} connected`);
+    } else {
+      socket.join('users');
+      const history = conversations[userId] || [];
+      socket.emit('history', history);
+      io.to('admins').emit('user:online', { userId, userName });
+      if (isAnyAdminOnline()) socket.emit('admin:online');
+      console.log(`[USER] ${userName} (${userId}) connected`);
     }
   });
+
+  // User sends message to admin
+  socket.on('message:send', ({ text }) => {
+    if (socket.role !== 'user') return;
+    if (!text || !text.trim()) return;
+
+    const msg = {
+      id:        Date.now(),
+      from:      'user',
+      userId:    socket.userId,
+      userName:  socket.userName || 'User',
+      text:      text.trim(),
+      timestamp: new Date().toISOString(),
+      read:      false
+    };
+
+    if (!conversations[socket.userId]) conversations[socket.userId] = [];
+    conversations[socket.userId].push(msg);
+
+    socket.emit('message:new', msg);
+    io.to('admins').emit('message:new', msg);
+    io.to('admins').emit('admin:conversations', buildConversationList());
+  });
+
+  // Admin replies to specific user
+  socket.on('admin:reply', ({ toUserId, text }) => {
+    if (socket.role !== 'admin') return;
+    if (!text || !text.trim() || !toUserId) return;
+
+    const msg = {
+      id:        Date.now(),
+      from:      'admin',
+      userId:    toUserId,
+      userName:  socket.userName || 'Support',
+      text:      text.trim(),
+      timestamp: new Date().toISOString(),
+      read:      false
+    };
+
+    if (!conversations[toUserId]) conversations[toUserId] = [];
+    conversations[toUserId].push(msg);
+
+    io.to(roomName(toUserId)).emit('message:new', msg);
+    io.to('admins').emit('message:new', msg);
+    io.to('admins').emit('admin:conversations', buildConversationList());
+  });
+
+  // Admin opens a conversation — mark as read
+  socket.on('admin:open', ({ userId }) => {
+    if (socket.role !== 'admin' || !userId) return;
+    const history = conversations[userId] || [];
+    history.forEach(m => { if (m.from === 'user') m.read = true; });
+    socket.emit('history', history);
+    socket.emit('admin:conversations', buildConversationList());
+  });
+
+  // Typing
+  socket.on('typing:start', ({ toUserId } = {}) => {
+    if (socket.role === 'user') {
+      io.to('admins').emit('typing:show', { userId: socket.userId, userName: socket.userName || 'User' });
+    } else if (socket.role === 'admin' && toUserId) {
+      io.to(roomName(toUserId)).emit('typing:show', { userName: socket.userName || 'Support' });
+    }
+  });
+
+  socket.on('typing:stop', ({ toUserId } = {}) => {
+    if (socket.role === 'user') {
+      io.to('admins').emit('typing:hide', { userId: socket.userId });
+    } else if (socket.role === 'admin' && toUserId) {
+      io.to(roomName(toUserId)).emit('typing:hide', {});
+    }
+  });
+
+  // Disconnect
+  socket.on('disconnect', () => {
+    const user = onlineUsers[socket.id];
+    if (!user) return;
+    delete onlineUsers[socket.id];
+
+    if (user.role === 'user') {
+      io.to('admins').emit('user:offline', { userId: user.id });
+      console.log(`[USER OFFLINE] ${user.name} (${user.id})`);
+    } else if (user.role === 'admin') {
+      if (!isAnyAdminOnline()) io.to('users').emit('admin:offline');
+      console.log(`[ADMIN OFFLINE] ${user.name}`);
+    }
+  });
+
 });
 
 const PORT = process.env.PORT || 3000;
-httpServer.listen(PORT, () => {
-  console.log(`\n🚀 Server running on port ${PORT}`);
-  console.log(`📡 Waiting for connections...\n`);
-});
+httpServer.listen(PORT, () => console.log(`🚀 Noble Support Server running on port ${PORT}`));

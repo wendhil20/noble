@@ -5,20 +5,15 @@ require_once '../notification/main-handler-notif-page-2.php';
 error_reporting(E_ALL);
 ini_set('display_errors', 1);
 
-// FIXED: Consistent path handling
 function saveImageToFolder($file, $targetDir = '../../uploads/')
 {
     if (!file_exists($targetDir)) {
         mkdir($targetDir, 0777, true);
     }
 
-    // Generate unique filename with timestamp for extra uniqueness
     $timestamp = time();
     $filename = 'img_' . $timestamp . '_' . uniqid() . '.webp';
     $targetPath = $targetDir . $filename;
-
-    // IMPORTANT: Return path WITHOUT ../../ prefix
-    // This ensures database stores: uploads/img_xxxxx.webp
     $relativePath = 'uploads/' . $filename;
 
     $imageType = mime_content_type($file['tmp_name']);
@@ -27,43 +22,52 @@ function saveImageToFolder($file, $targetDir = '../../uploads/')
     switch ($imageType) {
         case 'image/jpeg':
         case 'image/jpg':
-            $sourceImage = imagecreatefromjpeg($file['tmp_name']);
+            $sourceImage = @imagecreatefromjpeg($file['tmp_name']);
+            if (!$sourceImage) return null;
             break;
 
         case 'image/png':
-            $sourceImage = imagecreatefrompng($file['tmp_name']);
+            $sourceImage = @imagecreatefrompng($file['tmp_name']);
+            if (!$sourceImage) return null;
             imagepalettetotruecolor($sourceImage);
             imagealphablending($sourceImage, true);
             imagesavealpha($sourceImage, true);
             break;
 
         case 'image/gif':
-            $sourceImage = imagecreatefromgif($file['tmp_name']);
+            $sourceImage = @imagecreatefromgif($file['tmp_name']);
+            if (!$sourceImage) return null;
             imagepalettetotruecolor($sourceImage);
             imagealphablending($sourceImage, true);
             imagesavealpha($sourceImage, true);
             break;
 
         case 'image/webp':
-            // Already WebP, move directly
-            if (move_uploaded_file($file['tmp_name'], $targetPath)) {
-                return $relativePath;
+            $sourceImage = @imagecreatefromwebp($file['tmp_name']);
+            if (!$sourceImage) {
+                // fallback: move directly
+                if (move_uploaded_file($file['tmp_name'], $targetPath)) {
+                    return $relativePath;
+                }
+                return null;
             }
-            return null;
+            break;
 
         default:
             return null;
     }
 
-    if ($sourceImage && imagewebp($sourceImage, $targetPath, 80)) {
+    if (!$sourceImage) return null;
+
+    if (imagewebp($sourceImage, $targetPath, 80)) {
         imagedestroy($sourceImage);
         return $relativePath;
     }
 
+    imagedestroy($sourceImage);
     return null;
 }
 
-// FIXED: Sub images path handling
 function saveSubImages($subImagesFiles, $targetDir = '../../sub_images/')
 {
     if (!file_exists($targetDir)) {
@@ -80,12 +84,9 @@ function saveSubImages($subImagesFiles, $targetDir = '../../sub_images/')
                 continue;
             }
 
-            // Generate unique filename
             $timestamp = time();
             $filename = 'sub_' . $timestamp . '_' . uniqid() . '.webp';
             $targetPath = $targetDir . $filename;
-
-            // IMPORTANT: Store as sub_images/filename.webp
             $relativePath = 'sub_images/' . $filename;
 
             $file = [
@@ -93,39 +94,53 @@ function saveSubImages($subImagesFiles, $targetDir = '../../sub_images/')
                 'tmp_name' => $subImagesFiles['tmp_name'][$i]
             ];
 
-            // Process image
             $imageType = mime_content_type($file['tmp_name']);
             $sourceImage = null;
 
             switch ($imageType) {
                 case 'image/jpeg':
                 case 'image/jpg':
-                    $sourceImage = imagecreatefromjpeg($file['tmp_name']);
+                    $sourceImage = @imagecreatefromjpeg($file['tmp_name']);
+                    if (!$sourceImage) continue 2;
                     break;
+
                 case 'image/png':
-                    $sourceImage = imagecreatefrompng($file['tmp_name']);
+                    $sourceImage = @imagecreatefrompng($file['tmp_name']);
+                    if (!$sourceImage) continue 2;
                     imagepalettetotruecolor($sourceImage);
                     imagealphablending($sourceImage, true);
                     imagesavealpha($sourceImage, true);
                     break;
+
                 case 'image/gif':
-                    $sourceImage = imagecreatefromgif($file['tmp_name']);
+                    $sourceImage = @imagecreatefromgif($file['tmp_name']);
+                    if (!$sourceImage) continue 2;
                     imagepalettetotruecolor($sourceImage);
                     imagealphablending($sourceImage, true);
                     imagesavealpha($sourceImage, true);
                     break;
+
                 case 'image/webp':
-                    if (move_uploaded_file($file['tmp_name'], $targetPath)) {
-                        $subImagePaths[] = $relativePath;
+                    $sourceImage = @imagecreatefromwebp($file['tmp_name']);
+                    if (!$sourceImage) {
+                        if (move_uploaded_file($file['tmp_name'], $targetPath)) {
+                            $subImagePaths[] = $relativePath;
+                        }
+                        continue 2;
                     }
-                    continue 2;
+                    break;
+
                 default:
                     continue 2;
             }
 
-            if ($sourceImage && imagewebp($sourceImage, $targetPath, 80)) {
+            if (!$sourceImage) continue;
+
+            if (imagewebp($sourceImage, $targetPath, 80)) {
                 imagedestroy($sourceImage);
                 $subImagePaths[] = $relativePath;
+            } else {
+                imagedestroy($sourceImage);
             }
         }
     }
@@ -193,7 +208,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             }
         }
 
-        // ✅ NEW: Check and add image2 column to product_colors
+        // Check and add image2 column to product_colors
         $check_image2 = $conn->query("SHOW COLUMNS FROM product_colors LIKE 'image2'");
         if ($check_image2->num_rows == 0) {
             $conn->query("ALTER TABLE product_colors ADD COLUMN image2 VARCHAR(255) NULL DEFAULT NULL AFTER image");
@@ -217,7 +232,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $product_name = $_POST['product_name'];
         $stmt->close();
 
-        // Log product creation
         error_log("Product created with ID: $product_id, Main image: $main_image");
 
         // Product types
@@ -242,16 +256,16 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 $type_id = $stmt->insert_id;
                 $stmt->close();
 
-                // ✅ UPDATED: Colors with image2 support
+                // Colors with image2 support
                 if (isset($_POST['color_name'][$type_index]) && is_array($_POST['color_name'][$type_index])) {
                     foreach ($_POST['color_name'][$type_index] as $color_index => $color_name) {
                         if (!empty($color_name)) {
                             $color_code = $_POST['color_code'][$type_index][$color_index] ?? '';
                             $color_price = (float)($_POST['color_price'][$type_index][$color_index] ?? 0);
                             $color_image = null;
-                            $color_image2 = null; // ✅ NEW
+                            $color_image2 = null;
 
-                            // Handle main image
+                            // Handle main color image
                             if (
                                 isset($_FILES['color_image']['tmp_name'][$type_index][$color_index]) &&
                                 $_FILES['color_image']['error'][$type_index][$color_index] === UPLOAD_ERR_OK
@@ -263,7 +277,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                                 $color_image = saveImageToFolder($file);
                             }
 
-                            // ✅ NEW: Handle secondary image
+                            // Handle secondary color image
                             if (
                                 isset($_FILES['color_image2']['tmp_name'][$type_index][$color_index]) &&
                                 $_FILES['color_image2']['error'][$type_index][$color_index] === UPLOAD_ERR_OK
@@ -275,7 +289,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                                 $color_image2 = saveImageToFolder($file);
                             }
 
-                            // ✅ FIXED: Changed 'issdsS' to 'issdss' (all lowercase)
                             $stmt = $conn->prepare("INSERT INTO product_colors (product_id, color_name, color_code, price, image, image2) VALUES (?, ?, ?, ?, ?, ?)");
                             if (!$stmt) throw new Exception("Color insert failed: " . $conn->error);
                             $stmt->bind_param("issdss", $product_id, $color_name, $color_code, $color_price, $color_image, $color_image2);
@@ -347,12 +360,12 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
         $conn->commit();
 
-        // ✅ NEW: CREATE NOTIFICATION FOR ALL ADMINS
+        // Create notification for all admins
         $notification_title = "New Product Added";
         $notification_message = "'" . htmlspecialchars($product_name) . "' has been added to catalog (ID: #$product_id)";
-        
+
         $style = getNotificationStyle('product_upload');
-        
+
         $notif_created = createNotification(
             $conn,
             'product_upload',
@@ -368,7 +381,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             $success_message .= " ($sub_images_count sub images)";
         }
 
-        // Log notification creation
         if ($notif_created) {
             error_log("Notification created for product: $product_id");
         } else {
@@ -379,6 +391,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             alert('$success_message'); 
             window.location.href='main-adminshop-page-1.php';
         </script>";
+
     } catch (Exception $e) {
         $conn->rollback();
         error_log("Upload error: " . $e->getMessage());

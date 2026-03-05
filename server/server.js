@@ -41,19 +41,22 @@ function getAdminList() {
 function buildAdminConversationList(adminId) {
   const suffix = `__a${adminId}`;
   return Object.entries(conversations)
-    .filter(([key, msgs]) => key.endsWith(suffix) && msgs.length > 0) // only show if has messages
+    .filter(([key, msgs]) => key.endsWith(suffix) && msgs.length > 0)
     .map(([key, msgs]) => {
       const userId   = key.replace(/^u/, '').replace(suffix, '');
       const last     = msgs[msgs.length - 1];
       const unread   = msgs.filter(m => !m.read && m.from === 'user').length;
       const isOnline = !!onlineUsers[userId];
-      // Get userName from messages first, then fall back to onlineUsers map
-      const userName = last?.userName
-        || (onlineUsers[userId]?.name)
+
+      // ALWAYS get userName from a user message — never from admin reply
+      const userMsg  = msgs.find(m => m.from === 'user');
+      const userName = userMsg?.userName
+        || onlineUsers[userId]?.name
         || 'Unknown';
+
       return {
         userId,
-        userName,
+        userName,                              // always the user's real name
         lastMessage: last?.text     || '',
         lastTime:    last?.timestamp || new Date(0).toISOString(),
         unread,

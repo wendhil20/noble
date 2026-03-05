@@ -3,7 +3,6 @@ session_name("nobleuser");
 session_start();
 include '../../connection/connect.php';
 
-// ✅ Restore session from remember_token
 if (!isset($_SESSION['user_id']) && isset($_COOKIE['remember_token'])) {
     $token = $_COOKIE['remember_token'];
     $stmt = $conn->prepare("SELECT * FROM users WHERE remember_token = ?");
@@ -23,7 +22,6 @@ if (!isset($_SESSION['user_id']) && isset($_COOKIE['remember_token'])) {
     $stmt->close();
 }
 
-// ✅ Final auth check
 if (!isset($_SESSION['user_id'])) {
     header('Location: ../google-callback.php');
     exit;
@@ -40,310 +38,253 @@ $user_picture = $_SESSION['user_picture'] ?? null;
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Support Chat — Noble Home Depot</title>
-  <script src="https://cdn.tailwindcss.com"></script>
   <script src="https://cdn.socket.io/4.7.2/socket.io.min.js"></script>
   <link href="https://fonts.googleapis.com/css2?family=Sora:wght@300;400;500;600;700&display=swap" rel="stylesheet">
   <style>
     *, *::before, *::after { font-family: 'Sora', sans-serif; box-sizing: border-box; margin: 0; padding: 0; }
-
     :root {
-      --bg:        #0a0a0f;
-      --surface:   rgba(255,255,255,0.04);
-      --border:    rgba(255,255,255,0.07);
-      --blue:      #0084ff;
-      --blue-dark: #0055cc;
-      --text:      #e8e8f0;
-      --muted:     rgba(255,255,255,0.35);
-      --subtle:    rgba(255,255,255,0.08);
+      --bg: #0a0a0f; --surface: rgba(255,255,255,0.04);
+      --border: rgba(255,255,255,0.07); --blue: #0084ff;
+      --text: #e8e8f0; --muted: rgba(255,255,255,0.35);
+    }
+    html, body { height: 100%; background: var(--bg); overflow: hidden; color: var(--text); }
+
+    /* Background grid */
+    body::before {
+      content: ''; position: fixed; inset: 0; pointer-events: none; z-index: 0;
+      background-image: linear-gradient(rgba(255,255,255,0.015) 1px, transparent 1px),
+                        linear-gradient(90deg, rgba(255,255,255,0.015) 1px, transparent 1px);
+      background-size: 40px 40px;
     }
 
-    html, body { height: 100%; background: var(--bg); overflow: hidden; }
-
-    /* ── LAYOUT ── */
     .app {
-      height: 100vh;
-      display: flex;
-      flex-direction: column;
-      max-width: 780px;
-      margin: 0 auto;
-      border-left: 1px solid var(--border);
-      border-right: 1px solid var(--border);
-      position: relative;
+      height: 100vh; display: flex; flex-direction: column;
+      max-width: 820px; margin: 0 auto;
+      border-left: 1px solid var(--border); border-right: 1px solid var(--border);
+      position: relative; z-index: 1;
     }
 
     /* ── HEADER ── */
     .header {
-      display: flex;
-      align-items: center;
-      gap: 14px;
-      padding: 14px 20px;
-      background: rgba(10,10,15,0.85);
-      backdrop-filter: blur(20px);
-      border-bottom: 1px solid var(--border);
-      flex-shrink: 0;
-      z-index: 10;
+      display: flex; align-items: center; gap: 12px;
+      padding: 13px 20px;
+      background: rgba(10,10,15,0.9); backdrop-filter: blur(20px);
+      border-bottom: 1px solid var(--border); flex-shrink: 0;
     }
-
     .header-avatar {
-      width: 42px; height: 42px;
-      border-radius: 50%;
-      background: linear-gradient(135deg, #1a6fff, #a855f7);
+      width: 40px; height: 40px; border-radius: 50%; flex-shrink: 0;
       display: flex; align-items: center; justify-content: center;
-      font-weight: 700; font-size: 16px; color: #fff;
-      flex-shrink: 0;
+      font-weight: 700; font-size: 15px; color: #fff; position: relative;
+    }
+    .status-dot {
+      width: 10px; height: 10px; border-radius: 50%;
+      border: 2px solid var(--bg); position: absolute; bottom: 0; right: 0;
+      background: rgba(255,255,255,0.2); transition: background 0.3s;
+    }
+    .status-dot.online { background: #22c55e; }
+
+    /* ── PANELS ── */
+    #adminPickPanel, #chatPanel { flex: 1; display: flex; flex-direction: column; overflow: hidden; }
+    #chatPanel { display: none; }
+
+    /* ── ADMIN PICK PANEL ── */
+    .pick-header {
+      padding: 28px 24px 16px;
+      border-bottom: 1px solid var(--border);
+    }
+    .pick-header h2 { font-size: 18px; font-weight: 700; color: #fff; margin-bottom: 4px; }
+    .pick-header p  { font-size: 13px; color: var(--muted); }
+
+    #adminListContainer {
+      flex: 1; overflow-y: auto; padding: 16px;
+      display: flex; flex-direction: column; gap: 10px;
+    }
+    #adminListContainer::-webkit-scrollbar { width: 3px; }
+    #adminListContainer::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.08); border-radius: 4px; }
+
+    .admin-card {
+      display: flex; align-items: center; gap: 14px;
+      padding: 14px 16px;
+      background: rgba(255,255,255,0.04);
+      border: 1px solid rgba(255,255,255,0.07);
+      border-radius: 16px; cursor: pointer;
+      transition: all 0.18s;
+    }
+    .admin-card:hover {
+      background: rgba(0,132,255,0.08);
+      border-color: rgba(0,132,255,0.25);
+      transform: translateY(-1px);
+      box-shadow: 0 6px 20px rgba(0,0,0,0.3);
+    }
+    .admin-card-avatar {
+      width: 48px; height: 48px; border-radius: 50%;
+      display: flex; align-items: center; justify-content: center;
+      font-weight: 700; font-size: 18px; color: #fff; flex-shrink: 0;
       position: relative;
     }
-
-    .status-ring {
-      position: absolute;
-      inset: -3px;
-      border-radius: 50%;
-      border: 2px solid transparent;
-      transition: border-color 0.4s;
+    .admin-card-dot {
+      width: 12px; height: 12px; border-radius: 50%;
+      background: #22c55e; border: 2px solid var(--bg);
+      position: absolute; bottom: 1px; right: 1px;
     }
-    .status-ring.online  { border-color: #22c55e; }
-    .status-ring.offline { border-color: rgba(255,255,255,0.15); }
-
-    .status-dot {
-      width: 10px; height: 10px;
-      border-radius: 50%;
-      background: #22c55e;
-      border: 2px solid var(--bg);
-      position: absolute;
-      bottom: 1px; right: 1px;
-      transition: background 0.3s;
+    .admin-card-info { flex: 1; }
+    .admin-card-name { font-size: 15px; font-weight: 600; color: #fff; margin-bottom: 3px; }
+    .admin-card-title { font-size: 12px; color: var(--muted); }
+    .admin-card-arrow {
+      color: rgba(255,255,255,0.2); font-size: 18px;
+      transition: transform 0.18s; flex-shrink: 0;
     }
-    .status-dot.offline { background: rgba(255,255,255,0.25); }
+    .admin-card:hover .admin-card-arrow { transform: translateX(3px); color: var(--blue); }
 
-    /* ── MESSAGES ── */
+    .no-admins {
+      flex: 1; display: flex; flex-direction: column;
+      align-items: center; justify-content: center;
+      gap: 10px; text-align: center; padding: 40px;
+    }
+    .no-admins-icon {
+      width: 60px; height: 60px; border-radius: 50%;
+      background: rgba(255,255,255,0.04); border: 1px solid var(--border);
+      display: flex; align-items: center; justify-content: center;
+      font-size: 26px; margin-bottom: 6px;
+    }
+
+    /* ── CHAT PANEL ── */
+    .chat-header {
+      display: flex; align-items: center; gap: 12px;
+      padding: 13px 20px;
+      background: rgba(10,10,15,0.85); backdrop-filter: blur(20px);
+      border-bottom: 1px solid var(--border); flex-shrink: 0;
+    }
+    .back-btn {
+      width: 34px; height: 34px; border-radius: 50%;
+      background: rgba(255,255,255,0.06); border: 1px solid var(--border);
+      display: flex; align-items: center; justify-content: center;
+      cursor: pointer; flex-shrink: 0; transition: all 0.15s;
+    }
+    .back-btn:hover { background: rgba(255,255,255,0.1); }
+    .chat-admin-avatar {
+      width: 38px; height: 38px; border-radius: 50%; flex-shrink: 0;
+      display: flex; align-items: center; justify-content: center;
+      font-weight: 700; font-size: 14px; color: #fff; position: relative;
+    }
+    #chatStatusDot {
+      width: 10px; height: 10px; border-radius: 50%;
+      background: #22c55e; border: 2px solid var(--bg);
+      position: absolute; bottom: 0; right: 0;
+    }
+
+    /* Messages */
     #messagesContainer {
-      flex: 1;
-      overflow-y: auto;
-      padding: 24px 20px 12px;
-      display: flex;
-      flex-direction: column;
-      gap: 4px;
+      flex: 1; overflow-y: auto; padding: 20px 18px 10px;
+      display: flex; flex-direction: column; gap: 4px;
       scroll-behavior: smooth;
     }
     #messagesContainer::-webkit-scrollbar { width: 3px; }
     #messagesContainer::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.08); border-radius: 4px; }
 
-    /* Message grouping */
     .msg-wrapper {
-      display: flex;
-      align-items: flex-end;
-      gap: 8px;
-      max-width: 78%;
-      animation: msgIn 0.18s ease-out;
+      display: flex; align-items: flex-end; gap: 8px;
+      max-width: 78%; animation: msgIn 0.18s ease-out;
     }
     @keyframes msgIn {
       from { opacity: 0; transform: translateY(6px); }
       to   { opacity: 1; transform: translateY(0); }
     }
-
-    .msg-wrapper.mine  { align-self: flex-end; flex-direction: row-reverse; }
+    .msg-wrapper.mine  { align-self: flex-end;  flex-direction: row-reverse; }
     .msg-wrapper.other { align-self: flex-start; }
     .msg-wrapper.mt    { margin-top: 10px; }
 
-    .msg-avatar {
-      width: 26px; height: 26px; border-radius: 50%;
+    .msg-av {
+      width: 26px; height: 26px; border-radius: 50%; flex-shrink: 0;
       display: flex; align-items: center; justify-content: center;
-      font-size: 10px; font-weight: 700; flex-shrink: 0;
-      margin-bottom: 2px;
+      font-size: 10px; font-weight: 700; margin-bottom: 2px;
     }
-    .msg-avatar.hidden { visibility: hidden; }
-
     .msg-col { display: flex; flex-direction: column; gap: 2px; }
-    .msg-sender-name {
-      font-size: 11px; font-weight: 600;
-      color: rgba(255,255,255,0.4);
-      padding-left: 12px;
-      margin-bottom: 2px;
-    }
+    .msg-sender { font-size: 11px; color: rgba(255,255,255,0.38); padding-left: 12px; margin-bottom: 2px; }
 
     .msg-bubble {
-      padding: 10px 14px;
-      border-radius: 20px;
-      font-size: 14px;
-      line-height: 1.5;
-      word-break: break-word;
+      padding: 10px 14px; border-radius: 20px;
+      font-size: 14px; line-height: 1.5; word-break: break-word;
     }
-
     .msg-wrapper.mine .msg-bubble {
-      background: linear-gradient(135deg, var(--blue), var(--blue-dark));
-      color: #fff;
-      border-bottom-right-radius: 5px;
+      background: linear-gradient(135deg, #0084ff, #0055cc);
+      color: #fff; border-bottom-right-radius: 5px;
     }
-    .msg-wrapper.mine .msg-bubble + .msg-bubble { border-top-right-radius: 8px; }
-
     .msg-wrapper.other .msg-bubble {
-      background: rgba(255,255,255,0.08);
-      color: var(--text);
-      border: 1px solid var(--border);
-      border-bottom-left-radius: 5px;
+      background: rgba(255,255,255,0.08); color: var(--text);
+      border: 1px solid var(--border); border-bottom-left-radius: 5px;
     }
-    .msg-wrapper.other .msg-bubble + .msg-bubble { border-top-left-radius: 8px; }
-
-    .msg-time {
-      font-size: 10px;
-      color: rgba(255,255,255,0.2);
-      padding: 0 4px;
-      white-space: nowrap;
-      align-self: flex-end;
-    }
-
-    /* System message */
+    .msg-time { font-size: 10px; color: rgba(255,255,255,0.2); padding: 0 4px; white-space: nowrap; }
     .msg-system {
-      text-align: center;
-      font-size: 11px;
-      color: rgba(255,255,255,0.2);
-      padding: 8px 0;
-      font-style: italic;
-    }
-
-    /* Date divider */
-    .date-divider {
-      display: flex; align-items: center; gap: 10px;
-      padding: 10px 0;
-    }
-    .date-divider::before, .date-divider::after {
-      content: ''; flex: 1; height: 1px;
-      background: rgba(255,255,255,0.06);
-    }
-    .date-divider span {
-      font-size: 10px; color: rgba(255,255,255,0.2);
-      white-space: nowrap; font-weight: 500;
+      text-align: center; font-size: 11px;
+      color: rgba(255,255,255,0.2); padding: 8px 0; font-style: italic;
     }
 
     /* Typing */
     #typingIndicator {
-      padding: 0 20px 8px;
-      height: 26px;
-      font-size: 12px;
-      color: var(--muted);
-      font-style: italic;
-      display: flex;
-      align-items: center;
-      gap: 6px;
+      padding: 0 20px 8px; height: 26px;
+      font-size: 12px; color: var(--muted); font-style: italic;
+      display: flex; align-items: center; gap: 6px;
     }
-
-    .typing-dots {
-      display: flex; gap: 3px; align-items: center;
-    }
+    .typing-dots { display: flex; gap: 3px; align-items: center; }
     .typing-dots span {
-      width: 5px; height: 5px;
-      background: var(--muted);
-      border-radius: 50%;
-      animation: typingBounce 1.2s ease-in-out infinite;
+      width: 5px; height: 5px; background: var(--muted); border-radius: 50%;
+      animation: bounce 1.2s ease-in-out infinite;
     }
     .typing-dots span:nth-child(2) { animation-delay: 0.2s; }
     .typing-dots span:nth-child(3) { animation-delay: 0.4s; }
-    @keyframes typingBounce {
-      0%, 60%, 100% { transform: translateY(0); }
-      30%            { transform: translateY(-4px); }
-    }
+    @keyframes bounce { 0%,60%,100% { transform: translateY(0); } 30% { transform: translateY(-4px); } }
 
-    /* ── INPUT BAR ── */
+    /* Input */
     .input-bar {
-      padding: 12px 16px;
-      border-top: 1px solid var(--border);
+      padding: 12px 16px; border-top: 1px solid var(--border);
       background: rgba(10,10,15,0.9);
-      display: flex;
-      align-items: center;
-      gap: 10px;
-      flex-shrink: 0;
+      display: flex; align-items: center; gap: 10px; flex-shrink: 0;
     }
-
     #msgInput {
-      flex: 1;
-      background: rgba(255,255,255,0.06);
-      border: 1px solid rgba(255,255,255,0.1);
-      border-radius: 24px;
-      padding: 11px 18px;
-      color: #fff;
-      font-size: 14px;
-      outline: none;
-      transition: all 0.2s;
-      font-family: 'Sora', sans-serif;
+      flex: 1; background: rgba(255,255,255,0.06);
+      border: 1px solid rgba(255,255,255,0.1); border-radius: 24px;
+      padding: 11px 18px; color: #fff; font-size: 14px;
+      outline: none; transition: all 0.2s; font-family: 'Sora', sans-serif;
     }
     #msgInput:focus {
-      border-color: rgba(0,132,255,0.45);
-      background: rgba(0,132,255,0.06);
+      border-color: rgba(0,132,255,0.45); background: rgba(0,132,255,0.06);
       box-shadow: 0 0 0 3px rgba(0,132,255,0.1);
     }
     #msgInput::placeholder { color: rgba(255,255,255,0.22); }
-
     .send-btn {
-      width: 42px; height: 42px;
-      background: var(--blue);
-      border: none; border-radius: 50%;
-      cursor: pointer;
-      display: flex; align-items: center; justify-content: center;
-      transition: all 0.18s; flex-shrink: 0;
+      width: 42px; height: 42px; background: var(--blue); border: none;
+      border-radius: 50%; cursor: pointer; flex-shrink: 0;
+      display: flex; align-items: center; justify-content: center; transition: all 0.18s;
     }
     .send-btn:hover:not(:disabled) {
-      background: #1a8fff;
-      transform: scale(1.06);
+      background: #1a8fff; transform: scale(1.06);
       box-shadow: 0 4px 18px rgba(0,132,255,0.45);
     }
-    .send-btn:active:not(:disabled) { transform: scale(0.96); }
     .send-btn:disabled { background: rgba(255,255,255,0.08); cursor: not-allowed; }
 
-    /* ── OFFLINE BANNER ── */
-    #offlineBanner {
-      display: none;
-      background: rgba(239,68,68,0.12);
-      border-bottom: 1px solid rgba(239,68,68,0.2);
-      padding: 8px 20px;
-      font-size: 12px;
-      color: #fca5a5;
-      text-align: center;
-    }
-
-    /* ── EMPTY STATE ── */
-    .empty-state {
-      display: flex; flex-direction: column; align-items: center;
-      justify-content: center; flex: 1; padding: 40px 24px;
-      text-align: center; gap: 10px;
-    }
-    .empty-icon {
-      width: 64px; height: 64px;
-      background: rgba(0,132,255,0.1);
-      border: 1px solid rgba(0,132,255,0.2);
-      border-radius: 50%;
-      display: flex; align-items: center; justify-content: center;
-      margin-bottom: 6px;
-    }
-
-    /* Subtle background grid */
-    body::before {
-      content: '';
-      position: fixed; inset: 0;
-      background-image: linear-gradient(rgba(255,255,255,0.015) 1px, transparent 1px),
-                        linear-gradient(90deg, rgba(255,255,255,0.015) 1px, transparent 1px);
-      background-size: 40px 40px;
-      pointer-events: none;
-      z-index: 0;
-    }
-    .app { z-index: 1; }
+    /* Avatar color palette */
+    .av-0 { background: linear-gradient(135deg,#0084ff,#0044aa); }
+    .av-1 { background: linear-gradient(135deg,#a855f7,#7c3aed); }
+    .av-2 { background: linear-gradient(135deg,#22c55e,#16a34a); }
+    .av-3 { background: linear-gradient(135deg,#f97316,#ea580c); }
+    .av-4 { background: linear-gradient(135deg,#ec4899,#db2777); }
+    .av-5 { background: linear-gradient(135deg,#06b6d4,#0891b2); }
   </style>
 </head>
 <body>
-
 <div class="app">
 
-  <!-- ── HEADER ── -->
+  <!-- ── MAIN HEADER ── -->
   <div class="header">
-    <div class="header-avatar">
-      S
-      <div class="status-ring offline" id="statusRing"></div>
-      <div class="status-dot offline" id="statusDot"></div>
+    <div class="header-avatar" style="background:linear-gradient(135deg,#0084ff,#a855f7);">
+      N
     </div>
     <div style="flex:1;">
-      <div style="color:#fff;font-weight:700;font-size:15px;">Noble Support</div>
-      <div style="font-size:11px;color:var(--muted);" id="headerStatus">Connecting...</div>
+      <div style="font-size:15px;font-weight:700;color:#fff;">Noble Home Depot</div>
+      <div style="font-size:11px;color:var(--muted);">Support &amp; Sales</div>
     </div>
-    <!-- User info pill -->
+    <!-- Logged in user pill -->
     <div style="display:flex;align-items:center;gap:8px;background:rgba(255,255,255,0.05);border:1px solid var(--border);border-radius:20px;padding:6px 12px;">
       <?php if ($user_picture): ?>
         <img src="<?= htmlspecialchars($user_picture) ?>" style="width:22px;height:22px;border-radius:50%;object-fit:cover;" />
@@ -356,72 +297,71 @@ $user_picture = $_SESSION['user_picture'] ?? null;
     </div>
   </div>
 
-  <!-- ── OFFLINE BANNER ── -->
-  <div id="offlineBanner">⚠ Connection lost — trying to reconnect...</div>
-
-  <!-- ── MESSAGES ── -->
-  <div id="messagesContainer">
-    <!-- Empty state shown before messages load -->
-    <div class="empty-state" id="emptyState">
-      <div class="empty-icon">
-        <svg width="28" height="28" viewBox="0 0 32 32" fill="rgba(0,132,255,0.8)">
-          <path d="M16 2C8.268 2 2 7.87 2 15.07c0 4.2 2.07 7.95 5.31 10.41V30l4.85-2.66c1.29.36 2.66.55 4.08.55 7.732 0 14-5.87 14-13.07C30 7.87 23.732 2 16 2zm1.39 17.58L14 16.07l-6.5 3.51 7.14-7.58 3.39 3.51 6.5-3.51-7.14 7.58z"/>
-        </svg>
-      </div>
-      <div style="color:rgba(255,255,255,0.6);font-size:15px;font-weight:600;">Start a conversation</div>
-      <div style="color:rgba(255,255,255,0.25);font-size:13px;line-height:1.6;">
-        Our sales team is here to help.<br>Send a message to get started.
+  <!-- ══ PANEL 1: PICK AN ADMIN ══ -->
+  <div id="adminPickPanel">
+    <div class="pick-header">
+      <h2>Talk to our team 👋</h2>
+      <p>Choose a sales representative to start a private conversation.</p>
+    </div>
+    <div id="adminListContainer">
+      <div class="no-admins" id="noAdminsMsg">
+        <div class="no-admins-icon">😴</div>
+        <div style="font-size:15px;font-weight:600;color:rgba(255,255,255,0.5);">No one online right now</div>
+        <div style="font-size:13px;color:rgba(255,255,255,0.25);line-height:1.6;">Our team is currently offline.<br>Please check back later.</div>
       </div>
     </div>
   </div>
 
-  <!-- ── TYPING INDICATOR ── -->
-  <div id="typingIndicator"></div>
+  <!-- ══ PANEL 2: CHAT ══ -->
+  <div id="chatPanel">
+    <div class="chat-header">
+      <div class="back-btn" onclick="backToAdminList()" title="Back">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none">
+          <path d="M15 18l-6-6 6-6" stroke="rgba(255,255,255,0.7)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+        </svg>
+      </div>
+      <div class="chat-admin-avatar av-0" id="chatAdminAvatar">
+        ?
+        <div id="chatStatusDot"></div>
+      </div>
+      <div style="flex:1;">
+        <div style="font-size:14px;font-weight:600;color:#fff;" id="chatAdminName">—</div>
+        <div style="font-size:11px;color:#22c55e;" id="chatAdminStatus">● Online</div>
+      </div>
+    </div>
 
-  <!-- ── INPUT BAR ── -->
-  <div class="input-bar">
-    <input
-      type="text"
-      id="msgInput"
-      placeholder="Type a message..."
-      maxlength="500"
-      autocomplete="off"
-    />
-    <button class="send-btn" id="sendBtn" disabled>
-      <svg width="17" height="17" viewBox="0 0 24 24" fill="none">
-        <path d="M22 2L11 13M22 2L15 22L11 13M22 2L2 9L11 13" stroke="white" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/>
-      </svg>
-    </button>
+    <div id="messagesContainer"></div>
+    <div id="typingIndicator"></div>
+
+    <div class="input-bar">
+      <input type="text" id="msgInput" placeholder="Type a message..." maxlength="500" autocomplete="off" />
+      <button class="send-btn" id="sendBtn" disabled>
+        <svg width="17" height="17" viewBox="0 0 24 24" fill="none">
+          <path d="M22 2L11 13M22 2L15 22L11 13M22 2L2 9L11 13" stroke="white" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/>
+        </svg>
+      </button>
+    </div>
   </div>
 
 </div>
 
 <script>
-  // ── PHP → JS ──────────────────────────────────────────
   const USER_ID   = <?= json_encode((string)$user_id) ?>;
   const USER_NAME = <?= json_encode($user_name) ?>;
 
-  // ── DOM REFS ──────────────────────────────────────────
-  const messagesEl   = document.getElementById('messagesContainer');
-  const msgInput     = document.getElementById('msgInput');
-  const sendBtn      = document.getElementById('sendBtn');
-  const typingEl     = document.getElementById('typingIndicator');
-  const headerStatus = document.getElementById('headerStatus');
-  const statusRing   = document.getElementById('statusRing');
-  const statusDot    = document.getElementById('statusDot');
-  const offlineBanner= document.getElementById('offlineBanner');
-  const emptyState   = document.getElementById('emptyState');
+  const COLORS = ['av-0','av-1','av-2','av-3','av-4','av-5'];
+  function getColor(id) {
+    const idx = Math.abs(String(id).split('').reduce((a,c) => a + c.charCodeAt(0), 0)) % COLORS.length;
+    return COLORS[idx];
+  }
 
-  // ── SOCKET ────────────────────────────────────────────
+  let selectedAdmin = null; // { adminId, adminName, colorClass }
+  let isTyping = false, typingTimer;
+
   const socket = io('https://support.noblehomedepot.com');
 
-  // ── CONNECT ───────────────────────────────────────────
+  // ── CONNECT ──────────────────────────────────────────────
   socket.on('connect', () => {
-    offlineBanner.style.display = 'none';
-    setAdminStatus(false); // will be updated by user:online event
-    sendBtn.disabled = false;
-
-    // Join as user with PHP session data — unique per account
     socket.emit('user:join', {
       userId:   USER_ID,
       userName: USER_NAME,
@@ -430,117 +370,186 @@ $user_picture = $_SESSION['user_picture'] ?? null;
   });
 
   socket.on('disconnect', () => {
-    offlineBanner.style.display = 'block';
-    headerStatus.textContent = 'Disconnected — reconnecting...';
-    sendBtn.disabled = true;
+    document.getElementById('sendBtn').disabled = true;
   });
 
-  // ── HISTORY (load past messages on connect) ────────────
+  // ── ADMIN LIST ───────────────────────────────────────────
+  socket.on('admins:list', (admins) => {
+    renderAdminList(admins);
+  });
+
+  // ── HISTORY ──────────────────────────────────────────────
   socket.on('history', (msgs) => {
-    messagesEl.innerHTML = '';
+    const el = document.getElementById('messagesContainer');
+    el.innerHTML = '';
     if (!msgs || msgs.length === 0) {
-      messagesEl.appendChild(emptyState);
-      emptyState.style.display = 'flex';
+      addSystemMsg('No messages yet. Say hello! 👋');
     } else {
-      emptyState.style.display = 'none';
-      msgs.forEach((msg, i) => {
-        if (msg && msg.text) renderMessage(msg, i > 0 ? msgs[i-1] : null);
-      });
+      msgs.forEach((m, i) => { if (m && m.text) renderMessage(m, i > 0 ? msgs[i-1] : null); });
     }
     scrollToBottom();
   });
 
-  // ── NEW MESSAGE ────────────────────────────────────────
+  // ── NEW MESSAGE ──────────────────────────────────────────
   socket.on('message:new', (msg) => {
     if (!msg || !msg.text) return;
-    emptyState.style.display = 'none';
-
-    // Get last message for grouping logic
-    const bubbles = messagesEl.querySelectorAll('.msg-wrapper');
-    const lastMsg = bubbles.length > 0 ? bubbles[bubbles.length - 1] : null;
-    renderMessage(msg, null, lastMsg);
+    renderMessage(msg);
     scrollToBottom();
   });
 
-  // ── ADMIN ONLINE/OFFLINE ────────────────────────────────
-  // Listen if admin comes online (optional — server can emit this)
-  socket.on('admin:online', () => setAdminStatus(true));
-  socket.on('admin:offline', () => setAdminStatus(false));
-
-  // ── TYPING ────────────────────────────────────────────
-  let typingTimeout;
+  // ── TYPING ───────────────────────────────────────────────
+  let typingHideTimer;
   socket.on('typing:show', ({ userName }) => {
-    typingEl.innerHTML = `
+    const el = document.getElementById('typingIndicator');
+    el.innerHTML = `
       <div class="typing-dots"><span></span><span></span><span></span></div>
-      <span style="font-size:12px;color:rgba(255,255,255,0.3);">Support is typing...</span>
+      <span style="font-size:12px;color:rgba(255,255,255,0.3);">${escapeHtml(userName || 'Support')} is typing...</span>
     `;
-    clearTimeout(typingTimeout);
-    typingTimeout = setTimeout(() => { typingEl.innerHTML = ''; }, 4000);
+    clearTimeout(typingHideTimer);
+    typingHideTimer = setTimeout(() => { el.innerHTML = ''; }, 4000);
   });
 
   socket.on('typing:hide', () => {
-    typingEl.innerHTML = '';
-    clearTimeout(typingTimeout);
+    document.getElementById('typingIndicator').innerHTML = '';
+    clearTimeout(typingHideTimer);
   });
 
-  // ── SEND MESSAGE ──────────────────────────────────────
+  // ── ADMIN GOES OFFLINE ───────────────────────────────────
+  socket.on('admins:list', (admins) => {
+    renderAdminList(admins);
+    // If currently chatting with someone who went offline, update status
+    if (selectedAdmin) {
+      const stillOnline = admins.find(a => a.adminId == selectedAdmin.adminId);
+      updateChatStatus(!!stillOnline);
+    }
+  });
+
+  // ── RENDER ADMIN LIST ────────────────────────────────────
+  function renderAdminList(admins) {
+    const container = document.getElementById('adminListContainer');
+    const noMsg     = document.getElementById('noAdminsMsg');
+
+    if (!admins || admins.length === 0) {
+      container.innerHTML = '';
+      container.appendChild(noMsg);
+      noMsg.style.display = 'flex';
+      return;
+    }
+
+    noMsg.style.display = 'none';
+    container.innerHTML = '';
+
+    admins.forEach(admin => {
+      const color = getColor(admin.adminId);
+      const initial = (admin.adminName || 'A')[0].toUpperCase();
+      const card = document.createElement('div');
+      card.className = 'admin-card';
+      card.innerHTML = `
+        <div class="admin-card-avatar ${color}">
+          ${initial}
+          <div class="admin-card-dot"></div>
+        </div>
+        <div class="admin-card-info">
+          <div class="admin-card-name">${escapeHtml(admin.adminName)}</div>
+          <div class="admin-card-title">${escapeHtml(admin.title || 'Sales Representative')} · <span style="color:#22c55e;">● Online</span></div>
+        </div>
+        <div class="admin-card-arrow">›</div>
+      `;
+      card.onclick = () => selectAdmin(admin, color);
+      container.appendChild(card);
+    });
+  }
+
+  // ── SELECT ADMIN → OPEN CHAT ─────────────────────────────
+  function selectAdmin(admin, colorClass) {
+    selectedAdmin = { ...admin, colorClass };
+
+    // Update chat header
+    const av = document.getElementById('chatAdminAvatar');
+    av.className = `chat-admin-avatar ${colorClass}`;
+    av.innerHTML = `${(admin.adminName || 'A')[0].toUpperCase()}<div id="chatStatusDot" class="status-dot online"></div>`;
+    document.getElementById('chatAdminName').textContent   = admin.adminName || 'Support';
+    document.getElementById('chatAdminStatus').textContent = '● Online';
+    document.getElementById('chatAdminStatus').style.color = '#22c55e';
+
+    // Switch panels
+    document.getElementById('adminPickPanel').style.display = 'none';
+    document.getElementById('chatPanel').style.display      = 'flex';
+    document.getElementById('chatPanel').style.flexDirection = 'column';
+
+    // Enable input
+    document.getElementById('sendBtn').disabled = false;
+    document.getElementById('msgInput').focus();
+
+    // Tell server user selected this admin
+    socket.emit('user:select-admin', { adminId: admin.adminId });
+  }
+
+  // ── BACK TO ADMIN LIST ───────────────────────────────────
+  function backToAdminList() {
+    selectedAdmin = null;
+    document.getElementById('chatPanel').style.display      = 'none';
+    document.getElementById('adminPickPanel').style.display = 'flex';
+    document.getElementById('adminPickPanel').style.flexDirection = 'column';
+    document.getElementById('messagesContainer').innerHTML  = '';
+    document.getElementById('typingIndicator').innerHTML    = '';
+    document.getElementById('sendBtn').disabled = true;
+  }
+
+  // ── SEND MESSAGE ─────────────────────────────────────────
   function sendMessage() {
-    const text = msgInput.value.trim();
-    if (!text || !socket.connected) return;
+    const text = document.getElementById('msgInput').value.trim();
+    if (!text || !socket.connected || !selectedAdmin) return;
 
     socket.emit('message:send', { text });
     socket.emit('typing:stop');
 
-    msgInput.value = '';
+    document.getElementById('msgInput').value = '';
     isTyping = false;
-    clearTimeout(typingStopTimer);
+    clearTimeout(typingTimer);
   }
 
-  sendBtn.addEventListener('click', sendMessage);
-  msgInput.addEventListener('keydown', (e) => {
+  document.getElementById('sendBtn').addEventListener('click', sendMessage);
+  document.getElementById('msgInput').addEventListener('keydown', (e) => {
     if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); sendMessage(); }
   });
 
-  let isTyping = false, typingStopTimer;
-  msgInput.addEventListener('input', () => {
+  document.getElementById('msgInput').addEventListener('input', () => {
+    if (!selectedAdmin) return;
     if (!isTyping) {
       isTyping = true;
-      socket.emit('typing:start');
+      socket.emit('typing:start', { toAdminId: selectedAdmin.adminId });
     }
-    clearTimeout(typingStopTimer);
-    typingStopTimer = setTimeout(() => {
+    clearTimeout(typingTimer);
+    typingTimer = setTimeout(() => {
       isTyping = false;
-      socket.emit('typing:stop');
+      socket.emit('typing:stop', { toAdminId: selectedAdmin.adminId });
     }, 1500);
   });
 
-  // ── RENDER MESSAGE ────────────────────────────────────
-  function renderMessage(msg, prevMsg, prevEl) {
-    const isMine  = msg.from === 'user' || msg.userId == USER_ID && msg.from !== 'admin';
-    const isAdmin = msg.from === 'admin';
-    const userName = msg.userName || (isAdmin ? 'Support' : USER_NAME);
-
+  // ── RENDER MESSAGE ───────────────────────────────────────
+  function renderMessage(msg, prevMsg) {
+    const isMine = msg.from === 'user';
     const wrapper = document.createElement('div');
     wrapper.className = `msg-wrapper ${isMine ? 'mine' : 'other'}`;
-
-    // Add top margin if different sender than previous
-    const prevFrom = prevMsg ? prevMsg.from : (prevEl ? prevEl.dataset.from : null);
-    if (!prevFrom || prevFrom !== msg.from) wrapper.classList.add('mt');
+    if (!prevMsg || prevMsg.from !== msg.from) wrapper.classList.add('mt');
     wrapper.dataset.from = msg.from;
 
-    const time = formatTime(msg.timestamp);
+    const time     = formatTime(msg.timestamp);
+    const userName = msg.userName || (isMine ? USER_NAME : 'Support');
+    const color    = isMine ? getColor(USER_ID) : (selectedAdmin ? selectedAdmin.colorClass : 'av-0');
 
     if (isMine) {
       wrapper.innerHTML = `
         <span class="msg-time">${time}</span>
         <div class="msg-bubble">${escapeHtml(msg.text)}</div>
+        <div class="msg-av ${color}">${USER_NAME[0].toUpperCase()}</div>
       `;
     } else {
-      // Admin / Support message
       wrapper.innerHTML = `
-        <div class="msg-avatar" style="background:linear-gradient(135deg,#1a6fff,#a855f7);color:#fff;">S</div>
+        <div class="msg-av ${color}">${(userName)[0].toUpperCase()}</div>
         <div class="msg-col">
-          <div class="msg-sender-name">${escapeHtml(userName)}</div>
+          <div class="msg-sender">${escapeHtml(userName)}</div>
           <div style="display:flex;align-items:flex-end;gap:6px;">
             <div class="msg-bubble">${escapeHtml(msg.text)}</div>
             <span class="msg-time">${time}</span>
@@ -548,43 +557,34 @@ $user_picture = $_SESSION['user_picture'] ?? null;
         </div>
       `;
     }
-
-    messagesEl.appendChild(wrapper);
+    document.getElementById('messagesContainer').appendChild(wrapper);
   }
 
-  // ── HELPERS ───────────────────────────────────────────
-  function setAdminStatus(online) {
-    if (online) {
-      headerStatus.textContent = '● Online — Support available';
-      headerStatus.style.color = '#22c55e';
-      statusRing.className = 'status-ring online';
-      statusDot.className  = 'status-dot online';
-    } else {
-      headerStatus.textContent = 'Support · We\'ll reply soon';
-      headerStatus.style.color = 'rgba(255,255,255,0.35)';
-      statusRing.className = 'status-ring offline';
-      statusDot.className  = 'status-dot offline';
-    }
+  function addSystemMsg(text) {
+    const d = document.createElement('div');
+    d.className = 'msg-system';
+    d.textContent = text;
+    document.getElementById('messagesContainer').appendChild(d);
+  }
+
+  function updateChatStatus(online) {
+    document.getElementById('chatAdminStatus').textContent = online ? '● Online' : 'Offline';
+    document.getElementById('chatAdminStatus').style.color = online ? '#22c55e' : 'rgba(255,255,255,0.35)';
   }
 
   function scrollToBottom() {
-    messagesEl.scrollTop = messagesEl.scrollHeight;
+    const el = document.getElementById('messagesContainer');
+    el.scrollTop = el.scrollHeight;
   }
 
   function formatTime(ts) {
-    try {
-      return new Date(ts).toLocaleTimeString('en-PH', { hour: '2-digit', minute: '2-digit' });
-    } catch(e) { return ''; }
+    try { return new Date(ts).toLocaleTimeString('en-PH', { hour: '2-digit', minute: '2-digit' }); }
+    catch(e) { return ''; }
   }
 
   function escapeHtml(str) {
     if (!str) return '';
-    return str
-      .replace(/&/g,'&amp;')
-      .replace(/</g,'&lt;')
-      .replace(/>/g,'&gt;')
-      .replace(/"/g,'&quot;')
-      .replace(/\n/g,'<br>');
+    return str.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;').replace(/\n/g,'<br>');
   }
 </script>
 </body>

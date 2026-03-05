@@ -41,16 +41,19 @@ function getAdminList() {
 function buildAdminConversationList(adminId) {
   const suffix = `__a${adminId}`;
   return Object.entries(conversations)
-    .filter(([key]) => key.endsWith(suffix))
+    .filter(([key, msgs]) => key.endsWith(suffix) && msgs.length > 0) // only show if has messages
     .map(([key, msgs]) => {
-      // Extract userId from key: u{userId}__a{adminId}
-      const userId = key.replace(/^u/, '').replace(suffix, '');
-      const last   = msgs[msgs.length - 1];
-      const unread = msgs.filter(m => !m.read && m.from === 'user').length;
+      const userId   = key.replace(/^u/, '').replace(suffix, '');
+      const last     = msgs[msgs.length - 1];
+      const unread   = msgs.filter(m => !m.read && m.from === 'user').length;
       const isOnline = !!onlineUsers[userId];
+      // Get userName from messages first, then fall back to onlineUsers map
+      const userName = last?.userName
+        || (onlineUsers[userId]?.name)
+        || 'Unknown';
       return {
         userId,
-        userName:    last?.userName || 'Unknown',
+        userName,
         lastMessage: last?.text     || '',
         lastTime:    last?.timestamp || new Date(0).toISOString(),
         unread,
@@ -129,12 +132,16 @@ io.on('connection', (socket) => {
       conversations[convKey(userId, aId)] = [];
     }
 
-    // Send history of this private conversation
+    // Send history of this private conversation to the user
     socket.emit('history', conversations[convKey(userId, aId)]);
 
-    // Notify ONLY that specific admin
-    io.to(`admin_${aId}`).emit('user:online', { userId, userName: socket.userName });
-    io.to(`admin_${aId}`).emit('admin:conversations', buildAdminConversationList(aId));
+    // Only notify admin if there are existing messages (returning user)
+    // New users will appear in admin list only after first message is sent
+    const existingMsgs = conversations[convKey(userId, aId)];
+    if (existingMsgs.length > 0) {
+      io.to(`admin_${aId}`).emit('user:online', { userId, userName: socket.userName });
+      io.to(`admin_${aId}`).emit('admin:conversations', buildAdminConversationList(aId));
+    }
 
     console.log(`[SELECT] User ${socket.userName} → Admin ${aId}`);
   });

@@ -1,27 +1,96 @@
-const express = require('express');
-const http = require('http');
+const express    = require('express');
+const http       = require('http');
 const { Server } = require('socket.io');
+const mysql      = require('mysql2/promise');
 
-const app = express();
+const app        = express();
 const httpServer = http.createServer(app);
-const io = new Server(httpServer, { cors: { origin: '*' } });
+const io         = new Server(httpServer, { cors: { origin: '*' } });
+
+// ── DATABASE ──────────────────────────────────────────────
+const db = mysql.createPool({
+  host:     process.env.DB_HOST     || 'localhost',
+  user:     process.env.DB_USER     || 'root',
+  password: process.env.DB_PASS     || '',
+  database: process.env.DB_NAME     || 'noble',
+  waitForConnections: true,
+  connectionLimit: 10
+});
+
+// ── DB HELPERS ────────────────────────────────────────────
+
+async function saveMessage(msg) {
+  await db.execute(
+    `INSERT INTO chat_messages (user_id, admin_id, from_role, user_name, text, is_read, created_at)
+     VALUES (?, ?, ?, ?, ?, ?, ?)`,
+    [msg.userId, msg.adminId, msg.from, msg.userName, msg.text, msg.read ? 1 : 0, msg.timestamp]
+  );
+}
+
+async function loadHistory(userId, adminId) {
+  const [rows] = await db.execute(
+    `SELECT * FROM chat_messages
+     WHERE user_id = ? AND admin_id = ?
+     ORDER BY created_at ASC`,
+    [String(userId), String(adminId)]
+  );
+  return rows.map(r => ({
+    id:        r.id,
+    from:      r.from_role,
+    userId:    r.user_id,
+    adminId:   r.admin_id,
+    userName:  r.user_name,
+    text:      r.text,
+    timestamp: r.created_at,
+    read:      !!r.is_read
+  }));
+}
+
+async function markRead(userId, adminId) {
+  await db.execute(
+    `UPDATE chat_messages SET is_read = 1
+     WHERE user_id = ? AND admin_id = ? AND from_role = 'user' AND is_read = 0`,
+    [String(userId), String(adminId)]
+  );
+}
+
+async function buildAdminConversationList(adminId) {
+  const [rows] = await db.execute(
+    `SELECT
+       user_id,
+       MAX(user_name)   AS user_name,
+       MAX(text)        AS last_text,
+       MAX(created_at)  AS last_time,
+       SUM(CASE WHEN from_role = 'user' AND is_read = 0 THEN 1 ELSE 0 END) AS unread
+     FROM chat_messages
+     WHERE admin_id = ?
+     GROUP BY user_id
+     ORDER BY last_time DESC`,
+    [String(adminId)]
+  );
+  return rows.map(r => ({
+    userId:      r.user_id,
+    userName:    onlineUsers[r.user_id]?.name || r.user_name || 'Unknown',
+    lastMessage: r.last_text || '',
+    lastTime:    r.last_time || new Date(0).toISOString(),
+    unread:      r.unread || 0,
+    isOnline:    !!onlineUsers[r.user_id]
+  }));
+}
 
 // ── IN-MEMORY STORES ──────────────────────────────────────
-const onlineAdmins   = {};   // adminId  → { socketId, name, title }
-const onlineUsers    = {};   // userId   → { socketId, name }
-const conversations  = {};   // convKey  → [ msg, ... ]
-const userAdminMap   = {};   // userId   → adminId
-const rateLimiter    = {};   // socketId → { count, resetAt }
+const onlineAdmins  = {};   // adminId  → { socketId, name, title }
+const onlineUsers   = {};   // userId   → { socketId, name }
+const userAdminMap  = {};   // userId   → adminId   (current session mapping)
+const rateLimiter   = {};   // socketId → { count, resetAt }
 
 // ── SECURITY HELPERS ──────────────────────────────────────
 
-// Sanitize text — strip HTML tags, trim, limit length
 function sanitize(str, maxLen = 500) {
   if (typeof str !== 'string') return '';
   return str.replace(/<[^>]*>/g, '').trim().slice(0, maxLen);
 }
 
-// Rate limit: max 10 messages per 5 seconds per socket
 function isRateLimited(socketId) {
   const now = Date.now();
   if (!rateLimiter[socketId] || now > rateLimiter[socketId].resetAt) {
@@ -29,23 +98,11 @@ function isRateLimited(socketId) {
     return false;
   }
   rateLimiter[socketId].count++;
-  if (rateLimiter[socketId].count > 10) return true;
-  return false;
+  return rateLimiter[socketId].count > 10;
 }
 
-// Validate that a userId is a safe string (digits only for DB IDs)
 function isValidId(id) {
   return id && /^[a-zA-Z0-9_-]+$/.test(String(id)) && String(id).length < 64;
-}
-
-// ── CONVERSATION HELPERS ──────────────────────────────────
-
-function convKey(userId, adminId) {
-  return `u${userId}__a${adminId}`;
-}
-
-function roomName(userId, adminId) {
-  return `room__u${userId}__a${adminId}`;
 }
 
 function getAdminList() {
@@ -57,42 +114,16 @@ function getAdminList() {
   }));
 }
 
-function buildAdminConversationList(adminId) {
-  const suffix = `__a${adminId}`;
-  return Object.entries(conversations)
-    .filter(([key, msgs]) => key.endsWith(suffix) && msgs.length > 0)
-    .map(([key, msgs]) => {
-      const userId   = key.replace(/^u/, '').replace(suffix, '');
-      const last     = msgs[msgs.length - 1];
-      const unread   = msgs.filter(m => !m.read && m.from === 'user').length;
-      const isOnline = !!onlineUsers[userId];
-      // Always get name from a user message — never from admin reply
-      const userMsg  = msgs.find(m => m.from === 'user');
-      const userName = userMsg?.userName || onlineUsers[userId]?.name || 'Unknown';
-      return {
-        userId,
-        userName,
-        lastMessage: last?.text     || '',
-        lastTime:    last?.timestamp || new Date(0).toISOString(),
-        unread,
-        isOnline
-      };
-    })
-    .sort((a, b) => new Date(b.lastTime) - new Date(a.lastTime));
-}
-
-// ── SOCKET EVENTS ──────────────────────────────────────────
+// ── SOCKET EVENTS ─────────────────────────────────────────
 
 io.on('connection', (socket) => {
 
-  // ── JOIN ────────────────────────────────────────────────
-  socket.on('user:join', ({ userId, userName, role, title }) => {
-    // ✅ SECURITY: Validate all inputs
+  // ── JOIN ──────────────────────────────────────────────
+  socket.on('user:join', async ({ userId, userName, role, title }) => {
     if (!isValidId(userId)) return;
     if (typeof userName !== 'string' || !userName.trim()) return;
-    if (role !== 'user' && role !== 'admin') return; // only accept known roles
+    if (role !== 'user' && role !== 'admin') return;
 
-    // ✅ SECURITY: Sanitize userName — prevent XSS via username
     const cleanName = sanitize(userName, 50);
     if (!cleanName) return;
 
@@ -102,16 +133,13 @@ io.on('connection', (socket) => {
 
     if (role === 'admin') {
       socket.title = sanitize(title || 'Sales', 30);
-      onlineAdmins[socket.userId] = {
-        socketId: socket.id,
-        name:     cleanName,
-        title:    socket.title
-      };
+      onlineAdmins[socket.userId] = { socketId: socket.id, name: cleanName, title: socket.title };
 
       socket.join('admins');
       socket.join(`admin_${socket.userId}`);
 
-      socket.emit('admin:conversations', buildAdminConversationList(socket.userId));
+      const convList = await buildAdminConversationList(socket.userId);
+      socket.emit('admin:conversations', convList);
       io.to('users').emit('admins:list', getAdminList());
       console.log(`[ADMIN] ${cleanName} joined (id: ${socket.userId})`);
 
@@ -121,15 +149,15 @@ io.on('connection', (socket) => {
       socket.join(`user_${socket.userId}`);
       socket.emit('admins:list', getAdminList());
 
-      // Restore previous conversation if exists
+      // Restore previous session mapping if any
       if (userAdminMap[socket.userId]) {
         const adminId = userAdminMap[socket.userId];
-        socket.join(roomName(socket.userId, adminId));
-        const existing = conversations[convKey(socket.userId, adminId)] || [];
-        socket.emit('history', existing);
-        if (existing.length > 0) {
+        const history = await loadHistory(socket.userId, adminId);
+        socket.emit('history', history);
+        if (history.length > 0) {
           io.to(`admin_${adminId}`).emit('user:online', { userId: socket.userId, userName: cleanName });
-          io.to(`admin_${adminId}`).emit('admin:conversations', buildAdminConversationList(adminId));
+          const convList = await buildAdminConversationList(adminId);
+          io.to(`admin_${adminId}`).emit('admin:conversations', convList);
         }
       }
 
@@ -138,11 +166,10 @@ io.on('connection', (socket) => {
   });
 
   // ── USER SELECTS AN ADMIN ────────────────────────────────
-  socket.on('user:select-admin', ({ adminId }) => {
+  socket.on('user:select-admin', async ({ adminId }) => {
     if (socket.role !== 'user') return;
     if (!isValidId(adminId)) return;
 
-    // ✅ SECURITY: Verify the selected admin actually exists and is online
     if (!onlineAdmins[String(adminId)]) {
       socket.emit('error:admin-offline', { message: 'This admin is no longer online.' });
       return;
@@ -152,28 +179,22 @@ io.on('connection', (socket) => {
     const aId    = String(adminId);
     userAdminMap[userId] = aId;
 
-    socket.join(roomName(userId, aId));
+    // Load history from DB (persisted across deploys!)
+    const history = await loadHistory(userId, aId);
+    socket.emit('history', history);
 
-    if (!conversations[convKey(userId, aId)]) {
-      conversations[convKey(userId, aId)] = [];
-    }
-
-    socket.emit('history', conversations[convKey(userId, aId)]);
-
-    const existing = conversations[convKey(userId, aId)];
-    if (existing.length > 0) {
+    if (history.length > 0) {
       io.to(`admin_${aId}`).emit('user:online', { userId, userName: socket.userName });
-      io.to(`admin_${aId}`).emit('admin:conversations', buildAdminConversationList(aId));
+      const convList = await buildAdminConversationList(aId);
+      io.to(`admin_${aId}`).emit('admin:conversations', convList);
     }
 
     console.log(`[SELECT] User ${socket.userName} → Admin ${aId}`);
   });
 
-  // ── USER SENDS MESSAGE ───────────────────────────────────
-  socket.on('message:send', ({ text }) => {
+  // ── USER SENDS MESSAGE ────────────────────────────────────
+  socket.on('message:send', async ({ text }) => {
     if (socket.role !== 'user') return;
-
-    // ✅ SECURITY: Rate limit
     if (isRateLimited(socket.id)) {
       socket.emit('error:rate-limit', { message: 'Sending too fast. Please slow down.' });
       return;
@@ -190,13 +211,6 @@ io.on('connection', (socket) => {
       return;
     }
 
-    // ✅ SECURITY: Verify admin is still online (optional — allows offline messages)
-    // Remove this block if you want to allow messages even when admin is offline
-    // if (!onlineAdmins[adminId]) {
-    //   socket.emit('error:admin-offline', { message: 'Admin is offline.' });
-    //   return;
-    // }
-
     const msg = {
       id:        Date.now(),
       from:      'user',
@@ -208,23 +222,20 @@ io.on('connection', (socket) => {
       read:      false
     };
 
-    if (!conversations[convKey(userId, adminId)]) {
-      conversations[convKey(userId, adminId)] = [];
-    }
-    conversations[convKey(userId, adminId)].push(msg);
+    // ✅ Save to DB first
+    await saveMessage(msg);
 
     socket.emit('message:new', msg);
     io.to(`admin_${adminId}`).emit('message:new', msg);
-    io.to(`admin_${adminId}`).emit('admin:conversations', buildAdminConversationList(adminId));
+    const convList = await buildAdminConversationList(adminId);
+    io.to(`admin_${adminId}`).emit('admin:conversations', convList);
 
     console.log(`[MSG] ${socket.userName} → admin_${adminId}: ${clean}`);
   });
 
-  // ── ADMIN REPLIES ────────────────────────────────────────
-  socket.on('admin:reply', ({ toUserId, text }) => {
+  // ── ADMIN REPLIES ─────────────────────────────────────────
+  socket.on('admin:reply', async ({ toUserId, text }) => {
     if (socket.role !== 'admin') return;
-
-    // ✅ SECURITY: Rate limit admins too
     if (isRateLimited(socket.id)) return;
 
     const clean = sanitize(text);
@@ -233,8 +244,6 @@ io.on('connection', (socket) => {
     const adminId = socket.userId;
     const userId  = String(toUserId);
 
-    // ✅ SECURITY: Verify this user actually chose THIS admin
-    // Prevents admin from injecting messages into other admin's conversations
     if (userAdminMap[userId] !== adminId) {
       console.warn(`[SECURITY] Admin ${adminId} tried to reply to user ${userId} who didn't select them`);
       return;
@@ -251,52 +260,43 @@ io.on('connection', (socket) => {
       read:      false
     };
 
-    if (!conversations[convKey(userId, adminId)]) {
-      conversations[convKey(userId, adminId)] = [];
-    }
-    conversations[convKey(userId, adminId)].push(msg);
+    // ✅ Save to DB
+    await saveMessage(msg);
 
     io.to(`user_${userId}`).emit('message:new', msg);
     socket.emit('message:new', msg);
-    socket.emit('admin:conversations', buildAdminConversationList(adminId));
+    const convList = await buildAdminConversationList(adminId);
+    socket.emit('admin:conversations', convList);
 
     console.log(`[REPLY] admin_${adminId} → user_${userId}: ${clean}`);
   });
 
-  // ── ADMIN OPENS CONVERSATION ─────────────────────────────
-  socket.on('admin:open', ({ userId }) => {
+  // ── ADMIN OPENS CONVERSATION ──────────────────────────────
+  socket.on('admin:open', async ({ userId }) => {
     if (socket.role !== 'admin' || !isValidId(userId)) return;
 
     const adminId = socket.userId;
     const uid     = String(userId);
 
-    // ✅ SECURITY: Only allow admin to open conversations that belong to them
-    if (userAdminMap[uid] !== adminId) {
-      // Allow if there are existing messages between this pair (history)
-      const existing = conversations[convKey(uid, adminId)] || [];
-      if (existing.length === 0) return;
-    }
+    const history = await loadHistory(uid, adminId);
+    if (history.length === 0 && userAdminMap[uid] !== adminId) return;
 
-    const key     = convKey(uid, adminId);
-    const history = conversations[key] || [];
-    history.forEach(m => { if (m.from === 'user') m.read = true; });
+    // Mark all user messages as read
+    await markRead(uid, adminId);
 
     socket.emit('history', history);
-    socket.emit('admin:conversations', buildAdminConversationList(adminId));
+    const convList = await buildAdminConversationList(adminId);
+    socket.emit('admin:conversations', convList);
   });
 
-  // ── TYPING ───────────────────────────────────────────────
+  // ── TYPING ────────────────────────────────────────────────
   socket.on('typing:start', ({ toUserId, toAdminId } = {}) => {
     if (socket.role === 'user') {
       const adminId = userAdminMap[socket.userId] || toAdminId;
       if (adminId && isValidId(adminId)) {
-        io.to(`admin_${adminId}`).emit('typing:show', {
-          userId:   socket.userId,
-          userName: socket.userName
-        });
+        io.to(`admin_${adminId}`).emit('typing:show', { userId: socket.userId, userName: socket.userName });
       }
     } else if (socket.role === 'admin' && isValidId(toUserId)) {
-      // ✅ SECURITY: Only allow typing indicator to user assigned to this admin
       if (userAdminMap[String(toUserId)] === socket.userId) {
         io.to(`user_${toUserId}`).emit('typing:show', { userName: socket.userName });
       }
@@ -316,11 +316,9 @@ io.on('connection', (socket) => {
     }
   });
 
-  // ── DISCONNECT ───────────────────────────────────────────
-  socket.on('disconnect', () => {
-    // Clean up rate limiter
+  // ── DISCONNECT ────────────────────────────────────────────
+  socket.on('disconnect', async () => {
     delete rateLimiter[socket.id];
-
     if (!socket.role) return;
 
     if (socket.role === 'admin') {
@@ -333,7 +331,8 @@ io.on('connection', (socket) => {
       const adminId = userAdminMap[socket.userId];
       if (adminId) {
         io.to(`admin_${adminId}`).emit('user:offline', { userId: socket.userId });
-        io.to(`admin_${adminId}`).emit('admin:conversations', buildAdminConversationList(adminId));
+        const convList = await buildAdminConversationList(adminId);
+        io.to(`admin_${adminId}`).emit('admin:conversations', convList);
       }
       console.log(`[USER OFFLINE] ${socket.userName}`);
     }

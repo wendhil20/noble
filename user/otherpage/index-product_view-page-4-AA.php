@@ -1150,14 +1150,14 @@ $is_guest = !isset($_SESSION['user_id']);
                     <button onclick="shareProduct()"
                       class="flex items-center gap-2 bg-gray-100 px-3 py-2 rounded-xl hover:bg-gray-200 transition">
                       <i class="fas fa-share-alt text-lg text-black"></i>
-                     
+
                     </button>
 
                     <!-- Customer Service -->
                     <button onclick="window.location.href='../rules/customer-services.php'"
                       class="flex items-center gap-2 bg-gray-100 px-3 py-2 rounded-xl hover:bg-gray-200 transition">
                       <i class="fas fa-headset text-lg text-black"></i>
-                     
+
                     </button>
 
                   </div>
@@ -2082,8 +2082,6 @@ $is_guest = !isset($_SESSION['user_id']);
     }
   </style>
 
-
-
   <!-- CUSTOMIZE MODAL -->
   <div id="customizeModal" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-[9999] hidden">
     <div class="bg-white rounded-2xl p-6 lg:p-8 max-w-2xl w-full mx-4 relative max-h-[90vh] overflow-y-auto">
@@ -2383,7 +2381,7 @@ $is_guest = !isset($_SESSION['user_id']);
 
       <!-- Header -->
       <div class="sticky top-0 bg-black text-white px-4 py-3 flex items-center justify-between z-20 shadow-md" style="font-family: 'Montserrat', sans-serif;">
-        <div >
+        <div>
           <h2 class="text-base">Related Products</h2>
           <p class="text-xs text-white">Similar items you may like</p>
         </div>
@@ -2446,7 +2444,7 @@ $is_guest = !isset($_SESSION['user_id']);
                 </div>
 
                 <!-- 🔥 SMART PRICE DISPLAY (exactly like Document 4) -->
-                <div class="flex items-baseline gap-1 flex-wrap mb-2" style="font-family: 'Montserrat', sans-serif; color: #2f1200"> 
+                <div class="flex items-baseline gap-1 flex-wrap mb-2" style="font-family: 'Montserrat', sans-serif; color: #2f1200">
                   <?php if ($discount > 0): ?>
                     <p class="text-[11px] font-bold "><?= $priceData['display_price'] ?></p>
                     <span class="text-[8px] font-semibold text-red-600 bg-red-50 px-1 py-0.5 rounded">-<?= number_format($discount, 0) ?>%</span>
@@ -2826,68 +2824,68 @@ $is_guest = !isset($_SESSION['user_id']);
 
           <!-- Specifications Tab Content -->
           <div id="content-specifications" class="tab-content">
-    <div class="space-y-6">
-        
-       
-        <!-- Description 1: Product Details -->
-        <?php if (!empty($product_specs['descrip1'])): ?>
-          <div>
-            <h3 class="text-lg font-bold text-gray-900 mb-4 flex items-center">
-              <i class="fas fa-align-left mr-3"></i>
-              Product Details
-            </h3>
-            <div class="text-gray-700 text-base space-y-2">
-              <?php 
-                $lines = explode("\n", $product_specs['descrip1']);
-                foreach ($lines as $line):
-                  $trimmed = trim($line);
-                  if (!empty($trimmed)):
-              ?>
-                <div class="py-1 border-b border-gray-200 last:border-b-0">
-                  <?= htmlspecialchars($trimmed) ?>
+            <div class="space-y-6">
+
+
+              <!-- Description 1: Product Details -->
+              <?php if (!empty($product_specs['descrip1'])): ?>
+                <div>
+                  <h3 class="text-lg font-bold text-gray-900 mb-4 flex items-center">
+                    <i class="fas fa-align-left mr-3"></i>
+                    Product Details
+                  </h3>
+                  <div class="text-gray-700 text-base space-y-2">
+                    <?php
+                    $lines = explode("\n", $product_specs['descrip1']);
+                    foreach ($lines as $line):
+                      $trimmed = trim($line);
+                      if (!empty($trimmed)):
+                    ?>
+                        <div class="py-1 border-b border-gray-200 last:border-b-0">
+                          <?= htmlspecialchars($trimmed) ?>
+                        </div>
+                    <?php
+                      endif;
+                    endforeach;
+                    ?>
+                  </div>
                 </div>
-              <?php 
-                  endif;
-                endforeach;
-              ?>
+              <?php endif; ?>
+
+              <!-- Description 6 & 7: Unit & Specifications -->
+              <?php if (!empty($product_specs['descrip6']) || !empty($product_specs['descrip7'])): ?>
+                <div class="space-y-3">
+
+                  <!-- Unit Information Section -->
+                  <?php if (!empty($product_specs['descrip6'])): ?>
+                    <div class="py-2 border-b border-gray-200">
+                      <div class="text-gray-700 text-base">
+                        <?= htmlspecialchars($product_specs['descrip6']) ?>
+                      </div>
+                    </div>
+                  <?php endif; ?>
+
+                  <!-- Technical Specifications Section -->
+                  <?php if (!empty($product_specs['descrip7'])): ?>
+                    <div class="py-2 border-b border-gray-200 last:border-b-0">
+                      <div class="text-gray-700 text-base">
+                        <?= htmlspecialchars($product_specs['descrip7']) ?>
+                      </div>
+                    </div>
+                  <?php endif; ?>
+
+                </div>
+              <?php endif; ?>
+
+              <!-- No Descriptions Message -->
+              <?php if (empty($product_specs['descrip1']) && empty($product_specs['descrip6']) && empty($product_specs['descrip7'])): ?>
+                <div class="bg-gray-50 rounded-xl p-6 text-center border border-dashed border-gray-300">
+                  <i class="fas fa-inbox text-gray-300 text-4xl mb-3 block"></i>
+                  <p class="text-gray-400 italic">No product descriptions available</p>
+                </div>
+              <?php endif; ?>
+
             </div>
-          </div>
-        <?php endif; ?>
-        
-        <!-- Description 6 & 7: Unit & Specifications -->
-        <?php if (!empty($product_specs['descrip6']) || !empty($product_specs['descrip7'])): ?>
-          <div class="space-y-3">
-            
-            <!-- Unit Information Section -->
-            <?php if (!empty($product_specs['descrip6'])): ?>
-              <div class="py-2 border-b border-gray-200">
-                <div class="text-gray-700 text-base">
-                  <?= htmlspecialchars($product_specs['descrip6']) ?>
-                </div>
-              </div>
-            <?php endif; ?>
-
-            <!-- Technical Specifications Section -->
-            <?php if (!empty($product_specs['descrip7'])): ?>
-              <div class="py-2 border-b border-gray-200 last:border-b-0">
-                <div class="text-gray-700 text-base">
-                  <?= htmlspecialchars($product_specs['descrip7']) ?>
-                </div>
-              </div>
-            <?php endif; ?>
-
-          </div>
-        <?php endif; ?>
-
-        <!-- No Descriptions Message -->
-        <?php if (empty($product_specs['descrip1']) && empty($product_specs['descrip6']) && empty($product_specs['descrip7'])): ?>
-          <div class="bg-gray-50 rounded-xl p-6 text-center border border-dashed border-gray-300">
-            <i class="fas fa-inbox text-gray-300 text-4xl mb-3 block"></i>
-            <p class="text-gray-400 italic">No product descriptions available</p>
-          </div>
-        <?php endif; ?>
-
-      </div>
           </div>
 
           <!-- Reviews Tab Content -->

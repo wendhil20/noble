@@ -95,6 +95,7 @@ function calculate_price($variant_price, $color_price, $percent = 0, $discount =
 
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -190,7 +191,7 @@ function calculate_price($variant_price, $color_price, $percent = 0, $discount =
 
         .notification {
             position: fixed;
-            top: 20px;
+            bottom: 20px;
             right: 20px;
             z-index: 1000;
             padding: 16px 20px;
@@ -223,8 +224,13 @@ function calculate_price($variant_price, $color_price, $percent = 0, $discount =
         }
 
         @keyframes spin {
-            0% { transform: rotate(0deg); }
-            100% { transform: rotate(360deg); }
+            0% {
+                transform: rotate(0deg);
+            }
+
+            100% {
+                transform: rotate(360deg);
+            }
         }
 
         .size-btn {
@@ -278,14 +284,14 @@ function calculate_price($variant_price, $color_price, $percent = 0, $discount =
             top: 0;
             left: 0;
         }
-        
+
         .notification.error {
-    background-color: #dc2626;
-    color: #fff;
-    padding: 12px 16px;
-    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.15);
-    font-weight: 500;
-}
+            background-color: #dc2626;
+            color: #fff;
+            padding: 12px 16px;
+            box-shadow: 0 2px 6px rgba(0, 0, 0, 0.15);
+            font-weight: 500;
+        }
 
         /*@media (hover: hover) { this is for switch image2 output */
         /*    .product-image {*/
@@ -306,7 +312,7 @@ function calculate_price($variant_price, $color_price, $percent = 0, $discount =
 
 <body class="bg-gray-50" style="font-family: 'Montserrat', sans-serif; color: #2f1200">
     <?php include '../navbar/top.php'; ?>
-    
+
     <!-- Hero Banner - Desktop only -->
     <div class="hidden md:block mb-4">
         <div class="container mx-auto px-1 bg-contain bg-center h-96" style="background-image: url('../img/display2.webp');"></div>
@@ -564,24 +570,24 @@ function calculate_price($variant_price, $color_price, $percent = 0, $discount =
             }
         };
 
-const allProducts = [];
-const productGroups = {};
+        const allProducts = [];
+        const productGroups = {};
 
-document.querySelectorAll('.product-data-item').forEach(item => {
-    const productData = JSON.parse(item.getAttribute('data-product'));
+        document.querySelectorAll('.product-data-item').forEach(item => {
+            const productData = JSON.parse(item.getAttribute('data-product'));
 
-    // Group by product_id
-    if (!productGroups[productData.id]) {
-        productGroups[productData.id] = [];
-    }
-    productGroups[productData.id].push(productData);
-});
+            // Group by product_id
+            if (!productGroups[productData.id]) {
+                productGroups[productData.id] = [];
+            }
+            productGroups[productData.id].push(productData);
+        });
 
-// ✅ One entry per product_id only (first color as default)
-Object.values(productGroups).forEach(group => {
-    allProducts.push(group[0]); // only push the first color
-});
-        
+        // ✅ One entry per product_id only (first color as default)
+        Object.values(productGroups).forEach(group => {
+            allProducts.push(group[0]); // only push the first color
+        });
+
 
         class MobileFilterManager {
             constructor() {
@@ -873,20 +879,20 @@ Object.values(productGroups).forEach(group => {
                 this.totalCount.textContent = this.filteredProducts.length;
 
                 if (this.filteredProducts.length === 0) {
-    this.noResults.classList.remove('hidden');
-    this.grid.classList.add('hidden');
-    this.paginationContainer.classList.add('hidden');
-} else {
-    this.noResults.classList.add('hidden');
-    this.grid.classList.remove('hidden');
-    this.paginationContainer.classList.remove('hidden');
-}
+                    this.noResults.classList.remove('hidden');
+                    this.grid.classList.add('hidden');
+                    this.paginationContainer.classList.add('hidden');
+                } else {
+                    this.noResults.classList.add('hidden');
+                    this.grid.classList.remove('hidden');
+                    this.paginationContainer.classList.remove('hidden');
+                }
 
-if (totalPages > 1) {
-    this.renderPagination(totalPages);
-} else {
-    this.paginationContainer.innerHTML = '';
-}
+                if (totalPages > 1) {
+                    this.renderPagination(totalPages);
+                } else {
+                    this.paginationContainer.innerHTML = '';
+                }
 
                 window.scrollTo({
                     top: 0,
@@ -895,7 +901,7 @@ if (totalPages > 1) {
             }
 
             renderPagination(totalPages) {
-            
+
 
                 let paginationHTML = `
                     <button class="pagination-btn" ${this.currentPage === 1 ? 'disabled' : ''} 
@@ -965,7 +971,7 @@ if (totalPages > 1) {
                 this.renderPage();
             }
 
-       createProductCard(product) {
+            createProductCard(product) {
                 const card = document.createElement('article');
                 card.className = 'product-card overflow-hidden rounded-lg shadow-sm';
 
@@ -994,10 +1000,10 @@ if (totalPages > 1) {
 
                 // Only show discount if the initial (first) selected size has discount
                 const initialDiscount = parseFloat(initial.discount || 0);
-                
+
                 // Debug log
                 console.log(`Product: ${product.name}, Discount: ${initialDiscount}, Initial:`, initial);
-                
+
                 if (initialDiscount > 0) {
                     const discountBadge = document.createElement('span');
                     discountBadge.className = 'absolute bottom-3 left-3 bg-red-600 text-white text-xs font-bold px-2 py-1 rounded z-20';
@@ -1035,96 +1041,96 @@ if (totalPages > 1) {
                 colorDiv.className = 'text-xs text-gray-600 mt-1 hidden sm:block';
                 colorDiv.innerHTML = `<span class="font-medium color-label">${product.color_name}</span>`;
                 infoSection.appendChild(colorDiv);
-                
+
                 // --- COLOR SWATCHES ---
-const siblings = productGroups[product.id] || [product];
+                const siblings = productGroups[product.id] || [product];
 
-if (siblings.length > 1) {
-    const colorRow = document.createElement('div');
-    colorRow.className = 'flex gap-1 flex-wrap items-center px-2 pt-1';
+                if (siblings.length > 1) {
+                    const colorRow = document.createElement('div');
+                    colorRow.className = 'flex gap-1 flex-wrap items-center px-2 pt-1';
 
-    const VISIBLE_COLORS = 3; // show 3 swatches max
-    let hiddenColorCount = 0;
+                    const VISIBLE_COLORS = 3; // show 3 swatches max
+                    let hiddenColorCount = 0;
 
-    siblings.forEach((colorVariant, idx) => {
-        if (idx >= VISIBLE_COLORS) {
-            hiddenColorCount++;
-            return; // skip rendering this swatch
-        }
-        const swatch = document.createElement('button');
-        swatch.type = 'button';
-        swatch.title = colorVariant.color_name;
-        swatch.className = `w-5 h-5 rounded-full border-2 transition-all ${idx === 0 ? 'border-black scale-110' : 'border-gray-300 hover:border-gray-500'}`;
-        swatch.style.backgroundColor = colorVariant.color_code || '#ccc';
+                    siblings.forEach((colorVariant, idx) => {
+                        if (idx >= VISIBLE_COLORS) {
+                            hiddenColorCount++;
+                            return; // skip rendering this swatch
+                        }
+                        const swatch = document.createElement('button');
+                        swatch.type = 'button';
+                        swatch.title = colorVariant.color_name;
+                        swatch.className = `w-5 h-5 rounded-full border-2 transition-all ${idx === 0 ? 'border-black scale-110' : 'border-gray-300 hover:border-gray-500'}`;
+                        swatch.style.backgroundColor = colorVariant.color_code || '#ccc';
 
-        swatch.addEventListener('click', (e) => {
-            e.preventDefault();
+                        swatch.addEventListener('click', (e) => {
+                            e.preventDefault();
 
-            // Swap image
-            img.src = colorVariant.color_image;
-            if (product.color_image2 && colorVariant.color_image2) {
-                const img2El = imageContainer.querySelector('.product-image-2');
-                if (img2El) img2El.src = colorVariant.color_image2;
-            }
+                            // Swap image
+                            img.src = colorVariant.color_image;
+                            if (product.color_image2 && colorVariant.color_image2) {
+                                const img2El = imageContainer.querySelector('.product-image-2');
+                                if (img2El) img2El.src = colorVariant.color_image2;
+                            }
 
-            // Swap product name color label
-            const colorLabel = infoSection.querySelector('.color-label');
-            if (colorLabel) colorLabel.textContent = colorVariant.color_name;
+                            // Swap product name color label
+                            const colorLabel = infoSection.querySelector('.color-label');
+                            if (colorLabel) colorLabel.textContent = colorVariant.color_name;
 
-            // Swap hidden form inputs
-            const form = card.querySelector('.productForm');
-            if (form) {
-                form.querySelector('.color-id-input').value = colorVariant.color_id;
-                form.querySelector('.color-name-input').value = colorVariant.color_name;
-                form.querySelector('.color-price-input').value = colorVariant.color_price;
-            }
+                            // Swap hidden form inputs
+                            const form = card.querySelector('.productForm');
+                            if (form) {
+                                form.querySelector('.color-id-input').value = colorVariant.color_id;
+                                form.querySelector('.color-name-input').value = colorVariant.color_name;
+                                form.querySelector('.color-price-input').value = colorVariant.color_price;
+                            }
 
-            // Update view form product id (colors share same product id so no change needed)
+                            // Update view form product id (colors share same product id so no change needed)
 
-            // Recalculate price for selected size using new color_price
-            const activeSizeBtn = card.querySelector('.size-btn.bg-black');
-            if (activeSizeBtn) {
-                const newPrice = parseFloat(activeSizeBtn.dataset.variantPrice || 0) + parseFloat(colorVariant.color_price);
-                activeSizeBtn.dataset.price = newPrice;
-                const priceEl = card.querySelector('.final-price');
-                if (priceEl) priceEl.textContent = `₱${newPrice.toLocaleString()}`;
-                if (form) form.querySelector('.total-price-input').value = newPrice;
-                form.querySelector('.color-price-input').value = colorVariant.color_price;
-            }
+                            // Recalculate price for selected size using new color_price
+                            const activeSizeBtn = card.querySelector('.size-btn.bg-black');
+                            if (activeSizeBtn) {
+                                const newPrice = parseFloat(activeSizeBtn.dataset.variantPrice || 0) + parseFloat(colorVariant.color_price);
+                                activeSizeBtn.dataset.price = newPrice;
+                                const priceEl = card.querySelector('.final-price');
+                                if (priceEl) priceEl.textContent = `₱${newPrice.toLocaleString()}`;
+                                if (form) form.querySelector('.total-price-input').value = newPrice;
+                                form.querySelector('.color-price-input').value = colorVariant.color_price;
+                            }
 
-            // Update active swatch styles
-            colorRow.querySelectorAll('button').forEach(s => {
-                s.classList.remove('border-black', 'scale-110');
-                s.classList.add('border-gray-300');
-            });
-            swatch.classList.add('border-black', 'scale-110');
-            swatch.classList.remove('border-gray-300');
-        });
+                            // Update active swatch styles
+                            colorRow.querySelectorAll('button').forEach(s => {
+                                s.classList.remove('border-black', 'scale-110');
+                                s.classList.add('border-gray-300');
+                            });
+                            swatch.classList.add('border-black', 'scale-110');
+                            swatch.classList.remove('border-gray-300');
+                        });
 
-        colorRow.appendChild(swatch);
-    });
-    // +N badge kung may hidden colors
-    if (hiddenColorCount > 0) {
-        const colorBadge = document.createElement('span');
-        colorBadge.className = 'border border-gray-200 rounded-full text-xs font-bold bg-gray-50 text-gray-700';
-        colorBadge.textContent = `+${hiddenColorCount}`;
-        colorBadge.style.display = 'inline-flex';
-        colorBadge.style.alignItems = 'center';
-        colorBadge.style.justifyContent = 'center';
-        colorBadge.style.minWidth = '22px';
-        colorBadge.style.minHeight = '22px';
-        colorRow.appendChild(colorBadge);
-    }
+                        colorRow.appendChild(swatch);
+                    });
+                    // +N badge kung may hidden colors
+                    if (hiddenColorCount > 0) {
+                        const colorBadge = document.createElement('span');
+                        colorBadge.className = 'border border-gray-200 rounded-full text-xs font-bold bg-gray-50 text-gray-700';
+                        colorBadge.textContent = `+${hiddenColorCount}`;
+                        colorBadge.style.display = 'inline-flex';
+                        colorBadge.style.alignItems = 'center';
+                        colorBadge.style.justifyContent = 'center';
+                        colorBadge.style.minWidth = '22px';
+                        colorBadge.style.minHeight = '22px';
+                        colorRow.appendChild(colorBadge);
+                    }
 
-    infoSection.appendChild(colorRow);
-}
+                    infoSection.appendChild(colorRow);
+                }
 
                 const finalPrice = document.createElement('p');
                 finalPrice.className = 'text-lg font-bold text-black mt-2 final-price';
                 finalPrice.textContent = `₱${(initial.price || 0).toLocaleString()}`;
                 infoSection.appendChild(finalPrice);
 
-         if (hasMultipleVariants) {
+                if (hasMultipleVariants) {
                     const sizesContainer = document.createElement('div');
                     sizesContainer.className = 'mt-2';
 
@@ -1206,19 +1212,64 @@ if (siblings.length > 1) {
                 cartForm.className = 'productForm';
                 cartForm.dataset.productId = product.id;
 
-                const hiddenInputs = [
-                    { name: 'product_id', value: product.id },
-                    { name: 'variant_id', value: initial.variant_id, className: 'variant-id-input' },
-                    { name: 'selected_color_id', value: product.color_id, className: 'color-id-input' },
-                    { name: 'selected_color_name', value: product.color_name, className: 'color-name-input' },
-                    { name: 'color_price', value: product.color_price, className: 'color-price-input' },
-                    { name: 'variant_price', value: initial.variant_price, className: 'variant-price-input' },
-                    { name: 'total_price', value: initial.price, className: 'total-price-input' },
-                    { name: 'discount', value: initial.discount, className: 'discount-input' },
-                    { name: 'percent', value: initial.percent, className: 'percent-input' },
-                    { name: 'origin', value: initial.origin, className: 'origin-input' },
-                    { name: 'selected_size', value: initial.size, className: 'size-input' },
-                    { name: 'return_url', value: 'index' }
+                const hiddenInputs = [{
+                        name: 'product_id',
+                        value: product.id
+                    },
+                    {
+                        name: 'variant_id',
+                        value: initial.variant_id,
+                        className: 'variant-id-input'
+                    },
+                    {
+                        name: 'selected_color_id',
+                        value: product.color_id,
+                        className: 'color-id-input'
+                    },
+                    {
+                        name: 'selected_color_name',
+                        value: product.color_name,
+                        className: 'color-name-input'
+                    },
+                    {
+                        name: 'color_price',
+                        value: product.color_price,
+                        className: 'color-price-input'
+                    },
+                    {
+                        name: 'variant_price',
+                        value: initial.variant_price,
+                        className: 'variant-price-input'
+                    },
+                    {
+                        name: 'total_price',
+                        value: initial.price,
+                        className: 'total-price-input'
+                    },
+                    {
+                        name: 'discount',
+                        value: initial.discount,
+                        className: 'discount-input'
+                    },
+                    {
+                        name: 'percent',
+                        value: initial.percent,
+                        className: 'percent-input'
+                    },
+                    {
+                        name: 'origin',
+                        value: initial.origin,
+                        className: 'origin-input'
+                    },
+                    {
+                        name: 'selected_size',
+                        value: initial.size,
+                        className: 'size-input'
+                    },
+                    {
+                        name: 'return_url',
+                        value: 'index'
+                    }
                 ];
 
                 hiddenInputs.forEach(inputData => {
@@ -1346,11 +1397,11 @@ if (siblings.length > 1) {
                     const data = await response.json();
 
                     if (data.success) {
-                     
-        this.showNotification(data.message || 'Added to cart!', 'success');
-        const newCount = data.cart_count;
-      
-        this.updateCartCount(newCount);
+
+                        this.showNotification(data.message || 'Added to cart!', 'success');
+                        const newCount = data.cart_count;
+
+                        this.updateCartCount(newCount);
                         button.innerHTML = '✓ Added!';
                         setTimeout(() => {
                             button.innerHTML = originalContent;
@@ -1367,16 +1418,16 @@ if (siblings.length > 1) {
                 }
             }
 
-updateCartCount(count) {
-    if (typeof window.updateCartBadge === 'function') {
-        window.updateCartBadge(count); // ← direct badge update
-    }
-    setTimeout(() => {
-        if (typeof window.updateCartGlobally === 'function') {
-            window.updateCartGlobally(); // ← fetch from DB para ma-sync modal
-        }
-    }, 800);
-}
+            updateCartCount(count) {
+                if (typeof window.updateCartBadge === 'function') {
+                    window.updateCartBadge(count); // ← direct badge update
+                }
+                setTimeout(() => {
+                    if (typeof window.updateCartGlobally === 'function') {
+                        window.updateCartGlobally(); // ← fetch from DB para ma-sync modal
+                    }
+                }, 800);
+            }
 
 
             showNotification(message, type) {

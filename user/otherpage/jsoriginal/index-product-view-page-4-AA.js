@@ -1412,7 +1412,7 @@ class ProductSelector {
     existingNotifications.forEach((notification) => notification.remove());
 
     const notification = document.createElement("div");
-    notification.className = `notification-toast fixed top-4 right-4 z-[150] px-6 py-4 rounded-lg shadow-lg transform transition-all duration-300 translate-x-full`;
+    notification.className = `notification-toast fixed bottom-20 right-4 z-[150] px-6 py-4 rounded-lg shadow-lg transform transition-all duration-300 translate-x-full`;
 
     if (type === "success") {
       notification.classList.add("bg-green-500", "text-white");

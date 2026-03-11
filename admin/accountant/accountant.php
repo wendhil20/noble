@@ -26,6 +26,36 @@ if (!isset($_SESSION['noble_user'])) {
     exit();
 }
 
+// ============================================================
+// FCM PUSH NOTIFICATION — via Express server
+// ============================================================
+function sendPushNotification($userId, $actorId, $title, $message, $type = 'general', $link = '/') {
+    $expressUrl = getenv('EXPRESS_URL') ?: 'https://support.noblehomedepot.com';
+    $apiSecret  = getenv('API_SECRET')  ?: 'noble-secret-2025';
+
+    $ch = curl_init($expressUrl . '/api/send-notif');
+    curl_setopt_array($ch, [
+        CURLOPT_POST           => true,
+        CURLOPT_POSTFIELDS     => json_encode([
+            'userId'  => (string)$userId,
+            'actorId' => (string)$actorId,
+            'type'    => $type,
+            'title'   => $title,
+            'message' => $message,
+            'link'    => $link
+        ]),
+        CURLOPT_RETURNTRANSFER => true,
+        CURLOPT_TIMEOUT        => 5,
+        CURLOPT_HTTPHEADER     => [
+            'Content-Type: application/json',
+            'x-api-secret: ' . $apiSecret
+        ]
+    ]);
+    curl_exec($ch);
+    curl_close($ch);
+}
+
+// ============================================================
 function resolve_current_user_details($conn)
 {
     if (!empty($_SESSION['current_user_details'])) return $_SESSION['current_user_details'];
@@ -114,6 +144,16 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action'])) {
                         $n->execute();
                         $n->close();
                     }
+
+                    // ✅ FCM PUSH NOTIFICATION — lalabas sa cp kahit naka-lock!
+                    sendPushNotification(
+                        $od['user_id'],
+                        $current_user_id,
+                        '✅ Payment Verified!',
+                        "Order #$order_id verified. Amount: ₱" . number_format($total, 2),
+                        'payment_verified',
+                        '/orders/view.php?id=' . $order_id
+                    );
                 }
                 $conn->commit();
                 echo json_encode(['success' => true, 'message' => 'Payment verified successfully', 'verified_by' => $current_user['name']]);
@@ -437,14 +477,12 @@ function tabClass($current, $target)
                                     <tr class="order-row-clickable" id="order-row-<?php echo $order['id']; ?>"
                                         onclick="viewOrderDetails(<?php echo $order['id']; ?>)" title="Click to view order details">
 
-                                        <!-- Order ID -->
                                         <td class="px-6 py-4 whitespace-nowrap">
                                             <span class="bg-gray-100 px-2 py-1 rounded-md inline-flex items-center text-sm font-medium">
                                                 #<?php echo $order['id']; ?>
                                             </span>
                                         </td>
 
-                                        <!-- Customer -->
                                         <td class="px-6 py-4 whitespace-nowrap">
                                             <div class="flex items-center">
                                                 <div class="w-8 h-8 bg-blue-100 rounded-full flex items-center justify-center mr-3">
@@ -457,13 +495,11 @@ function tabClass($current, $target)
                                             </div>
                                         </td>
 
-                                        <!-- Amount -->
                                         <td class="px-6 py-4 whitespace-nowrap">
                                             <?php $amt = ($order['payment_status'] === 'verified' && !empty($order['final_total'])) ? $order['final_total'] : $order['total']; ?>
                                             <div class="text-sm font-semibold text-gray-900">₱<?php echo number_format((float)$amt, 2); ?></div>
                                         </td>
 
-                                        <!-- Payment Method -->
                                         <td class="px-6 py-4 whitespace-nowrap">
                                             <div class="text-sm text-gray-900 flex items-center">
                                                 <?php if ($order['mode_payment'] === 'PayMongo'): ?>
@@ -488,7 +524,6 @@ function tabClass($current, $target)
                                             <?php endif; ?>
                                         </td>
 
-                                        <!-- Reference -->
                                         <td class="px-6 py-4 whitespace-nowrap">
                                             <code class="text-sm bg-gray-100 px-2 py-1 rounded">
                                                 <?php echo htmlspecialchars($order['reference_number'] ?: $order['reference_no'] ?: 'N/A'); ?>
@@ -498,7 +533,6 @@ function tabClass($current, $target)
                                             <?php endif; ?>
                                         </td>
 
-                                        <!-- Status -->
                                         <td class="px-6 py-4 whitespace-nowrap">
                                             <?php
                                             $sm = [
@@ -512,7 +546,6 @@ function tabClass($current, $target)
                                             </span>
                                         </td>
 
-                                        <!-- Verified By -->
                                         <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
                                             <?php echo htmlspecialchars($order['verified_by_name'] ?: 'N/A'); ?>
                                             <?php if ($order['confirmed_at'] && $order['payment_status'] === 'verified'): ?>
@@ -520,13 +553,11 @@ function tabClass($current, $target)
                                             <?php endif; ?>
                                         </td>
 
-                                        <!-- Date -->
                                         <td class="px-6 py-4 whitespace-nowrap">
                                             <div class="text-sm text-gray-900"><?php echo date('M d, Y', strtotime($order['created_at'])); ?></div>
                                             <div class="text-xs text-gray-500"><?php echo date('g:i A', strtotime($order['created_at'])); ?></div>
                                         </td>
 
-                                        <!-- Actions — only paid orders get Verify button -->
                                         <td class="px-6 py-4 whitespace-nowrap text-sm" onclick="event.stopPropagation()">
                                             <?php if ($order['payment_status'] === 'paid'): ?>
                                                 <button onclick="verifyPayment(<?php echo $order['id']; ?>)"
@@ -675,12 +706,9 @@ function tabClass($current, $target)
         function updateRow(id, status, by) {
             const row = document.getElementById('order-row-' + id);
             if (!row) return;
-            // Status cell (index 5)
             row.cells[5].innerHTML = `<span class="inline-flex items-center px-2 py-1 text-xs font-semibold rounded-full border bg-green-100 text-green-800 border-green-200"><i class="fas fa-check-circle mr-1"></i>Verified</span>`;
-            // Verified by (index 6)
             const now = new Date().toLocaleString('en-US', { month: 'short', day: '2-digit', hour: '2-digit', minute: '2-digit', hour12: true });
             row.cells[6].innerHTML = `<div class="text-sm text-gray-900">${by}</div><div class="text-xs text-gray-500">${now}</div>`;
-            // Actions (index 8)
             row.cells[8].innerHTML = '<span class="text-xs text-gray-400 italic">Verified</span>';
             row.classList.add('bg-green-50');
             setTimeout(() => row.classList.remove('bg-green-50'), 2500);

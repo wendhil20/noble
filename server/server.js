@@ -20,7 +20,7 @@ const db = mysql.createPool({
 
 // ── LOAD MODULES ──────────────────────────────────────────
 require('./chat')(io, db);
-// require('./notif')(io, db);   // <- buksan mo lang ito pag handa na ang notif
+require('./notif')(io, db);   // ✅ FCM notifications
 
 // ── START SERVER ──────────────────────────────────────────
 const PORT = process.env.PORT || 3000;

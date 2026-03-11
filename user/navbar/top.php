@@ -3145,7 +3145,7 @@ $hidden_pages = ['help.php', 'about.php'];
 
       </style>
 
-      <script>
+      <scrip>
         // Auto-refresh new products count
         setInterval(function() {
           fetch(window.location.pathname + '?action=get_new_products_count')
@@ -3173,12 +3173,17 @@ $hidden_pages = ['help.php', 'about.php'];
 
 </nav>
 
-
- <script src="../navbar/js/top-obf.js?v=<?= filemtime('../navbar/js/top-obf.js') ?>"></script>
- <script src="../navbar/js/topcart.obfuscated.js?v=<?= filemtime('../navbar/js/topcart.obfuscated.js') ?>"></script>
+<script src="../navbar/js/top-obf.js?v=<?= filemtime('../navbar/js/top-obf.js') ?>"></script>
+<script src="../navbar/js/topcart.obfuscated.js?v=<?= filemtime('../navbar/js/topcart.obfuscated.js') ?>"></script>
+<script src="../navbar/js/noble-fcm.js?v=<?= filemtime('../navbar/js/noble-fcm.js') ?>"></script>
 <script src="https://unpkg.com/lucide@latest"></script>
 
 <script>
+    // I-check muna kung naka-login ang user
+  <?php if (isset($user_id)): ?>
+  initFCM(<?= $user_id ?>, socket);
+  <?php endif; ?>
+
   function showGuestLoginAlert() {
     showNotification('Please login to proceed', 'info');
 

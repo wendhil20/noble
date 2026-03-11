@@ -1,3 +1,4 @@
+// server.js
 const express    = require('express');
 const http       = require('http');
 const { Server } = require('socket.io');
@@ -20,7 +21,9 @@ const db = mysql.createPool({
 
 // ── LOAD MODULES ──────────────────────────────────────────
 require('./chat')(io, db);
-require('./notif')(io, db);   // ✅ FCM notifications
+
+const notifRouter = require('./notif')(io, db);  // ← returns express router
+app.use(notifRouter);                             // ← i-register sa Express
 
 // ── START SERVER ──────────────────────────────────────────
 const PORT = process.env.PORT || 3000;

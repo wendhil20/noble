@@ -1,5 +1,5 @@
 // firebase-service.js
-// Helper para mag-send ng FCM push notifications
+// Nasa server/ folder ito
 
 const admin = require('firebase-admin');
 
@@ -23,16 +23,9 @@ function initFirebase() {
   }
 }
 
-/**
- * Mag-send ng push notification sa isang user
- * @param {string} fcmToken  - FCM token ng device ng user
- * @param {string} title     - Notification title
- * @param {string} body      - Notification body/message
- * @param {object} data      - Extra data (optional)
- */
 async function sendPushNotification(fcmToken, title, body, data = {}) {
   if (!initialized) initFirebase();
-  if (!fcmToken) return;
+  if (!fcmToken) return { success: false, error: 'No token' };
 
   try {
     const message = {
@@ -46,19 +39,19 @@ async function sendPushNotification(fcmToken, title, body, data = {}) {
         notification: {
           title,
           body,
-          icon: '/assets/img/logo.png',  // palitan ng logo mo
-          badge: '/assets/img/badge.png', // optional badge icon
-          vibrate: [200, 100, 200],
-          requireInteraction: true        // hindi mabilis mawawala
+          icon:               '/user/img/logo.png',
+          badge:              '/user/img/logo.png',
+          vibrate:            [200, 100, 200],
+          requireInteraction: true
         },
         fcmOptions: {
-          link: '/'  // i-redirect dito kapag nag-click
+          link: data.link || '/'
         }
       }
     };
 
     const response = await admin.messaging().send(message);
-    console.log(`[FCM] Sent to ${fcmToken.slice(0, 20)}... → ${response}`);
+    console.log(`[FCM] Sent OK → ${response}`);
     return { success: true, response };
   } catch (err) {
     console.error('[FCM] Send error:', err.message);
@@ -66,13 +59,6 @@ async function sendPushNotification(fcmToken, title, body, data = {}) {
   }
 }
 
-/**
- * Mag-send ng push notification sa maraming users (multicast)
- * @param {string[]} tokens - Array ng FCM tokens
- * @param {string} title
- * @param {string} body
- * @param {object} data
- */
 async function sendMulticast(tokens, title, body, data = {}) {
   if (!initialized) initFirebase();
   if (!tokens || tokens.length === 0) return;
@@ -89,7 +75,7 @@ async function sendMulticast(tokens, title, body, data = {}) {
         notification: {
           title,
           body,
-          icon: '/assets/img/logo.png',
+          icon:               '/user/img/logo.png',
           requireInteraction: true
         }
       }

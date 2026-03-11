@@ -1,6 +1,8 @@
 // firebase-messaging-sw.js
-importScripts('https://www.gstatic.com/firebasejs/10.12.0/firebase-app-compat.js');
-importScripts('https://www.gstatic.com/firebasejs/10.12.0/firebase-messaging-compat.js');
+// I-upload sa ROOT ng website: public_html/firebase-messaging-sw.js
+
+importScripts('https://www.gstatic.com/firebasejs/10.7.0/firebase-app-compat.js');
+importScripts('https://www.gstatic.com/firebasejs/10.7.0/firebase-messaging-compat.js');
 
 firebase.initializeApp({
   apiKey:            "AIzaSyDyp9nm7eBKjIPIk2EUoGGkRiF3WL6DvNk",
@@ -13,29 +15,45 @@ firebase.initializeApp({
 
 const messaging = firebase.messaging();
 
-// ✅ Lalabas kahit naka-minimize o naka-lock ang browser
-messaging.onBackgroundMessage((payload) => {
-  console.log('Background message received:', payload);
+// Background message handler
+messaging.onBackgroundMessage(function(payload) {
+  console.log('[SW] Background message received:', payload);
 
-  self.registration.showNotification(payload.notification.title, {
-    body:  payload.notification.body,
-    icon:  '/assets/img/logo.png',
-    badge: '/assets/img/logo.png',
-    data:  payload.data,
-    vibrate: [200, 100, 200]
+  const { title, body } = payload.notification || {};
+  const data = payload.data || {};
+
+  self.registration.showNotification(title || 'Noble Home', {
+    body:    body || 'You have a new notification.',
+    icon:    '/user/img/logo.png',
+    badge:   '/user/img/logo.png',
+    vibrate: [200, 100, 200],
+    data:    { link: data.link || '/' },
+    actions: [
+      { action: 'view',    title: 'View' },
+      { action: 'dismiss', title: 'Dismiss' }
+    ]
   });
 });
 
-// Click handler — mag-open ng link pag na-click ang notif
-self.addEventListener('notificationclick', (event) => {
+// Click handler
+self.addEventListener('notificationclick', function(event) {
   event.notification.close();
+
+  if (event.action === 'dismiss') return;
+
   const link = event.notification.data?.link || '/';
+
   event.waitUntil(
-    clients.matchAll({ type: 'window', includeUncontrolled: true }).then((clientList) => {
+    clients.matchAll({ type: 'window', includeUncontrolled: true }).then(function(clientList) {
       for (const client of clientList) {
-        if (client.url === link && 'focus' in client) return client.focus();
+        if (client.url.includes(self.location.origin) && 'focus' in client) {
+          client.focus();
+          return;
+        }
       }
-      if (clients.openWindow) return clients.openWindow(link);
+      if (clients.openWindow) {
+        return clients.openWindow(link);
+      }
     })
   );
 });

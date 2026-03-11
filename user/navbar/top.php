@@ -3177,9 +3177,26 @@ $hidden_pages = ['help.php', 'about.php'];
 <script src="../navbar/js/topcart.obfuscated.js?v=<?= filemtime('../navbar/js/topcart.obfuscated.js') ?>"></script>
 
 <script src="https://unpkg.com/lucide@latest"></script>
+<script src="../navbar/js/noble-fcm.js?v=<?= filemtime('../navbar/js/noble-fcm.js') ?>"></script>
 
 <script>
+// Wait para ready na lahat bago mag-initFCM
+window.addEventListener('load', function () {
+  <?php if (isset($user_id) && $user_id): ?>
+  setTimeout(function () {
+    if (typeof initFCM === 'function') {
+      if (typeof socket !== 'undefined') {
+        initFCM(<?= intval($user_id) ?>, socket);
+      } else {
+        initFCM(<?= intval($user_id) ?>, null);
+      }
+    }
+  }, 2000); // 2 segundo para ready na ang socket
+  <?php endif; ?>
+});
+</script>
 
+<script>
 
   function showGuestLoginAlert() {
     showNotification('Please login to proceed', 'info');

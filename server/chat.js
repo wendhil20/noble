@@ -54,7 +54,6 @@ async function dbGetHistory(userId, adminId, limit = 100) {
        LIMIT ?`,
       [userId, adminId, limit]
     );
-    // Normalize to the same shape the client expects
     return rows.map(r => ({
       from:      r.from_role,
       userId:    String(r.user_id),
@@ -85,20 +84,6 @@ async function dbMarkRead(userId, adminId) {
   }
 }
 
-async function dbUnreadCount(userId, adminId) {
-  if (!pool) return 0;
-  try {
-    const [rows] = await pool.execute(
-      `SELECT COUNT(*) as cnt FROM chat_messages
-       WHERE user_id = ? AND admin_id = ? AND from_role = 'user' AND is_read = 0`,
-      [userId, adminId]
-    );
-    return rows[0]?.cnt || 0;
-  } catch (err) {
-    return 0;
-  }
-}
-
 // ── SOCKET.IO FACTORY ─────────────────────────────────────────────────────────
 function createApp(server) {
   const io = new Server(server, {
@@ -107,7 +92,6 @@ function createApp(server) {
       methods:     ['GET', 'POST'],
       credentials: false
     },
-    // Hostinger reverse proxy fix
     transports:        ['websocket', 'polling'],
     allowEIO3:         true,
     pingTimeout:       60000,
@@ -133,55 +117,55 @@ function createApp(server) {
     io.emit('admins:list', list);
   }
 
+  /**
+   * Build conversation list for admin from DB only.
+   * Only users who have actually sent/received messages will appear.
+   */
   async function sendConversationsToAdmin(adminId) {
     const info = admins.get(adminId);
     if (!info || !info.socketId) return;
 
-    // Build conversation list from DB
     const convs = [];
-    for (const [userId, uInfo] of users.entries()) {
-      // Only include users that have selectedAdminId OR have history
-      if (uInfo.selectedAdminId !== adminId) {
-        // Check if there's any history
-        if (pool) {
-          try {
-            const [rows] = await pool.execute(
-              `SELECT COUNT(*) as cnt FROM chat_messages WHERE user_id = ? AND admin_id = ?`,
-              [userId, adminId]
-            );
-            if (!rows[0]?.cnt) continue;
-          } catch { continue; }
-        } else continue;
-      }
 
-      // Get last message
-      let lastMessage = null, lastTime = null;
-      if (pool) {
-        try {
-          const [rows] = await pool.execute(
-            `SELECT text, created_at FROM chat_messages
-             WHERE user_id = ? AND admin_id = ?
-             ORDER BY created_at DESC LIMIT 1`,
-            [userId, adminId]
-          );
-          if (rows[0]) {
-            lastMessage = rows[0].text;
-            lastTime    = rows[0].created_at instanceof Date
-                            ? rows[0].created_at.toISOString()
-                            : String(rows[0].created_at);
-          }
-        } catch {}
-      }
+    if (!pool) {
+      io.to(info.socketId).emit('admin:conversations', convs);
+      return;
+    }
 
-      const unread = await dbUnreadCount(userId, adminId);
-      convs.push({
-        userId,
-        userName:    uInfo.userName,
-        isOnline:    !!uInfo.socketId,
-        lastMessage,
-        lastTime,
-        unread
-      });
+    try {
+      const [rows] = await pool.execute(
+        `SELECT
+           m.user_id,
+           m.user_name,
+           MAX(m.created_at) as lastTime,
+           (
+             SELECT m2.text FROM chat_messages m2
+             WHERE m2.user_id = m.user_id AND m2.admin_id = m.admin_id
+             ORDER BY m2.created_at DESC LIMIT 1
+           ) as lastMessage,
+           SUM(CASE WHEN m.from_role = 'user' AND m.is_read = 0 THEN 1 ELSE 0 END) as unread
+         FROM chat_messages m
+         WHERE m.admin_id = ?
+         GROUP BY m.user_id, m.user_name
+         ORDER BY MAX(m.created_at) DESC`,
+        [adminId]
+      );
+
+      for (const row of rows) {
+        const uInfo = users.get(String(row.user_id));
+        convs.push({
+          userId:      String(row.user_id),
+          userName:    row.user_name,
+          isOnline:    !!(uInfo && uInfo.socketId),
+          lastMessage: row.lastMessage,
+          lastTime:    row.lastTime instanceof Date
+                         ? row.lastTime.toISOString()
+                         : String(row.lastTime),
+          unread:      Number(row.unread) || 0
+        });
+      }
+    } catch (err) {
+      console.error('[sendConversations] error:', err.message);
     }
 
     io.to(info.socketId).emit('admin:conversations', convs);
@@ -223,18 +207,20 @@ function createApp(server) {
         });
         socket.emit('admins:list', list);
 
+        // Notify admin this user is back online (only if they had a previous conversation)
         const uInfo = users.get(selfId);
         if (uInfo && uInfo.selectedAdminId) {
           const aInfo = admins.get(String(uInfo.selectedAdminId));
           if (aInfo && aInfo.socketId) {
             io.to(aInfo.socketId).emit('user:online', { userId: selfId, userName });
-            sendConversationsToAdmin(String(uInfo.selectedAdminId));
           }
         }
       }
     });
 
     // ── USER SELECTS AN ADMIN ───────────────────────────────
+    // NOTE: We do NOT call sendConversationsToAdmin here anymore.
+    // The admin sidebar only updates when an actual message is sent/received.
     socket.on('user:select-admin', async ({ adminId } = {}) => {
       if (!selfId || selfRole !== 'user' || !adminId) return;
       const adminIdStr = String(adminId);
@@ -245,14 +231,14 @@ function createApp(server) {
         users.set(selfId, uInfo);
       }
 
-      // Send history from DB
+      // Send chat history to user
       const hist = await dbGetHistory(selfId, adminIdStr);
       socket.emit('history', hist);
 
+      // Let admin know user is online — but do NOT update sidebar yet (no message sent)
       const aInfo = admins.get(adminIdStr);
       if (aInfo && aInfo.socketId) {
         io.to(aInfo.socketId).emit('user:online', { userId: selfId, userName: uInfo ? uInfo.userName : 'Unknown' });
-        sendConversationsToAdmin(adminIdStr);
       }
 
       console.log(`[select] user ${selfId} → admin ${adminIdStr}`);
@@ -266,7 +252,6 @@ function createApp(server) {
       const hist = await dbGetHistory(userIdStr, selfId);
       socket.emit('history', hist);
 
-      // Mark messages as read
       await dbMarkRead(userIdStr, selfId);
       sendConversationsToAdmin(selfId);
 
@@ -281,7 +266,6 @@ function createApp(server) {
 
       const adminIdStr = String(uInfo.selectedAdminId);
 
-      // Save to DB
       await dbSaveMessage(selfId, adminIdStr, 'user', uInfo.userName, text);
 
       const msg = {
@@ -298,6 +282,7 @@ function createApp(server) {
       const aInfo = admins.get(adminIdStr);
       if (aInfo && aInfo.socketId) {
         io.to(aInfo.socketId).emit('message:new', msg);
+        // Update admin sidebar NOW that a real message was sent
         sendConversationsToAdmin(adminIdStr);
       }
 
@@ -311,7 +296,6 @@ function createApp(server) {
       const aInfo     = admins.get(selfId);
       const adminName = aInfo ? aInfo.adminName : 'Support';
 
-      // Save to DB
       await dbSaveMessage(userIdStr, selfId, 'admin', adminName, text);
 
       const msg = {

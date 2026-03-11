@@ -463,6 +463,7 @@ $is_guest = !isset($_SESSION['user_id']);
 
 <body class="font-roboto">
     <?php include '../navbar/top.php'; ?>
+    <?php include 'push-notification.php'; ?>
     <section class="bg-white relative mb-12">
         <div class="w-full px-4 sm:px-6 lg:px-8 py-2">
             <!-- Two Container Buttons with Background Images -->

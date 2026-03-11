@@ -238,7 +238,7 @@ foreach ($subcategories as $sub) {
         return number_format($count);
     }
     ?>
-
+<?php include 'push-notification.php'; ?>
     <!-- Breadcrumb -->
     <div class="bg-white border-b">
         <div class="container mx-auto px-6 py-4">

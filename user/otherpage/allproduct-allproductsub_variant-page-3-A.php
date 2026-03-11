@@ -387,7 +387,7 @@ $filter_description = ($show_sale == 1) ? 'discounted' : '';
         include $navbar_path;
     }
     ?>
-
+<?php include 'push-notification.php'; ?>
     <!-- Header Section -->
     <div class="bg-black text-white">
         <div class="container mx-auto px-3 py-5">

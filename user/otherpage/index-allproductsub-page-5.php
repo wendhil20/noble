@@ -231,7 +231,7 @@ try {
         include $navbar_path;
     }
     ?>
-
+<?php include 'push-notification.php'; ?>
     <!-- Hero Banner -->
     <?php if ($onsale_result && $onsale_result->num_rows > 0): ?>
         <div class="container mx-auto px-4 max-w-8xl mt-8 mb-16">

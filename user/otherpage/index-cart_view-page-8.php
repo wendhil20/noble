@@ -206,7 +206,7 @@ $total_cart_items = count($cart_items);
 
 <body class="bg-gray-100 font-roboto">
   <?php include '../navbar/top.php'; ?>
-
+<?php include 'push-notification.php'; ?>
   <!-- Hero Section -->
   <div class="gradient-bg text-white relative overflow-hidden">
     <div class="absolute inset-0 pointer-events-none z-0">

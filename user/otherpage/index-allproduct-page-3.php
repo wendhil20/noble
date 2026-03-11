@@ -312,7 +312,7 @@ function calculate_price($variant_price, $color_price, $percent = 0, $discount =
 
 <body class="bg-gray-50" style="font-family: 'Montserrat', sans-serif; color: #2f1200">
     <?php include '../navbar/top.php'; ?>
-
+<?php include 'push-notification.php'; ?>
     <!-- Hero Banner - Desktop only -->
     <div class="hidden md:block mb-4">
         <div class="container mx-auto px-1 bg-contain bg-center h-96" style="background-image: url('../img/display2.webp');"></div>

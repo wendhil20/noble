@@ -754,6 +754,7 @@ while ($row = $banners_result->fetch_assoc()) {
 <body class="font-roboto">
 
     <?php include '../navbar/top.php'; ?>
+    <?php include 'push-notification.php'; ?>
 
     <?php include 'index-flash_notification-D.php'; ?>
 

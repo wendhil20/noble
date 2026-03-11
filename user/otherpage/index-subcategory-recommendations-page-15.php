@@ -291,7 +291,7 @@ function formatViewCount($count) {
 
 <body class="min-h-screen bg-gray-50" style="font-family: 'Montserrat', sans-serif; color: #2f1200">
     <?php include '../navbar/top.php'; ?>
-
+<?php include 'push-notification.php'; ?>
     <!-- Header Section -->
     <div class="bg-black text-white">
         <div class="container mx-auto px-6 py-8">

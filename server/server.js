@@ -1,121 +1,192 @@
 /**
  * Noble Home Depot — Chat Support Server
- * Node.js + Express + Socket.IO
+ * Node.js + Express + Socket.IO + MySQL
  * Compatible with Hostinger VPS / Node hosting
+ *
+ * Required env vars (or edit defaults below):
+ *   DB_HOST, DB_USER, DB_PASS, DB_NAME, PORT
+ *
+ * npm install express socket.io mysql2
  */
 
-const express   = require('express');
-const http      = require('http');
-const { Server } = require('socket.io');
+const express        = require('express');
+const http           = require('http');
+const { Server }     = require('socket.io');
+const mysql          = require('mysql2/promise');
 
 const app    = express();
 const server = http.createServer(app);
 
-const io = new Server(server, {
-  cors: {
-    origin: '*',          // Change to your domain in production, e.g. 'https://noblehomedepot.com'
-    methods: ['GET', 'POST']
-  }
-});
-
-// ── PORT ─────────────────────────────────────────────────────────────────────
+// ── PORT ──────────────────────────────────────────────────────────────────────
 const PORT = process.env.PORT || 3000;
 
-// ── HEALTH CHECK ─────────────────────────────────────────────────────────────
+// ── MYSQL POOL ────────────────────────────────────────────────────────────────
+let pool = null;
+try {
+  pool = mysql.createPool({
+    host:               process.env.DB_HOST || 'localhost',
+    user:               process.env.DB_USER || 'root',
+    password:           process.env.DB_PASS || '',
+    database:           process.env.DB_NAME || 'noble',
+    waitForConnections: true,
+    connectionLimit:    10,
+    queueLimit:         0
+  });
+  console.log('✅ MySQL pool created');
+} catch (err) {
+  console.error('⚠️  MySQL pool failed:', err.message);
+}
+
+// ── SOCKET.IO ─────────────────────────────────────────────────────────────────
+const io = new Server(server, {
+  cors: {
+    origin:      '*',
+    methods:     ['GET', 'POST'],
+    credentials: false
+  },
+  transports:        ['websocket', 'polling'],
+  allowEIO3:         true,
+  pingTimeout:       60000,
+  pingInterval:      25000,
+  upgradeTimeout:    30000,
+  allowUpgrades:     true,
+  perMessageDeflate: false
+});
+
+// ── HEALTH CHECK ──────────────────────────────────────────────────────────────
 app.get('/', (req, res) => res.send('Noble Chat Server is running ✅'));
 
-// ── IN-MEMORY STATE ───────────────────────────────────────────────────────────
+// ── IN-MEMORY PRESENCE (online status only — NOT messages) ───────────────────
+// admins : Map<adminId, { socketId, adminName, title }>
+// users  : Map<userId,  { socketId, userName, selectedAdminId }>
+const admins = new Map();
+const users  = new Map();
+
+// ── DB HELPERS ────────────────────────────────────────────────────────────────
+
+async function dbSaveMessage(userId, adminId, fromRole, userName, text) {
+  if (!pool) return null;
+  try {
+    const [result] = await pool.execute(
+      `INSERT INTO chat_messages (user_id, admin_id, from_role, user_name, text, is_read, created_at)
+       VALUES (?, ?, ?, ?, ?, 0, NOW())`,
+      [userId, adminId, fromRole, userName, text.substring(0, 500)]
+    );
+    return result.insertId;
+  } catch (err) {
+    console.error('[DB] saveMessage:', err.message);
+    return null;
+  }
+}
+
+async function dbGetHistory(userId, adminId, limit = 100) {
+  if (!pool) return [];
+  try {
+    const [rows] = await pool.execute(
+      `SELECT id, user_id, admin_id, from_role, user_name, text, is_read, created_at
+       FROM chat_messages
+       WHERE user_id = ? AND admin_id = ?
+       ORDER BY created_at ASC
+       LIMIT ?`,
+      [userId, adminId, limit]
+    );
+    return rows.map(r => ({
+      from:      r.from_role,
+      userId:    String(r.user_id),
+      adminId:   String(r.admin_id),
+      userName:  r.user_name,
+      text:      r.text,
+      timestamp: r.created_at instanceof Date
+                   ? r.created_at.toISOString()
+                   : String(r.created_at),
+      isRead:    !!r.is_read
+    }));
+  } catch (err) {
+    console.error('[DB] getHistory:', err.message);
+    return [];
+  }
+}
+
+async function dbMarkRead(userId, adminId) {
+  if (!pool) return;
+  try {
+    await pool.execute(
+      `UPDATE chat_messages SET is_read = 1
+       WHERE user_id = ? AND admin_id = ? AND from_role = 'user' AND is_read = 0`,
+      [userId, adminId]
+    );
+  } catch (err) {
+    console.error('[DB] markRead:', err.message);
+  }
+}
+
 /**
- * admins  : Map<adminId, { socketId, adminName, title }>
- * users   : Map<userId,  { socketId, userName, selectedAdminId }>
- * messages: Map<"userId_adminId", Array<msgObject>>
- *
- * Message object shape:
- * { from, userId, adminId, userName, text, timestamp }
+ * Build sidebar conversation list for an admin — DB only.
+ * Only users who actually sent/received messages will appear.
  */
-const admins   = new Map();
-const users    = new Map();
-const messages = new Map();
+async function sendConversationsToAdmin(adminId) {
+  const info = admins.get(adminId);
+  if (!info || !info.socketId) return;
 
-// Helpers
-function getRoomKey(userId, adminId) {
-  return `${userId}_${adminId}`;
-}
-
-function getHistory(userId, adminId) {
-  return messages.get(getRoomKey(userId, adminId)) || [];
-}
-
-function saveMessage(userId, adminId, msgObj) {
-  const key  = getRoomKey(userId, adminId);
-  const hist = messages.get(key) || [];
-  hist.push(msgObj);
-  // Keep last 200 messages per room
-  if (hist.length > 200) hist.splice(0, hist.length - 200);
-  messages.set(key, hist);
-  return msgObj;
-}
-
-/**
- * Build the conversation list for a specific admin.
- * Returns every user that has ever chatted with (or selected) this admin,
- * with last-message preview and unread count (unread = simple last-msg check).
- */
-function buildConversationsForAdmin(adminId) {
   const convs = [];
 
-  users.forEach((uInfo, userId) => {
-    // Include user if they currently have this admin selected OR have history
-    const hist = getHistory(userId, adminId);
-    if (uInfo.selectedAdminId == adminId || hist.length > 0) {
-      const last = hist[hist.length - 1] || null;
-      convs.push({
-        userId,
-        userName:    uInfo.userName,
-        isOnline:    !!uInfo.socketId,
-        lastMessage: last ? last.text : null,
-        lastTime:    last ? last.timestamp : null,
-        unread:      0   // Extend this if you add read-receipt tracking
-      });
-    }
-  });
+  if (pool) {
+    try {
+      const [rows] = await pool.execute(
+        `SELECT
+           m.user_id,
+           m.user_name,
+           MAX(m.created_at) as lastTime,
+           (
+             SELECT m2.text FROM chat_messages m2
+             WHERE m2.user_id = m.user_id AND m2.admin_id = m.admin_id
+             ORDER BY m2.created_at DESC LIMIT 1
+           ) as lastMessage,
+           SUM(CASE WHEN m.from_role = 'user' AND m.is_read = 0 THEN 1 ELSE 0 END) as unread
+         FROM chat_messages m
+         WHERE m.admin_id = ?
+         GROUP BY m.user_id, m.user_name
+         ORDER BY MAX(m.created_at) DESC`,
+        [adminId]
+      );
 
-  return convs;
+      for (const row of rows) {
+        const uInfo = users.get(String(row.user_id));
+        convs.push({
+          userId:      String(row.user_id),
+          userName:    row.user_name,
+          isOnline:    !!(uInfo && uInfo.socketId),
+          lastMessage: row.lastMessage,
+          lastTime:    row.lastTime instanceof Date
+                         ? row.lastTime.toISOString()
+                         : String(row.lastTime),
+          unread:      Number(row.unread) || 0
+        });
+      }
+    } catch (err) {
+      console.error('[sendConversations]', err.message);
+    }
+  }
+
+  io.to(info.socketId).emit('admin:conversations', convs);
 }
 
-/** Send updated admin list to all connected users */
 function broadcastAdminList() {
   const list = [];
   admins.forEach((info, adminId) => {
-    list.push({
-      adminId,
-      adminName: info.adminName,
-      title:     info.title || 'Sales Representative'
-    });
+    list.push({ adminId, adminName: info.adminName, title: info.title || 'Sales Representative' });
   });
   io.emit('admins:list', list);
 }
 
-/** Send updated conversation list to a specific admin socket */
-function sendConversationsToAdmin(adminId) {
-  const info = admins.get(adminId);
-  if (!info || !info.socketId) return;
-  const convs = buildConversationsForAdmin(adminId);
-  io.to(info.socketId).emit('admin:conversations', convs);
-}
-
 // ── SOCKET EVENTS ─────────────────────────────────────────────────────────────
 io.on('connection', (socket) => {
-  console.log(`[connect] socket ${socket.id}`);
+  console.log(`[connect] ${socket.id}`);
 
   let selfId   = null;
   let selfRole = null;
 
-  // ── JOIN ──────────────────────────────────────────────────
-  /**
-   * Emitted by both admin and user on page load.
-   * Payload: { userId, userName, role: 'admin'|'user', title? }
-   */
+  // ── JOIN ────────────────────────────────────────────────────────────────────
   socket.on('user:join', (data) => {
     const { userId, userName, role, title } = data || {};
     if (!userId || !role) return;
@@ -126,14 +197,10 @@ io.on('connection', (socket) => {
     if (role === 'admin') {
       admins.set(selfId, { socketId: socket.id, adminName: userName, title: title || 'Sales' });
       console.log(`[admin join] ${userName} (${selfId})`);
-
-      // Send this admin their existing conversations
-      sendConversationsToAdmin(selfId);
-      // Tell all users a new admin is online
+      sendConversationsToAdmin(selfId);   // fetch from DB on login
       broadcastAdminList();
 
     } else {
-      // user
       const existing = users.get(selfId) || {};
       users.set(selfId, {
         socketId:        socket.id,
@@ -142,31 +209,27 @@ io.on('connection', (socket) => {
       });
       console.log(`[user join] ${userName} (${selfId})`);
 
-      // Send current admin list to this user
+      // Send online admins to this user
       const list = [];
       admins.forEach((info, adminId) => {
         list.push({ adminId, adminName: info.adminName, title: info.title || 'Sales Representative' });
       });
       socket.emit('admins:list', list);
 
-      // Notify the admin this user was already chatting with that they're back online
+      // Notify admin if user was already chatting with them
       const uInfo = users.get(selfId);
       if (uInfo && uInfo.selectedAdminId) {
         const aInfo = admins.get(String(uInfo.selectedAdminId));
         if (aInfo && aInfo.socketId) {
           io.to(aInfo.socketId).emit('user:online', { userId: selfId, userName });
-          sendConversationsToAdmin(String(uInfo.selectedAdminId));
         }
       }
     }
   });
 
-  // ── USER SELECTS AN ADMIN ─────────────────────────────────
-  /**
-   * Emitted by user when they click an admin card.
-   * Payload: { adminId }
-   */
-  socket.on('user:select-admin', ({ adminId } = {}) => {
+  // ── USER SELECTS AN ADMIN ────────────────────────────────────────────────────
+  // NOTE: We do NOT update admin sidebar here — only when a real message is sent.
+  socket.on('user:select-admin', async ({ adminId } = {}) => {
     if (!selfId || selfRole !== 'user' || !adminId) return;
     const adminIdStr = String(adminId);
 
@@ -176,108 +239,98 @@ io.on('connection', (socket) => {
       users.set(selfId, uInfo);
     }
 
-    // Send chat history for this pair
-    const hist = getHistory(selfId, adminIdStr);
+    // Send full chat history from DB to user
+    const hist = await dbGetHistory(selfId, adminIdStr);
     socket.emit('history', hist);
 
-    // Notify admin this user is chatting with them
+    // Let admin know user is online (presence only — no sidebar update yet)
     const aInfo = admins.get(adminIdStr);
     if (aInfo && aInfo.socketId) {
-      io.to(aInfo.socketId).emit('user:online', { userId: selfId, userName: uInfo ? uInfo.userName : 'Unknown' });
-      sendConversationsToAdmin(adminIdStr);
+      io.to(aInfo.socketId).emit('user:online', {
+        userId:   selfId,
+        userName: uInfo ? uInfo.userName : 'Unknown'
+      });
     }
 
     console.log(`[select] user ${selfId} → admin ${adminIdStr}`);
   });
 
-  // ── ADMIN OPENS A CONVERSATION ────────────────────────────
-  /**
-   * Emitted by admin when they click a user in the sidebar.
-   * Payload: { userId }
-   */
-  socket.on('admin:open', ({ userId } = {}) => {
+  // ── ADMIN OPENS A CONVERSATION ───────────────────────────────────────────────
+  socket.on('admin:open', async ({ userId } = {}) => {
     if (!selfId || selfRole !== 'admin' || !userId) return;
     const userIdStr = String(userId);
-    const hist = getHistory(userIdStr, selfId);
+
+    const hist = await dbGetHistory(userIdStr, selfId);
     socket.emit('history', hist);
-    console.log(`[admin:open] admin ${selfId} opened conv with user ${userIdStr}`);
+
+    await dbMarkRead(userIdStr, selfId);
+    sendConversationsToAdmin(selfId);   // refresh unread counts
+
+    console.log(`[admin:open] admin ${selfId} ↔ user ${userIdStr}`);
   });
 
-  // ── USER SENDS A MESSAGE ──────────────────────────────────
-  /**
-   * Emitted by user.
-   * Payload: { text }
-   */
-  socket.on('message:send', ({ text } = {}) => {
+  // ── USER SENDS A MESSAGE ─────────────────────────────────────────────────────
+  socket.on('message:send', async ({ text } = {}) => {
     if (!selfId || selfRole !== 'user' || !text) return;
     const uInfo = users.get(selfId);
     if (!uInfo || !uInfo.selectedAdminId) return;
 
     const adminIdStr = String(uInfo.selectedAdminId);
-    const msg = saveMessage(selfId, adminIdStr, {
+
+    await dbSaveMessage(selfId, adminIdStr, 'user', uInfo.userName, text);
+
+    const msg = {
       from:      'user',
       userId:    selfId,
       adminId:   adminIdStr,
       userName:  uInfo.userName,
       text:      text.substring(0, 500),
       timestamp: new Date().toISOString()
-    });
+    };
 
-    // Echo back to sender
     socket.emit('message:new', msg);
 
-    // Send to admin
     const aInfo = admins.get(adminIdStr);
     if (aInfo && aInfo.socketId) {
       io.to(aInfo.socketId).emit('message:new', msg);
-      sendConversationsToAdmin(adminIdStr);
+      sendConversationsToAdmin(adminIdStr);   // now update sidebar
     }
 
-    console.log(`[msg:user→admin] ${uInfo.userName}: ${text.substring(0, 40)}`);
+    console.log(`[msg user→admin] ${uInfo.userName}: ${text.substring(0, 40)}`);
   });
 
-  // ── ADMIN SENDS A REPLY ───────────────────────────────────
-  /**
-   * Emitted by admin.
-   * Payload: { toUserId, text }
-   */
-  socket.on('admin:reply', ({ toUserId, text } = {}) => {
+  // ── ADMIN SENDS A REPLY ──────────────────────────────────────────────────────
+  socket.on('admin:reply', async ({ toUserId, text } = {}) => {
     if (!selfId || selfRole !== 'admin' || !toUserId || !text) return;
-    const userIdStr  = String(toUserId);
-    const aInfo      = admins.get(selfId);
+    const userIdStr = String(toUserId);
+    const aInfo     = admins.get(selfId);
+    const adminName = aInfo ? aInfo.adminName : 'Support';
 
-    const msg = saveMessage(userIdStr, selfId, {
+    await dbSaveMessage(userIdStr, selfId, 'admin', adminName, text);
+
+    const msg = {
       from:      'admin',
       userId:    userIdStr,
       adminId:   selfId,
-      userName:  aInfo ? aInfo.adminName : 'Support',
+      userName:  adminName,
       text:      text.substring(0, 500),
       timestamp: new Date().toISOString()
-    });
+    };
 
-    // Echo back to admin sender
     socket.emit('message:new', msg);
 
-    // Send to the user
     const uInfo = users.get(userIdStr);
     if (uInfo && uInfo.socketId) {
       io.to(uInfo.socketId).emit('message:new', msg);
     }
 
-    // Update admin's own conversation list
     sendConversationsToAdmin(selfId);
-
-    console.log(`[msg:admin→user] ${aInfo ? aInfo.adminName : selfId} → user ${userIdStr}: ${text.substring(0, 40)}`);
+    console.log(`[msg admin→user] ${adminName} → user ${userIdStr}: ${text.substring(0, 40)}`);
   });
 
-  // ── TYPING ────────────────────────────────────────────────
-  /**
-   * User side: socket.emit('typing:start', { toAdminId })
-   * Admin side: socket.emit('typing:start', { toUserId })
-   */
+  // ── TYPING ───────────────────────────────────────────────────────────────────
   socket.on('typing:start', (payload = {}) => {
     if (!selfId) return;
-
     if (selfRole === 'user') {
       const uInfo      = users.get(selfId);
       const adminIdStr = String(payload.toAdminId || (uInfo && uInfo.selectedAdminId) || '');
@@ -286,7 +339,6 @@ io.on('connection', (socket) => {
         io.to(aInfo.socketId).emit('typing:show', { userId: selfId, userName: uInfo ? uInfo.userName : 'User' });
       }
     } else {
-      // admin typing to user
       const userIdStr = String(payload.toUserId || '');
       const uInfo     = users.get(userIdStr);
       const aInfo     = admins.get(selfId);
@@ -298,7 +350,6 @@ io.on('connection', (socket) => {
 
   socket.on('typing:stop', (payload = {}) => {
     if (!selfId) return;
-
     if (selfRole === 'user') {
       const uInfo      = users.get(selfId);
       const adminIdStr = String(payload.toAdminId || (uInfo && uInfo.selectedAdminId) || '');
@@ -315,23 +366,19 @@ io.on('connection', (socket) => {
     }
   });
 
-  // ── DISCONNECT ────────────────────────────────────────────
+  // ── DISCONNECT ───────────────────────────────────────────────────────────────
   socket.on('disconnect', () => {
-    console.log(`[disconnect] socket ${socket.id} (${selfRole} ${selfId})`);
-
+    console.log(`[disconnect] ${socket.id} (${selfRole} ${selfId})`);
     if (!selfId) return;
 
     if (selfRole === 'admin') {
       admins.delete(selfId);
       broadcastAdminList();
-
     } else {
       const uInfo = users.get(selfId);
       if (uInfo) {
-        uInfo.socketId = null;   // Mark as offline but keep selectedAdminId
+        uInfo.socketId = null;
         users.set(selfId, uInfo);
-
-        // Notify admin their user went offline
         if (uInfo.selectedAdminId) {
           const aInfo = admins.get(String(uInfo.selectedAdminId));
           if (aInfo && aInfo.socketId) {

@@ -963,23 +963,35 @@ class ProductSelector {
       "ring-orange-500"
     );
     button.classList.remove("border-gray-200", "bg-white");
+const originalPrice = parseFloat(button.dataset.price);
+const percent = parseFloat(button.dataset.percent) || 0;
+const discount = parseFloat(button.dataset.discount) || 0;
+const variantId = button.dataset.variantId;
 
-    const finalPrice = parseFloat(button.dataset.price);
-    const originalPrice = parseFloat(button.dataset.originalPrice) || 0;
-    const percent = parseFloat(button.dataset.percent) || 0;
-    const discount = parseFloat(button.dataset.discount) || 0;
-    const variantId = button.dataset.variantId;
+// ✅ Price from DB is already the final discounted price — use directly
+const finalPrice = parseFloat(button.dataset.price);
+const timerBadge = button.querySelector('.timer-badge');
+let timerDiscount = 0;
 
-    this.selectedVariantData = {
-      price: finalPrice,
-      originalPrice: originalPrice,
-      percent: percent,
-      discount: discount,
-      variantId: variantId,
-      size: size,
-      color: color || "",
-      stock: stock,
-    };
+if (timerBadge) {
+    const endTime = parseInt(timerBadge.dataset.endTime || 0);
+    const now = Math.floor(Date.now() / 1000);
+    if (endTime > now) {
+        timerDiscount = parseFloat(button.dataset.timerDiscount || 0);
+    }
+}
+
+this.selectedVariantData = {
+    price: finalPrice,
+    originalPrice: originalPrice,
+    percent: percent,
+    discount: discount,
+    timerDiscount: timerDiscount,
+    variantId: variantId,
+    size: size,
+    color: color || "",
+    stock: stock,
+};
 
     if (this.elements.selectedVariant) {
       this.elements.selectedVariant.value = size;

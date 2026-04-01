@@ -1,4 +1,5 @@
 <?php
+// refresh_cart.php
 session_name("nobleuser");
 if (session_status() === PHP_SESSION_NONE) session_start();
 
@@ -17,7 +18,7 @@ function sendEmptyCart() {
     if (ob_get_level()) ob_end_clean();
     echo json_encode([
         'success'     => true,
-        'total_items' => 0,   // SUM of quantity = 0
+        'total_items' => 0,
         'cart_html'   => $empty_html,
         'footer_html' => '',
         'total'       => '0.00'
@@ -51,20 +52,19 @@ if (!$conn_loaded) {
 }
 
 try {
-    // STEP 1: Quick SUM check - if 0 qty total, cart is empty
-    // PALITAN NG:
-$count_stmt = $conn->prepare("SELECT COUNT(*) as total_qty FROM user_cart_items WHERE user_id = ?");
+    // Quick count check
+    $count_stmt = $conn->prepare("SELECT COUNT(*) as total_qty FROM user_cart_items WHERE user_id = ?");
     $count_stmt->bind_param("i", $user_id);
     $count_stmt->execute();
     $count_row = $count_stmt->get_result()->fetch_assoc();
     $count_stmt->close();
 
     $total_qty_quick = (int)($count_row['total_qty'] ?? 0);
-
-    // EARLY RETURN IF EMPTY - stops any polling loop
     if ($total_qty_quick === 0) sendEmptyCart();
 
-    // STEP 2: Full query only when cart has items
+    // ✅ FIX: Join only what's needed for display
+    // price column in user_cart_items is already the correct final price
+    // saved by add_to_cart.php — no need to recalculate
     $stmt = $conn->prepare("
         SELECT
             c.*,
@@ -73,11 +73,20 @@ $count_stmt = $conn->prepare("SELECT COUNT(*) as total_qty FROM user_cart_items 
             p.descrip7,
             p.product_name,
             p.main_image,
-            pc.image as pc_image
+            pc.image as pc_image,
+            -- ✅ For timer discount check only (to keep price fresh if timer expires)
+            pv.price                  AS raw_price,
+            pv.timer_discount_percent,
+            pv.timer_discount_active,
+            pv.timer_discount_start,
+            pv.timer_discount_end,
+            pc2.price                 AS color_addon_price
         FROM user_cart_items c
-        LEFT JOIN product_types t ON t.product_id = c.product_id AND t.type_name = c.type_name
-        LEFT JOIN products p ON c.product_id = p.id
+        LEFT JOIN product_types t   ON t.product_id = c.product_id AND t.type_name = c.type_name
+        LEFT JOIN products p        ON c.product_id = p.id
         LEFT JOIN product_colors pc ON pc.id = c.color_id
+        LEFT JOIN product_variants pv ON pv.id = c.variant_id
+        LEFT JOIN product_colors pc2  ON pc2.id = c.color_id
         WHERE c.user_id = ?
         ORDER BY c.added_at DESC
     ");
@@ -87,13 +96,53 @@ $count_stmt = $conn->prepare("SELECT COUNT(*) as total_qty FROM user_cart_items 
 
     $cart_items = [];
     $total      = 0;
-    $total_qty  = 0; // SUM of all quantities
+    $total_qty  = 0;
+    $now        = time();
 
     while ($row = $result->fetch_assoc()) {
+        // ✅ FIX: Use stored price directly — it was saved correctly by add_to_cart.php
+        // The price column already holds the final discounted price (e.g. 114.95)
+        $unit_price = floatval($row['price']);
+
+        // ✅ ONLY re-check if timer discount has EXPIRED since cart was last updated
+        // If timer was active when added but now expired, restore to non-timer price
+        $raw_price = floatval($row['raw_price'] ?? 0);
+        $color_addon = floatval($row['color_addon_price'] ?? 0);
+
+        if ($raw_price > 0) {
+            $timer_active = isset($row['timer_discount_active']) && (int)$row['timer_discount_active'] === 1;
+            $timer_end    = !empty($row['timer_discount_end']) ? strtotime($row['timer_discount_end']) : 0;
+            $timer_start  = !empty($row['timer_discount_start']) ? strtotime($row['timer_discount_start']) : 0;
+
+            if ($timer_active && $timer_end > 0) {
+                if ($now >= $timer_start && $now <= $timer_end) {
+                    // ✅ Timer still active — use stored price (already has timer discount)
+                    // No change needed
+                } else {
+                    // ✅ Timer EXPIRED — recalculate without timer discount
+                    // raw_price (price column) is already post-regular-discount
+                    // just use it directly + color addon
+                    $unit_price = round($raw_price + $color_addon, 2);
+
+                    // Update stored price to reflect expiry
+                    if (abs($unit_price - floatval($row['price'])) > 0.01) {
+                        $fix_stmt = $conn->prepare("UPDATE user_cart_items SET price = ? WHERE id = ?");
+                        $fix_stmt->bind_param("di", $unit_price, $row['id']);
+                        $fix_stmt->execute();
+                        $fix_stmt->close();
+                        $row['price'] = $unit_price;
+                    }
+                }
+            }
+            // No timer — use stored price as-is
+        }
+
+        $row['price'] = $unit_price;
         $cart_items[] = $row;
+
         $qty    = intval($row['quantity']);
-        $total += floatval($row['price']) * $qty;
-      $total_qty += 1; // <-- COUNT ng products lang
+        $total += $unit_price * $qty;
+        $total_qty += 1;
     }
     $stmt->close();
 
@@ -170,14 +219,12 @@ $count_stmt = $conn->prepare("SELECT COUNT(*) as total_qty FROM user_cart_items 
 </div>';
     }
 
-    // Discard stray output
     $stray = ob_get_clean();
     if (!empty(trim($stray))) error_log("refresh_cart stray: " . substr($stray, 0, 200));
 
-    // Return JSON with total_qty as badge count (SUM of quantities)
     echo json_encode([
         'success'     => true,
-        'total_items' => $total_qty,  // SUM of all quantities (e.g. 5)
+        'total_items' => $total_qty,
         'cart_html'   => $cart_html,
         'footer_html' => $footer_html,
         'total'       => number_format($total, 2)

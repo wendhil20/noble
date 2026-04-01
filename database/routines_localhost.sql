@@ -1,6 +1,5 @@
-
- DELIMITER $$
-CREATE DEFINER=`u318146187_nh`@`127.0.0.1` PROCEDURE `record_order_as_sold`(IN `p_order_id` INT)
+DELIMITER $$
+CREATE DEFINER=`root`@`localhost` PROCEDURE `record_order_as_sold`(IN `p_order_id` INT)
 BEGIN
     DECLARE v_sold_order_id INT;
     DECLARE v_order_exists INT;

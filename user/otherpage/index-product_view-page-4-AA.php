@@ -7,7 +7,7 @@ include 'index-recent_views_handler-page-14.php';
 
 // Track this product view
 if (isset($_GET['id']) && is_numeric($_GET['id'])) {
-  $product_id = (int)$_GET['id'];
+  $product_id = (int) $_GET['id'];
   trackProductView($conn, $product_id);
 
   // Get view count for display
@@ -25,8 +25,8 @@ if (!isset($_SESSION['user_id']) && isset($_COOKIE['remember_token'])) {
 
   if ($res->num_rows > 0) {
     $user = $res->fetch_assoc();
-    $_SESSION['user_id']    = $user['id'];
-    $_SESSION['user_name']  = $user['name'];
+    $_SESSION['user_id'] = $user['id'];
+    $_SESSION['user_name'] = $user['name'];
     $_SESSION['user_email'] = $user['email'] ?? '';
     $_SESSION['user_mobile'] = $user['mobile'] ?? '';
 
@@ -200,9 +200,10 @@ $stmt = $conn->prepare("
     pv.namevariant, 
     pv.color, 
     pv.size, 
+    pv.original_price,
     pv.price as variant_price, 
     pv.percent, 
-    pv.discount, 
+    pv.discount,
     pv.image as variant_image,
     pv.sku_info,
     pv.width,
@@ -265,6 +266,7 @@ while ($row = $types_result->fetch_assoc()) {
       'namevariant' => $row['namevariant'],
       'color' => $row['color'],
       'size' => $row['size'],
+      'original_price' => $row['original_price'], // ← ADD THIS
       'variant_price' => $row['variant_price'],
       'percent' => $row['percent'],
       'discount' => $row['discount'],
@@ -333,10 +335,10 @@ $stmt = $conn->prepare("
     p.descrip7,
     p.view_count,
     p.unique_view_count,
-    v.origin,
-    v.discount,
-    v.percent,
-    v.status,
+ANY_VALUE(v.origin) as origin,
+ANY_VALUE(v.discount) as discount,
+ANY_VALUE(v.percent) as percent,
+ANY_VALUE(v.status) as status,
     COALESCE(MIN(pv.price), 0) as min_size_price,  
     COALESCE(MAX(pv.price), 0) as max_size_price,  
     COALESCE(MIN(pc.price), 0) as min_color_price,
@@ -402,11 +404,15 @@ $is_guest = !isset($_SESSION['user_id']);
   <title><?= htmlspecialchars($product['product_name']) ?> - Noble Home</title>
   <script src="https://cdn.jsdelivr.net/npm/swiper@11/swiper-bundle.min.js"></script>
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/swiper@11/swiper-bundle.min.css" />
-  <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700;800&display=swap" rel="stylesheet">
-
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap"
+    rel="stylesheet" />
   <script src="https://cdn.tailwindcss.com"></script>
   <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
   <style>
+    footer * {
+      font-family: 'Plus Jakarta Sans', sans-serif;
+    }
+
     /* Selection States */
     .selected {
       border-color: #f97316;
@@ -463,7 +469,6 @@ $is_guest = !isset($_SESSION['user_id']);
       transform: translateY(-0.25rem);
       box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -4px rgba(0, 0, 0, 0.1);
     }
-
 
 
     /* Swiper Styles */
@@ -1015,7 +1020,7 @@ $is_guest = !isset($_SESSION['user_id']);
   </style>
 </head>
 
-<body class="font-roboto">
+<body class="">
   <?php include '../navbar/top.php'; ?>
   <!-- Breadcrumb -->
   <nav class="bg-white border-b border-gray-200 px-4 py-3">
@@ -1047,8 +1052,7 @@ $is_guest = !isset($_SESSION['user_id']);
                 w-48 h-48 sm:w-64 sm:h-64 md:w-80 md:h-80 lg:w-full lg:h-auto mx-auto lg:mx-0"
               id="magnifier-container">
 
-              <img id="main-product-image"
-                src="../../<?= htmlspecialchars($display_image) ?>"
+              <img id="main-product-image" src="../../<?= htmlspecialchars($display_image) ?>"
                 data-original-image="../../<?= htmlspecialchars($display_image) ?>"
                 data-original-name="<?= htmlspecialchars($display_name) ?>"
                 class="w-full h-full object-contain transition-all duration-300"
@@ -1061,12 +1065,10 @@ $is_guest = !isset($_SESSION['user_id']);
             </div>
 
             <!-- Zoom Preview Panel - Hidden by default -->
-            <div id="zoom-preview-panel"
-              class="hidden absolute top-0 left-full ml-6 w-96 h-96 z-50">
-              <div class="relative w-full h-full bg-gray-50 rounded-lg shadow-2xl overflow-hidden border-2 border-gray-200">
-                <div id="zoom-preview-content"
-                  class="w-full h-full bg-no-repeat"
-                  style="background-size: 250%;"></div>
+            <div id="zoom-preview-panel" class="hidden absolute top-0 left-full ml-6 w-96 h-96 z-50">
+              <div
+                class="relative w-full h-full bg-gray-50 rounded-lg shadow-2xl overflow-hidden border-2 border-gray-200">
+                <div id="zoom-preview-content" class="w-full h-full bg-no-repeat" style="background-size: 250%;"></div>
 
                 <div class="absolute top-3 left-3 bg-black/70 text-white text-xs px-3 py-1.5 rounded-full">
                   <i class="fas fa-search-plus mr-1"></i> 2.5x Zoom
@@ -1082,7 +1084,8 @@ $is_guest = !isset($_SESSION['user_id']);
                 <div class="flex gap-1 sm:gap-2 pb-2 justify-center lg:justify-start">
 
                   <!-- Main Thumbnail -->
-                  <div class="thumbnail-item cursor-pointer flex-shrink-0 border border-gray-200 rounded-lg" data-index="0">
+                  <div class="thumbnail-item cursor-pointer flex-shrink-0 border border-gray-200 rounded-lg"
+                    data-index="0">
                     <img src="../../<?= htmlspecialchars($display_image) ?>" loading="lazy"
                       class="w-12 h-12 sm:w-14 sm:h-14 md:w-16 md:h-16 object-contain rounded-lg border-2 border-transparent hover:border-blue-500 transition-all duration-200 thumbnail-active"
                       alt="Main Image">
@@ -1090,7 +1093,8 @@ $is_guest = !isset($_SESSION['user_id']);
 
                   <!-- Sub Images Thumbnails - FIXED PATH -->
                   <?php foreach ($sub_images as $index => $sub_image): ?>
-                    <div class="thumbnail-item cursor-pointer flex-shrink-0 border border-gray-200 rounded-lg" data-index="<?= $index + 1 ?>">
+                    <div class="thumbnail-item cursor-pointer flex-shrink-0 border border-gray-200 rounded-lg"
+                      data-index="<?= $index + 1 ?>">
                       <img src="../../uploads/<?= htmlspecialchars($sub_image) ?>" loading="lazy"
                         class="w-12 h-12 sm:w-14 sm:h-14 md:w-16 md:h-16 object-contain rounded-lg border-2 border-transparent hover:border-blue-500 transition-all duration-200"
                         alt="Sub Image <?= $index + 1 ?>">
@@ -1113,13 +1117,14 @@ $is_guest = !isset($_SESSION['user_id']);
         <div id="sidebarOverlay" class="fixed inset-0 bg-black bg-opacity-50 z-[100] hidden lg:hidden"></div>
 
         <!-- Product Options Section - Sidebar on mobile, normal on desktop -->
-        <div id="productOptionsContainer"
-          class="fixed lg:relative top-0 right-0 h-full lg:h-auto w-full sm:w-80 lg:w-full 
+        <div id="productOptionsContainer" class="fixed lg:relative top-0 right-0 h-full lg:h-auto w-full sm:w-80 lg:w-full 
          transform translate-x-full lg:translate-x-0 transition-transform duration-300 ease-in-out
          z-[101] lg:z-auto bg-white lg:bg-white shadow-xl lg:shadow-none overflow-y-auto">
 
           <!-- Mobile Sidebar Header -->
-          <div class="lg:hidden sticky top-0 bg-white border-b border-gray-200 p-4 flex items-center justify-between z-20 shadow-sm " style="font-family: 'Montserrat', sans-serif; color: #2f1200">
+          <div
+            class="lg:hidden sticky top-0 bg-white border-b border-gray-200 p-4 flex items-center justify-between z-20 shadow-sm "
+            style="font-family: 'Montserrat', sans-serif; color: #2f1200">
             <h2 class="text-lg">Product Options</h2>
             <button id="closeSidebar" class="text-black hover:text-white p-1">
               <i class="fas fa-times text-xl"></i>
@@ -1136,7 +1141,8 @@ $is_guest = !isset($_SESSION['user_id']);
                 <div class="flex items-center justify-between gap-4">
 
                   <!-- PRODUCT NAME -->
-                  <h1 class="text-xl sm:text-2xl lg:text-3xl font-bold " style="font-family: 'Montserrat', sans-serif; color: #2f1200">
+                  <h1 class="text-xl sm:text-2xl lg:text-3xl font-bold "
+                    style="font-family: 'Montserrat', sans-serif; color: #2f1200">
                     <?php
                     $safe_product = isset($ORIGINAL_PRODUCT) ? $ORIGINAL_PRODUCT : $product;
                     echo htmlspecialchars($display_name ?? $safe_product['product_name'] ?? 'Product');
@@ -1165,7 +1171,8 @@ $is_guest = !isset($_SESSION['user_id']);
 
 
                 <div class="flex flex-wrap gap-2 mb-3 mt-2">
-                  <span class="bg-orange-100  px-3 py-1 rounded-full text-xs font-medium uppercase" style="font-family: 'Montserrat', sans-serif; color: #2f1200">
+                  <span class="bg-orange-100  px-3 py-1 rounded-full text-xs font-medium uppercase"
+                    style="font-family: 'Montserrat', sans-serif; color: #2f1200">
                     <?php
                     $safe_product = isset($ORIGINAL_PRODUCT) ? $ORIGINAL_PRODUCT : $product;
                     echo htmlspecialchars($safe_product['codename']);
@@ -1176,7 +1183,8 @@ $is_guest = !isset($_SESSION['user_id']);
 
               <!-- Product Description -->
               <div>
-                <p class=" leading-relaxed text-sm lg:text-base" style="font-family: 'Montserrat', sans-serif; color: #2f1200">
+                <p class=" leading-relaxed text-sm lg:text-base"
+                  style="font-family: 'Montserrat', sans-serif; color: #2f1200">
                   <?= htmlspecialchars($safe_product['description'] ?? 'No description available.') ?>
                 </p>
               </div>
@@ -1185,25 +1193,25 @@ $is_guest = !isset($_SESSION['user_id']);
             <?php if (!empty($types_data)): ?>
               <div class="step-section">
                 <div class="flex items-center justify-between mb-4">
-                  <h3 class="text-base lg:text-xl font-semibold text-gray-800" style="font-family: 'Montserrat', sans-serif; color: #2f1200">
+                  <h3 class="text-base lg:text-xl font-semibold text-gray-800"
+                    style="font-family: 'Montserrat', sans-serif; color: #2f1200">
 
                     Click Item Type
                   </h3>
-                  <div class="text-xs lg:text-sm text-orange-600 font-medium" style="font-family: 'Montserrat', sans-serif; color: #2f1200">Required</div>
+                  <div class="text-xs lg:text-sm text-orange-600 font-medium"
+                    style="font-family: 'Montserrat', sans-serif; color: #2f1200">Required</div>
                 </div>
 
                 <div class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-2">
                   <?php foreach ($types_data as $index => $type): ?>
-                    <button type="button"
-                      onclick="showVariants(<?= $type['id'] ?>, '<?= addslashes($type['name']) ?>')"
+                    <button type="button" onclick="showVariants(<?= $type['id'] ?>, '<?= addslashes($type['name']) ?>')"
                       class="type-btn border-2 border-gray-300 p-2 hover:border-orange-500 transition-all duration-200 bg-white rounded focus:outline-none focus:ring-2 focus:ring-orange-300">
 
-                      <div class="aspect-square mb-1.5 overflow-hidden bg-gray-50 flex items-center justify-center relative rounded">
+                      <div
+                        class="aspect-square mb-1.5 overflow-hidden bg-gray-50 flex items-center justify-center relative rounded">
                         <?php if (!empty($type['image']) && file_exists("../../" . $type['image'])): ?>
-                          <img src="../../<?= htmlspecialchars($type['image']) ?>"
-                            class="w-full h-full object-contain"
-                            alt="<?= htmlspecialchars($type['name']) ?>"
-                            loading="lazy"
+                          <img src="../../<?= htmlspecialchars($type['image']) ?>" class="w-full h-full object-contain"
+                            alt="<?= htmlspecialchars($type['name']) ?>" loading="lazy"
                             onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';">
                           <div class="w-full h-full flex items-center justify-center text-gray-300" style="display: none;">
                             <i class="fas fa-image text-lg"></i>
@@ -1215,7 +1223,8 @@ $is_guest = !isset($_SESSION['user_id']);
                         <?php endif; ?>
                       </div>
 
-                      <span class="text-[10px] font-medium text-gray-700 block truncate leading-tight uppercase text-center">
+                      <span
+                        class="text-[10px] font-medium text-gray-700 block truncate leading-tight uppercase text-center">
                         <?= htmlspecialchars($type['name']) ?>
                       </span>
                     </button>
@@ -1234,44 +1243,47 @@ $is_guest = !isset($_SESSION['user_id']);
             <?php if (!empty($product_colors)): ?>
               <div class="step-section">
                 <div class="flex items-center justify-between mb-4">
-                  <h3 class="text-base lg:text-xl font-semibold " style="font-family: 'Montserrat', sans-serif; color: #2f1200">
+                  <h3 class="text-base lg:text-xl font-semibold "
+                    style="font-family: 'Montserrat', sans-serif; color: #2f1200">
                     Choose Color
                   </h3>
-                  <div class="text-xs lg:text-sm  font-medium" style="font-family: 'Montserrat', sans-serif; color: #2f1200">Required</div>
+                  <div class="text-xs lg:text-sm  font-medium"
+                    style="font-family: 'Montserrat', sans-serif; color: #2f1200">Required</div>
                 </div>
 
                 <!-- Product Image - Mobile Sidebar Only -->
                 <div class="lg:hidden py-3 px-0 bg-white border-b border-gray-100 mb-4">
                   <div class="aspect-square w-32 mx-auto overflow-hidden">
                     <h1 class="text-center mb-2 text-xs text-gray-600">Display</h1>
-                    <img id="sidebar-product-image"
-                      src="../../<?= htmlspecialchars($display_image) ?>"
-                      class="w-full h-full object-contain"
-                      alt="<?= htmlspecialchars($product['product_name']) ?>">
+                    <img id="sidebar-product-image" src="../../<?= htmlspecialchars($display_image) ?>"
+                      class="w-full h-full object-contain" alt="<?= htmlspecialchars($product['product_name']) ?>">
                   </div>
-                  <h3 class="text-center mt-2 font-semibold text-gray-800 text-xs line-clamp-2" style="font-family: 'Montserrat', sans-serif; color: #2f1200">
+                  <h3 class="text-center mt-2 font-semibold text-gray-800 text-xs line-clamp-2"
+                    style="font-family: 'Montserrat', sans-serif; color: #2f1200">
                     <?= htmlspecialchars($product['product_name']) ?>
                   </h3>
                 </div>
 
                 <div id="color-selection-container" class="opacity-50 pointer-events-none">
-                  <div class="max-h-60 lg:max-h-80 overflow-y-auto scrollbar-thin scrollbar-thumb-gray-300 hover:scrollbar-thumb-gray-400 transition-all duration-300">
+                  <div
+                    class="max-h-60 lg:max-h-80 overflow-y-auto scrollbar-thin scrollbar-thumb-gray-300 hover:scrollbar-thumb-gray-400 transition-all duration-300">
                     <div class="grid grid-cols-2 lg:grid-cols-4 gap-2 p-1" id="all-colors-grid">
                       <?php foreach ($product_colors as $color): ?>
                         <button type="button"
                           onclick="selectColorFromGrid(<?= $color['id'] ?>, '<?= addslashes($color['color_name']) ?>', <?= $color['price'] ?>, '<?= !empty($color['image']) ? htmlspecialchars($color['image']) : '' ?>', '<?= htmlspecialchars($color['color_code']) ?>')"
                           class="color-btn border-2 border-gray-300 hover:border-orange-500 bg-white rounded
                px-2 py-1.5 text-xs transition-all duration-200 text-center w-full min-h-[32px]"
-                          data-color-id="<?= $color['id'] ?>"
-                          data-color-name="<?= addslashes($color['color_name']) ?>"
+                          data-color-id="<?= $color['id'] ?>" data-color-name="<?= addslashes($color['color_name']) ?>"
                           data-price="<?= $color['price'] ?>"
                           data-color-code="<?= htmlspecialchars($color['color_code']) ?>"
                           data-image="<?= !empty($color['image']) ? htmlspecialchars($color['image']) : '' ?>">
-                          <span class="text-gray-700 block truncate text-[10px] lg:text-[11px] leading-tight font-medium" style="font-family: 'Montserrat', sans-serif; color: #2f1200">
+                          <span class="text-gray-700 block truncate text-[10px] lg:text-[11px] leading-tight font-medium"
+                            style="font-family: 'Montserrat', sans-serif; color: #2f1200">
                             <?= htmlspecialchars($color['color_name']) ?>
                           </span>
                           <!-- Stock indicator - Shows total stock for this color across ALL sizes -->
-                          <span class="color-stock-display text-[8px] lg:text-[9px]  font-semibold block mt-1" style="font-family: 'Montserrat', sans-serif; color: #2f1200">
+                          <span class="color-stock-display text-[8px] lg:text-[9px]  font-semibold block mt-1"
+                            style="font-family: 'Montserrat', sans-serif; color: #2f1200">
                             -
                           </span>
                         </button>
@@ -1280,7 +1292,8 @@ $is_guest = !isset($_SESSION['user_id']);
                   </div>
                 </div>
 
-                <div id="color-disabled-message" class="text-center p-4 lg:p-6 bg-gray-50 rounded-lg border-2 border-dashed border-gray-300">
+                <div id="color-disabled-message"
+                  class="text-center p-4 lg:p-6 bg-gray-50 rounded-lg border-2 border-dashed border-gray-300">
                   <i class="fas fa-arrow-up text-orange-500 mb-2 text-lg lg:text-xl"></i>
                   <p class="text-sm lg:text-base text-gray-500">Please select an item type first</p>
                 </div>
@@ -1290,20 +1303,24 @@ $is_guest = !isset($_SESSION['user_id']);
             <!-- STEP 3: SIZE/VARIANT SELECTION -->
             <div class="step-section">
               <div class="flex items-center justify-between mb-4">
-                <h3 class="text-base lg:text-xl font-semibold " style="font-family: 'Montserrat', sans-serif; color: #2f1200">
+                <h3 class="text-base lg:text-xl font-semibold "
+                  style="font-family: 'Montserrat', sans-serif; color: #2f1200">
                   Choose Size
                 </h3>
-                <div class="text-xs lg:text-sm  font-medium" style="font-family: 'Montserrat', sans-serif; color: #2f1200">Required</div>
+                <div class="text-xs lg:text-sm  font-medium"
+                  style="font-family: 'Montserrat', sans-serif; color: #2f1200">Required</div>
               </div>
 
-              <div id="variant-container" class="text-gray-500 p-4 lg:p-6 bg-gray-50 text-center rounded-lg border-2 border-dashed border-gray-300">
+              <div id="variant-container"
+                class="text-gray-500 p-4 lg:p-6 bg-gray-50 text-center rounded-lg border-2 border-dashed border-gray-300">
                 <i class="fas fa-arrow-up text-orange-500 mb-2 text-lg lg:text-xl"></i>
                 <p class="text-sm lg:text-base">Please select a color first</p>
               </div>
               <?php foreach ($types_data as $type): ?>
                 <div id="variants-<?= $type['id'] ?>" class="variant-group hidden">
                   <?php if (!empty($type['variants'])): ?>
-                    <div class="max-h-60 lg:max-h-72 overflow-y-auto scrollbar-thin scrollbar-thumb-gray-300 hover:scrollbar-thumb-gray-400 transition-all duration-300 pr-1">
+                    <div
+                      class="max-h-60 lg:max-h-72 overflow-y-auto scrollbar-thin scrollbar-thumb-gray-300 hover:scrollbar-thumb-gray-400 transition-all duration-300 pr-1">
                       <div class="grid grid-cols-2 lg:grid-cols-4 gap-2">
                         <?php foreach ($type['variants'] as $variant): ?>
                           <?php
@@ -1318,10 +1335,10 @@ $is_guest = !isset($_SESSION['user_id']);
 
                           // ✅ FIXED: Get timer dates
                           $timer_discount = floatval($variant['timer_discount'] ?? 0);
-                          $has_active_timer = (bool)($variant['has_active_timer'] ?? false);
+                          $has_active_timer = (bool) ($variant['has_active_timer'] ?? false);
                           $timer_discount_start = !empty($variant['timer_discount_start']) ? strtotime($variant['timer_discount_start']) : 0;
                           $timer_discount_end = !empty($variant['timer_end']) ? strtotime($variant['timer_end']) : 0;
-                          $timer_discount_active = (bool)($variant['timer_discount_active'] ?? false);
+                          $timer_discount_active = (bool) ($variant['timer_discount_active'] ?? false);
 
                           // ✅ FIXED: Calculate DURATION from admin setting (not remaining time)
                           $now = time();
@@ -1332,23 +1349,20 @@ $is_guest = !isset($_SESSION['user_id']);
                           <button type="button"
                             onclick="selectVariant(this, '<?= addslashes($variant['size']) ?>'); showSkuInfo(this); updateCalculatorFromVariant(this); updateColorStockDisplay();"
                             class="variant-btn border-2 <?= $is_out_of_stock ? 'border-red-300 opacity-50' : 'border-gray-300 hover:border-orange-500' ?> bg-white rounded px-2 py-2 text-center transition-all duration-200 min-h-[50px] flex flex-col items-center justify-center relative"
-                            data-price="<?= $price ?>"
-                            data-percent="<?= $percent ?>"
-                            data-discount="<?= $discount ?>"
-                            data-variant-id="<?= $variant['variant_id'] ?>"
-                            data-stock="<?= $stock ?>"
+                            data-price="<?= $price ?>" data-percent="<?= $percent ?>" data-discount="<?= $discount ?>"
+                            data-variant-id="<?= $variant['variant_id'] ?>" data-stock="<?= $stock ?>"
                             data-width="<?= isset($variant['width']) ? htmlspecialchars($variant['width']) : '0' ?>"
                             data-height="<?= isset($variant['height']) ? htmlspecialchars($variant['height']) : '0' ?>"
                             data-length="<?= isset($variant['length']) ? htmlspecialchars($variant['length']) : '0' ?>"
                             data-sku-info='<?= $sku_info ? htmlspecialchars(json_encode($sku_info), ENT_QUOTES) : '' ?>'
-                            data-has-timer="<?= $has_active_timer ? '1' : '0' ?>"
-                            data-timer-discount="<?= $timer_discount ?>"
+                            data-has-timer="<?= $has_active_timer ? '1' : '0' ?>" data-timer-discount="<?= $timer_discount ?>"
                             data-timer-end="<?= !empty($variant['timer_end']) ? strtotime($variant['timer_end']) : '0' ?>"
                             <?= $is_out_of_stock ? 'disabled' : '' ?>>
 
                             <!-- ✅ DISCOUNT BADGE - Top Right Corner -->
                             <?php if ($discount > 0): ?>
-                              <div class="absolute top-1 right-1 bg-red-500 text-white text-[8px] px-1.5 py-0.5 rounded-full font-bold z-20 shadow-md">
+                              <div
+                                class="absolute top-1 right-1 bg-red-500 text-white text-[8px] px-1.5 py-0.5 rounded-full font-bold z-20 shadow-md">
                                 -<?= round($discount) ?>%
                               </div>
                             <?php endif; ?>
@@ -1371,17 +1385,15 @@ $is_guest = !isset($_SESSION['user_id']);
 
                             <?php if ($is_timer_active && $timer_discount_end): ?>
                               <?php
-                              // ✅ CALCULATE PRICES TO SHOW
-                              $priceAfterMarkup = $price + ($price * $percent / 100);
-                              $priceAfterRegularDiscount = $priceAfterMarkup - ($priceAfterMarkup * $discount / 100);
-                              $priceAfterTimerDiscount = $priceAfterRegularDiscount - ($priceAfterRegularDiscount * $timer_discount / 100);
+                              $originalDisplayPrice = floatval($variant['original_price']); // 121 - original
+                              $finalDisplayPrice = floatval($variant['variant_price']);      // 114.95 - already discounted
+                              $priceAfterTimerDiscount = $finalDisplayPrice - ($finalDisplayPrice * $timer_discount / 100);
                               ?>
 
-                              <div class="mt-2 bg-red-700 text-white text-[10px] font-bold px-2 py-1 rounded inline-block timer-badge shadow-lg"
-                                data-variant-id="<?= $variant['variant_id'] ?>"
-                                data-end-time="<?= $timer_discount_end ?>"
-                                data-duration="<?= $duration_seconds ?>"
-                                data-remaining="<?= max(0, $remaining_seconds) ?>">
+                              <div
+                                class="mt-2 bg-red-700 text-white text-[10px] font-bold px-2 py-1 rounded inline-block timer-badge shadow-lg"
+                                data-variant-id="<?= $variant['variant_id'] ?>" data-end-time="<?= $timer_discount_end ?>"
+                                data-duration="<?= $duration_seconds ?>" data-remaining="<?= max(0, $remaining_seconds) ?>">
 
                                 <!-- Timer Countdown -->
                                 <div class="flex items-center gap-1 mb-1">
@@ -1394,9 +1406,9 @@ $is_guest = !isset($_SESSION['user_id']);
 
                                 <!-- Price Breakdown -->
                                 <div class="text-[9px] bg-white/20 px-1 py-0.5 rounded flex items-center justify-between gap-2">
-                                  <span class="line-through opacity-75">₱<?= number_format($priceAfterRegularDiscount, 2) ?></span>
+                                  <span class="line-through opacity-75">₱<?= number_format($originalDisplayPrice, 2) ?></span>
                                   <span class="text-yellow-300 font-bold">→</span>
-                                  <span class="text-yellow-300 font-bold">₱<?= number_format($priceAfterTimerDiscount, 2) ?></span>
+                                  <span class="text-yellow-300 font-bold">₱<?= number_format($finalDisplayPrice, 2) ?></span>
                                 </div>
 
                                 <!-- Timer Discount Percentage -->
@@ -1406,7 +1418,8 @@ $is_guest = !isset($_SESSION['user_id']);
                               </div>
                             <?php endif; ?>
 
-                            <span class="hidden" data-original-price="<?= $priceWithMarkup ?>" data-final-price="<?= $finalPrice ?>" data-discount-percent="<?= $discount ?>"></span>
+                            <span class="hidden" data-original-price="<?= $priceWithMarkup ?>"
+                              data-final-price="<?= $finalPrice ?>" data-discount-percent="<?= $discount ?>"></span>
                           </button>
                         <?php endforeach; ?>
                       </div>
@@ -1525,7 +1538,7 @@ $is_guest = !isset($_SESSION['user_id']);
               }
 
               // ✅ Initialize on page load
-              document.addEventListener('DOMContentLoaded', function() {
+              document.addEventListener('DOMContentLoaded', function () {
                 initializeColorStockDisplay();
               });
             </script>
@@ -1625,7 +1638,8 @@ $is_guest = !isset($_SESSION['user_id']);
                         <label class="block text-xs text-gray-600 mb-1">Adhesive</label>
                         <div class="text-sm font-bold text-gray-900">
                           <span id="userAdhesiveNeededKg">0</span> kg
-                          <div class="text-xs text-gray-600 mt-1" id="userAdhesiveBagsDisplay">(<span id="userAdhesiveBags">0</span> bags, buy <span id="userAdhesiveWholeBags">0</span>)</div>
+                          <div class="text-xs text-gray-600 mt-1" id="userAdhesiveBagsDisplay">(<span
+                              id="userAdhesiveBags">0</span> bags, buy <span id="userAdhesiveWholeBags">0</span>)</div>
                         </div>
                       </div>
                       <div class="bg-white rounded px-3 py-2 text-center border border-gray-200">
@@ -1762,7 +1776,7 @@ $is_guest = !isset($_SESSION['user_id']);
                 }
 
                 // DISABLE KEYBOARD SHORTCUTS COMPLETELY WHEN IN INPUTS
-                document.addEventListener('keydown', function(e) {
+                document.addEventListener('keydown', function (e) {
                   const activeElement = document.activeElement;
 
                   if (activeElement &&
@@ -1793,10 +1807,10 @@ $is_guest = !isset($_SESSION['user_id']);
                 });
 
                 // Prevent keydown on area input from triggering shortcuts
-                document.addEventListener('DOMContentLoaded', function() {
+                document.addEventListener('DOMContentLoaded', function () {
                   const areaInput = document.getElementById('userArea');
                   if (areaInput) {
-                    areaInput.addEventListener('keydown', function(e) {
+                    areaInput.addEventListener('keydown', function (e) {
                       e.stopPropagation();
                     });
                   }
@@ -1853,7 +1867,8 @@ $is_guest = !isset($_SESSION['user_id']);
                 </div>
 
                 <!-- See More / See Less button -->
-                <button id="toggle-sku-btn" onclick="toggleSkuContent()" class="hidden mt-3 text-orange-600 hover:text-orange-700 font-medium text-sm flex items-center gap-1 transition">
+                <button id="toggle-sku-btn" onclick="toggleSkuContent()"
+                  class="hidden mt-3 text-orange-600 hover:text-orange-700 font-medium text-sm flex items-center gap-1 transition">
                   <span id="toggle-sku-text">See More</span>
                   <i id="toggle-sku-icon" class="fas fa-chevron-down text-xs"></i>
                 </button>
@@ -1871,25 +1886,17 @@ $is_guest = !isset($_SESSION['user_id']);
 
             <!-- Quantity Controls -->
             <div class="flex items-start justify-start gap-2 mb-3">
-              <button type="button"
-                onclick="decreaseQuantity()"
+              <button type="button" onclick="decreaseQuantity()"
                 class="w-9 h-9 bg-gray-200 hover:bg-gray-300 text-gray-700 rounded-lg flex items-center justify-center transition"
                 id="decreaseBtn">
                 <i class="fas fa-minus text-sm"></i>
               </button>
 
-              <input type="number"
-                id="quantityInput"
-                name="quantity"
-                value="1"
-                min="1"
-                max="9999"
+              <input type="number" id="quantityInput" name="quantity" value="1" min="1" max="9999"
                 class="w-20 text-center text-base font-semibold border-2 border-gray-300 rounded-lg py-1 focus:outline-none focus:border-orange-500"
-                onchange="validateQuantity()"
-                oninput="validateQuantity()">
+                onchange="validateQuantity()" oninput="validateQuantity()">
 
-              <button type="button"
-                onclick="increaseQuantity()"
+              <button type="button" onclick="increaseQuantity()"
                 class="w-9 h-9 bg-orange-500 hover:bg-orange-600 text-white rounded-lg flex items-center justify-center transition"
                 id="increaseBtn">
                 <i class="fas fa-plus text-sm"></i>
@@ -1898,10 +1905,14 @@ $is_guest = !isset($_SESSION['user_id']);
 
             <!-- Quick Buttons -->
             <div class="flex flex-wrap gap-2 justify-start mb-3">
-              <button type="button" onclick="setQuantity(5)" class="px-3 py-1.5 text-xs font-medium bg-gray-100 hover:bg-orange-100 hover:text-orange-600 rounded-lg transition">5</button>
-              <button type="button" onclick="setQuantity(10)" class="px-3 py-1.5 text-xs font-medium bg-gray-100 hover:bg-orange-100 hover:text-orange-600 rounded-lg transition">10</button>
-              <button type="button" onclick="setQuantity(25)" class="px-3 py-1.5 text-xs font-medium bg-gray-100 hover:bg-orange-100 hover:text-orange-600 rounded-lg transition">25</button>
-              <button type="button" onclick="setQuantity(50)" class="px-3 py-1.5 text-xs font-medium bg-gray-100 hover:bg-orange-100 hover:text-orange-600 rounded-lg transition">50</button>
+              <button type="button" onclick="setQuantity(5)"
+                class="px-3 py-1.5 text-xs font-medium bg-gray-100 hover:bg-orange-100 hover:text-orange-600 rounded-lg transition">5</button>
+              <button type="button" onclick="setQuantity(10)"
+                class="px-3 py-1.5 text-xs font-medium bg-gray-100 hover:bg-orange-100 hover:text-orange-600 rounded-lg transition">10</button>
+              <button type="button" onclick="setQuantity(25)"
+                class="px-3 py-1.5 text-xs font-medium bg-gray-100 hover:bg-orange-100 hover:text-orange-600 rounded-lg transition">25</button>
+              <button type="button" onclick="setQuantity(50)"
+                class="px-3 py-1.5 text-xs font-medium bg-gray-100 hover:bg-orange-100 hover:text-orange-600 rounded-lg transition">50</button>
             </div>
 
             <!-- Preview -->
@@ -1914,7 +1925,8 @@ $is_guest = !isset($_SESSION['user_id']);
           </div>
 
           <!-- PURCHASE SECTION -->
-          <div class="mt-6 p-2 sticky bottom-0 lg:relative bg-white lg:bg-transparent pt-4 lg:pt-0 border-t lg:border-0 border-gray-200 z-10 shadow-lg lg:shadow-none">
+          <div
+            class="mt-6 p-2 sticky bottom-0 lg:relative bg-white lg:bg-transparent pt-4 lg:pt-0 border-t lg:border-0 border-gray-200 z-10 shadow-lg lg:shadow-none">
             <form id="productForm" method="POST" class="space-y-3 lg:space-y-4">
               <input type="hidden" name="product_id" value="<?= $product_id ?>" />
               <input type="hidden" name="selected_color_id" id="selected_color_id">
@@ -1942,8 +1954,7 @@ $is_guest = !isset($_SESSION['user_id']);
               <!-- CUSTOMIZE BUTTON - Shows only for Windows products -->
               <?php if ($is_windows_category): ?>
                 <div id="customizeButtonContainer">
-                  <button type="button"
-                    onclick="openCustomizeModal()"
+                  <button type="button" onclick="openCustomizeModal()"
                     class="w-full py-3 lg:py-4 text-sm lg:text-lg font-semibold transition-all duration-300 bg-black text-white hover:bg-orange-500 ">
                     <span class="flex items-center justify-center gap-2">
                       Quote Customize
@@ -1952,9 +1963,9 @@ $is_guest = !isset($_SESSION['user_id']);
                 </div>
               <?php endif; ?>
               <div class="flex gap-2 lg:gap-3 w-full">
-                <button type="submit" id="addToCartBtn"
-                  disabled
-                  class="flex-1 py-3 lg:py-4 text-sm lg:text-lg font-semibold transition-all duration-300 bg-gray-400 text-white disabled:cursor-not-allowed disabled:opacity-75 " style="font-family: 'Montserrat', sans-serif; ">
+                <button type="submit" id="addToCartBtn" disabled
+                  class="flex-1 py-3 lg:py-4 text-sm lg:text-lg font-semibold transition-all duration-300 bg-gray-400 text-white disabled:cursor-not-allowed disabled:opacity-75 "
+                  style="font-family: 'Montserrat', sans-serif; ">
                   <span id="btnText" class="flex items-center justify-center gap-2">
                     <i class="fas fa-shopping-cart text-sm lg:text-base"></i>
                     Add to Cart
@@ -1962,7 +1973,8 @@ $is_guest = !isset($_SESSION['user_id']);
                 </button>
 
                 <button type="button" onclick="window.location.href='index-cart_view-page-8.php'"
-                  class="flex-1 py-3 lg:py-4 text-sm lg:text-lg font-semibold transition-all duration-300 bg-black hover:bg-orange-500 text-white" style="font-family: 'Montserrat', sans-serif;">
+                  class="flex-1 py-3 lg:py-4 text-sm lg:text-lg font-semibold transition-all duration-300 bg-black hover:bg-orange-500 text-white"
+                  style="font-family: 'Montserrat', sans-serif;">
                   <span class="flex items-center justify-center gap-2">
                     <i class="fas fa-shopping-cart text-sm lg:text-base"></i>
                     View Cart
@@ -2082,709 +2094,13 @@ $is_guest = !isset($_SESSION['user_id']);
     }
   </style>
 
-  <!-- CUSTOMIZE MODAL -->
-  <div id="customizeModal" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-[9999] hidden">
-    <div class="bg-white rounded-2xl p-6 lg:p-8 max-w-2xl w-full mx-4 relative max-h-[90vh] overflow-y-auto">
-
-      <!-- Close Button -->
-      <button onclick="closeCustomizeModal()" class="absolute top-4 right-4 text-gray-400 hover:text-gray-600 transition-colors">
-        <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
-        </svg>
-      </button>
-
-      <!-- Modal Header -->
-      <div class="mb-6">
-        <div class="flex items-center gap-3 mb-2">
-
-          <div>
-            <h3 class="text-2xl lg:text-3xl font-bold text-gray-900">Customize Your Windows</h3>
-            <p class="text-sm text-gray-600 mt-1">Get a personalized quote for your custom specifications</p>
-          </div>
-        </div>
-      </div>
-
-      <!-- Product Summary -->
-      <div class="bg-gradient-to-r from-blue-50 to-purple-50 p-4 rounded-lg mb-6 border border-blue-200">
-        <h4 class="font-semibold text-gray-900 mb-2">Product Details</h4>
-        <p id="customizeProductName" class="text-gray-700 font-medium mb-1"></p>
-        <p id="customizeProductInfo" class="text-sm text-gray-600"></p>
-      </div>
-
-      <!-- Customize Form -->
-      <form id="customizeForm" class="space-y-5" onsubmit="submitCustomizeForm(event)">
-
-        <!-- Customization Type -->
-        <div>
-          <label class="block text-sm font-semibold text-gray-900 mb-3">What would you like to customize?</label>
-          <div class="space-y-2">
-            <label class="flex items-center p-3 border-2 border-gray-200 rounded-lg cursor-pointer hover:border-purple-400 hover:bg-purple-50 transition">
-              <input type="radio" name="customType" value="size" checked class="w-4 h-4 text-purple-600">
-              <span class="ml-3 font-medium text-gray-700">Custom Size</span>
-            </label>
-            <label class="flex items-center p-3 border-2 border-gray-200 rounded-lg cursor-pointer hover:border-purple-400 hover:bg-purple-50 transition">
-              <input type="radio" name="customType" value="color" class="w-4 h-4 text-purple-600">
-              <span class="ml-3 font-medium text-gray-700">Custom Color/Design</span>
-            </label>
-            <label class="flex items-center p-3 border-2 border-gray-200 rounded-lg cursor-pointer hover:border-purple-400 hover:bg-purple-50 transition">
-              <input type="radio" name="customType" value="material" class="w-4 h-4 text-purple-600">
-              <span class="ml-3 font-medium text-gray-700">Different Material</span>
-            </label>
-            <label class="flex items-center p-3 border-2 border-gray-200 rounded-lg cursor-pointer hover:border-purple-400 hover:bg-purple-50 transition">
-              <input type="radio" name="customType" value="other" class="w-4 h-4 text-purple-600">
-              <span class="ml-3 font-medium text-gray-700">Other</span>
-            </label>
-          </div>
-        </div>
-
-        <!-- Specifications -->
-        <div>
-          <label class="block text-sm font-semibold text-gray-900 mb-2">Your Specifications</label>
-          <textarea
-            name="specifications"
-            placeholder="Describe your custom requirements in detail (dimensions, colors, materials, quantity, etc.)"
-            class="w-full px-4 py-3 border-2 border-gray-300 rounded-lg focus:outline-none focus:border-purple-500 resize-none"
-            rows="4"
-            required></textarea>
-        </div>
-
-        <!-- Contact Information -->
-        <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
-          <div>
-            <label class="block text-sm font-semibold text-gray-900 mb-2">Full Name</label>
-            <input
-              type="text"
-              name="fullName"
-              id="customizeFullName"
-              placeholder="Your name"
-              class="w-full px-4 py-2 border-2 border-gray-300 rounded-lg focus:outline-none focus:border-purple-500 bg-gray-100 cursor-not-allowed"
-              readonly
-              required>
-            <p class="text-xs text-gray-500 mt-1">From your account</p>
-          </div>
-          <div>
-            <label class="block text-sm font-semibold text-gray-900 mb-2">Email</label>
-            <input
-              type="email"
-              name="email"
-              id="customizeEmail"
-              placeholder="your@email.com"
-              class="w-full px-4 py-2 border-2 border-gray-300 rounded-lg focus:outline-none focus:border-purple-500 bg-gray-100 cursor-not-allowed"
-              readonly
-              required>
-            <p class="text-xs text-gray-500 mt-1">From your account</p>
-          </div>
-        </div>
-
-        <div>
-          <label class="block text-sm font-semibold text-gray-900 mb-2">Phone Number</label>
-          <input
-            type="tel"
-            name="phone"
-            placeholder="+63 9XX XXX XXXX"
-            class="w-full px-4 py-2 border-2 border-gray-300 rounded-lg focus:outline-none focus:border-purple-500"
-            required>
-        </div>
-
-        <!-- Message (Optional) -->
-        <div>
-          <label class="block text-sm font-semibold text-gray-900 mb-2">Additional Message (Optional)</label>
-          <textarea
-            name="message"
-            placeholder="Any additional information you'd like to share..."
-            class="w-full px-4 py-3 border-2 border-gray-300 rounded-lg focus:outline-none focus:border-purple-500 resize-none"
-            rows="3"></textarea>
-        </div>
-
-        <!-- Checkbox -->
-        <label class="flex items-start p-3 border-2 border-gray-200 rounded-lg cursor-pointer hover:bg-gray-50 transition">
-          <input type="checkbox" name="agreeTerms" class="w-4 h-4 mt-1 text-purple-600" required>
-          <span class="ml-3 text-sm text-gray-700">
-            I agree to receive updates and quote details from Noble Home Construction
-          </span>
-        </label>
-
-        <!-- Submit Buttons -->
-        <div class="grid grid-cols-2 gap-3 pt-4">
-          <button type="button"
-            onclick="closeCustomizeModal()"
-            class="py-3 bg-gray-200 hover:bg-gray-300 text-gray-900 font-semibold rounded-lg transition-colors">
-            Cancel
-          </button>
-          <button type="submit"
-            class="py-3 bg-black hover:bg-orange-500 text-white font-semibold ">
-            <i class="fas fa-paper-plane mr-2"></i>Send Request
-          </button>
-        </div>
-      </form>
-
-      <!-- Contact Info -->
-      <div class="mt-6 pt-6 border-t border-gray-200">
-        <p class="text-xs text-gray-600 text-center mb-3">Or contact us directly:</p>
-        <div class="flex gap-2 justify-center">
-          <a href="tel:+639922394563" class="flex items-center gap-2 px-4 py-2 bg-blue-100 hover:bg-blue-200 text-blue-700 rounded-lg text-sm font-medium transition">
-            <i class="fas fa-phone"></i> Call
-          </a>
-          <a href="https://wa.me/639922394563" target="_blank" class="flex items-center gap-2 px-4 py-2 bg-green-100 hover:bg-green-200 text-green-700 rounded-lg text-sm font-medium transition">
-            <i class="fab fa-whatsapp"></i> WhatsApp
-          </a>
-          <a href="mailto:noblehomeconst.ph@gmail.com" class="flex items-center gap-2 px-4 py-2 bg-orange-100 hover:bg-orange-200 text-orange-700 rounded-lg text-sm font-medium transition">
-            <i class="fas fa-envelope"></i> Email
-          </a>
-        </div>
-      </div>
-    </div>
-  </div>
-
-  <style>
-    /* Modal animations */
-    #customizeModal {
-      animation: modalFadeIn 0.3s ease-out;
-    }
-
-    @keyframes modalFadeIn {
-      from {
-        opacity: 0;
-        transform: scale(0.95);
-      }
-
-      to {
-        opacity: 1;
-        transform: scale(1);
-      }
-    }
-
-    #customizeModal>div {
-      animation: slideUp 0.3s ease-out;
-    }
-
-    @keyframes slideUp {
-      from {
-        transform: translateY(30px);
-        opacity: 0;
-      }
-
-      to {
-        transform: translateY(0);
-        opacity: 1;
-      }
-    }
-
-    /* Form styling */
-    #customizeForm input:focus,
-    #customizeForm textarea:focus {
-      box-shadow: 0 0 0 3px rgba(147, 51, 234, 0.1);
-    }
-
-    #customizeForm textarea {
-      font-family: inherit;
-    }
-  </style>
-
-  <script>
-    // Open customize modal
-    function openCustomizeModal() {
-      const modal = document.getElementById('customizeModal');
-      const productName = document.querySelector('h1.text-xl')?.textContent || 'Product';
-      const selectedColor = document.getElementById('selected_color')?.value || 'Not selected';
-      const selectedSize = document.querySelector('.variant-btn.selected')?.textContent || 'Not selected';
-
-      // Populate product info
-      document.getElementById('customizeProductName').textContent = productName;
-      document.getElementById('customizeProductInfo').textContent =
-        `Color: ${selectedColor} | Size: ${selectedSize}`;
-
-      // Pre-fill user info from PHP session data
-      const userEmail = document.querySelector('meta[name="user-email"]')?.getAttribute('content') || '';
-      const userName = document.querySelector('meta[name="user-name"]')?.getAttribute('content') || '';
-
-      if (userName) document.getElementById('customizeFullName').value = userName;
-      if (userEmail) document.getElementById('customizeEmail').value = userEmail;
-
-      modal.classList.remove('hidden');
-      document.body.style.overflow = 'hidden';
-    }
-
-    // Close customize modal
-    function closeCustomizeModal() {
-      const modal = document.getElementById('customizeModal');
-      modal.classList.add('hidden');
-      document.body.style.overflow = 'auto';
-    }
-
-    // Submit customize form
-    function submitCustomizeForm(event) {
-      event.preventDefault();
-
-      const form = document.getElementById('customizeForm');
-      const formData = new FormData(form);
-      const productId = document.querySelector('input[name="product_id"]').value;
-      const selectedColor = document.getElementById('selected_color')?.value || '';
-      const selectedVariant = document.getElementById('selected_variant')?.value || '';
-
-      // Add product details
-      formData.append('product_id', productId);
-      formData.append('selected_color', selectedColor);
-      formData.append('selected_variant', selectedVariant);
-
-      // Send to server
-      fetch('index-customize_quote_handler-page-4-AA.php', {
-          method: 'POST',
-          body: formData
-        })
-        .then(response => response.json())
-        .then(data => {
-          if (data.success) {
-            alert('✅ Your customization request has been sent! We will contact you shortly.');
-            closeCustomizeModal();
-            form.reset();
-          } else {
-            alert('❌ Error: ' + (data.message || 'Something went wrong'));
-          }
-        })
-        .catch(error => {
-          console.error('Error:', error);
-          alert('❌ Error sending request. Please try again or contact us directly.');
-        });
-    }
-
-    // Close modal with Escape key
-    document.addEventListener('keydown', function(e) {
-      if (e.key === 'Escape') {
-        closeCustomizeModal();
-      }
-    });
-  </script>
-
-  <?php if ($related_products->num_rows > 0): ?>
-    <!-- RELATED PRODUCTS SECTION - MOBILE SIDEBAR & DESKTOP CAROUSEL -->
-
-    <!-- Mobile Trigger Button (Bottom Right) -->
-    <button id="relatedProductsTrigger"
-      class="lg:hidden fixed bottom-20 right-4 z-[80] bg-black text-white px-4 py-2 text-sm rounded-full shadow-md hover:shadow-lg transition-all active:scale-95 flex items-center gap-1">
-      <i class="fas fa-th-large text-sm"></i>
-      <span>Related (<?= $related_products->num_rows ?>)</span>
-    </button>
-
-    <!-- Overlay for mobile sidebar -->
-    <div id="relatedOverlay" class="fixed inset-0 bg-black bg-opacity-50 z-[110] hidden lg:hidden transition-opacity duration-300"></div>
-
-    <!-- Related Products Section - Bottom Sheet on Mobile, Hidden on Desktop -->
-    <section id="relatedProductsContainer"
-      class="fixed bottom-0 left-0 right-0
-       transform translate-y-full
-       transition-transform duration-300 ease-out
-       z-[111] bg-white 
-       shadow-2xl rounded-t-3xl 
-       max-h-[80vh] overflow-hidden flex flex-col
-       lg:hidden">
-
-      <!-- Header -->
-      <div class="sticky top-0 bg-black text-white px-4 py-3 flex items-center justify-between z-20 shadow-md" style="font-family: 'Montserrat', sans-serif;">
-        <div>
-          <h2 class="text-base">Related Products</h2>
-          <p class="text-xs text-white">Similar items you may like</p>
-        </div>
-        <button id="closeRelatedProducts" class="text-white hover:bg-white/20 p-2 rounded-full transition-colors">
-          <i class="fas fa-times text-lg"></i>
-        </button>
-      </div>
-
-      <!-- Products Grid (Mobile) -->
-      <div class="overflow-y-auto flex-1 p-3 bg-gray-50">
-        <div class="grid grid-cols-2 gap-3">
-          <?php
-          $related_products->data_seek(0);
-          while ($row = $related_products->fetch_assoc()):
-            // 🔥 USE SMART PRICE DISPLAY FUNCTION (same as Document 4)
-            $priceData = calculateSmartPriceDisplay($row);
-            $discount = (float)($row['discount'] ?? 0);
-
-            // Get total sold count
-            $total_sold = (int)($row['total_sold'] ?? 0);
-            $view_count = (int)($row['view_count'] ?? 0);
-          ?>
-            <!-- Buong card ay clickable na -->
-            <a href="index-product_view-page-4-AA.php?id=<?= $row['id'] ?>"
-              class="group block bg-white hover:shadow-lg transition-all duration-300 transform hover:-translate-y-1 overflow-hidden hover:border-orange-300 cursor-pointer rounded-lg">
-
-              <!-- Product Image -->
-              <div class="relative overflow-hidden bg-gray-50" style="height: 140px;">
-                <?php if ($row['main_image']): ?>
-                  <img src="../../<?= $row['main_image'] ?>"
-                    loading="lazy"
-                    class="w-full h-full object-contain p-2 group-hover:scale-105 transition-transform duration-300"
-                    alt="<?= htmlspecialchars($row['product_name']) ?>">
-                <?php else: ?>
-                  <div class="flex flex-col items-center justify-center h-full text-gray-400">
-                    <svg class="w-8 h-8 mb-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5"
-                        d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
-                    </svg>
-                    <span class="text-xs">No Image</span>
-                  </div>
-                <?php endif; ?>
-              </div>
-
-              <!-- Product Information -->
-              <div class="p-2.5">
-                <h3 class=" text-xs mb-1.5 line-clamp-2 leading-tight font-semibold" style="font-family: 'Montserrat', sans-serif; color: #2f1200">
-                  <?= htmlspecialchars($row['product_name']) ?>
-                </h3>
-
-                <div class="mb-2" style="font-family: 'Montserrat', sans-serif; color: #2f1200">
-                  <p class=" text-xs line-clamp-1 mb-1">
-                    <?= htmlspecialchars($row['description']) ?>
-                  </p>
-                  <?php if (!empty($row['descrip6'])): ?>
-                    <p class=" text-xs line-clamp-1">
-                      • <?= htmlspecialchars($row['descrip6']) ?>
-                    </p>
-                  <?php endif; ?>
-                </div>
-
-                <!-- 🔥 SMART PRICE DISPLAY (exactly like Document 4) -->
-                <div class="flex items-baseline gap-1 flex-wrap mb-2" style="font-family: 'Montserrat', sans-serif; color: #2f1200">
-                  <?php if ($discount > 0): ?>
-                    <p class="text-[11px] font-bold "><?= $priceData['display_price'] ?></p>
-                    <span class="text-[8px] font-semibold text-red-600 bg-red-50 px-1 py-0.5 rounded">-<?= number_format($discount, 0) ?>%</span>
-                  <?php else: ?>
-                    <p class="text-[11px] font-bold"><?= $priceData['display_price'] ?></p>
-                  <?php endif; ?>
-                </div>
-
-                <!-- View count + Sold count (styled like Document 4) -->
-                <div class="flex items-center gap-2 text-[9px] mb-2" style="font-family: 'Montserrat', sans-serif; color: #2f1200">
-                  <?php if ($view_count > 0): ?>
-                    <div class="flex items-center gap-1 bg-blue-50 px-2 py-1 rounded">
-                      viewing
-                      <span class="font-medium"><?= formatViewCount($view_count) ?></span>
-                    </div>
-                  <?php endif; ?>
-
-                  <?php if ($total_sold > 0): ?>
-                    <div class="flex items-center gap-1  px-2 py-1 rounded">
-                      sold
-                      <span class="font-medium"><?= number_format($total_sold) ?></span>
-                    </div>
-                  <?php endif; ?>
-                </div>
-              </div>
-            </a>
-          <?php endwhile; ?>
-        </div>
-      </div>
-    </section>
-
-    <!-- DESKTOP RELATED PRODUCTS CAROUSEL - Shows above product specifications -->
-    <section class="hidden lg:block mt-8 px-4 lg:px-0 max-w-7xl mx-auto">
-      <div class="bg-white rounded-xl overflow-hidden shadow-sm">
-
-        <!-- Header -->
-        <div class="px-6 py-6 border-b border-gray-200">
-          <div class="flex items-center justify-between" style="font-family: 'Montserrat', sans-serif; color: #2f1200">
-            <div>
-              <h2 class="text-2xl font-bold mb-1">Related Products</h2>
-              <p class="text-sm ">Similar items you might like</p>
-            </div>
-          </div>
-        </div>
-
-        <!-- Carousel Container -->
-        <div class="p-6 bg-gray-50">
-          <div class="relative">
-            <!-- Swiper Container -->
-            <div class="swiper relatedProductsSwiper">
-              <div class="swiper-wrapper">
-                <?php
-                $related_products->data_seek(0);
-                while ($row = $related_products->fetch_assoc()):
-                  // 🔥 USE SMART PRICE DISPLAY FUNCTION (same as Document 4)
-                  $priceData = calculateSmartPriceDisplay($row);
-                  $discount = (float)($row['discount'] ?? 0);
-
-                  // Get total sold count
-                  $total_sold = (int)($row['total_sold'] ?? 0);
-                  $view_count = (int)($row['view_count'] ?? 0);
-                ?>
-                  <div class="swiper-slide">
-                    <!-- Buong card ay clickable na -->
-                    <a href="index-product_view-page-4-AA.php?id=<?= $row['id'] ?>"
-                      class="group block bg-white rounded-lg overflow-hidden hover:shadow-xl transition-all duration-300 h-full flex flex-col cursor-pointer">
-
-                      <!-- Product Image -->
-                      <div class="relative overflow-hidden bg-gray-100" style="height: 200px;">
-                        <?php if ($row['main_image']): ?>
-                          <img src="../../<?= $row['main_image'] ?>"
-                            loading="lazy"
-                            class="w-full h-full object-contain p-4 group-hover:scale-110 transition-transform duration-300"
-                            alt="<?= htmlspecialchars($row['product_name']) ?>">
-                        <?php else: ?>
-                          <div class="flex flex-col items-center justify-center h-full text-gray-400">
-                            <i class="fas fa-image text-3xl mb-2"></i>
-                            <span class="text-sm">No Image</span>
-                          </div>
-                        <?php endif; ?>
-                      </div>
-
-                      <!-- Product Info -->
-                      <div class="p-4 flex-1 flex flex-col">
-                        <!-- Product Name -->
-                        <h3 class=" font-semibold text-[15px] mb-2 line-clamp-2 leading-tight" style="font-family: 'Montserrat', sans-serif; color: #2f1200">
-                          <?= htmlspecialchars($row['product_name']) ?>
-                        </h3>
-
-                        <!-- Product Description -->
-                        <div class="mb-3 flex-1">
-                          <p class=" text-xs line-clamp-2 mb-1 text-[13px]" style="font-family: 'Montserrat', sans-serif; color: #2f1200">
-                            <?= htmlspecialchars($row['description']) ?>
-                          </p>
-                          <?php if (!empty($row['descrip6'])): ?>
-                            <p class=" text-xs line-clamp-1">
-                              <?= htmlspecialchars($row['descrip6']) ?>
-                            </p>
-                          <?php endif; ?>
-                        </div>
-
-                        <!-- 🔥 SMART PRICE DISPLAY (exactly like Document 4) -->
-                        <div class="flex items-baseline gap-1 flex-wrap mb-3" style="font-family: 'Montserrat', sans-serif; color: #2f1200">
-                          <?php if ($discount > 0): ?>
-                            <p class="text-[13px] font-bold "><?= $priceData['display_price'] ?></p>
-                            <span class="text-[8px] font-semibold text-red-600 bg-red-50 px-1 py-0.5 rounded">-<?= number_format($discount, 0) ?>%</span>
-                          <?php else: ?>
-                            <p class="text-[13px] font-bold "><?= $priceData['display_price'] ?></p>
-                          <?php endif; ?>
-                        </div>
-
-                        <!-- View count + Sold count (styled like Document 4) -->
-                        <div class="flex items-center gap-2 text-[9px] text-gray-500 mb-3" style="font-family: 'Montserrat', sans-serif; color: #2f1200">
-                          <?php if ($view_count > 0): ?>
-                            <div class="flex items-center gap-1 bg-blue-50 px-2 py-1 rounded">
-                              viewing
-                              <span class="font-medium"><?= formatViewCount($view_count) ?></span>
-                            </div>
-                          <?php endif; ?>
-
-                          <?php if ($total_sold > 0): ?>
-                            <div class="flex items-center gap-1 bg-green-50 px-2 py-1 rounded">
-                              sold
-                              <span class="font-medium"><?= number_format($total_sold) ?></span>
-                            </div>
-                          <?php endif; ?>
-                        </div>
-                      </div>
-
-                    </a>
-                  </div>
-                <?php endwhile; ?>
-              </div>
-            </div>
-
-            <!-- Navigation Buttons -->
-            <button class="relatedProducts-prev absolute left-0 top-1/2 -translate-y-1/2 -translate-x-4 z-10 w-10 h-10 bg-orange-500 hover:bg-orange-600 text-white rounded-full flex items-center justify-center transition-all shadow-lg hover:shadow-xl">
-              <i class="fas fa-chevron-left text-sm"></i>
-            </button>
-
-            <button class="relatedProducts-next absolute right-0 top-1/2 -translate-y-1/2 translate-x-4 z-10 w-10 h-10 bg-orange-500 hover:bg-orange-600 text-white rounded-full flex items-center justify-center transition-all shadow-lg hover:shadow-xl">
-              <i class="fas fa-chevron-right text-sm"></i>
-            </button>
-          </div>
-        </div>
-      </div>
-    </section>
-
-    <style>
-      /* Mobile Sidebar Styles */
-      #relatedProductsContainer.sidebar-open {
-        transform: translateY(0);
-      }
-
-      #relatedProductsContainer {
-        -webkit-overflow-scrolling: touch;
-      }
-
-      #relatedProductsContainer::-webkit-scrollbar {
-        width: 6px;
-      }
-
-      #relatedProductsContainer::-webkit-scrollbar-track {
-        background: #f1f1f1;
-      }
-
-      #relatedProductsContainer::-webkit-scrollbar-thumb {
-        background: #cbd5e0;
-        border-radius: 3px;
-      }
-
-      #relatedProductsContainer::-webkit-scrollbar-thumb:hover {
-        background: #a0aec0;
-      }
-
-      body.related-sidebar-open {
-        overflow: hidden;
-      }
-
-      /* Desktop Carousel Styles */
-      .relatedProductsSwiper {
-        overflow: visible;
-      }
-
-      .relatedProductsSwiper .swiper-slide {
-        height: auto;
-      }
-
-      /* Pagination Dots */
-      .swiper-pagination-bullets.swiper-pagination-horizontal {
-        bottom: 0;
-      }
-
-      .swiper-pagination-bullet {
-        background-color: #d1d5db;
-        opacity: 1;
-      }
-
-      .swiper-pagination-bullet-active {
-        background-color: #f97316;
-      }
-
-      /* Ensure carousel shows properly */
-      @media (min-width: 1024px) {
-        .relatedProductsSwiper {
-          padding: 0;
-        }
-
-        .relatedProductsSwiper .swiper-wrapper {
-          gap: 20px;
-        }
-      }
-    </style>
-
-    <script>
-      // Mobile Sidebar Controls
-      document.addEventListener('DOMContentLoaded', function() {
-        const mobileTrigger = document.getElementById('relatedProductsTrigger');
-        const closeBtn = document.getElementById('closeRelatedProducts');
-        const overlay = document.getElementById('relatedOverlay');
-        const container = document.getElementById('relatedProductsContainer');
-
-        function openSidebar() {
-          container.classList.add('sidebar-open');
-          overlay.classList.remove('hidden');
-          document.body.classList.add('related-sidebar-open');
-
-          setTimeout(() => {
-            overlay.style.opacity = '1';
-          }, 10);
-        }
-
-        function closeSidebar() {
-          container.classList.remove('sidebar-open');
-          overlay.style.opacity = '0';
-          document.body.classList.remove('related-sidebar-open');
-
-          setTimeout(() => {
-            overlay.classList.add('hidden');
-          }, 300);
-        }
-
-        if (mobileTrigger) {
-          mobileTrigger.addEventListener('click', openSidebar);
-        }
-
-        if (closeBtn) {
-          closeBtn.addEventListener('click', closeSidebar);
-        }
-
-        if (overlay) {
-          overlay.addEventListener('click', closeSidebar);
-        }
-
-        // Close on swipe down (mobile only)
-        let touchStartY = 0;
-        let touchEndY = 0;
-
-        if (container) {
-          container.addEventListener('touchstart', (e) => {
-            touchStartY = e.changedTouches[0].screenY;
-          }, {
-            passive: true
-          });
-
-          container.addEventListener('touchend', (e) => {
-            touchEndY = e.changedTouches[0].screenY;
-            const scrollTop = container.querySelector('.overflow-y-auto')?.scrollTop || 0;
-            if (scrollTop === 0 && touchEndY > touchStartY + 50) {
-              closeSidebar();
-            }
-          }, {
-            passive: true
-          });
-        }
-
-        // Close with Escape key
-        document.addEventListener('keydown', (e) => {
-          if (e.key === 'Escape' && container.classList.contains('sidebar-open')) {
-            closeSidebar();
-          }
-        });
-
-        // Desktop Carousel (Swiper)
-        if (typeof Swiper !== 'undefined') {
-          const relatedSwiper = new Swiper('.relatedProductsSwiper', {
-            slidesPerView: 'auto',
-            spaceBetween: 20,
-            loop: false,
-            pagination: {
-              el: '.swiper-pagination',
-              clickable: true,
-              type: 'bullets',
-            },
-            navigation: {
-              nextEl: '.relatedProducts-next',
-              prevEl: '.relatedProducts-prev',
-            },
-            keyboard: {
-              enabled: true,
-            },
-            grabCursor: true,
-            breakpoints: {
-              640: {
-                slidesPerView: 2,
-                spaceBetween: 15,
-              },
-              1024: {
-                slidesPerView: 4,
-                spaceBetween: 20,
-              },
-              1280: {
-                slidesPerView: 4,
-                spaceBetween: 20,
-              },
-            },
-          });
-
-          // Update button disabled state
-          const updateButtonState = () => {
-            const prevBtn = document.querySelector('.relatedProducts-prev');
-            const nextBtn = document.querySelector('.relatedProducts-next');
-
-            if (prevBtn) {
-              prevBtn.style.opacity = relatedSwiper.isBeginning ? '0.5' : '1';
-              prevBtn.style.pointerEvents = relatedSwiper.isBeginning ? 'none' : 'auto';
-            }
-            if (nextBtn) {
-              nextBtn.style.opacity = relatedSwiper.isEnd ? '0.5' : '1';
-              nextBtn.style.pointerEvents = relatedSwiper.isEnd ? 'none' : 'auto';
-            }
-          };
-
-          relatedSwiper.on('slideChange', updateButtonState);
-          updateButtonState();
-        }
-      });
-    </script>
+  <?php if ($is_windows_category): ?>
+    <?php include 'index-product-windows-customize-modal.php'; ?>
   <?php endif; ?>
 
+  <?php if ($related_products->num_rows > 0): ?>
+    <?php include 'index-product-related-products.php'; ?>
+  <?php endif; ?>
 
   <?php if (!empty($product_specs)): ?>
     <section class="mt-6 lg:mt-8 px-4 lg:px-0 max-w-7xl mx-auto">
@@ -2793,16 +2109,16 @@ $is_guest = !isset($_SESSION['user_id']);
         <!-- Tab Navigation -->
         <div class="border-b border-gray-200">
           <div class="flex">
-            <button onclick="switchTab('specifications')"
-              id="tab-specifications"
-              class="product-tab flex-1 px-4 lg:px-6 py-3 lg:py-4 text-sm lg:text-base font-semibold  hover:text-orange-600 border-b-2 border-transparent transition-all duration-200 active" style="font-family: 'Montserrat', sans-serif; color: #2f1200">
+            <button onclick="switchTab('specifications')" id="tab-specifications"
+              class="product-tab flex-1 px-4 lg:px-6 py-3 lg:py-4 text-sm lg:text-base font-semibold  hover:text-orange-600 border-b-2 border-transparent transition-all duration-200 active"
+              style="font-family: 'Montserrat', sans-serif; color: #2f1200">
               <i class="fas fa-list-alt mr-2"></i>
               Product Specifications
             </button>
 
-            <button onclick="switchTab('reviews')"
-              id="tab-reviews"
-              class="product-tab flex-1 px-4 lg:px-6 py-3 lg:py-4 text-sm lg:text-base font-semibold  hover:text-orange-600 border-b-2 border-transparent transition-all duration-200" style="font-family: 'Montserrat', sans-serif; color: #2f1200">
+            <button onclick="switchTab('reviews')" id="tab-reviews"
+              class="product-tab flex-1 px-4 lg:px-6 py-3 lg:py-4 text-sm lg:text-base font-semibold  hover:text-orange-600 border-b-2 border-transparent transition-all duration-200"
+              style="font-family: 'Montserrat', sans-serif; color: #2f1200">
               <i class="fas fa-star mr-2"></i>
               Reviews
               <?php if ($total_raters > 0): ?>
@@ -2810,9 +2126,9 @@ $is_guest = !isset($_SESSION['user_id']);
               <?php endif; ?>
             </button>
 
-            <button onclick="switchTab('productinfo')"
-              id="tab-productinfo"
-              class="product-tab flex-1 px-4 lg:px-6 py-3 lg:py-4 text-sm lg:text-base font-semibold  hover:text-orange-600 border-b-2 border-transparent transition-all duration-200" style="font-family: 'Montserrat', sans-serif; color: #2f1200">
+            <button onclick="switchTab('productinfo')" id="tab-productinfo"
+              class="product-tab flex-1 px-4 lg:px-6 py-3 lg:py-4 text-sm lg:text-base font-semibold  hover:text-orange-600 border-b-2 border-transparent transition-all duration-200"
+              style="font-family: 'Montserrat', sans-serif; color: #2f1200">
               <i class="fas fa-info-circle mr-2"></i>
               Product Information
             </button>
@@ -2840,11 +2156,11 @@ $is_guest = !isset($_SESSION['user_id']);
                     foreach ($lines as $line):
                       $trimmed = trim($line);
                       if (!empty($trimmed)):
-                    ?>
+                        ?>
                         <div class="py-1 border-b border-gray-200 last:border-b-0">
                           <?= htmlspecialchars($trimmed) ?>
                         </div>
-                    <?php
+                        <?php
                       endif;
                     endforeach;
                     ?>
@@ -2909,11 +2225,15 @@ $is_guest = !isset($_SESSION['user_id']);
                           $half = ($avg_rating - $full >= 0.5) ? 1 : 0;
                           $empty = 5 - $full - $half;
 
-                          for ($i = 0; $i < $full; $i++) echo '<i class="fas fa-star"></i>';
-                          if ($half) echo '<i class="fas fa-star-half-alt"></i>';
-                          for ($i = 0; $i < $empty; $i++) echo '<i class="far fa-star text-gray-300"></i>';
+                          for ($i = 0; $i < $full; $i++)
+                            echo '<i class="fas fa-star"></i>';
+                          if ($half)
+                            echo '<i class="fas fa-star-half-alt"></i>';
+                          for ($i = 0; $i < $empty; $i++)
+                            echo '<i class="far fa-star text-gray-300"></i>';
                         } else {
-                          for ($i = 0; $i < 5; $i++) echo '<i class="far fa-star text-gray-300"></i>';
+                          for ($i = 0; $i < 5; $i++)
+                            echo '<i class="far fa-star text-gray-300"></i>';
                         }
                         ?>
                       </div>
@@ -2948,7 +2268,7 @@ $is_guest = !isset($_SESSION['user_id']);
                       foreach ([5, 4, 3, 2, 1] as $star):
                         $count = $rating_counts[$star];
                         $percentage = $total_raters > 0 ? ($count / $total_raters) * 100 : 0;
-                      ?>
+                        ?>
                         <div class="flex items-center gap-2 mb-2">
                           <div class="flex items-center gap-1 w-16">
                             <span class="text-sm font-medium text-gray-700"><?= $star ?></span>
@@ -2986,7 +2306,7 @@ $is_guest = !isset($_SESSION['user_id']);
                   $reviews_result = $reviews_query->get_result();
 
                   while ($review = $reviews_result->fetch_assoc()):
-                  ?>
+                    ?>
                     <div class="bg-white border border-gray-200 rounded-lg p-4 hover:shadow-md transition-shadow">
                       <div class="flex items-start gap-4">
 
@@ -2994,10 +2314,10 @@ $is_guest = !isset($_SESSION['user_id']);
                         <div class="flex-shrink-0">
                           <?php if (!empty($review['profile_picture'])): ?>
                             <img src="<?= htmlspecialchars($review['profile_picture']) ?>"
-                              alt="<?= htmlspecialchars($review['user_name']) ?>"
-                              class="w-10 h-10 rounded-full object-cover">
+                              alt="<?= htmlspecialchars($review['user_name']) ?>" class="w-10 h-10 rounded-full object-cover">
                           <?php else: ?>
-                            <div class="w-10 h-10 rounded-full bg-orange-500 flex items-center justify-center text-white font-semibold">
+                            <div
+                              class="w-10 h-10 rounded-full bg-orange-500 flex items-center justify-center text-white font-semibold">
                               <?= strtoupper(substr($review['user_name'], 0, 1)) ?>
                             </div>
                           <?php endif; ?>
@@ -3011,9 +2331,11 @@ $is_guest = !isset($_SESSION['user_id']);
                               <div class="flex items-center gap-2 mt-1">
                                 <div class="flex text-yellow-400 text-sm">
                                   <?php
-                                  $review_rating = (int)$review['rating'];
-                                  for ($i = 0; $i < $review_rating; $i++) echo '<i class="fas fa-star"></i>';
-                                  for ($i = $review_rating; $i < 5; $i++) echo '<i class="far fa-star text-gray-300"></i>';
+                                  $review_rating = (int) $review['rating'];
+                                  for ($i = 0; $i < $review_rating; $i++)
+                                    echo '<i class="fas fa-star"></i>';
+                                  for ($i = $review_rating; $i < 5; $i++)
+                                    echo '<i class="far fa-star text-gray-300"></i>';
                                   ?>
                                 </div>
                                 <span class="text-xs text-gray-500">
@@ -3060,7 +2382,8 @@ $is_guest = !isset($_SESSION['user_id']);
             <div class="relative overflow-hidden rounded-2xl p-8 mb-8">
               <div class="relative z-10 text-center">
                 <h2 class="text-3xl font-bold text-black mb-2">Product Details</h2>
-                <p class="text-black max-w-2xl mx-auto">Explore high-quality images and comprehensive information about this product</p>
+                <p class="text-black max-w-2xl mx-auto">Explore high-quality images and comprehensive information about
+                  this product</p>
               </div>
             </div>
 
@@ -3092,7 +2415,7 @@ $is_guest = !isset($_SESSION['user_id']);
                     <!-- ✅ FIXED: $product_images already processed above - no need to decode again! -->
                     <?php if (!empty($product_images)): ?>
                       <span class="bg-blue-100 text-blue-700 text-xs font-semibold px-3 py-1 rounded-full">
-                        <?= count($product_images) ?> <?= count($product_images) == 1 ? 'Image' : 'Images' ?>
+                        <?= count($product_images) ?>     <?= count($product_images) == 1 ? 'Image' : 'Images' ?>
                       </span>
                     <?php endif; ?>
                   </div>
@@ -3104,17 +2427,19 @@ $is_guest = !isset($_SESSION['user_id']);
                     <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
                       <!-- ✅ FIXED: Use pre-processed $product_images array -->
                       <?php foreach ($product_images as $imageData): ?>
-                        <div class="group relative overflow-hidden rounded-xl bg-gradient-to-br from-gray-50 to-gray-100 shadow-md hover:shadow-2xl transition-all duration-300">
+                        <div
+                          class="group relative overflow-hidden rounded-xl bg-gradient-to-br from-gray-50 to-gray-100 shadow-md hover:shadow-2xl transition-all duration-300">
 
                           <!-- Zoom Icon -->
-                          <div class="absolute top-3 right-3 z-10 w-8 h-8 bg-white/90 backdrop-blur-sm rounded-full flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity duration-300 shadow-lg">
+                          <div
+                            class="absolute top-3 right-3 z-10 w-8 h-8 bg-white/90 backdrop-blur-sm rounded-full flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity duration-300 shadow-lg">
                             <i class="fas fa-search-plus text-gray-700 text-sm"></i>
                           </div>
 
                           <!-- Image -->
-                          <div class="aspect-square relative overflow-hidden cursor-pointer" onclick="openImageModal('<?= htmlspecialchars($imageData['src']) ?>')">
-                            <img
-                              src="<?= htmlspecialchars($imageData['src']) ?>"
+                          <div class="aspect-square relative overflow-hidden cursor-pointer"
+                            onclick="openImageModal('<?= htmlspecialchars($imageData['src']) ?>')">
+                            <img src="<?= htmlspecialchars($imageData['src']) ?>"
                               alt="Product Image <?= $imageData['index'] + 1 ?>"
                               class="w-full h-full object-cover transition-all duration-500 group-hover:scale-110 group-hover:brightness-110"
                               loading="lazy"
@@ -3130,7 +2455,8 @@ $is_guest = !isset($_SESSION['user_id']);
                           </div>
 
                           <!-- Hover Overlay -->
-                          <div class="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex items-end p-4">
+                          <div
+                            class="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex items-end p-4">
                             <span class="text-white text-sm font-medium">Click to enlarge</span>
                           </div>
                         </div>
@@ -3139,11 +2465,13 @@ $is_guest = !isset($_SESSION['user_id']);
                   <?php else: ?>
                     <!-- Empty State -->
                     <div class="text-center py-16 px-4">
-                      <div class="inline-flex items-center justify-center w-20 h-20 bg-gradient-to-br from-gray-100 to-gray-200 rounded-2xl mb-4">
+                      <div
+                        class="inline-flex items-center justify-center w-20 h-20 bg-gradient-to-br from-gray-100 to-gray-200 rounded-2xl mb-4">
                         <i class="fas fa-images text-4xl text-gray-400"></i>
                       </div>
                       <h4 class="text-lg font-semibold text-gray-700 mb-2">No Images Available</h4>
-                      <p class="text-sm text-gray-500 max-w-sm mx-auto">Product images haven't been uploaded yet. Check back later for visual content.</p>
+                      <p class="text-sm text-gray-500 max-w-sm mx-auto">Product images haven't been uploaded yet. Check back
+                        later for visual content.</p>
                     </div>
                   <?php endif; ?>
                 </div>
@@ -3269,7 +2597,7 @@ $is_guest = !isset($_SESSION['user_id']);
 
           const modalContent = document.createElement('div');
           modalContent.className = 'relative max-w-4xl max-h-full';
-          modalContent.onclick = function(e) {
+          modalContent.onclick = function (e) {
             e.stopPropagation();
           };
 
@@ -3322,12 +2650,12 @@ $is_guest = !isset($_SESSION['user_id']);
       }
 
       // Restore active tab on page load
-      document.addEventListener('DOMContentLoaded', function() {
+      document.addEventListener('DOMContentLoaded', function () {
         const savedTab = localStorage.getItem('activeProductTab') || 'specifications';
         switchTab(savedTab);
 
         // Close modal with escape key
-        document.addEventListener('keydown', function(e) {
+        document.addEventListener('keydown', function (e) {
           if (e.key === 'Escape') {
             closeImageModal();
           }
@@ -3336,7 +2664,14 @@ $is_guest = !isset($_SESSION['user_id']);
     </script>
   <?php endif; ?>
 
+  <script
+    src="js/index-product-view-junction-stock.obfuscated.js?v=<?= filemtime('js/index-product-view-junction-stock.obfuscated.js') ?>"></script>
+
+  <script
+    src="js/index-product-view-page-4-AA.obfuscated.js?v=<?= filemtime('js/index-product-view-page-4-AA.obfuscated.js') ?>"></script>
+
   <?php include '../navbar/footer.php'; ?>
+
   <script>
     // ✅ REAL-TIME TIMER - Accurate countdown
     function initFlashSaleTimers() {
@@ -3356,9 +2691,9 @@ $is_guest = !isset($_SESSION['user_id']);
       const timeOffset = serverTime - clientTime;
 
       console.log(`📅 Server time: ${new Date(serverTime * 1000).toLocaleString('en-US', {
-      year: 'numeric', month: '2-digit', day: '2-digit',
-      hour: '2-digit', minute: '2-digit', second: '2-digit', hour12: true
-    })}`);
+        year: 'numeric', month: '2-digit', day: '2-digit',
+        hour: '2-digit', minute: '2-digit', second: '2-digit', hour12: true
+      })}`);
       console.log(`⏱️ Time offset: ${timeOffset}s`);
 
       timerBadges.forEach((badge) => {
@@ -3374,9 +2709,9 @@ $is_guest = !isset($_SESSION['user_id']);
         console.log(`\n✅ Timer for variant ${variantId}:`);
         console.log(`   End time (unix): ${endTime}`);
         console.log(`   End time (readable): ${new Date(endTime * 1000).toLocaleString('en-US', {
-        year: 'numeric', month: '2-digit', day: '2-digit',
-        hour: '2-digit', minute: '2-digit', second: '2-digit', hour12: true
-      })}`);
+          year: 'numeric', month: '2-digit', day: '2-digit',
+          hour: '2-digit', minute: '2-digit', second: '2-digit', hour12: true
+        })}`);
 
         let timerInterval;
 
@@ -3443,8 +2778,7 @@ $is_guest = !isset($_SESSION['user_id']);
       initFlashSaleTimers();
     }
   </script>
-  <script src="js/index-product-view-junction-stock.obfuscated.js?v=<?= filemtime('js/index-product-view-junction-stock.obfuscated.js') ?>"></script>
-  <script src="js/index-product-view-page-4-AA.obfuscated.js?v=<?= filemtime('js/index-product-view-page-4-AA.obfuscated.js') ?>"></script>
+
 </body>
 
 </html>

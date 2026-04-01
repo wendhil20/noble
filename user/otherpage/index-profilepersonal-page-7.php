@@ -10,7 +10,41 @@ if (!isset($_SESSION['user_id'])) {
     exit;
 }
 
+// ✅ Restore session from remember_token (normal account or Google)
+if (!isset($_SESSION['user_id']) && isset($_COOKIE['remember_token'])) {
+    $token = $_COOKIE['remember_token'];
+    $stmt = $conn->prepare("SELECT * FROM users WHERE remember_token = ?");
+    $stmt->bind_param("s", $token);
+    $stmt->execute();
+    $res = $stmt->get_result();
+
+    if ($res->num_rows > 0) {
+        $user = $res->fetch_assoc();
+        $_SESSION['user_id'] = $user['id'];
+        $_SESSION['user_name'] = $user['name'];
+        $_SESSION['user_email'] = $user['email'];
+
+        // Check if the account is Google-based (optional flag or logic)
+        if (!empty($user['google_id'])) {
+            $_SESSION['google_logged_in'] = true;
+            $_SESSION['user_picture'] = $user['profile_picture'] ?? null;
+        }
+    }
+    $stmt->close();
+}
+
+// ✅ Final check if logged in (either normal or Google)
+if (!isset($_SESSION['user_id'])) {
+    // Not logged in, redirect to login/Google callback
+    header('Location: ../google-callback.php');
+    exit;
+}
+
+// ✅ Retrieve user info
 $user_id = $_SESSION['user_id'];
+$user_name = $_SESSION['user_name'] ?? 'Guest';
+$user_email = $_SESSION['user_email'] ?? null;
+$user_picture = $_SESSION['user_picture'] ?? null;
 
 // Pagination settings
 $orders_per_page = 10;
@@ -514,10 +548,10 @@ $recent_count = $recent_products->num_rows;
                 p.descrip7,
                 p.view_count,
                 p.unique_view_count,
-                v.origin,
-                v.discount,
-                v.percent,
-                v.status,
+            ANY_VALUE(v.origin) as origin,
+            ANY_VALUE(v.discount) as discount,
+            ANY_VALUE(v.percent) as percent,
+            ANY_VALUE(v.status) as status,
                 
                 -- 🔥 SIZE PRICES (variant prices only)
                 COALESCE(MIN(pv.price), 0) as min_size_price,  

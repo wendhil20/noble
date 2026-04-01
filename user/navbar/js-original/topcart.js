@@ -1,4 +1,5 @@
 // ===== CART SYSTEM - Event-driven only, NO continuous polling =====
+// topcart.js
 document.addEventListener('DOMContentLoaded', function () {
     const cartContainer = document.getElementById('cart-container');
     const cartModal     = document.getElementById('cart-modal');

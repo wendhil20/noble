@@ -1,5 +1,7 @@
 <?php
-//upload_process-page-1-A.php - UPDATED WITH IMAGE2 SUPPORT & NOTIFICATIONS
+//upload_process-page-1-A.php - UPDATED: saves descrip1, descrip6, descrip7 on upload + added_by tracking
+session_name("nobleadmin");
+session_start();
 include '../../connection/connect.php';
 require_once '../notification/main-handler-notif-page-2.php';
 error_reporting(E_ALL);
@@ -25,7 +27,6 @@ function saveImageToFolder($file, $targetDir = '../../uploads/')
             $sourceImage = @imagecreatefromjpeg($file['tmp_name']);
             if (!$sourceImage) return null;
             break;
-
         case 'image/png':
             $sourceImage = @imagecreatefrompng($file['tmp_name']);
             if (!$sourceImage) return null;
@@ -33,7 +34,6 @@ function saveImageToFolder($file, $targetDir = '../../uploads/')
             imagealphablending($sourceImage, true);
             imagesavealpha($sourceImage, true);
             break;
-
         case 'image/gif':
             $sourceImage = @imagecreatefromgif($file['tmp_name']);
             if (!$sourceImage) return null;
@@ -41,18 +41,15 @@ function saveImageToFolder($file, $targetDir = '../../uploads/')
             imagealphablending($sourceImage, true);
             imagesavealpha($sourceImage, true);
             break;
-
         case 'image/webp':
             $sourceImage = @imagecreatefromwebp($file['tmp_name']);
             if (!$sourceImage) {
-                // fallback: move directly
                 if (move_uploaded_file($file['tmp_name'], $targetPath)) {
                     return $relativePath;
                 }
                 return null;
             }
             break;
-
         default:
             return null;
     }
@@ -90,7 +87,7 @@ function saveSubImages($subImagesFiles, $targetDir = '../../sub_images/')
             $relativePath = 'sub_images/' . $filename;
 
             $file = [
-                'name' => $subImagesFiles['name'][$i],
+                'name'     => $subImagesFiles['name'][$i],
                 'tmp_name' => $subImagesFiles['tmp_name'][$i]
             ];
 
@@ -103,7 +100,6 @@ function saveSubImages($subImagesFiles, $targetDir = '../../sub_images/')
                     $sourceImage = @imagecreatefromjpeg($file['tmp_name']);
                     if (!$sourceImage) continue 2;
                     break;
-
                 case 'image/png':
                     $sourceImage = @imagecreatefrompng($file['tmp_name']);
                     if (!$sourceImage) continue 2;
@@ -111,7 +107,6 @@ function saveSubImages($subImagesFiles, $targetDir = '../../sub_images/')
                     imagealphablending($sourceImage, true);
                     imagesavealpha($sourceImage, true);
                     break;
-
                 case 'image/gif':
                     $sourceImage = @imagecreatefromgif($file['tmp_name']);
                     if (!$sourceImage) continue 2;
@@ -119,7 +114,6 @@ function saveSubImages($subImagesFiles, $targetDir = '../../sub_images/')
                     imagealphablending($sourceImage, true);
                     imagesavealpha($sourceImage, true);
                     break;
-
                 case 'image/webp':
                     $sourceImage = @imagecreatefromwebp($file['tmp_name']);
                     if (!$sourceImage) {
@@ -129,7 +123,6 @@ function saveSubImages($subImagesFiles, $targetDir = '../../sub_images/')
                         continue 2;
                     }
                     break;
-
                 default:
                     continue 2;
             }
@@ -152,7 +145,7 @@ function saveSubImages($subImagesFiles, $targetDir = '../../sub_images/')
 $tables = ['products', 'product_types', 'product_variants', 'product_colors'];
 foreach ($tables as $table) {
     $result = $conn->query("SELECT MAX(id) AS max_id FROM $table");
-    $row = $result->fetch_assoc();
+    $row    = $result->fetch_assoc();
     $max_id = (int)$row['max_id'];
     $next_id = $max_id > 0 ? $max_id + 1 : 1;
     $conn->query("ALTER TABLE $table AUTO_INCREMENT = $next_id");
@@ -162,28 +155,45 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     try {
         $conn->begin_transaction();
 
+        // ── Get the current logged-in user ──────────────────────────────
+        $added_by = $_SESSION['noble_user'] ?? null;
+        if (!$added_by) {
+            throw new Exception("Session expired. Please log in again.");
+        }
+
         // Main product image
         $main_image = null;
         if (isset($_FILES['main_image']) && $_FILES['main_image']['error'] === UPLOAD_ERR_OK) {
             $main_image = saveImageToFolder($_FILES['main_image']);
-            error_log("Main image saved: $main_image");
         }
 
-        // Handle sub images
+        // Sub images
         $sub_images = [];
         if (isset($_FILES['sub_images'])) {
             $sub_images = saveSubImages($_FILES['sub_images']);
-            error_log("Sub images saved: " . json_encode($sub_images));
         }
-
         $sub_images_json = !empty($sub_images) ? json_encode($sub_images) : null;
 
         $_POST['quantity'] = (int)$_POST['quantity'];
 
-        // Check columns
+        // ── Ensure columns exist ────────────────────────────────────────
+
         $check_column = $conn->query("SHOW COLUMNS FROM products LIKE 'sub_images'");
         if ($check_column->num_rows == 0) {
             $conn->query("ALTER TABLE products ADD COLUMN sub_images TEXT NULL AFTER main_image");
+        }
+
+        foreach (['descrip1', 'descrip6', 'descrip7'] as $col) {
+            $chk = $conn->query("SHOW COLUMNS FROM products LIKE '$col'");
+            if ($chk->num_rows == 0) {
+                $conn->query("ALTER TABLE products ADD COLUMN $col TEXT NULL");
+            }
+        }
+
+        // ── added_by column ─────────────────────────────────────────────
+        $chk_added_by = $conn->query("SHOW COLUMNS FROM products LIKE 'added_by'");
+        if ($chk_added_by->num_rows == 0) {
+            $conn->query("ALTER TABLE products ADD COLUMN added_by VARCHAR(100) NULL AFTER descrip7");
         }
 
         $check_variant_column = $conn->query("SHOW COLUMNS FROM product_variants LIKE 'product_id'");
@@ -192,7 +202,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             $conn->query("ALTER TABLE product_variants ADD CONSTRAINT FK_product_variants_product_id FOREIGN KEY (product_id) REFERENCES products(id) ON DELETE CASCADE");
         }
 
-        // Add dimension columns
         $dimension_columns = ['width', 'height', 'length', 'dimension_unit', 'weight', 'weight_unit'];
         foreach ($dimension_columns as $column) {
             $check_col = $conn->query("SHOW COLUMNS FROM product_variants LIKE '$column'");
@@ -208,33 +217,42 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             }
         }
 
-        // Check and add image2 column to product_colors
         $check_image2 = $conn->query("SHOW COLUMNS FROM product_colors LIKE 'image2'");
         if ($check_image2->num_rows == 0) {
             $conn->query("ALTER TABLE product_colors ADD COLUMN image2 VARCHAR(255) NULL DEFAULT NULL AFTER image");
         }
 
-        // Insert product
-        $stmt = $conn->prepare("INSERT INTO products (product_name, codename, quantity, main_image, sub_images, description) VALUES (?, ?, ?, ?, ?, ?)");
+        // ── Insert product (includes added_by) ──────────────────────────
+        $descrip1_val = trim($_POST['descrip1'] ?? '');
+        $descrip6_val = trim($_POST['descrip6'] ?? '');
+        $descrip7_val = trim($_POST['descrip7'] ?? '');
+
+        $stmt = $conn->prepare("
+            INSERT INTO products 
+                (product_name, codename, quantity, main_image, sub_images, description, descrip1, descrip6, descrip7, added_by) 
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+        ");
         if (!$stmt) throw new Exception("Prepare failed: " . $conn->error);
 
         $stmt->bind_param(
-            "ssisss",
+            "ssisssssss",
             $_POST['product_name'],
             $_POST['codename'],
             $_POST['quantity'],
             $main_image,
             $sub_images_json,
-            $_POST['description']
+            $_POST['description'],
+            $descrip1_val,
+            $descrip6_val,
+            $descrip7_val,
+            $added_by
         );
         $stmt->execute();
-        $product_id = $conn->insert_id;
+        $product_id   = $conn->insert_id;
         $product_name = $_POST['product_name'];
         $stmt->close();
 
-        error_log("Product created with ID: $product_id, Main image: $main_image");
-
-        // Product types
+        // ── Product types ───────────────────────────────────────────────
         if (isset($_POST['type_name']) && is_array($_POST['type_name'])) {
             foreach ($_POST['type_name'] as $type_index => $type_name) {
                 $type_image = null;
@@ -243,7 +261,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                     $_FILES['type_image']['error'][$type_index] === UPLOAD_ERR_OK
                 ) {
                     $file = [
-                        'name' => $_FILES['type_image']['name'][$type_index],
+                        'name'     => $_FILES['type_image']['name'][$type_index],
                         'tmp_name' => $_FILES['type_image']['tmp_name'][$type_index]
                     ];
                     $type_image = saveImageToFolder($file);
@@ -256,34 +274,32 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 $type_id = $stmt->insert_id;
                 $stmt->close();
 
-                // Colors with image2 support
+                // Colors
                 if (isset($_POST['color_name'][$type_index]) && is_array($_POST['color_name'][$type_index])) {
                     foreach ($_POST['color_name'][$type_index] as $color_index => $color_name) {
                         if (!empty($color_name)) {
-                            $color_code = $_POST['color_code'][$type_index][$color_index] ?? '';
+                            $color_code  = $_POST['color_code'][$type_index][$color_index]  ?? '';
                             $color_price = (float)($_POST['color_price'][$type_index][$color_index] ?? 0);
-                            $color_image = null;
+                            $color_image  = null;
                             $color_image2 = null;
 
-                            // Handle main color image
                             if (
                                 isset($_FILES['color_image']['tmp_name'][$type_index][$color_index]) &&
                                 $_FILES['color_image']['error'][$type_index][$color_index] === UPLOAD_ERR_OK
                             ) {
                                 $file = [
-                                    'name' => $_FILES['color_image']['name'][$type_index][$color_index],
+                                    'name'     => $_FILES['color_image']['name'][$type_index][$color_index],
                                     'tmp_name' => $_FILES['color_image']['tmp_name'][$type_index][$color_index]
                                 ];
                                 $color_image = saveImageToFolder($file);
                             }
 
-                            // Handle secondary color image
                             if (
                                 isset($_FILES['color_image2']['tmp_name'][$type_index][$color_index]) &&
                                 $_FILES['color_image2']['error'][$type_index][$color_index] === UPLOAD_ERR_OK
                             ) {
                                 $file = [
-                                    'name' => $_FILES['color_image2']['name'][$type_index][$color_index],
+                                    'name'     => $_FILES['color_image2']['name'][$type_index][$color_index],
                                     'tmp_name' => $_FILES['color_image2']['tmp_name'][$type_index][$color_index]
                                 ];
                                 $color_image2 = saveImageToFolder($file);
@@ -301,21 +317,21 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 // Variants
                 if (isset($_POST['variant_size'][$type_index]) && is_array($_POST['variant_size'][$type_index])) {
                     foreach ($_POST['variant_size'][$type_index] as $variant_index => $size) {
-                        $name_variant = $_POST['variant_namevariant'][$type_index][$variant_index] ?? '';
-                        $color = $_POST['variant_color'][$type_index][$variant_index] ?? '';
+                        $name_variant   = $_POST['variant_namevariant'][$type_index][$variant_index]   ?? '';
+                        $color          = $_POST['variant_color'][$type_index][$variant_index]          ?? '';
                         $original_price = (float)($_POST['variant_original_price'][$type_index][$variant_index] ?? 0);
-                        $price = (float)($_POST['variant_price'][$type_index][$variant_index] ?? 0);
-                        $percent = (float)($_POST['variant_percent'][$type_index][$variant_index] ?? 0);
-                        $discount = (float)($_POST['variant_discount'][$type_index][$variant_index] ?? 0);
-                        $width = !empty($_POST['variant_width'][$type_index][$variant_index]) ? (float)$_POST['variant_width'][$type_index][$variant_index] : null;
-                        $height = !empty($_POST['variant_height'][$type_index][$variant_index]) ? (float)$_POST['variant_height'][$type_index][$variant_index] : null;
-                        $length = !empty($_POST['variant_length'][$type_index][$variant_index]) ? (float)$_POST['variant_length'][$type_index][$variant_index] : null;
-                        $dimension_unit = $_POST['variant_dimension_unit'][$type_index][$variant_index] ?? 'cm';
-                        $weight = !empty($_POST['variant_weight'][$type_index][$variant_index]) ? (float)$_POST['variant_weight'][$type_index][$variant_index] : null;
-                        $weight_unit = $_POST['variant_weight_unit'][$type_index][$variant_index] ?? 'kg';
+                        $price          = (float)($_POST['variant_price'][$type_index][$variant_index]          ?? 0);
+                        $percent        = (float)($_POST['variant_percent'][$type_index][$variant_index]        ?? 0);
+                        $discount       = (float)($_POST['variant_discount'][$type_index][$variant_index]       ?? 0);
+                        $width          = !empty($_POST['variant_width'][$type_index][$variant_index])   ? (float)$_POST['variant_width'][$type_index][$variant_index]   : null;
+                        $height         = !empty($_POST['variant_height'][$type_index][$variant_index])  ? (float)$_POST['variant_height'][$type_index][$variant_index]  : null;
+                        $length         = !empty($_POST['variant_length'][$type_index][$variant_index])  ? (float)$_POST['variant_length'][$type_index][$variant_index]  : null;
+                        $dimension_unit = $_POST['variant_dimension_unit'][$type_index][$variant_index]  ?? 'cm';
+                        $weight         = !empty($_POST['variant_weight'][$type_index][$variant_index])  ? (float)$_POST['variant_weight'][$type_index][$variant_index]  : null;
+                        $weight_unit    = $_POST['variant_weight_unit'][$type_index][$variant_index]     ?? 'kg';
 
                         if (!empty($size) || !empty($name_variant)) {
-                            $final_price = $price + ($price * $percent / 100);
+                            $final_price   = $price + ($price * $percent / 100);
                             $variant_image = null;
 
                             if (
@@ -323,7 +339,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                                 $_FILES['variant_image']['error'][$type_index][$variant_index] === UPLOAD_ERR_OK
                             ) {
                                 $file = [
-                                    'name' => $_FILES['variant_image']['name'][$type_index][$variant_index],
+                                    'name'     => $_FILES['variant_image']['name'][$type_index][$variant_index],
                                     'tmp_name' => $_FILES['variant_image']['tmp_name'][$type_index][$variant_index]
                                 ];
                                 $variant_image = saveImageToFolder($file);
@@ -333,22 +349,11 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                             if (!$stmt) throw new Exception("Variant insert failed: " . $conn->error);
                             $stmt->bind_param(
                                 "iissddddssdddsds",
-                                $product_id,
-                                $type_id,
-                                $color,
-                                $size,
-                                $original_price,
-                                $final_price,
-                                $percent,
-                                $discount,
-                                $name_variant,
-                                $variant_image,
-                                $width,
-                                $height,
-                                $length,
-                                $dimension_unit,
-                                $weight,
-                                $weight_unit
+                                $product_id, $type_id, $color, $size,
+                                $original_price, $final_price, $percent, $discount,
+                                $name_variant, $variant_image,
+                                $width, $height, $length, $dimension_unit,
+                                $weight, $weight_unit
                             );
                             $stmt->execute();
                             $stmt->close();
@@ -360,31 +365,16 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
         $conn->commit();
 
-        // Create notification for all admins
-        $notification_title = "New Product Added";
-        $notification_message = "'" . htmlspecialchars($product_name) . "' has been added to catalog (ID: #$product_id)";
-
+        // Notification
+        $notification_title   = "New Product Added";
+        $notification_message = "'" . htmlspecialchars($product_name) . "' has been added by '$added_by' (ID: #$product_id)";
         $style = getNotificationStyle('product_upload');
-
-        $notif_created = createNotification(
-            $conn,
-            'product_upload',
-            $notification_title,
-            $notification_message,
-            $style['icon'],
-            $style['color']
-        );
+        createNotification($conn, 'product_upload', $notification_title, $notification_message, $style['icon'], $style['color']);
 
         $sub_images_count = count($sub_images);
-        $success_message = "Product uploaded successfully! ID: $product_id";
+        $success_message  = "Product uploaded successfully! ID: $product_id";
         if ($sub_images_count > 0) {
             $success_message .= " ($sub_images_count sub images)";
-        }
-
-        if ($notif_created) {
-            error_log("Notification created for product: $product_id");
-        } else {
-            error_log("Failed to create notification for product: $product_id");
         }
 
         echo "<script>

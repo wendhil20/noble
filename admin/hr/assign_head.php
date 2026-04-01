@@ -7,7 +7,7 @@ require_once '../role/roleaccount.php';
 require_role(['superadmin', 'hr']); // only superadmin can manage heads
 
 // departments to manage (supplier removed)
-$departments = ['superadmin', 'sales', 'accountant', 'hr', 'warehouse', 'logistic'];
+$departments = ['superadmin', 'sales', 'accountant', 'hr', 'warehouse', 'logistic','productspecialist'];
 
 // Define subroles for each department (you can edit these)
 $department_subroles = [
@@ -37,9 +37,10 @@ $groups = [];
 $heads = [];
 while ($r = mysqli_fetch_assoc($res)) {
   $lvl = strtolower($r['lvl']);
-  if (!isset($groups[$lvl])) $groups[$lvl] = [];
+  if (!isset($groups[$lvl]))
+    $groups[$lvl] = [];
   $groups[$lvl][] = $r;
-  if ((int)$r['is_head'] === 1) {
+  if ((int) $r['is_head'] === 1) {
     $heads[] = $r;
   }
 }
@@ -61,7 +62,8 @@ while ($r = mysqli_fetch_assoc($res)) {
     <header class="flex flex-col md:flex-row md:items-center md:justify-between gap-4 mb-6">
       <div>
         <h1 class="text-2xl md:text-3xl font-extrabold text-orange-600">Assign Department Head</h1>
-        <p class="mt-1 text-sm text-gray-600">Click a department to filter. Superadmin is excluded from assignable heads.</p>
+        <p class="mt-1 text-sm text-gray-600">Click a department to filter. Superadmin is excluded from assignable
+          heads.</p>
       </div>
 
       <div class="w-full md:w-96 relative">
@@ -69,7 +71,8 @@ while ($r = mysqli_fetch_assoc($res)) {
           class="w-full pl-10 pr-4 py-2 rounded-lg border border-orange-200 focus:outline-none focus:ring-2 focus:ring-orange-300" />
         <div class="absolute left-3 top-1/2 -translate-y-1/2 text-orange-500 pointer-events-none">
           <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-4.35-4.35M10.5 18a7.5 7.5 0 111 0z" />
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+              d="M21 21l-4.35-4.35M10.5 18a7.5 7.5 0 111 0z" />
           </svg>
         </div>
       </div>
@@ -77,13 +80,16 @@ while ($r = mysqli_fetch_assoc($res)) {
 
     <!-- Filter Buttons -->
     <div class="bg-white rounded-xl shadow p-4 mb-6 flex flex-wrap gap-3 items-center">
-      <button type="button" class="dept-btn px-4 py-2 rounded-lg bg-orange-600 text-white font-medium" data-filter="">All</button>
+      <button type="button" class="dept-btn px-4 py-2 rounded-lg bg-orange-600 text-white font-medium"
+        data-filter="">All</button>
       <?php foreach ($departments as $d):
         $c = isset($groups[$d]) ? count($groups[$d]) : 0;
-      ?>
-        <button type="button" class="dept-btn px-4 py-2 rounded-lg bg-blue border border-orange-100 text-orange-700 hover:bg-orange-50"
+        ?>
+        <button type="button"
+          class="dept-btn px-4 py-2 rounded-lg bg-blue border border-orange-100 text-orange-700 hover:bg-orange-50"
           data-filter="<?= htmlspecialchars($d) ?>">
-          <?= ucwords($d) ?> <span class="ml-2 inline-block bg-orange-100 text-orange-800 px-2 py-0.5 rounded text-xs"><?= $c ?></span>
+          <?= ucwords($d) ?> <span
+            class="ml-2 inline-block bg-orange-100 text-orange-800 px-2 py-0.5 rounded text-xs"><?= $c ?></span>
         </button>
       <?php endforeach; ?>
     </div>
@@ -93,7 +99,7 @@ while ($r = mysqli_fetch_assoc($res)) {
       <div class="lg:col-span-2 space-y-4" id="departmentsContainer">
         <?php foreach ($departments as $dept):
           $members = $groups[$dept] ?? [];
-        ?>
+          ?>
           <section class="bg-white rounded-2xl shadow p-4 dept-section" data-dept="<?= htmlspecialchars($dept) ?>">
             <div class="flex items-center justify-between mb-3">
               <div>
@@ -106,17 +112,20 @@ while ($r = mysqli_fetch_assoc($res)) {
             <ul class="space-y-2 member-list">
               <?php if (count($members) === 0): ?>
                 <li class="text-center text-sm text-gray-400 py-4">No members.</li>
-                <?php else: foreach ($members as $m):
-                  $id = (int)$m['id'];
-                  $is_head = (int)$m['is_head'];
-                ?>
+              <?php else:
+                foreach ($members as $m):
+                  $id = (int) $m['id'];
+                  $is_head = (int) $m['is_head'];
+                  ?>
                   <li data-id="<?= $id ?>" data-dept="<?= htmlspecialchars($dept) ?>" data-is-head="<?= $is_head ?>"
                     class="flex items-center justify-between bg-orange-50 rounded-lg p-3">
                     <div class="flex items-center gap-3 flex-1">
-                      <?php if ((int)$m['has_signature'] === 1): ?>
-                        <img src="view_signature.php?id=<?= $id ?>" alt="Signature" class="w-16 h-16 object-contain border border-gray-300 rounded bg-white" />
+                      <?php if ((int) $m['has_signature'] === 1): ?>
+                        <img src="view_signature.php?id=<?= $id ?>" alt="Signature"
+                          class="w-16 h-16 object-contain border border-gray-300 rounded bg-white" />
                       <?php else: ?>
-                        <div class="w-16 h-16 flex items-center justify-center border-2 border-dashed border-gray-300 rounded bg-white">
+                        <div
+                          class="w-16 h-16 flex items-center justify-center border-2 border-dashed border-gray-300 rounded bg-white">
                           <span class="text-xs text-gray-400">No sig</span>
                         </div>
                       <?php endif; ?>
@@ -128,29 +137,42 @@ while ($r = mysqli_fetch_assoc($res)) {
                           <div class="text-xs text-blue-600 mt-1">Role: <?= htmlspecialchars($m['subrole']) ?></div>
                         <?php endif; ?>
                         <?php if ($dept === 'sales' && isset($m['commission_rate'])): ?>
-                          <div class="text-xs text-green-600 mt-1 font-semibold">Commission: <?= number_format($m['commission_rate'], 2) ?>%</div>
+                          <div class="text-xs text-green-600 mt-1 font-semibold">Commission:
+                            <?= number_format($m['commission_rate'], 2) ?>%</div>
                         <?php endif; ?>
                       </div>
                     </div>
 
                     <div class="flex flex-wrap items-center gap-2">
                       <?php if ($is_head === 1): ?>
-                        <span class="head-badge inline-flex items-center gap-2 bg-orange-200 text-orange-800 px-3 py-1 rounded-full text-xs font-semibold">Head</span>
-                        <button type="button" class="remove-head inline-flex items-center gap-2 px-3 py-1 rounded-md bg-red-500 text-white text-sm" data-id="<?= $id ?>">Remove</button>
+                        <span
+                          class="head-badge inline-flex items-center gap-2 bg-orange-200 text-orange-800 px-3 py-1 rounded-full text-xs font-semibold">Head</span>
+                        <button type="button"
+                          class="remove-head inline-flex items-center gap-2 px-3 py-1 rounded-md bg-red-500 text-white text-sm"
+                          data-id="<?= $id ?>">Remove</button>
                       <?php else: ?>
-                        <button type="button" class="set-head inline-flex items-center gap-2 px-3 py-1 rounded-md bg-orange-600 text-white text-sm" data-id="<?= $id ?>">Set as Head</button>
+                        <button type="button"
+                          class="set-head inline-flex items-center gap-2 px-3 py-1 rounded-md bg-orange-600 text-white text-sm"
+                          data-id="<?= $id ?>">Set as Head</button>
                       <?php endif; ?>
-                      <button type="button" class="upload-signature inline-flex items-center gap-2 px-3 py-1 rounded-md bg-purple-600 text-white text-sm" data-id="<?= $id ?>">
+                      <button type="button"
+                        class="upload-signature inline-flex items-center gap-2 px-3 py-1 rounded-md bg-purple-600 text-white text-sm"
+                        data-id="<?= $id ?>">
                         <i class="fas fa-upload"></i>Signature
                       </button>
-                     <?php if ($dept === 'sales' || $dept === 'accountant' || $dept === 'hr' || $dept === 'superadmin' || $dept === 'warehouse' || $dept === 'logistic'): ?>
-                        <button type="button" class="edit-subrole inline-flex items-center gap-2 px-3 py-1 rounded-md bg-blue-600 text-white text-sm" data-id="<?= $id ?>" data-subrole="<?= htmlspecialchars($m['subrole'] ?? '') ?>">Edit Role</button>
+                      <?php if ($dept === 'sales' || $dept === 'accountant' || $dept === 'hr' || $dept === 'superadmin' || $dept === 'warehouse' || $dept === 'logistic' || $dept === 'productspecialist'): ?>
+                        <button type="button"
+                          class="edit-subrole inline-flex items-center gap-2 px-3 py-1 rounded-md bg-blue-600 text-white text-sm"
+                          data-id="<?= $id ?>" data-subrole="<?= htmlspecialchars($m['subrole'] ?? '') ?>">Edit Role</button>
                       <?php else: ?>
-                        <button type="button" class="edit-commission inline-flex items-center gap-2 px-3 py-1 rounded-md bg-green-600 text-white text-sm" data-id="<?= $id ?>" data-commission="<?= htmlspecialchars($m['commission_rate'] ?? '0.00') ?>">Edit Commission</button>
+                        <button type="button"
+                          class="edit-commission inline-flex items-center gap-2 px-3 py-1 rounded-md bg-green-600 text-white text-sm"
+                          data-id="<?= $id ?>" data-commission="<?= htmlspecialchars($m['commission_rate'] ?? '0.00') ?>">Edit
+                          Commission</button>
                       <?php endif; ?>
                     </div>
                   </li>
-              <?php endforeach;
+                <?php endforeach;
               endif; ?>
             </ul>
           </section>
@@ -172,27 +194,32 @@ while ($r = mysqli_fetch_assoc($res)) {
             });
             if (count($visible_heads) === 0): ?>
               <li class="text-sm text-gray-400">No heads assigned yet.</li>
-              <?php else:
+            <?php else:
               foreach ($visible_heads as $h): ?>
-                <li data-id="<?= (int)$h['id'] ?>" data-dept="<?= htmlspecialchars(strtolower($h['lvl'])) ?>"
+                <li data-id="<?= (int) $h['id'] ?>" data-dept="<?= htmlspecialchars(strtolower($h['lvl'])) ?>"
                   class="flex items-center justify-between bg-orange-50 rounded-lg p-3">
                   <div>
                     <div class="font-medium text-gray-900"><?= htmlspecialchars($h['fullname']) ?></div>
                     <div class="text-xs text-gray-500"><?= ucwords(htmlspecialchars($h['lvl'])) ?></div>
                   </div>
                   <div class="flex items-center gap-2">
-                    <button type="button" class="goto-member text-sm px-3 py-1 rounded-md bg-white border border-orange-100 text-orange-700" data-id="<?= (int)$h['id'] ?>">View</button>
-                    <button type="button" class="remove-head inline-flex items-center gap-2 px-3 py-1 rounded-md bg-red-500 text-white text-sm" data-id="<?= (int)$h['id'] ?>">Remove</button>
+                    <button type="button"
+                      class="goto-member text-sm px-3 py-1 rounded-md bg-white border border-orange-100 text-orange-700"
+                      data-id="<?= (int) $h['id'] ?>">View</button>
+                    <button type="button"
+                      class="remove-head inline-flex items-center gap-2 px-3 py-1 rounded-md bg-red-500 text-white text-sm"
+                      data-id="<?= (int) $h['id'] ?>">Remove</button>
                   </div>
                 </li>
-            <?php endforeach;
+              <?php endforeach;
             endif; ?>
           </ul>
         </div>
 
         <div class="bg-white rounded-2xl shadow p-4 text-sm text-gray-600">
           <strong>Note:</strong>
-          <p class="mt-2">Assigning a head will remove the previous head for that department. Superadmin cannot be assigned as a department head.</p>
+          <p class="mt-2">Assigning a head will remove the previous head for that department. Superadmin cannot be
+            assigned as a department head.</p>
         </div>
       </aside>
     </div>
@@ -205,7 +232,8 @@ while ($r = mysqli_fetch_assoc($res)) {
       <p id="confirmMessage" class="mt-2 text-sm text-gray-600">Are you sure?</p>
       <div class="mt-5 flex justify-end gap-3">
         <button id="confirmCancel" type="button" class="px-4 py-2 rounded-md border bg-white">Cancel</button>
-        <button id="confirmOk" type="button" class="px-4 py-2 rounded-md bg-orange-600 text-white">Yes, continue</button>
+        <button id="confirmOk" type="button" class="px-4 py-2 rounded-md bg-orange-600 text-white">Yes,
+          continue</button>
       </div>
     </div>
   </div>
@@ -218,7 +246,8 @@ while ($r = mysqli_fetch_assoc($res)) {
 
       <div class="mt-3">
         <label class="block text-sm font-medium text-gray-700 mb-2">Select Role</label>
-        <select id="subroleSelect" class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500">
+        <select id="subroleSelect"
+          class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500">
           <option value="">-- No Role --</option>
         </select>
       </div>
@@ -232,7 +261,8 @@ while ($r = mysqli_fetch_assoc($res)) {
 
       <div id="subroleCustomContainer" class="mt-3 hidden">
         <label class="block text-sm font-medium text-gray-700 mb-2">Custom Role</label>
-        <input type="text" id="subroleCustomInput" placeholder="Enter custom role..." class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500" />
+        <input type="text" id="subroleCustomInput" placeholder="Enter custom role..."
+          class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500" />
       </div>
 
       <div class="mt-5 flex justify-end gap-3">
@@ -287,7 +317,8 @@ while ($r = mysqli_fetch_assoc($res)) {
 
       <div class="mt-5 flex justify-end gap-3">
         <button id="signatureCancel" type="button" class="px-4 py-2 rounded-md border bg-white">Cancel</button>
-        <button id="signatureSave" type="button" class="px-4 py-2 rounded-md bg-purple-600 text-white" disabled>Upload</button>
+        <button id="signatureSave" type="button" class="px-4 py-2 rounded-md bg-purple-600 text-white"
+          disabled>Upload</button>
       </div>
     </div>
   </div>
@@ -300,7 +331,7 @@ while ($r = mysqli_fetch_assoc($res)) {
   <script>
     // Department subroles from PHP
     const departmentSubroles = <?= json_encode($department_subroles) ?>;
-    document.addEventListener('DOMContentLoaded', function() {
+    document.addEventListener('DOMContentLoaded', function () {
       const $ = s => document.querySelector(s);
       const $$ = s => Array.from(document.querySelectorAll(s));
 
@@ -389,7 +420,7 @@ while ($r = mysqli_fetch_assoc($res)) {
           item.innerHTML = `
         <div>
           <div class="font-medium text-gray-900">${name}</div>
-          <div class="text-xs text-gray-500">${dept.replace(/\b\w/g,c=>c.toUpperCase())}</div>
+          <div class="text-xs text-gray-500">${dept.replace(/\b\w/g, c => c.toUpperCase())}</div>
         </div>
         <div class="flex items-center gap-2">
           <button type="button" class="goto-member text-sm px-3 py-1 rounded-md bg-white border border-orange-100 text-orange-700" data-id="${id}">View</button>
@@ -443,7 +474,7 @@ while ($r = mysqli_fetch_assoc($res)) {
       }
 
       // Signature file change handler
-      signatureFile.addEventListener('change', function() {
+      signatureFile.addEventListener('change', function () {
         const file = this.files[0];
         if (file) {
           // Check file size (2MB max)
@@ -466,7 +497,7 @@ while ($r = mysqli_fetch_assoc($res)) {
 
           // Show preview
           const reader = new FileReader();
-          reader.onload = function(e) {
+          reader.onload = function (e) {
             signaturePreviewImg.src = e.target.result;
             signaturePreview.classList.remove('hidden');
             signatureSave.disabled = false;
@@ -849,7 +880,7 @@ while ($r = mysqli_fetch_assoc($res)) {
       applyFilter(initialDept);
 
       // Search: filter members and heads
-      search.addEventListener('input', function() {
+      search.addEventListener('input', function () {
         const q = (search.value || '').trim().toLowerCase();
         document.querySelectorAll('li[data-id]').forEach(li => {
           const name = (li.querySelector('.font-medium')?.textContent || '').toLowerCase();

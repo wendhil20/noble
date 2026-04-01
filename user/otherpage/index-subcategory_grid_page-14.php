@@ -143,36 +143,35 @@ foreach ($subcategories as $sub) {
         // Get only the FIRST collection
         $first_collection = $sub['collections'][0];
         
-        // Get products for this first collection
-        $products_query = "
-            SELECT DISTINCT
-                p.id,
-                p.product_name,
-                p.main_image,
-                p.view_count,
-                pv.id as variant_id,
-                pv.price,
-                pv.discount,
-                pv.size,
-                pv.color,
-                GROUP_CONCAT(DISTINCT pc.color_name) as color_name
-            FROM products p
-            INNER JOIN product_variants pv ON p.id = pv.product_id
-            LEFT JOIN product_colors pc ON p.id = pc.product_id
-            WHERE pv.category_id = ?
-            AND (
-                pv.sub_subcategory_ids LIKE CONCAT('%\"', ?, '\"%')
-                OR pv.sub_subcategory_ids LIKE CONCAT('%,', ?, ',%')
-                OR pv.sub_subcategory_ids LIKE CONCAT('[', ?, ',%')
-                OR pv.sub_subcategory_ids LIKE CONCAT('%,', ?, ']')
-                OR pv.sub_subcategory_ids LIKE CONCAT('[', ?, ']')
-                OR pv.sub_subcategory_id = ?
-            )
-            AND p.is_archived = 0
-            GROUP BY p.id
-            ORDER BY p.product_name ASC
-            LIMIT 8
-        ";
+   $products_query = "
+    SELECT DISTINCT
+        p.id,
+        p.product_name,
+        p.main_image,
+        p.view_count,
+        ANY_VALUE(pv.id) as variant_id,
+        ANY_VALUE(pv.price) as price,
+        ANY_VALUE(pv.discount) as discount,
+        ANY_VALUE(pv.size) as size,
+        ANY_VALUE(pv.color) as color,
+        GROUP_CONCAT(DISTINCT pc.color_name) as color_name
+    FROM products p
+    INNER JOIN product_variants pv ON p.id = pv.product_id
+    LEFT JOIN product_colors pc ON p.id = pc.product_id
+    WHERE pv.category_id = ?
+    AND (
+        pv.sub_subcategory_ids LIKE CONCAT('%\"', ?, '\"%')
+        OR pv.sub_subcategory_ids LIKE CONCAT('%,', ?, ',%')
+        OR pv.sub_subcategory_ids LIKE CONCAT('[', ?, ',%')
+        OR pv.sub_subcategory_ids LIKE CONCAT('%,', ?, ']')
+        OR pv.sub_subcategory_ids LIKE CONCAT('[', ?, ']')
+        OR pv.sub_subcategory_id = ?
+    )
+    AND p.is_archived = 0
+    GROUP BY p.id
+    ORDER BY p.product_name ASC
+    LIMIT 8
+";
         
         $products_stmt = $conn->prepare($products_query);
         $products_stmt->bind_param("iiiiiii", 

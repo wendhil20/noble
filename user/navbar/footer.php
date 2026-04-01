@@ -1,260 +1,233 @@
-  <link rel="preconnect" href="https://fonts.googleapis.com/css2?family=Great+Vibes&family=Merriweather:wght@300;400;700&family=Montserrat:wght@300;400;600;700&family=Playfair+Display:wght@400;700;900&family=Poppins:wght@300;400;600;700&family=Roboto:wght@300;400;500;700&family=Inter:wght@300;400;500;600;700&family=Lato:wght@300;400;700&family=Open+Sans:wght@300;400;600;700&family=Source+Sans+Pro:wght@300;400;600;700&family=Raleway:wght@300;400;500;600;700&family=Nunito:wght@300;400;600;700&family=Dancing+Script:wght@400;700&family=Pacifico&family=Lobster&family=Quicksand:wght@300;400;500;600;700&family=Work+Sans:wght@300;400;500;600;700&family=Libre+Baskerville:wght@400;700&family=Crimson+Text:wght@400;600;700&family=EB+Garamond:wght@400;500;600;700&family=Lora:wght@400;500;600;700&family=Oswald:wght@300;400;500;600;700&family=Bebas+Neue&family=Anton&family=Rubik:wght@300;400;500;600;700&family=Fira+Sans:wght@300;400;500;600;700&family=Ubuntu:wght@300;400;500;700&family=Barlow:wght@300;400;500;600;700&family=Manrope:wght@300;400;500;600;700&family=DM+Sans:wght@400;500;700&family=Space+Grotesk:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap"
+    rel="stylesheet" />
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" />
 
+<style>
+    footer * {
+        font-family: 'Plus Jakarta Sans', sans-serif;
+    }
 
-  <footer class=" text-black py-16 mt-12 relative overflow-hidden font-roboto">
-      <!-- Divider -->
-      <div class="h-px bg-gradient-to-r from-transparent via-gray-600 to-transparent mb-8"></div>
+    .footer-link {
+        position: relative;
+        display: inline-block;
+        transition: color 0.2s;
+    }
 
-      <div class="max-w-7xl mx-auto px-6 relative z-10">
-          <!-- Main Footer Content -->
-          <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-12 mb-12">
+    .footer-link::after {
+        content: '';
+        position: absolute;
+        left: 0;
+        bottom: -2px;
+        width: 0;
+        height: 1.5px;
+        background: #ef4444;
+        transition: width 0.25s ease;
+    }
 
-              <!-- Enhanced Branding Section -->
-              <div class="lg:col-span-2">
-                  <div class="flex items-center space-x-4 mb-6">
-                      <!-- Logo with glow and pulse -->
-                      <div class="relative">
-                          <div class="w-16 h-16 bg-white rounded-2xl flex items-center justify-center shadow-2xl glow-effect floating overflow-hidden">
-                              <img src="../img/logo.png" alt="Noble Home Logo" class="w-10 h-10 object-cover">
-                          </div>
+    .footer-link:hover {
+        color: #ef4444;
+    }
 
-                      </div>
-                  </div>
+    .social-btn {
+        width: 44px;
+        height: 44px;
+        border-radius: 12px;
+        border: 1px solid #e5e7eb;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        transition: all 0.2s ease;
+        background: #fff;
+    }
 
+    .social-btn:hover {
+        border-color: #f97316;
+        transform: translateY(-2px);
+        box-shadow: 0 4px 12px rgba(249, 115, 22, 0.15);
+    }
 
-                  <p class="text-black leading-relaxed mb-6 max-w-md" style="font-family: 'Montserrat', sans-serif; color: #2f1200">
-                      Crafting exceptional living spaces with unmatched quality and attention to detail. Your dream home awaits with our expert construction and design services.
-                  </p>
+    @keyframes fadeInScale {
+        from {
+            opacity: 0;
+            transform: scale(0.94);
+        }
 
-                  <!-- Contact Info -->
-                  <div class="space-y-3" style="font-family: 'Montserrat', sans-serif; color: #2f1200">
-                      <div class="flex items-center space-x-3 text-sm">
-                          <div class="w-8 h-8  flex items-center justify-center">
-                              <svg class="w-4 h-4 text-orange-400" fill="currentColor" viewBox="0 0 24 24">
-                                  <path d="M2.003 5.884L10 9.882l7.997-3.998A2 2 0 0016 4H4a2 2 0 00-1.997 1.884z" />
-                                  <path d="m18 8.118l-8 4-8-4V14a2 2 0 002 2h12a2 2 0 002-2V8.118z" />
-                              </svg>
-                          </div>
-                          <span class="text-black">noblehomeconst.ph@gmail.com</span>
-                      </div>
-                      <div class="flex items-center space-x-3 text-sm">
-                          <div class="w-8 h-8  flex items-center justify-center">
-                              <svg class="w-4 h-4 text-orange-400" fill="currentColor" viewBox="0 0 24 24">
-                                  <path d="M2 3a1 1 0 011-1h2.153a1 1 0 01.986.836l.74 4.435a1 1 0 01-.54 1.06l-1.548.773a11.037 11.037 0 006.105 6.105l.774-1.548a1 1 0 011.059-.54l4.435.74a1 1 0 01.836.986V17a1 1 0 01-1 1h-2C7.82 18 2 12.18 2 5V3z" />
-                              </svg>
-                          </div>
-                          <span class="text-black">09922394563 / (02) 8822-1295</span>
-                      </div>
-                  </div>
-              </div>
+        to {
+            opacity: 1;
+            transform: scale(1);
+        }
+    }
 
-              <!-- Quick Links -->
-              <div>
-                  <h3 class="text-lg mb-6  relative" style="font-family: 'Montserrat', sans-serif; color: #2f1200">
-                      Company Info
-                  </h3>
-                  <nav class="space-y-3 text-xs" style="font-family: 'Montserrat', sans-serif; color: #2f1200">
-                      <a href="../rules/terms.php" class="block  hover:text-red-500 link-hover transition-all duration-300 ">Terms of use</a>
-                      <a href="../rules/policy.php" class="block hover:text-red-500 link-hover transition-all duration-300 ">Privacy Policy</a>
-                      <a href="../about/about.php" class="block  hover:text-red-500 link-hover transition-all duration-300 ">About Noblehome</a>
-                      <a href="../rules/customer-services.php" class="block  hover:text-red-500 link-hover transition-all duration-300 ">Help Center</a>
-                   
+    .modal-animate {
+        animation: fadeInScale 0.2s ease-out;
+    }
+</style>
 
-                  </nav>
-              </div>
-       <!-- Services -->
-              <div>
-                  <h3 class="text-xl mb-6 text-black relative" style="font-family: 'Montserrat', sans-serif; color: #2f1200">
-                     Customer Services
-                     
-                  </h3>
-                  <ul class="space-y-3 text-xs" style="font-family: 'Montserrat', sans-serif; color: #2f1200">
-                      <a href="../rules/return-policy.php" class="block  hover:text-red-500 link-hover transition-all duration-300 ">Return policy</a>
-                      <a href="../rules/payment.php" class="block  hover:text-red-500 link-hover transition-all duration-300 ">Payment policy</a>
-                      <a href="#" class="block  hover:text-red-500 link-hover transition-all duration-300 ">Shipping policy</a>
-                      <li class="hover:text-orange-300 transition-colors cursor-pointer"></li>
-                      <li class="hover:text-orange-300 transition-colors cursor-pointer"></li>
-                      <li class="hover:text-orange-300 transition-colors cursor-pointer"></li>
-                      <li class="hover:text-orange-300 transition-colors cursor-pointer"></li>
-                  </ul>
-              </div>
-          </div>
+<footer class="bg-white text-gray-800 pt-14 pb-8 mt-12 relative overflow-hidden">
 
-          <!-- Divider -->
-          <div class="h-px bg-gradient-to-r from-transparent via-gray-600 to-transparent mb-8"></div>
+    <!-- Top divider -->
+    <div class="h-px bg-gradient-to-r from-transparent via-gray-200 to-transparent mb-12"></div>
 
-          <!-- Bottom Section -->
-          <div class="flex flex-col lg:flex-row justify-between items-center gap-6">
-              <!-- Copyright -->
-              <div class="text-center lg:text-left">
-                  <p class="text-black text-sm">
-                      © <?= date('Y') ?> Noble Home Construction. All rights reserved.
-                  </p>
-                  <p class="text-gray-500 text-xs mt-1">
-                      Licensed & Insured | PCAB License No. 12345
-                  </p>
-              </div>
-              <!-- Enhanced Social Media -->
-              <div class="flex items-center space-x-4">
-                  <span class="text-black text-sm mr-2">Follow us:</span>
+    <div class="max-w-7xl mx-auto px-6">
 
-                  <a href="https://www.facebook.com/noblehomedepotph" class="w-12 h-12 glass-effect rounded-xl flex items-center justify-center social-hover transition-all duration-300 group" aria-label="Facebook">
-                      <svg class="w-5 h-5 text-blue-500 group-hover:text-orange-400" fill="currentColor" viewBox="0 0 24 24">
-                          <path d="M22 12a10 10 0 10-11.63 9.88v-6.99H8.4v-2.89h1.97V9.91c0-1.95 1.16-3.03 2.93-3.03.85 0 1.74.15 1.74.15v1.91h-.98c-.97 0-1.27.6-1.27 1.21v1.45h2.16l-.35 2.89h-1.81v6.99A10 10 0 0022 12z" />
-                      </svg>
-                  </a>
+        <!-- Main grid -->
+        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-10 mb-12">
 
-                  <a href="https://www.instagram.com/noblehome_depot?utm_source=ig_web_button_share_sheet&igsh=ZDNlZDc0MzIxNw==" class="w-12 h-12 glass-effect rounded-xl flex items-center justify-center social-hover transition-all duration-300 group" aria-label="Instagram">
-                      <svg class="w-5 h-5 text-pink-600 group-hover:text-orange-400" fill="currentColor" viewBox="0 0 24 24">
-                          <path d="M12 2.2c3.2 0 3.6 0 4.9.1 1.2.1 2 .3 2.5.5.6.2 1 .6 1.5 1.1.4.4.8.9 1.1 1.5.2.5.4 1.3.5 2.5.1 1.3.1 1.7.1 4.9s0 3.6-.1 4.9c-.1 1.2-.3 2-.5 2.5-.2.6-.6 1-1.1 1.5-.4.4-.9.8-1.5 1.1-.5.2-1.3.4-2.5.5-1.3.1-1.7.1-4.9.1s-3.6 0-4.9-.1c-1.2-.1-2-.3-2.5-.5-.6-.2-1-.6-1.5-1.1-.4-.4-.8-.9-1.1-1.5-.2-.5-.4-1.3-.5-2.5C2.2 15.6 2.2 15.2 2.2 12s0-3.6.1-4.9c.1-1.2.3-2 .5-2.5.2-.6.6-1 1.1-1.5.4-.4.9-.8 1.5-1.1.5-.2 1.3-.4 2.5-.5C8.4 2.2 8.8 2.2 12 2.2zm0 2.3c-3.1 0-3.5 0-4.7.1-.9.1-1.4.2-1.8.4-.5.2-.8.4-1.2.8s-.6.7-.8 1.2c-.2.4-.3.9-.4 1.8-.1 1.2-.1 1.6-.1 4.7s0 3.5.1 4.7c.1.9.2 1.4.4 1.8.2.5.4.8.8 1.2.4.4.7.6 1.2.8.4.2.9.3 1.8.4 1.2.1 1.6.1 4.7.1s3.5 0 4.7-.1c.9-.1 1.4-.2 1.8-.4.5-.2.8-.4 1.2-.8s.6-.7.8-1.2c.2-.4.3-.9.4-1.8.1-1.2.1-1.6.1-4.7s0-3.5-.1-4.7c-.1-.9-.2-1.4-.4-1.8-.2-.5-.4-.8-.8-1.2s-.7-.6-1.2-.8c-.4-.2-.9-.3-1.8-.4-1.2-.1-1.6-.1-4.7-.1zm0 3.7a5.8 5.8 0 100 11.6 5.8 5.8 0 000-11.6zm0 9.5a3.7 3.7 0 110-7.4 3.7 3.7 0 010 7.4zm5.9-9.8a1.3 1.3 0 11-2.6 0 1.3 1.3 0 012.6 0z" />
-                      </svg>
-                  </a>
+            <!-- Branding -->
+            <div class="lg:col-span-2">
+                <div class="flex items-center gap-3 mb-5">
+                    <div
+                        class="w-12 h-12 bg-white rounded-xl border border-gray-100 shadow-sm flex items-center justify-center overflow-hidden">
+                        <img src="../img/logo.png" alt="Noble Home" class="w-8 h-8 object-contain" />
+                    </div>
+                    <span class="text-lg font-700 text-[#2f1200]" style="font-weight:700;">Noble Home</span>
+                </div>
 
-                  <!-- Social Icons Section -->
-                  <div class="flex items-center space-x-4">
+                <p class="text-sm leading-relaxed text-gray-500 max-w-sm mb-6">
+                    Crafting exceptional living spaces with unmatched quality and attention to detail. Your dream home
+                    awaits with our expert construction and design services.
+                </p>
 
-                      <!-- WeChat -->
-                      <a href="" id="wechatBtn"
-                          class="w-12 h-12 glass-effect rounded-xl flex items-center justify-center social-hover transition-all duration-300 group"
-                          aria-label="WeChat">
-                          <i class="fab fa-weixin text-2xl text-green-500 group-hover:text-green-400"></i>
-                      </a>
+                <div class="space-y-2.5 text-sm text-gray-600">
+                    <div class="flex items-center gap-3">
+                        <span class="w-7 h-7 rounded-lg bg-orange-50 flex items-center justify-center shrink-0">
+                            <svg class="w-3.5 h-3.5 text-orange-400" fill="currentColor" viewBox="0 0 20 20">
+                                <path d="M2.003 5.884L10 9.882l7.997-3.998A2 2 0 0016 4H4a2 2 0 00-1.997 1.884z" />
+                                <path d="M18 8.118l-8 4-8-4V14a2 2 0 002 2h12a2 2 0 002-2V8.118z" />
+                            </svg>
+                        </span>
+                        <span>noblehomeconst.ph@gmail.com</span>
+                    </div>
+                    <div class="flex items-center gap-3">
+                        <span class="w-7 h-7 rounded-lg bg-orange-50 flex items-center justify-center shrink-0">
+                            <svg class="w-3.5 h-3.5 text-orange-400" fill="currentColor" viewBox="0 0 20 20">
+                                <path
+                                    d="M2 3a1 1 0 011-1h2.153a1 1 0 01.986.836l.74 4.435a1 1 0 01-.54 1.06l-1.548.773a11.037 11.037 0 006.105 6.105l.774-1.548a1 1 0 011.059-.54l4.435.74a1 1 0 01.836.986V17a1 1 0 01-1 1h-2C7.82 18 2 12.18 2 5V3z" />
+                            </svg>
+                        </span>
+                        <span>09922394563 / (02) 8822-1295</span>
+                    </div>
+                </div>
+            </div>
 
-                      <!-- Viber -->
-                      <a href="" id="viberBtn"
-                          class="w-12 h-12 glass-effect rounded-xl flex items-center justify-center social-hover transition-all duration-300 group"
-                          aria-label="Viber">
-                          <i class="fab fa-viber text-2xl text-purple-500 group-hover:text-purple-400"></i>
-                      </a>
+            <!-- Company Info -->
+            <div>
+                <h3 class="text-sm font-semibold uppercase tracking-wide text-[#2f1200] mb-5">Company Info</h3>
+                <div class="flex flex-col gap-3 text-sm text-gray-500">
+                    <a href="../rules/terms.php" class="footer-link">Terms of use</a>
+                    <a href="../rules/policy.php" class="footer-link">Privacy Policy</a>
+                    <a href="../about/about.php" class="footer-link">About Noblehome</a>
+                    <a href="../rules/customer-services.php" class="footer-link">Help Center</a>
+                </div>
+            </div>
 
-                      <!-- WhatsApp -->
-                      <a href="" id="whatsappBtn"
-                          class="w-12 h-12 glass-effect rounded-xl flex items-center justify-center social-hover transition-all duration-300 group"
-                          aria-label="WhatsApp">
-                          <i class="fab fa-whatsapp text-2xl text-green-600 group-hover:text-green-500"></i>
-                      </a>
-                  </div>
+            <!-- Customer Services -->
+            <div>
+                <h3 class="text-sm font-semibold uppercase tracking-wide text-[#2f1200] mb-5">Customer Services</h3>
+                <div class="flex flex-col gap-3 text-sm text-gray-500">
+                    <a href="../rules/return-policy.php" class="footer-link">Return Policy</a>
+                    <a href="../rules/payment.php" class="footer-link">Payment Policy</a>
+                    <a href="#" class="footer-link">Shipping Policy</a>
+                </div>
+            </div>
+        </div>
 
-                  <!-- Modal (shared for all socials) -->
-                  <div id="socialModal" class="hidden fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-                      <div class="bg-white rounded-2xl shadow-xl p-6 w-80 relative animate-fadeIn">
-                          <!-- Close Button -->
-                          <button id="closeModal" class="absolute top-2 right-3 text-gray-500 hover:text-gray-700 text-2xl font-bold">&times;</button>
+        <!-- Bottom divider -->
+        <div class="h-px bg-gradient-to-r from-transparent via-gray-200 to-transparent mb-8"></div>
 
-                          <!-- Dynamic Title -->
-                          <h2 id="modalTitle" class="text-xl font-semibold text-gray-800 mb-4 text-center"></h2>
+        <!-- Bottom row -->
+        <div class="flex flex-col lg:flex-row justify-between items-center gap-6">
 
-                          <!-- Dynamic Image -->
-                          <div class="flex flex-col items-center">
-                              <img id="modalImage" src="" alt="QR Code" class="rounded-xl shadow-md w-56 h-56 object-contain">
-                              <p class="text-sm text-gray-500 mt-3">Scan this QR code to start chatting</p>
-                          </div>
-                      </div>
-                  </div>
+            <!-- Copyright -->
+            <div class="text-center lg:text-left">
+                <p class="text-sm text-gray-600">© <?= date('Y') ?> Noble Home Construction. All rights reserved.</p>
+                <p class="text-xs text-gray-400 mt-1">Licensed &amp; Insured | PCAB License No. 12345</p>
+            </div>
 
-                  <!-- Animation -->
-                  <style>
-                      @keyframes fadeIn {
-                          from {
-                              opacity: 0;
-                              transform: scale(0.9);
-                          }
+            <!-- Socials -->
+            <div class="flex items-center gap-3">
+                <span class="text-sm text-gray-400 mr-1">Follow us:</span>
 
-                          to {
-                              opacity: 1;
-                              transform: scale(1);
-                          }
-                      }
+                <!-- Facebook -->
+                <a href="https://www.facebook.com/noblehomedepotph" class="social-btn" aria-label="Facebook">
+                    <svg class="w-4 h-4 text-blue-500" fill="currentColor" viewBox="0 0 24 24">
+                        <path
+                            d="M22 12a10 10 0 10-11.63 9.88v-6.99H8.4v-2.89h1.97V9.91c0-1.95 1.16-3.03 2.93-3.03.85 0 1.74.15 1.74.15v1.91h-.98c-.97 0-1.27.6-1.27 1.21v1.45h2.16l-.35 2.89h-1.81v6.99A10 10 0 0022 12z" />
+                    </svg>
+                </a>
 
-                      .animate-fadeIn {
-                          animation: fadeIn 0.3s ease-out;
-                      }
-                  </style>
+                <!-- Instagram -->
+                <a href="https://www.instagram.com/noblehome_depot" class="social-btn" aria-label="Instagram">
+                    <svg class="w-4 h-4 text-pink-500" fill="currentColor" viewBox="0 0 24 24">
+                        <path
+                            d="M12 2.2c3.2 0 3.6 0 4.9.1 1.2.1 2 .3 2.5.5.6.2 1 .6 1.5 1.1.4.4.8.9 1.1 1.5.2.5.4 1.3.5 2.5.1 1.3.1 1.7.1 4.9s0 3.6-.1 4.9c-.1 1.2-.3 2-.5 2.5-.2.6-.6 1-1.1 1.5-.4.4-.9.8-1.5 1.1-.5.2-1.3.4-2.5.5-1.3.1-1.7.1-4.9.1s-3.6 0-4.9-.1c-1.2-.1-2-.3-2.5-.5-.6-.2-1-.6-1.5-1.1-.4-.4-.8-.9-1.1-1.5-.2-.5-.4-1.3-.5-2.5C2.2 15.6 2.2 15.2 2.2 12s0-3.6.1-4.9c.1-1.2.3-2 .5-2.5.2-.6.6-1 1.1-1.5.4-.4.9-.8 1.5-1.1.5-.2 1.3-.4 2.5-.5C8.4 2.2 8.8 2.2 12 2.2zm0 2.3c-3.1 0-3.5 0-4.7.1-.9.1-1.4.2-1.8.4-.5.2-.8.4-1.2.8s-.6.7-.8 1.2c-.2.4-.3.9-.4 1.8-.1 1.2-.1 1.6-.1 4.7s0 3.5.1 4.7c.1.9.2 1.4.4 1.8.2.5.4.8.8 1.2.4.4.7.6 1.2.8.4.2.9.3 1.8.4 1.2.1 1.6.1 4.7.1s3.5 0 4.7-.1c.9-.1 1.4-.2 1.8-.4.5-.2.8-.4 1.2-.8s.6-.7.8-1.2c.2-.4.3-.9.4-1.8.1-1.2.1-1.6.1-4.7s0-3.5-.1-4.7c-.1-.9-.2-1.4-.4-1.8-.2-.5-.4-.8-.8-1.2s-.7-.6-1.2-.8c-.4-.2-.9-.3-1.8-.4-1.2-.1-1.6-.1-4.7-.1zm0 3.7a5.8 5.8 0 100 11.6 5.8 5.8 0 000-11.6zm0 9.5a3.7 3.7 0 110-7.4 3.7 3.7 0 010 7.4zm5.9-9.8a1.3 1.3 0 11-2.6 0 1.3 1.3 0 012.6 0z" />
+                    </svg>
+                </a>
 
-                  <!-- Replace the existing script section in your footer with this: -->
+                <!-- WeChat -->
+                <button id="wechatBtn" class="social-btn" aria-label="WeChat">
+                    <i class="fab fa-weixin text-base text-green-500"></i>
+                </button>
 
-                  <script>
-                      // Social Modal Elements
-                      const socialModal = document.getElementById('socialModal');
-                      const modalTitle = document.getElementById('modalTitle');
-                      const modalImage = document.getElementById('modalImage');
-                      const closeSocialModalBtn = document.getElementById('closeModal'); // Renamed to avoid conflict
+                <!-- Viber -->
+                <button id="viberBtn" class="social-btn" aria-label="Viber">
+                    <i class="fab fa-viber text-base text-purple-500"></i>
+                </button>
 
-                      // Social Media Buttons
-                      const wechatBtn = document.getElementById('wechatBtn');
-                      const viberBtn = document.getElementById('viberBtn');
-                      const whatsappBtn = document.getElementById('whatsappBtn');
+                <!-- WhatsApp -->
+                <button id="whatsappBtn" class="social-btn" aria-label="WhatsApp">
+                    <i class="fab fa-whatsapp text-base text-green-600"></i>
+                </button>
+            </div>
 
-                      // Function to show modal
-                      function showSocialModal(title, imgSrc) {
-                          modalTitle.textContent = title;
-                          modalImage.src = imgSrc;
-                          socialModal.classList.remove('hidden');
-                      }
+            <!-- Back to top -->
+            <button onclick="window.scrollTo({top:0,behavior:'smooth'})"
+                class="w-10 h-10 bg-orange-500 hover:bg-orange-600 rounded-xl flex items-center justify-center transition-all duration-200 hover:scale-105 shadow-md shadow-orange-100"
+                aria-label="Back to top">
+                <svg class="w-4 h-4 text-white" fill="none" stroke="currentColor" stroke-width="2.5"
+                    viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M5 10l7-7m0 0l7 7m-7-7v18" />
+                </svg>
+            </button>
+        </div>
+    </div>
+</footer>
 
-                      // Click Handlers for Social Media Buttons
-                      if (wechatBtn) {
-                          wechatBtn.addEventListener('click', (e) => {
-                              e.preventDefault();
-                              showSocialModal('Chat with us on WeChat', '../img/wechat.png');
-                          });
-                      }
+<!-- QR Modal -->
+<div id="socialModal" class="hidden fixed inset-0 bg-black/50 flex items-center justify-center z-50 px-4">
+    <div class="modal-animate bg-white rounded-2xl shadow-xl p-6 w-72 relative">
+        <button id="closeModal"
+            class="absolute top-3 right-4 text-gray-400 hover:text-gray-600 text-xl font-bold leading-none">&times;</button>
+        <h2 id="modalTitle" class="text-base font-600 text-gray-800 mb-4 text-center"
+            style="font-weight:600;font-family:'Plus Jakarta Sans',sans-serif;"></h2>
+        <div class="flex flex-col items-center gap-3">
+            <img id="modalImage" src="" alt="QR Code"
+                class="rounded-xl w-48 h-48 object-contain border border-gray-100" />
+            <p class="text-xs text-gray-400">Scan this QR code to start chatting</p>
+        </div>
+    </div>
+</div>
 
-                      if (viberBtn) {
-                          viberBtn.addEventListener('click', (e) => {
-                              e.preventDefault();
-                              showSocialModal('Chat with us on Viber', '../img/viber.png');
-                          });
-                      }
+<script>
+    (function () {
+        const modal = document.getElementById('socialModal');
+        const modalTitle = document.getElementById('modalTitle');
+        const modalImage = document.getElementById('modalImage');
 
-                      if (whatsappBtn) {
-                          whatsappBtn.addEventListener('click', (e) => {
-                              e.preventDefault();
-                              showSocialModal('Chat with us on WhatsApp', '../img/whatapp.jpg');
-                          });
-                      }
+        function openModal(title, img) {
+            modalTitle.textContent = title;
+            modalImage.src = img;
+            modal.classList.remove('hidden');
+        }
+        function closeModal() { modal.classList.add('hidden'); }
 
-                      // Close Modal Button
-                      if (closeSocialModalBtn) {
-                          closeSocialModalBtn.addEventListener('click', () => {
-                              socialModal.classList.add('hidden');
-                          });
-                      }
-
-                      // Close when clicking outside modal
-                      if (socialModal) {
-                          socialModal.addEventListener('click', (e) => {
-                              if (e.target === socialModal) {
-                                  socialModal.classList.add('hidden');
-                              }
-                          });
-                      }
-
-                      // Close modal with Escape key
-                      document.addEventListener('keydown', (e) => {
-                          if (e.key === 'Escape' && socialModal && !socialModal.classList.contains('hidden')) {
-                              socialModal.classList.add('hidden');
-                          }
-                      });
-                  </script>
-              </div>
-
-              <!-- Back to Top Button -->
-              <button onclick="window.scrollTo({top: 0, behavior: 'smooth'})"
-                  class="w-12 h-12 bg-orange-500 hover:bg-orange-600 rounded-xl flex items-center justify-center transition-all duration-300 hover:scale-110 shadow-lg">
-                  <svg class="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 10l7-7m0 0l7 7m-7-7v18" />
-                  </svg>
-              </button>
-          </div>
-      </div>
-
-      <!-- Background Pattern -->
-      <div class="absolute bottom-0 right-0 opacity-5">
-          <svg width="200" height="200" viewBox="0 0 200 200" fill="none">
-              <path d="M50 50h100v100H50z" stroke="currentColor" stroke-width="2" />
-              <path d="M70 70h60v60H70z" stroke="currentColor" stroke-width="1" />
-              <path d="M90 90h20v20H90z" stroke="currentColor" stroke-width="1" />
-          </svg>
-      </div>
-  </footer>
+        document.getElementById('wechatBtn')?.addEventListener('click', () => openModal('Chat with us on WeChat', '../img/wechat.png'));
+        document.getElementById('viberBtn')?.addEventListener('click', () => openModal('Chat with us on Viber', '../img/viber.png'));
+        document.getElementById('whatsappBtn')?.addEventListener('click', () => openModal('Chat with us on WhatsApp', '../img/whatapp.jpg'));
+        document.getElementById('closeModal')?.addEventListener('click', closeModal);
+        modal?.addEventListener('click', e => { if (e.target === modal) closeModal(); });
+        document.addEventListener('keydown', e => { if (e.key === 'Escape') closeModal(); });
+    })();
+</script>

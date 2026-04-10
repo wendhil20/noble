@@ -395,7 +395,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['remake_code'])) {
     <title>My Referral Code - Noble Admin</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
-    <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700;800&display=swap"
+        rel="stylesheet">
     <!-- QR Code Library -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
     <script>
@@ -463,7 +464,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['remake_code'])) {
                         <div class="text-4xl font-bold text-white tracking-wider  mb-4">
                             <?php echo htmlspecialchars($referral_data['code']); ?>
                         </div>
-                        <button onclick="copyCode()" class="bg-green-500 hover:bg-red-600 text-white px-6 py-2 rounded-lg transition-colors duration-200 inline-flex items-center space-x-2">
+                        <button onclick="copyCode()"
+                            class="bg-green-500 hover:bg-red-600 text-white px-6 py-2 rounded-lg transition-colors duration-200 inline-flex items-center space-x-2">
                             <i class="fas fa-copy"></i>
                             <span>Copy Code</span>
                         </button>
@@ -474,13 +476,13 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['remake_code'])) {
                             <i class="fas fa-link mr-1"></i>Referral Link
                         </label>
                         <div class="flex gap-2">
-                            <input type="text" id="referralLink" readonly
-                                value="<?php
-                                        $saved_base_url = $referral_data['base_url'] ?? '';
-                                        echo htmlspecialchars($saved_base_url . "?ref=" . $referral_data['code']);
-                                        ?>"
+                            <input type="text" id="referralLink" readonly value="<?php
+                            $saved_base_url = $referral_data['base_url'] ?? '';
+                            echo htmlspecialchars($saved_base_url . "?ref=" . $referral_data['code']);
+                            ?>"
                                 class="flex-1 px-4 py-2 bg-gray-50 border border-gray-300 rounded-md text-sm ">
-                            <button onclick="copyLink()" class="bg-green-500 hover:bg-green-600 text-white px-4 py-2 rounded-lg transition-colors duration-200 flex items-center space-x-2">
+                            <button onclick="copyLink()"
+                                class="bg-green-500 hover:bg-green-600 text-white px-4 py-2 rounded-lg transition-colors duration-200 flex items-center space-x-2">
                                 <i class="fas fa-link"></i>
                                 <span>Copy</span>
                             </button>
@@ -502,7 +504,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['remake_code'])) {
                         </div>
 
                         <!-- QR Container - Hidden by default if no QR exists -->
-                        <div id="qr-container" class="<?php echo (empty($referral_data['qr_path']) || $referral_data['qr_path'] === null) ? 'hidden' : ''; ?>">
+                        <div id="qr-container"
+                            class="<?php echo (empty($referral_data['qr_path']) || $referral_data['qr_path'] === null) ? 'hidden' : ''; ?>">
                             <div class="text-center mb-4">
                                 <div class="inline-block p-4 bg-white border-2 border-gray-300 rounded-lg shadow-sm">
                                     <div id="qr-display" class="qr-code-display"></div>
@@ -523,7 +526,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['remake_code'])) {
                         </div>
 
                         <!-- Generate button (shown when no QR exists) -->
-                        <div id="qr-generate-section" class="<?php echo (empty($referral_data['qr_path']) || $referral_data['qr_path'] === null) ? '' : 'hidden'; ?>">
+                        <div id="qr-generate-section"
+                            class="<?php echo (empty($referral_data['qr_path']) || $referral_data['qr_path'] === null) ? '' : 'hidden'; ?>">
                             <div class="text-center py-8">
                                 <i class="fas fa-qrcode text-white text-6xl mb-4"></i>
                                 <p class="text-white mb-4">No QR code generated yet</p>
@@ -624,11 +628,13 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['remake_code'])) {
                                                 <div>
                                                     <h4 class="font-bold text-yellow-900">Claim Pending Approval</h4>
                                                     <p class="text-sm text-yellow-700 mt-1">
-                                                        Your commission claim of <strong>₱<?php echo number_format($pending_claim_data['commission_amount'], 2); ?></strong>
+                                                        Your commission claim of
+                                                        <strong>₱<?php echo number_format($pending_claim_data['commission_amount'], 2); ?></strong>
                                                         is waiting for superadmin approval.
                                                     </p>
                                                     <p class="text-xs text-yellow-600 mt-1">
-                                                        Submitted on <?php echo date('M j, Y g:i A', strtotime($pending_claim_data['claim_date'])); ?>
+                                                        Submitted on
+                                                        <?php echo date('M j, Y g:i A', strtotime($pending_claim_data['claim_date'])); ?>
                                                     </p>
                                                 </div>
                                             <?php elseif ($pending_claim_data['status'] === 'approved'): ?>
@@ -636,7 +642,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['remake_code'])) {
                                                 <div>
                                                     <h4 class="font-bold text-green-900">Claim Approved - Pending Release</h4>
                                                     <p class="text-sm text-green-700 mt-1">
-                                                        Your claim of <strong>₱<?php echo number_format($pending_claim_data['commission_amount'], 2); ?></strong>
+                                                        Your claim of
+                                                        <strong>₱<?php echo number_format($pending_claim_data['commission_amount'], 2); ?></strong>
                                                         has been approved! Waiting for accountant to release payment.
                                                     </p>
                                                 </div>
@@ -654,7 +661,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['remake_code'])) {
                                         ₱<?php echo number_format($referral_data['total_commission'] ?? 0, 2); ?>
                                     </div>
                                     <div class="text-xs text-gray-500">
-                                        From <?php echo number_format($referral_data['commission_orders'] ?? 0); ?> order<?php echo ($referral_data['commission_orders'] ?? 0) != 1 ? 's' : ''; ?>
+                                        From <?php echo number_format($referral_data['commission_orders'] ?? 0); ?>
+                                        order<?php echo ($referral_data['commission_orders'] ?? 0) != 1 ? 's' : ''; ?>
                                     </div>
 
                                     <!-- Claim Button -->
@@ -685,11 +693,11 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['remake_code'])) {
                                     <div class="text-sm text-gray-600 mb-2 font-medium">Avg Commission/Order</div>
                                     <div class="text-4xl font-bold text-green-600 mb-1">
                                         ₱<?php
-                                            $avg_per_order = ($referral_data['commission_orders'] ?? 0) > 0
-                                                ? ($referral_data['total_commission'] ?? 0) / ($referral_data['commission_orders'] ?? 1)
-                                                : 0;
-                                            echo number_format($avg_per_order, 2);
-                                            ?>
+                                        $avg_per_order = ($referral_data['commission_orders'] ?? 0) > 0
+                                            ? ($referral_data['total_commission'] ?? 0) / ($referral_data['commission_orders'] ?? 1)
+                                            : 0;
+                                        echo number_format($avg_per_order, 2);
+                                        ?>
                                     </div>
                                     <div class="text-xs text-gray-500">
                                         Per successful order
@@ -711,13 +719,20 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['remake_code'])) {
                                         <table class="w-full text-sm">
                                             <thead class="bg-gray-100 sticky top-0">
                                                 <tr class="border-b border-gray-200">
-                                                    <th class="px-4 py-3 text-left text-xs font-bold text-gray-700 uppercase">Order #</th>
-                                                    <th class="px-4 py-3 text-left text-xs font-bold text-gray-700 uppercase">Customer</th>
-                                                    <th class="px-4 py-3 text-center text-xs font-bold text-gray-700 uppercase">Date</th>
-                                                    <th class="px-4 py-3 text-right text-xs font-bold text-gray-700 uppercase">Order Value</th>
-                                                    <th class="px-4 py-3 text-center text-xs font-bold text-gray-700 uppercase">Rate</th>
-                                                    <th class="px-4 py-3 text-right text-xs font-bold text-gray-700 uppercase">Commission</th>
-                                                    <th class="px-4 py-3 text-center text-xs font-bold text-gray-700 uppercase">Status</th>
+                                                    <th class="px-4 py-3 text-left text-xs font-bold text-gray-700 uppercase">
+                                                        Order #</th>
+                                                    <th class="px-4 py-3 text-left text-xs font-bold text-gray-700 uppercase">
+                                                        Customer</th>
+                                                    <th class="px-4 py-3 text-center text-xs font-bold text-gray-700 uppercase">
+                                                        Date</th>
+                                                    <th class="px-4 py-3 text-right text-xs font-bold text-gray-700 uppercase">
+                                                        Order Value</th>
+                                                    <th class="px-4 py-3 text-center text-xs font-bold text-gray-700 uppercase">
+                                                        Rate</th>
+                                                    <th class="px-4 py-3 text-right text-xs font-bold text-gray-700 uppercase">
+                                                        Commission</th>
+                                                    <th class="px-4 py-3 text-center text-xs font-bold text-gray-700 uppercase">
+                                                        Status</th>
                                                 </tr>
                                             </thead>
                                             <tbody class="divide-y divide-gray-100">
@@ -738,7 +753,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['remake_code'])) {
                                                             ₱<?php echo number_format($order['subtotal'], 2); ?>
                                                         </td>
                                                         <td class="px-4 py-3 text-center">
-                                                            <span class="inline-flex items-center px-2 py-1 bg-orange-100 text-orange-700 rounded text-xs font-bold">
+                                                            <span
+                                                                class="inline-flex items-center px-2 py-1 bg-orange-100 text-orange-700 rounded text-xs font-bold">
                                                                 <?php echo number_format($order['sales_commission_rate'], 1); ?>%
                                                             </span>
                                                         </td>
@@ -757,7 +773,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['remake_code'])) {
                                                             ];
                                                             $status_class = $status_colors[$order['payment_status']] ?? 'bg-gray-100 text-gray-700';
                                                             ?>
-                                                            <span class="inline-flex items-center px-2 py-1 <?php echo $status_class; ?> rounded-full text-xs font-semibold">
+                                                            <span
+                                                                class="inline-flex items-center px-2 py-1 <?php echo $status_class; ?> rounded-full text-xs font-semibold">
                                                                 <?php echo ucfirst($order['payment_status']); ?>
                                                             </span>
                                                         </td>
@@ -769,8 +786,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['remake_code'])) {
                                 </div>
                                 <!-- ✅ CLAIMED COMMISSION HISTORY -->
                                 <?php if (!empty($referral_data['claimed_history'])): ?>
-                                    <div class="bg-gradient-to-r from-gray-50 to-gray-100 rounded-lg border-2 border-gray-300 overflow-hidden mt-6">
-                                        <div class="bg-gradient-to-r from-gray-600 to-gray-700 px-4 py-3 flex items-center justify-between">
+                                    <div
+                                        class="bg-gradient-to-r from-gray-50 to-gray-100 rounded-lg border-2 border-gray-300 overflow-hidden mt-6">
+                                        <div
+                                            class="bg-gradient-to-r from-gray-600 to-gray-700 px-4 py-3 flex items-center justify-between">
                                             <h3 class="text-white font-bold flex items-center text-lg">
                                                 <i class="fas fa-history mr-2"></i>
                                                 Claimed Commission History
@@ -782,11 +801,21 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['remake_code'])) {
                                                 <table class="w-full text-sm">
                                                     <thead class="bg-gray-200 border-b-2 border-gray-300">
                                                         <tr>
-                                                            <th class="px-4 py-3 text-left text-xs font-bold text-gray-700 uppercase">Claim Date</th>
-                                                            <th class="px-4 py-3 text-center text-xs font-bold text-gray-700 uppercase">Orders</th>
-                                                            <th class="px-4 py-3 text-right text-xs font-bold text-gray-700 uppercase">Amount</th>
-                                                            <th class="px-4 py-3 text-center text-xs font-bold text-gray-700 uppercase">Status</th>
-                                                            <th class="px-4 py-3 text-center text-xs font-bold text-gray-700 uppercase">Released Date</th>
+                                                            <th
+                                                                class="px-4 py-3 text-left text-xs font-bold text-gray-700 uppercase">
+                                                                Claim Date</th>
+                                                            <th
+                                                                class="px-4 py-3 text-center text-xs font-bold text-gray-700 uppercase">
+                                                                Orders</th>
+                                                            <th
+                                                                class="px-4 py-3 text-right text-xs font-bold text-gray-700 uppercase">
+                                                                Amount</th>
+                                                            <th
+                                                                class="px-4 py-3 text-center text-xs font-bold text-gray-700 uppercase">
+                                                                Status</th>
+                                                            <th
+                                                                class="px-4 py-3 text-center text-xs font-bold text-gray-700 uppercase">
+                                                                Released Date</th>
                                                         </tr>
                                                     </thead>
                                                     <tbody class="divide-y divide-gray-200">
@@ -796,7 +825,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['remake_code'])) {
                                                                     <?php echo date('M j, Y g:i A', strtotime($history['claim_date'])); ?>
                                                                 </td>
                                                                 <td class="px-4 py-3 text-center">
-                                                                    <span class="bg-blue-100 text-blue-700 px-3 py-1 rounded-full text-xs font-semibold">
+                                                                    <span
+                                                                        class="bg-blue-100 text-blue-700 px-3 py-1 rounded-full text-xs font-semibold">
                                                                         <?php echo number_format($history['order_count']); ?> orders
                                                                     </span>
                                                                 </td>
@@ -813,7 +843,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['remake_code'])) {
                                                                     ];
                                                                     $status_class = $status_colors[$history['status']] ?? 'bg-gray-100 text-gray-700';
                                                                     ?>
-                                                                    <span class="inline-flex items-center px-3 py-1 <?php echo $status_class; ?> rounded-full text-xs font-bold">
+                                                                    <span
+                                                                        class="inline-flex items-center px-3 py-1 <?php echo $status_class; ?> rounded-full text-xs font-bold">
                                                                         <?php echo ucfirst($history['status']); ?>
                                                                     </span>
                                                                 </td>
@@ -838,7 +869,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['remake_code'])) {
                                 <div class=" p-12 text-center">
                                     <i class="fas fa-inbox text-5xl text-gray-300 mb-4"></i>
                                     <p class="text-gray-600 font-medium">No commission earned yet</p>
-                                    <p class="text-sm text-gray-500 mt-2">Share your referral code to start earning commissions!</p>
+                                    <p class="text-sm text-gray-500 mt-2">Share your referral code to start earning commissions!
+                                    </p>
                                 </div>
                             <?php endif; ?>
                         </div>
@@ -860,13 +892,20 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['remake_code'])) {
                                         <thead class="bg-gray-100 border-b-2 border-gray-300">
                                             <tr>
                                                 <th class="px-4 py-3 text-left text-xs font-bold text-gray-700 uppercase">#</th>
-                                                <th class="px-4 py-3 text-left text-xs font-bold text-gray-700 uppercase">Customer Name</th>
-                                                <th class="px-4 py-3 text-left text-xs font-bold text-gray-700 uppercase">Email</th>
-                                                <th class="px-4 py-3 text-center text-xs font-bold text-gray-700 uppercase">Orders</th>
-                                                <th class="px-4 py-3 text-right text-xs font-bold text-gray-700 uppercase">Total Spent</th>
-                                                <th class="px-4 py-3 text-right text-xs font-bold text-gray-700 uppercase">Comission</th>
-                                                <th class="px-4 py-3 text-center text-xs font-bold text-gray-700 uppercase">First Order</th>
-                                                <th class="px-4 py-3 text-center text-xs font-bold text-gray-700 uppercase">Last Order</th>
+                                                <th class="px-4 py-3 text-left text-xs font-bold text-gray-700 uppercase">
+                                                    Customer Name</th>
+                                                <th class="px-4 py-3 text-left text-xs font-bold text-gray-700 uppercase">Email
+                                                </th>
+                                                <th class="px-4 py-3 text-center text-xs font-bold text-gray-700 uppercase">
+                                                    Orders</th>
+                                                <th class="px-4 py-3 text-right text-xs font-bold text-gray-700 uppercase">Total
+                                                    Spent</th>
+                                                <th class="px-4 py-3 text-right text-xs font-bold text-gray-700 uppercase">
+                                                    Comission</th>
+                                                <th class="px-4 py-3 text-center text-xs font-bold text-gray-700 uppercase">
+                                                    First Order</th>
+                                                <th class="px-4 py-3 text-center text-xs font-bold text-gray-700 uppercase">Last
+                                                    Order</th>
                                             </tr>
                                         </thead>
                                         <tbody class="divide-y divide-gray-200">
@@ -877,7 +916,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['remake_code'])) {
 
                                                     <td class="px-4 py-3">
                                                         <div class="flex items-center space-x-2">
-                                                            <div class="w-8 h-8 bg-orange-100 rounded-full flex items-center justify-center">
+                                                            <div
+                                                                class="w-8 h-8 bg-orange-100 rounded-full flex items-center justify-center">
                                                                 <span class="text-orange-600 font-bold text-xs">
                                                                     <?php echo strtoupper(substr($user['customer_name'], 0, 1)); ?>
                                                                 </span>
@@ -893,7 +933,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['remake_code'])) {
                                                     </td>
 
                                                     <td class="px-4 py-3 text-center">
-                                                        <span class="inline-flex items-center px-2 py-1 bg-blue-100 text-blue-700 rounded text-xs font-bold">
+                                                        <span
+                                                            class="inline-flex items-center px-2 py-1 bg-blue-100 text-blue-700 rounded text-xs font-bold">
                                                             <i class="fas fa-shopping-bag mr-1"></i>
                                                             <?php echo number_format($user['order_count']); ?>
                                                         </span>
@@ -944,15 +985,17 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['remake_code'])) {
                                     <div class="flex items-center justify-between text-sm">
                                         <span class="text-gray-700">
                                             <i class="fas fa-users mr-2 text-orange-600"></i>
-                                            <strong><?php echo count($referral_data['users_list']); ?></strong> unique customer<?php echo count($referral_data['users_list']) != 1 ? 's' : ''; ?> used your referral code
+                                            <strong><?php echo count($referral_data['users_list']); ?></strong> unique
+                                            customer<?php echo count($referral_data['users_list']) != 1 ? 's' : ''; ?> used your
+                                            referral code
                                         </span>
                                         <span class="text-gray-600">
                                             Average spending: <strong class="text-green-700">₱<?php
-                                                                                                $avg_spending = count($referral_data['users_list']) > 0
-                                                                                                    ? array_sum(array_column($referral_data['users_list'], 'total_spent')) / count($referral_data['users_list'])
-                                                                                                    : 0;
-                                                                                                echo number_format($avg_spending, 2);
-                                                                                                ?></strong>
+                                            $avg_spending = count($referral_data['users_list']) > 0
+                                                ? array_sum(array_column($referral_data['users_list'], 'total_spent')) / count($referral_data['users_list'])
+                                                : 0;
+                                            echo number_format($avg_spending, 2);
+                                            ?></strong>
                                         </span>
                                     </div>
                                 </div>
@@ -1018,7 +1061,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['remake_code'])) {
 
                     <!-- Time Period Stats -->
                     <div class="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-6">
-                        <div class="bg-gradient-to-br from-green-50 to-green-100 border border-green-200 rounded-lg p-4 text-center">
+                        <div
+                            class="bg-gradient-to-br from-green-50 to-green-100 border border-green-200 rounded-lg p-4 text-center">
                             <div class="text-3xl font-bold text-green-600 mb-1">
                                 <?php echo number_format($today_visits); ?>
                             </div>
@@ -1032,12 +1076,14 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['remake_code'])) {
                             </div>
                             <?php if ($today_orders > 0): ?>
                                 <div class="text-xs text-green-700 mt-1 font-semibold">
-                                    <i class="fas fa-check-circle mr-1"></i><?php echo $today_orders; ?> order<?php echo $today_orders != 1 ? 's' : ''; ?>
+                                    <i class="fas fa-check-circle mr-1"></i><?php echo $today_orders; ?>
+                                    order<?php echo $today_orders != 1 ? 's' : ''; ?>
                                 </div>
                             <?php endif; ?>
                         </div>
 
-                        <div class="bg-gradient-to-br from-blue-50 to-blue-100 border border-blue-200 rounded-lg p-4 text-center">
+                        <div
+                            class="bg-gradient-to-br from-blue-50 to-blue-100 border border-blue-200 rounded-lg p-4 text-center">
                             <div class="text-3xl font-bold text-blue-600 mb-1">
                                 <?php echo number_format($week_visits); ?>
                             </div>
@@ -1051,12 +1097,14 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['remake_code'])) {
                             </div>
                             <?php if ($week_orders > 0): ?>
                                 <div class="text-xs text-blue-700 mt-1 font-semibold">
-                                    <i class="fas fa-check-circle mr-1"></i><?php echo $week_orders; ?> order<?php echo $week_orders != 1 ? 's' : ''; ?>
+                                    <i class="fas fa-check-circle mr-1"></i><?php echo $week_orders; ?>
+                                    order<?php echo $week_orders != 1 ? 's' : ''; ?>
                                 </div>
                             <?php endif; ?>
                         </div>
 
-                        <div class="bg-gradient-to-br from-purple-50 to-purple-100 border border-purple-200 rounded-lg p-4 text-center">
+                        <div
+                            class="bg-gradient-to-br from-purple-50 to-purple-100 border border-purple-200 rounded-lg p-4 text-center">
                             <div class="text-3xl font-bold text-purple-600 mb-1">
                                 <?php echo number_format($month_visits); ?>
                             </div>
@@ -1070,7 +1118,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['remake_code'])) {
                             </div>
                             <?php if ($month_orders > 0): ?>
                                 <div class="text-xs text-purple-700 mt-1 font-semibold">
-                                    <i class="fas fa-check-circle mr-1"></i><?php echo $month_orders; ?> order<?php echo $month_orders != 1 ? 's' : ''; ?>
+                                    <i class="fas fa-check-circle mr-1"></i><?php echo $month_orders; ?>
+                                    order<?php echo $month_orders != 1 ? 's' : ''; ?>
                                 </div>
                             <?php endif; ?>
                         </div>
@@ -1088,12 +1137,17 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['remake_code'])) {
                             <table class="w-full text-sm">
                                 <thead class="bg-gray-50 sticky top-0">
                                     <tr class="border-b border-gray-200">
-                                        <th class="px-4 py-2 text-left text-xs font-medium text-gray-600 uppercase">Date</th>
+                                        <th class="px-4 py-2 text-left text-xs font-medium text-gray-600 uppercase">Date
+                                        </th>
                                         <th class="px-4 py-2 text-left text-xs font-medium text-gray-600 uppercase">Day</th>
-                                        <th class="px-4 py-2 text-center text-xs font-medium text-gray-600 uppercase">Visits</th>
-                                        <th class="px-4 py-2 text-center text-xs font-medium text-gray-600 uppercase">Orders</th>
-                                        <th class="px-4 py-2 text-center text-xs font-medium text-gray-600 uppercase">Conv. Rate</th>
-                                        <th class="px-4 py-2 text-right text-xs font-medium text-gray-600 uppercase">Revenue</th>
+                                        <th class="px-4 py-2 text-center text-xs font-medium text-gray-600 uppercase">Visits
+                                        </th>
+                                        <th class="px-4 py-2 text-center text-xs font-medium text-gray-600 uppercase">Orders
+                                        </th>
+                                        <th class="px-4 py-2 text-center text-xs font-medium text-gray-600 uppercase">Conv.
+                                            Rate</th>
+                                        <th class="px-4 py-2 text-right text-xs font-medium text-gray-600 uppercase">Revenue
+                                        </th>
                                     </tr>
                                 </thead>
                                 <tbody class="divide-y divide-gray-100">
@@ -1114,14 +1168,16 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['remake_code'])) {
                                                     <?php echo date('l', strtotime($day['visit_date'])); ?>
                                                 </td>
                                                 <td class="px-4 py-2 text-center">
-                                                    <span class="inline-flex items-center px-2 py-1 bg-blue-100 text-blue-800 rounded-full text-xs font-medium">
+                                                    <span
+                                                        class="inline-flex items-center px-2 py-1 bg-blue-100 text-blue-800 rounded-full text-xs font-medium">
                                                         <i class="fas fa-eye mr-1"></i>
                                                         <?php echo number_format($day_visits); ?>
                                                     </span>
                                                 </td>
                                                 <td class="px-4 py-2 text-center">
                                                     <?php if ($has_orders): ?>
-                                                        <span class="inline-flex items-center px-2 py-1 bg-green-100 text-green-800 rounded-full text-xs font-bold">
+                                                        <span
+                                                            class="inline-flex items-center px-2 py-1 bg-green-100 text-green-800 rounded-full text-xs font-bold">
                                                             <i class="fas fa-shopping-cart mr-1"></i>
                                                             <?php echo number_format($day_orders); ?>
                                                         </span>
@@ -1131,7 +1187,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['remake_code'])) {
                                                 </td>
                                                 <td class="px-4 py-2 text-center">
                                                     <?php if ($has_orders): ?>
-                                                        <span class="font-bold <?= $day_conversion >= 10 ? 'text-green-700' : 'text-orange-600' ?>">
+                                                        <span
+                                                            class="font-bold <?= $day_conversion >= 10 ? 'text-green-700' : 'text-orange-600' ?>">
                                                             <?php echo number_format($day_conversion, 1); ?>%
                                                         </span>
                                                     <?php else: ?>
@@ -1166,305 +1223,75 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['remake_code'])) {
                     <div class="mt-4 flex flex-col sm:flex-row items-center justify-between text-xs text-gray-500 gap-2">
                         <span>
                             <i class="fas fa-info-circle mr-1"></i>
-                            Visit tracking started on <?php echo isset($referral_data['created']) ? date('M j, Y', strtotime($referral_data['created'])) : 'N/A'; ?>
+                            Visit tracking started on
+                            <?php echo isset($referral_data['created']) ? date('M j, Y', strtotime($referral_data['created'])) : 'N/A'; ?>
                         </span>
                         <span>
                             <i class="fas fa-users mr-1"></i>
-                            Total Unique Visits: <strong class="text-gray-700"><?php echo number_format($referral_data['scans'] ?? 0); ?></strong>
+                            Total Unique Visits: <strong
+                                class="text-gray-700"><?php echo number_format($referral_data['scans'] ?? 0); ?></strong>
                         </span>
                     </div>
                 </div>
             </div>
             <!-- ✅ ANALYTICS SECTION ENDS HERE -->
-
-            <!-- ✅ REFERRAL HISTORY SECTION STARTS HERE -->
-            <div class="bg-white rounded-xl shadow-lg border border-gray-200 overflow-hidden mt-6">
-                <div class="bg-gradient-to-r from-gray-600 to-gray-700 px-4 sm:px-6 py-3 sm:py-4">
-                    <h2 class="text-lg sm:text-2xl font-bold text-white flex items-center">
-                        <i class="fas fa-history mr-2 sm:mr-3"></i>
-                        Referral Code History
-                    </h2>
+        </div>
+        <!-- ✅ REFERRAL HISTORY SECTION ENDS HERE -->
+    <?php else: ?>
+        <div class="bg-white rounded-xl shadow-lg border border-gray-200 overflow-hidden">
+            <div class="p-8 sm:p-12 text-center">
+                <div class="inline-flex items-center justify-center w-20 h-20 bg-purple-100 rounded-full mb-6">
+                    <i class="fas fa-gift text-purple-600 text-3xl"></i>
                 </div>
+                <h3 class="text-2xl font-bold text-gray-900 mb-3">No Referral Code Yet</h3>
+                <p class="text-gray-600 mb-8 max-w-md mx-auto">
+                    Generate your unique referral code to start earning commissions from customer referrals!
+                </p>
 
-                <div class="p-4 sm:p-6">
-                    <?php
-                    // Fetch ALL referral codes (active and inactive) for this user
-                    $history_stmt = $conn->prepare("
-    SELECT 
-        referral_code, 
-        is_active, 
-        total_scans, 
-        total_conversions, 
-        total_revenue, 
-        discount_enabled,
-        discount_type,
-        discount_value,
-        created_at,
-        updated_at
-    FROM referral_codes 
-    WHERE user_id = ? 
-    ORDER BY is_active DESC, created_at DESC
-");
-                    $history_stmt->bind_param("i", $user_id);
-                    $history_stmt->execute();
-                    $history_result = $history_stmt->get_result();
-                    $has_history = $history_result->num_rows > 0;
+                <form method="POST">
+                    <button type="submit" name="generate_code"
+                        class="inline-flex items-center space-x-2 bg-gradient-to-r from-purple-500 to-purple-600 hover:from-purple-600 hover:to-purple-700 text-white px-8 py-3 rounded-lg transition-all duration-200 transform hover:scale-105 shadow-lg text-lg font-medium">
+                        <i class="fas fa-magic"></i>
+                        <span>Generate My Referral Code</span>
+                    </button>
+                </form>
 
-                    // Calculate summary stats
-                    $active_count = 0;
-                    $inactive_count = 0;
-                    $all_history_rows = [];
-
-                    while ($row = $history_result->fetch_assoc()) {
-                        $all_history_rows[] = $row;
-
-                        if ($row['is_active'] == 1) {
-                            $active_count++;
-                        } else {
-                            $inactive_count++;
-                        }
-                    }
-                    ?>
-
-                    <?php if ($has_history): ?>
-                        <?php
-                        // NOW calculate real totals by fetching actual data
-                        $total_all_visits = 0;
-                        $total_all_sales = 0;
-                        $total_all_revenue = 0;
-                        ?>
-
-                        <div class="overflow-x-auto">
-                            <table class="w-full text-sm">
-                                <thead class="bg-gray-100 border-b-2 border-gray-300">
-                                    <tr>
-                                        <th class="px-4 py-3 text-left text-xs font-bold text-gray-700 uppercase">#</th>
-                                        <th class="px-4 py-3 text-left text-xs font-bold text-gray-700 uppercase">Customer Name</th>
-                                        <th class="px-4 py-3 text-left text-xs font-bold text-gray-700 uppercase">Email</th>
-                                        <th class="px-4 py-3 text-center text-xs font-bold text-gray-700 uppercase">Orders</th>
-                                        <th class="px-4 py-3 text-right text-xs font-bold text-gray-700 uppercase">Total Spent</th>
-                                        <th class="px-4 py-3 text-right text-xs font-bold text-gray-700 uppercase">Commission Earned</th>
-                                        <th class="px-4 py-3 text-center text-xs font-bold text-gray-700 uppercase">First Order</th>
-                                        <th class="px-4 py-3 text-center text-xs font-bold text-gray-700 uppercase">Last Order</th>
-                                    </tr>
-                                </thead>
-                                <tbody class="divide-y divide-gray-200">
-                                    <?php foreach ($all_history_rows as $history_row): ?>
-                                        <?php
-                                        // Get REAL visit count from referral_visits table
-                                        $visit_stmt = $conn->prepare("SELECT COUNT(*) FROM referral_visits WHERE referral_code = ?");
-                                        $visit_stmt->bind_param("s", $history_row['referral_code']);
-                                        $visit_stmt->execute();
-                                        $visit_stmt->bind_result($real_visits);
-                                        $visit_stmt->fetch();
-                                        $visit_stmt->close();
-
-                                        // Get REAL order count from orders table
-                                        $order_stmt = $conn->prepare("SELECT COUNT(*), COALESCE(SUM(total), 0) FROM orders WHERE sales_referral_code = ? AND sales_referral_code IS NOT NULL");
-                                        $order_stmt->bind_param("s", $history_row['referral_code']);
-                                        $order_stmt->execute();
-                                        $order_stmt->bind_result($real_orders, $real_revenue);
-                                        $order_stmt->fetch();
-                                        $order_stmt->close();
-
-                                        // Use real data instead of cached totals
-                                        $hist_visits = intval($real_visits ?? 0);
-                                        $hist_orders = intval($real_orders ?? 0);
-                                        $hist_revenue = floatval($real_revenue ?? 0);
-                                        $hist_conv_rate = $hist_visits > 0 ? ($hist_orders / $hist_visits) * 100 : 0;
-
-                                        // Add to totals for summary
-                                        $total_all_visits += $hist_visits;
-                                        $total_all_sales += $hist_orders;
-                                        $total_all_revenue += $hist_revenue;
-                                        ?>
-                                        <tr class="hover:bg-gray-50 transition-colors <?php echo $history_row['is_active'] == 1 ? 'bg-green-50' : ''; ?>">
-                                            <!-- Status Badge -->
-                                            <td class="px-4 py-3">
-                                                <?php if ($history_row['is_active'] == 1): ?>
-                                                    <span class="inline-flex items-center px-3 py-1 bg-green-500 text-white rounded-full text-xs font-bold shadow-sm">
-                                                        <i class="fas fa-check-circle mr-1"></i>ACTIVE
-                                                    </span>
-                                                <?php else: ?>
-                                                    <span class="inline-flex items-center px-3 py-1 bg-gray-400 text-white rounded-full text-xs font-bold">
-                                                        <i class="fas fa-ban mr-1"></i>INACTIVE
-                                                    </span>
-                                                <?php endif; ?>
-                                            </td>
-
-                                            <!-- Referral Code -->
-                                            <td class="px-4 py-3">
-                                                <div class="flex items-center space-x-2">
-                                                    <span class="font-mono font-bold text-purple-700 text-base">
-                                                        <?php echo htmlspecialchars($history_row['referral_code']); ?>
-                                                    </span>
-                                                    <?php if ($history_row['is_active'] == 1): ?>
-                                                        <button onclick="copyHistoryCode('<?php echo htmlspecialchars($history_row['referral_code']); ?>')"
-                                                            class="text-purple-600 hover:text-purple-800 transition" title="Copy code">
-                                                            <i class="fas fa-copy"></i>
-                                                        </button>
-                                                    <?php endif; ?>
-                                                </div>
-                                            </td>
-
-                                            <!-- Discount Info -->
-                                            <td class="px-4 py-3 text-center">
-                                                <?php if ($history_row['discount_enabled'] == 1): ?>
-                                                    <span class="inline-flex items-center px-2 py-1 bg-orange-100 text-orange-700 rounded text-xs font-bold">
-                                                        <i class="fas fa-ticket-alt mr-1"></i>
-                                                        <?php
-                                                        if ($history_row['discount_type'] == 'percentage') {
-                                                            echo number_format($history_row['discount_value'], 0) . '%';
-                                                        } else {
-                                                            echo '₱' . number_format($history_row['discount_value'], 0);
-                                                        }
-                                                        ?>
-                                                    </span>
-                                                <?php else: ?>
-                                                    <span class="text-gray-400 text-xs">-</span>
-                                                <?php endif; ?>
-                                            </td>
-
-                                            <!-- Visits -->
-                                            <td class="px-4 py-3 text-center">
-                                                <span class="inline-flex items-center px-2 py-1 bg-blue-100 text-blue-700 rounded text-xs font-semibold">
-                                                    <i class="fas fa-eye mr-1"></i>
-                                                    <?php echo number_format($hist_visits); ?>
-                                                </span>
-                                            </td>
-
-                                            <!-- Orders -->
-                                            <td class="px-4 py-3 text-center">
-                                                <span class="inline-flex items-center px-2 py-1 bg-green-100 text-green-700 rounded text-xs font-semibold">
-                                                    <i class="fas fa-shopping-cart mr-1"></i>
-                                                    <?php echo number_format($hist_orders); ?>
-                                                </span>
-                                            </td>
-
-                                            <!-- Conversion Rate -->
-                                            <td class="px-4 py-3 text-center">
-                                                <?php if ($hist_orders > 0): ?>
-                                                    <span class="font-bold <?php echo $hist_conv_rate >= 10 ? 'text-green-700' : ($hist_conv_rate >= 5 ? 'text-orange-600' : 'text-red-600'); ?>">
-                                                        <?php echo number_format($hist_conv_rate, 1); ?>%
-                                                    </span>
-                                                <?php else: ?>
-                                                    <span class="text-gray-400 text-xs">0%</span>
-                                                <?php endif; ?>
-                                            </td>
-
-                                            <!-- Revenue -->
-                                            <td class="px-4 py-3 text-right">
-                                                <span class="font-bold text-purple-700">
-                                                    ₱<?php echo number_format($hist_revenue, 2); ?>
-                                                </span>
-                                            </td>
-
-                                            <!-- Created Date -->
-                                            <td class="px-4 py-3 text-center text-xs text-gray-600">
-                                                <div class="flex flex-col">
-                                                    <span class="font-medium"><?php echo date('M j, Y', strtotime($history_row['created_at'])); ?></span>
-                                                    <span class="text-gray-400"><?php echo date('g:i A', strtotime($history_row['created_at'])); ?></span>
-                                                </div>
-                                            </td>
-                                        </tr>
-                                    <?php endforeach; ?>
-                                </tbody>
-                            </table>
-                        </div>
-
-                        <!-- Summary Stats -->
-                        <div class="mt-6 grid grid-cols-2 sm:grid-cols-5 gap-3 bg-gray-50 rounded-lg p-4 border border-gray-200">
-                            <div class="text-center">
-                                <div class="text-2xl font-bold text-green-600"><?php echo $active_count; ?></div>
-                                <div class="text-xs text-gray-600">Active Codes</div>
+                <div class="mt-8 pt-8 border-t border-gray-200">
+                    <h4 class="text-sm font-semibold text-gray-700 mb-3">How It Works:</h4>
+                    <div class="grid grid-cols-1 sm:grid-cols-3 gap-4 text-left max-w-2xl mx-auto">
+                        <div class="flex items-start space-x-3">
+                            <div class="flex-shrink-0 w-8 h-8 bg-purple-100 rounded-full flex items-center justify-center">
+                                <span class="text-purple-600 font-bold">1</span>
                             </div>
-                            <div class="text-center">
-                                <div class="text-2xl font-bold text-gray-400"><?php echo $inactive_count; ?></div>
-                                <div class="text-xs text-gray-600">Inactive Codes</div>
-                            </div>
-                            <div class="text-center">
-                                <div class="text-2xl font-bold text-blue-600"><?php echo number_format($total_all_visits); ?></div>
-                                <div class="text-xs text-gray-600">Total Visits</div>
-                            </div>
-                            <div class="text-center">
-                                <div class="text-2xl font-bold text-green-600"><?php echo number_format($total_all_sales); ?></div>
-                                <div class="text-xs text-gray-600">Total Sales</div>
-                            </div>
-                            <div class="text-center">
-                                <div class="text-2xl font-bold text-purple-600">₱<?php echo number_format($total_all_revenue, 2); ?></div>
-                                <div class="text-xs text-gray-600">Total Revenue</div>
+                            <div>
+                                <div class="text-sm font-medium text-gray-900">Share Your Code</div>
+                                <div class="text-xs text-gray-600">Give your code to customers</div>
                             </div>
                         </div>
-
-                    <?php else: ?>
-                        <div class="text-center py-12 text-gray-500">
-                            <i class="fas fa-inbox text-5xl mb-4 text-gray-300"></i>
-                            <p class="text-lg font-medium">No referral history yet</p>
-                            <p class="text-sm">Your referral codes will appear here once you generate them</p>
+                        <div class="flex items-start space-x-3">
+                            <div class="flex-shrink-0 w-8 h-8 bg-purple-100 rounded-full flex items-center justify-center">
+                                <span class="text-purple-600 font-bold">2</span>
+                            </div>
+                            <div>
+                                <div class="text-sm font-medium text-gray-900">They Purchase</div>
+                                <div class="text-xs text-gray-600">Customer completes order</div>
+                            </div>
                         </div>
-                    <?php endif; ?>
-
-                    <?php $history_stmt->close(); ?>
-                </div>
-            </div>
-            <!-- ✅ REFERRAL HISTORY SECTION ENDS HERE -->
-
-        <?php else: ?>
-
-            <div class="bg-white rounded-xl shadow-lg border border-gray-200 overflow-hidden">
-                <div class="p-8 sm:p-12 text-center">
-                    <div class="inline-flex items-center justify-center w-20 h-20 bg-purple-100 rounded-full mb-6">
-                        <i class="fas fa-gift text-purple-600 text-3xl"></i>
-                    </div>
-                    <h3 class="text-2xl font-bold text-gray-900 mb-3">No Referral Code Yet</h3>
-                    <p class="text-gray-600 mb-8 max-w-md mx-auto">
-                        Generate your unique referral code to start earning commissions from customer referrals!
-                    </p>
-
-                    <form method="POST">
-                        <button type="submit" name="generate_code"
-                            class="inline-flex items-center space-x-2 bg-gradient-to-r from-purple-500 to-purple-600 hover:from-purple-600 hover:to-purple-700 text-white px-8 py-3 rounded-lg transition-all duration-200 transform hover:scale-105 shadow-lg text-lg font-medium">
-                            <i class="fas fa-magic"></i>
-                            <span>Generate My Referral Code</span>
-                        </button>
-                    </form>
-
-                    <div class="mt-8 pt-8 border-t border-gray-200">
-                        <h4 class="text-sm font-semibold text-gray-700 mb-3">How It Works:</h4>
-                        <div class="grid grid-cols-1 sm:grid-cols-3 gap-4 text-left max-w-2xl mx-auto">
-                            <div class="flex items-start space-x-3">
-                                <div class="flex-shrink-0 w-8 h-8 bg-purple-100 rounded-full flex items-center justify-center">
-                                    <span class="text-purple-600 font-bold">1</span>
-                                </div>
-                                <div>
-                                    <div class="text-sm font-medium text-gray-900">Share Your Code</div>
-                                    <div class="text-xs text-gray-600">Give your code to customers</div>
-                                </div>
+                        <div class="flex items-start space-x-3">
+                            <div class="flex-shrink-0 w-8 h-8 bg-purple-100 rounded-full flex items-center justify-center">
+                                <span class="text-purple-600 font-bold">3</span>
                             </div>
-                            <div class="flex items-start space-x-3">
-                                <div class="flex-shrink-0 w-8 h-8 bg-purple-100 rounded-full flex items-center justify-center">
-                                    <span class="text-purple-600 font-bold">2</span>
-                                </div>
-                                <div>
-                                    <div class="text-sm font-medium text-gray-900">They Purchase</div>
-                                    <div class="text-xs text-gray-600">Customer completes order</div>
-                                </div>
-                            </div>
-                            <div class="flex items-start space-x-3">
-                                <div class="flex-shrink-0 w-8 h-8 bg-purple-100 rounded-full flex items-center justify-center">
-                                    <span class="text-purple-600 font-bold">3</span>
-                                </div>
-                                <div>
-                                    <div class="text-sm font-medium text-gray-900">Earn Commission</div>
-                                    <div class="text-xs text-gray-600">Get credited for the sale</div>
-                                </div>
+                            <div>
+                                <div class="text-sm font-medium text-gray-900">Earn Commission</div>
+                                <div class="text-xs text-gray-600">Get credited for the sale</div>
                             </div>
                         </div>
                     </div>
                 </div>
             </div>
+        </div>
 
-        <?php endif; ?>
+    <?php endif; ?>
     </div>
 
     <!-- Remake Code Modal -->
@@ -1476,7 +1303,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['remake_code'])) {
                 </div>
                 <h3 class="text-xl font-bold text-gray-900 mb-2">Remake Referral Code?</h3>
                 <p class="text-gray-600 text-sm">
-                    This will deactivate your current code <strong class="text-purple-600"><?php echo htmlspecialchars($referral_data['code'] ?? ''); ?></strong> and generate a new one.
+                    This will deactivate your current code <strong
+                        class="text-purple-600"><?php echo htmlspecialchars($referral_data['code'] ?? ''); ?></strong>
+                    and generate a new one.
                 </p>
                 <p class="text-red-600 text-xs mt-2 font-medium">
                     ⚠️ Your old code will no longer work!
@@ -1489,15 +1318,18 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['remake_code'])) {
                 </div>
                 <div class="grid grid-cols-3 gap-2 text-center">
                     <div>
-                        <div class="font-bold text-blue-600"><?php echo number_format($referral_data['scans'] ?? 0); ?></div>
+                        <div class="font-bold text-blue-600"><?php echo number_format($referral_data['scans'] ?? 0); ?>
+                        </div>
                         <div class="text-xs text-gray-500">Visits</div>
                     </div>
                     <div>
-                        <div class="font-bold text-green-600"><?php echo number_format($referral_data['conversions'] ?? 0); ?></div>
+                        <div class="font-bold text-green-600">
+                            <?php echo number_format($referral_data['conversions'] ?? 0); ?></div>
                         <div class="text-xs text-gray-500">Sales</div>
                     </div>
                     <div>
-                        <div class="font-bold text-purple-600">₱<?php echo number_format($referral_data['revenue'] ?? 0, 2); ?></div>
+                        <div class="font-bold text-purple-600">
+                            ₱<?php echo number_format($referral_data['revenue'] ?? 0, 2); ?></div>
                         <div class="text-xs text-gray-500">Revenue</div>
                     </div>
                 </div>
@@ -1568,7 +1400,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['remake_code'])) {
         }
 
         // Close modal when clicking outside
-        document.getElementById('remakeModal')?.addEventListener('click', function(e) {
+        document.getElementById('remakeModal')?.addEventListener('click', function (e) {
             if (e.target === this) {
                 hideRemakeModal();
             }
@@ -1639,14 +1471,14 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['remake_code'])) {
 
         function saveQRCodeToDatabase(qrData) {
             fetch('save_referral_qr.php', {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json',
-                    },
-                    body: JSON.stringify({
-                        qr_data: qrData
-                    })
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({
+                    qr_data: qrData
                 })
+            })
                 .then(response => response.json())
                 .then(data => {
                     if (data.success) {
@@ -1725,7 +1557,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['remake_code'])) {
             ctx.fillText(userName, finalCanvas.width / 2, yPos);
 
             // Convert to blob and download
-            finalCanvas.toBlob(function(blob) {
+            finalCanvas.toBlob(function (blob) {
                 const url = URL.createObjectURL(blob);
                 const a = document.createElement('a');
                 a.href = url;
@@ -1748,7 +1580,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['remake_code'])) {
         }
 
         // Generate QR on page load if it exists
-        document.addEventListener('DOMContentLoaded', function() {
+        document.addEventListener('DOMContentLoaded', function () {
             <?php if (!empty($referral_data['qr_path'])): ?>
                 const referralLink = document.getElementById('referralLink');
                 const qrDisplay = document.getElementById('qr-display');

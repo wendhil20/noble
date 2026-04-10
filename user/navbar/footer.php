@@ -65,7 +65,7 @@
     }
 </style>
 
-<footer class="bg-white text-gray-800 pt-14 pb-8 mt-12 relative overflow-hidden">
+<footer class="bg-white text-gray-800 pt-5 pb-8 relative overflow-hidden">
 
     <!-- Top divider -->
     <div class="h-px bg-gradient-to-r from-transparent via-gray-200 to-transparent mb-12"></div>

@@ -38,15 +38,15 @@ if (!isset($_SESSION['noble_name']) || !isset($_SESSION['noble_lvl']) || !isset(
     $stmt->execute();
     $stmt->bind_result($id, $name, $lvl, $subrole, $is_head);  // ← dagdag is_head
     if ($stmt->fetch()) {
-        $_SESSION['noble_id']     = $id;
-        $_SESSION['noble_name']   = $name;
-        $_SESSION['noble_lvl']    = $lvl;
+        $_SESSION['noble_id'] = $id;
+        $_SESSION['noble_name'] = $name;
+        $_SESSION['noble_lvl'] = $lvl;
         $_SESSION['noble_subrole'] = $subrole ?? '';
-        $_SESSION['noble_is_head'] = (int)$is_head; // ← i-save sa session
+        $_SESSION['noble_is_head'] = (int) $is_head; // ← i-save sa session
     } else {
-        $_SESSION['noble_id']      = null;
-        $_SESSION['noble_name']    = "Unknown User";
-        $_SESSION['noble_lvl']     = "guest";
+        $_SESSION['noble_id'] = null;
+        $_SESSION['noble_name'] = "Unknown User";
+        $_SESSION['noble_lvl'] = "guest";
         $_SESSION['noble_subrole'] = '';
         $_SESSION['noble_is_head'] = 0;
     }
@@ -345,7 +345,7 @@ if (!isset($_SESSION['noble_name']) || !isset($_SESSION['noble_lvl']) || !isset(
             <div class="flex items-center gap-1.5 flex-shrink-0">
 
                 <!-- Quick Actions -->
-              <div class="static sm:relative">
+                <div class="static sm:relative">
                     <button @click="quickActionsOpen = !quickActionsOpen"
                         class="flex items-center gap-2 px-3 h-[38px] rounded-[10px] border border-[#e8e4df] bg-white text-[13px] font-medium text-gray-500 hover:border-orange-400 hover:bg-orange-50 hover:text-orange-600 hover:shadow-[0_0_0_4px_rgba(232,93,38,0.07)] transition-all"
                         :class="quickActionsOpen ? 'border-orange-400 bg-orange-50 text-orange-600' : ''">
@@ -428,77 +428,105 @@ if (!isset($_SESSION['noble_name']) || !isset($_SESSION['noble_lvl']) || !isset(
 
                             <?php endif; ?>
 
-                          <?php if (hasAnyRole(['productspecialist'])): ?>
-<div class="mb-1">
-    <div class="flex items-center gap-1.5 px-2.5 pt-2 pb-1">
-        <div class="w-5 h-5 rounded-[5px] bg-violet-50 text-violet-500 flex items-center justify-center text-[11px]">
-            <i class="ri-box-3-line"></i>
-        </div>
-        <span class="text-[10.5px] font-semibold uppercase tracking-[0.6px] text-gray-400">Product Management</span>
-    </div>
+                            <?php if (hasAnyRole(['productspecialist'])): ?>
+                                <div class="mb-1">
+                                    <div class="flex items-center gap-1.5 px-2.5 pt-2 pb-1">
+                                        <div
+                                            class="w-5 h-5 rounded-[5px] bg-violet-50 text-violet-500 flex items-center justify-center text-[11px]">
+                                            <i class="ri-box-3-line"></i>
+                                        </div>
+                                        <span
+                                            class="text-[10.5px] font-semibold uppercase tracking-[0.6px] text-gray-400">Product
+                                            Management</span>
+                                    </div>
 
-    <!-- Always visible — kahit non-head -->
-    <a href="../shop/main-adminshop-page-1.php" class="qa-item flex items-center gap-2.5 px-2.5 py-2 rounded-[10px] text-[13px] text-gray-600 hover:bg-orange-50 hover:text-orange-600 transition-all duration-150 group">
-        <div class="w-[30px] h-[30px] rounded-lg bg-gray-100 group-hover:bg-orange-100 flex items-center justify-center text-sm text-gray-500 group-hover:text-orange-500 transition-colors flex-shrink-0">
-            <i class="ri-add-circle-line"></i>
-        </div>
-        Add Product
-    </a>
+                                    <!-- Always visible — kahit non-head -->
+                                    <a href="../shop/main-adminshop-page-1.php"
+                                        class="qa-item flex items-center gap-2.5 px-2.5 py-2 rounded-[10px] text-[13px] text-gray-600 hover:bg-orange-50 hover:text-orange-600 transition-all duration-150 group">
+                                        <div
+                                            class="w-[30px] h-[30px] rounded-lg bg-gray-100 group-hover:bg-orange-100 flex items-center justify-center text-sm text-gray-500 group-hover:text-orange-500 transition-colors flex-shrink-0">
+                                            <i class="ri-add-circle-line"></i>
+                                        </div>
+                                        Add Product
+                                    </a>
 
-    <a href="../shop/main-adminupdateshop-page-2.php" class="qa-item flex items-center gap-2.5 px-2.5 py-2 rounded-[10px] text-[13px] text-gray-600 hover:bg-orange-50 hover:text-orange-600 transition-all duration-150 group">
-        <div class="w-[30px] h-[30px] rounded-lg bg-gray-100 group-hover:bg-orange-100 flex items-center justify-center text-sm text-gray-500 group-hover:text-orange-500 transition-colors flex-shrink-0">
-            <i class="ri-edit-line"></i>
-        </div>
-        Update Product
-    </a>
+                                    <a href="../shop/main-adminupdateshop-page-2.php"
+                                        class="qa-item flex items-center gap-2.5 px-2.5 py-2 rounded-[10px] text-[13px] text-gray-600 hover:bg-orange-50 hover:text-orange-600 transition-all duration-150 group">
+                                        <div
+                                            class="w-[30px] h-[30px] rounded-lg bg-gray-100 group-hover:bg-orange-100 flex items-center justify-center text-sm text-gray-500 group-hover:text-orange-500 transition-colors flex-shrink-0">
+                                            <i class="ri-edit-line"></i>
+                                        </div>
+                                        Update Product
+                                    </a>
 
-    <!-- Head-only links -->
-    <?php if ($_SESSION['noble_is_head'] == 1): ?>
-        <a href="../shop/main-banner-page-6.php" class="qa-item flex items-center gap-2.5 px-2.5 py-2 rounded-[10px] text-[13px] text-gray-600 hover:bg-orange-50 hover:text-orange-600 transition-all duration-150 group">
-            <div class="w-[30px] h-[30px] rounded-lg bg-gray-100 group-hover:bg-orange-100 flex items-center justify-center text-sm text-gray-500 group-hover:text-orange-500 transition-colors flex-shrink-0">
-                <i class="ri-price-tag-3-line"></i>
-            </div>
-            Banner Discount
-        </a>
+                                    <!-- Head-only links -->
+                                    <?php if ($_SESSION['noble_is_head'] == 1): ?>
+                                        <a href="../shop/main-banner-page-6.php"
+                                            class="qa-item flex items-center gap-2.5 px-2.5 py-2 rounded-[10px] text-[13px] text-gray-600 hover:bg-orange-50 hover:text-orange-600 transition-all duration-150 group">
+                                            <div
+                                                class="w-[30px] h-[30px] rounded-lg bg-gray-100 group-hover:bg-orange-100 flex items-center justify-center text-sm text-gray-500 group-hover:text-orange-500 transition-colors flex-shrink-0">
+                                                <i class="ri-price-tag-3-line"></i>
+                                            </div>
+                                            Banner Discount
+                                        </a>
 
-        <a href="../supplier_management/suppliers_list" class="qa-item flex items-center gap-2.5 px-2.5 py-2 rounded-[10px] text-[13px] text-gray-600 hover:bg-orange-50 hover:text-orange-600 transition-all duration-150 group">
-            <div class="w-[30px] h-[30px] rounded-lg bg-gray-100 group-hover:bg-orange-100 flex items-center justify-center text-sm text-gray-500 group-hover:text-orange-500 transition-colors flex-shrink-0">
-                <i class="ri-truck-line"></i>
-            </div>
-            Supplier Management
-        </a>
+                                        <a href="../supplier_management/suppliers_list"
+                                            class="qa-item flex items-center gap-2.5 px-2.5 py-2 rounded-[10px] text-[13px] text-gray-600 hover:bg-orange-50 hover:text-orange-600 transition-all duration-150 group">
+                                            <div
+                                                class="w-[30px] h-[30px] rounded-lg bg-gray-100 group-hover:bg-orange-100 flex items-center justify-center text-sm text-gray-500 group-hover:text-orange-500 transition-colors flex-shrink-0">
+                                                <i class="ri-truck-line"></i>
+                                            </div>
+                                            Supplier Management
+                                        </a>
 
-        <a href="../shop/main-category-product-page-3.php" class="qa-item flex items-center gap-2.5 px-2.5 py-2 rounded-[10px] text-[13px] text-gray-600 hover:bg-orange-50 hover:text-orange-600 transition-all duration-150 group">
-            <div class="w-[30px] h-[30px] rounded-lg bg-gray-100 group-hover:bg-orange-100 flex items-center justify-center text-sm text-gray-500 group-hover:text-orange-500 transition-colors flex-shrink-0">
-                <i class="ri-folder-line"></i>
-            </div>
-            Category Management
-        </a>
+                                        <a href="../shop/main-category-product-page-3.php"
+                                            class="qa-item flex items-center gap-2.5 px-2.5 py-2 rounded-[10px] text-[13px] text-gray-600 hover:bg-orange-50 hover:text-orange-600 transition-all duration-150 group">
+                                            <div
+                                                class="w-[30px] h-[30px] rounded-lg bg-gray-100 group-hover:bg-orange-100 flex items-center justify-center text-sm text-gray-500 group-hover:text-orange-500 transition-colors flex-shrink-0">
+                                                <i class="ri-folder-line"></i>
+                                            </div>
+                                            Category Management
+                                        </a>
 
-        <a href="../shop/main-add_bestseller-page-4.php" class="qa-item flex items-center gap-2.5 px-2.5 py-2 rounded-[10px] text-[13px] text-gray-600 hover:bg-orange-50 hover:text-orange-600 transition-all duration-150 group">
-            <div class="w-[30px] h-[30px] rounded-lg bg-gray-100 group-hover:bg-orange-100 flex items-center justify-center text-sm text-gray-500 group-hover:text-orange-500 transition-colors flex-shrink-0">
-                <i class="ri-star-line"></i>
-            </div>
-            Bestseller Management
-        </a>
+                                        <a href="../shop/main-add_bestseller-page-4.php"
+                                            class="qa-item flex items-center gap-2.5 px-2.5 py-2 rounded-[10px] text-[13px] text-gray-600 hover:bg-orange-50 hover:text-orange-600 transition-all duration-150 group">
+                                            <div
+                                                class="w-[30px] h-[30px] rounded-lg bg-gray-100 group-hover:bg-orange-100 flex items-center justify-center text-sm text-gray-500 group-hover:text-orange-500 transition-colors flex-shrink-0">
+                                                <i class="ri-star-line"></i>
+                                            </div>
+                                            Bestseller Management
+                                        </a>
 
-        <a href="../qrcodeperproduct/qrcodeitem" class="qa-item flex items-center gap-2.5 px-2.5 py-2 rounded-[10px] text-[13px] text-gray-600 hover:bg-orange-50 hover:text-orange-600 transition-all duration-150 group">
-            <div class="w-[30px] h-[30px] rounded-lg bg-gray-100 group-hover:bg-orange-100 flex items-center justify-center text-sm text-gray-500 group-hover:text-orange-500 transition-colors flex-shrink-0">
-                <i class="ri-qr-code-line"></i>
-            </div>
-            Product QR Codes
-        </a>
+                                        <a href="../qrcodeperproduct/qrcodeitem"
+                                            class="qa-item flex items-center gap-2.5 px-2.5 py-2 rounded-[10px] text-[13px] text-gray-600 hover:bg-orange-50 hover:text-orange-600 transition-all duration-150 group">
+                                            <div
+                                                class="w-[30px] h-[30px] rounded-lg bg-gray-100 group-hover:bg-orange-100 flex items-center justify-center text-sm text-gray-500 group-hover:text-orange-500 transition-colors flex-shrink-0">
+                                                <i class="ri-qr-code-line"></i>
+                                            </div>
+                                            Product QR Codes
+                                        </a>
 
-        <a href="../shop/quantity-management" class="qa-item flex items-center gap-2.5 px-2.5 py-2 rounded-[10px] text-[13px] text-gray-600 hover:bg-orange-50 hover:text-orange-600 transition-all duration-150 group">
-            <div class="w-[30px] h-[30px] rounded-lg bg-gray-100 group-hover:bg-orange-100 flex items-center justify-center text-sm text-gray-500 group-hover:text-orange-500 transition-colors flex-shrink-0">
-                <i class="ri-shopping-cart-line"></i>
-            </div>
-            Minimum Order Quantity
-        </a>
-    <?php endif; ?>
-</div>
-<div class="h-px bg-[#f5f0eb] mx-2 my-1"></div>
-<?php endif; ?>
+                                        <a href="../shop/quantity-management"
+                                            class="qa-item flex items-center gap-2.5 px-2.5 py-2 rounded-[10px] text-[13px] text-gray-600 hover:bg-orange-50 hover:text-orange-600 transition-all duration-150 group">
+                                            <div
+                                                class="w-[30px] h-[30px] rounded-lg bg-gray-100 group-hover:bg-orange-100 flex items-center justify-center text-sm text-gray-500 group-hover:text-orange-500 transition-colors flex-shrink-0">
+                                                <i class="ri-shopping-cart-line"></i>
+                                            </div>
+                                            Minimum Order Quantity
+                                        </a>
+
+                                        <a href="../shop/promotion-discount"
+                                            class="qa-item flex items-center gap-2.5 px-2.5 py-2 rounded-[10px] text-[13px] text-gray-600 hover:bg-orange-50 hover:text-orange-600 transition-all duration-150 group">
+                                            <div
+                                                class="w-[30px] h-[30px] rounded-lg bg-gray-100 group-hover:bg-orange-100 flex items-center justify-center text-sm text-gray-500 group-hover:text-orange-500 transition-colors flex-shrink-0">
+                                                <i class="ri-price-tag-3-line"></i>
+                                            </div>
+                                            Promotion Discount Banner
+                                        </a>
+                                    <?php endif; ?>
+                                </div>
+                                <div class="h-px bg-[#f5f0eb] mx-2 my-1"></div>
+                            <?php endif; ?>
 
                             <?php if (hasAnyRole(['sales'])): ?>
                                 <div class="px-3 py-2">

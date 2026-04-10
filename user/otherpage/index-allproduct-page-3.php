@@ -1412,7 +1412,11 @@ function calculate_price($variant_price, $color_price, $percent = 0, $discount =
                 const container = document.getElementById('notificationContainer');
                 const notification = document.createElement('div');
                 notification.className = `notification ${type}`;
-                notification.textContent = message;
+                const icon = type === 'success'
+                    ? '<i class="fa-regular fa-circle-check mr-2"></i>'
+                    : '<i class="fa-regular fa-circle-xmark mr-2"></i>';
+                notification.innerHTML = `${icon} ${message}`;
+
                 container.appendChild(notification);
                 setTimeout(() => notification.classList.add('show'), 10);
                 setTimeout(() => {

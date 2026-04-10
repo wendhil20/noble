@@ -342,7 +342,7 @@ if ($_POST && isset($_POST['add_address'])) {
                         <div>
                             <label class="block text-xs font-medium text-gray-600 mb-1.5">State / Province <span
                                     class="text-red-500">*</span></label>
-                            <input name="state" id="fieldState" type="text" placeholder="Auto-filled from map" required
+                            <input name="state" id="fieldState" type="text" placeholder="Enter the state" required
                                 class="w-full border border-gray-300 rounded-xl px-4 py-2.5 text-sm text-gray-800 placeholder-gray-400 transition-all bg-gray-50" />
                         </div>
                     </div>

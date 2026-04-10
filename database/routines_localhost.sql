@@ -1,6 +1,9 @@
+
 DELIMITER $$
-CREATE DEFINER=`root`@`localhost` PROCEDURE `record_order_as_sold`(IN `p_order_id` INT)
-BEGIN
+--
+-- Procedures
+--
+CREATE DEFINER=`root`@`localhost` PROCEDURE `record_order_as_sold` (IN `p_order_id` INT)   BEGIN
     DECLARE v_sold_order_id INT;
     DECLARE v_order_exists INT;
     DECLARE v_error_msg VARCHAR(255);
@@ -80,15 +83,22 @@ BEGIN
     WHERE order_id = p_order_id;
 
 END$$
-DELIMITER ;
 
--- Procedure structure for procedure `update_expired_timer_discounts`
-DELIMITER $$
-CREATE DEFINER=`root`@`localhost` PROCEDURE `update_expired_timer_discounts`()
-BEGIN
+CREATE DEFINER=`root`@`localhost` PROCEDURE `update_expired_timer_discounts` ()   BEGIN
     UPDATE product_variants 
     SET timer_discount_active = 0 
     WHERE timer_discount_active = 1 
     AND timer_discount_end < NOW();
 END$$
+
 DELIMITER ;
+
+DELIMITER $$
+--
+-- Events
+--
+CREATE DEFINER=`root`@`localhost` EVENT `delete_old_chats` ON SCHEDULE EVERY 1 DAY STARTS '2026-03-06 01:03:12' ON COMPLETION NOT PRESERVE ENABLE DO DELETE FROM chat_messages 
+  WHERE created_at < DATE_SUB(NOW(), INTERVAL 90 DAY)$$
+
+DELIMITER ;
+COMMIT;

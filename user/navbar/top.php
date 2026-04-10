@@ -610,11 +610,10 @@ $hidden_pages = ['help.php', 'about.php'];
                 style="max-height: 550px;" @wheel.stop>
 
                 <div class="flex items-center justify-between mb-2 px-1 sticky top-0 bg-gray-50 pb-1 z-10">
-                  <h3 class="text-xs uppercase" >
+                  <h3 class="text-xs uppercase">
                     Categories</h3>
                   <a href="../otherpage/index-shop-page-2.php"
-                    class="text-[11px] hover:text-orange-600 font-medium transition-all"
-                    >
+                    class="text-[11px] hover:text-orange-600 font-medium transition-all">
                     View All →
                   </a>
                 </div>
@@ -691,8 +690,7 @@ $hidden_pages = ['help.php', 'about.php'];
                       class="space-y-0.5" x-cloak>
 
                       <div class="mb-2 sticky top-0 bg-gray-50 pb-1 z-10">
-                        <h4 class="text-xs uppercase font-medium"
-                          >
+                        <h4 class="text-xs uppercase font-medium">
                           <?= htmlspecialchars($category['name']) ?> Types
                         </h4>
                       </div>
@@ -710,7 +708,6 @@ $hidden_pages = ['help.php', 'about.php'];
                       });
                     "
                             class="w-full flex items-center gap-2 p-1.5 rounded hover:bg-white transition-all duration-200 group text-left"
-                           
                             :class="selectedSubcategory === 'sub_<?= $sub['id'] ?>' ? 'bg-white border-l-2 border-orange-500 shadow-sm' : ''">
 
                             <?php if (!empty($sub['image_path'])): ?>
@@ -724,7 +721,6 @@ $hidden_pages = ['help.php', 'about.php'];
 
                             <div class="flex-1 min-w-0">
                               <div class="text-sm group-hover:text-orange-500 transition truncate uppercase"
-                               
                                 :class="selectedSubcategory === 'sub_<?= $sub['id'] ?>' ? 'text-orange-500 font-medium' : 'text-gray-800'">
                                 <?= htmlspecialchars($sub['name']) ?>
                               </div>
@@ -775,8 +771,7 @@ $hidden_pages = ['help.php', 'about.php'];
                           class="space-y-0.5" x-cloak>
 
                           <div class="mb-2 sticky top-0 bg-white pb-1 z-10">
-                            <h4 class="text-xs uppercase font-medium"
-                             >
+                            <h4 class="text-xs uppercase font-medium">
                               <?= htmlspecialchars($sub['name']) ?> Collections
                             </h4>
                           </div>
@@ -798,8 +793,7 @@ $hidden_pages = ['help.php', 'about.php'];
 
                                 <div class="flex-1 min-w-0">
                                   <div
-                                    class="text-sm group-hover:text-orange-600 transition font-medium text-gray-800 truncate uppercase"
-                                   >
+                                    class="text-sm group-hover:text-orange-600 transition font-medium text-gray-800 truncate uppercase">
                                     <?= htmlspecialchars($subsub['name']) ?>
                                   </div>
 
@@ -925,18 +919,28 @@ $hidden_pages = ['help.php', 'about.php'];
       <!-- Desktop Navigation -->
       <div class="hidden lg:flex space-x-6 items-center">
 
-        <!-- NEW PRODUCTS, INSPIRATION & FIND PRO - Show directly on extra large screens -->
-        <?php if (count($newProducts) > 0): ?>
-          <button @click="newProductsModal = true"
-            class="hidden xl:flex relative text-black hover:text-orange-500 transition font-mont uppercase text-sm">
-            New Products
-            <span
-              class="absolute -top-2 -right-2 bg-red-600 text-white rounded-full px-1.5 py-0.5 text-[10px] leading-none min-w-[18px] text-center">
-              <?php echo count($newProducts); ?>
-            </span>
-          </button>
-        <?php endif; ?>
+       <?php if (count($newProducts) > 0): ?>
+  <button @click="newProductsModal = true"
+    class="hidden xl:flex relative text-black hover:text-orange-500 transition font-semibold uppercase text-sm group">
+    <i class="fa-solid fa-box-open text-xl"></i>
+    <span
+      class="absolute -top-2 -right-2 bg-red-600 text-white rounded-full px-1.5 py-0.5 text-[10px] leading-none min-w-[18px] text-center">
+      <?php echo count($newProducts); ?>
+    </span>
 
+    <!-- Tooltip -->
+    <span class="absolute top-full left-1/2 -translate-x-1/2 mt-2 
+                 bg-gray-900 text-white text-xs font-medium uppercase tracking-wide
+                 px-2.5 py-1 rounded whitespace-nowrap
+                 opacity-0 group-hover:opacity-100 transition-opacity duration-150
+                 pointer-events-none z-50">
+      New Products
+      <!-- Arrow -->
+      <span class="absolute bottom-full left-1/2 -translate-x-1/2 
+                   border-4 border-transparent border-b-gray-900"></span>
+    </span>
+  </button>
+<?php endif; ?>
         <!-- MORE DROPDOWN - Show on medium screens when space is tight -->
         <div x-data="{ moreOpen: false, searchModalOpen: false }" class="relative xl:hidden">
           <button @click="moreOpen = !moreOpen"
@@ -976,7 +980,7 @@ $hidden_pages = ['help.php', 'about.php'];
             <?php if (count($newProducts) > 0): ?>
               <button @click="newProductsModal = true; moreOpen = false"
                 class="flex items-center justify-between w-full px-4 py-3 text-sm text-gray-700 hover:bg-orange-50 hover:text-orange-600 transition border-b border-gray-100">
-                <div class="flex items-center gap-3">
+                <div class="flex items-center gap-3 ">
                   <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                       d="M12 8v13m0-13V6a2 2 0 112 2h-2zm0 0V5.5A2.5 2.5 0 109.5 8H12zm-7 4h14M5 12a2 2 0 110-4h14a2 2 0 110 4M5 12v7a2 2 0 002 2h10a2 2 0 002-2v-7" />
@@ -1298,8 +1302,8 @@ $hidden_pages = ['help.php', 'about.php'];
               autocomplete="off">
 
             <!-- Search Button -->
-            <button @click="performSearch(search)" class="px-6 py-2 text-white text-sm font-medium transition"
-              style="background-color: #f97316;">
+            <button @click="performSearch(search)"
+              class="px-6 py-2 text-white text-sm font-medium transition rounded-sm" style="background-color: #f97316;">
               Search
             </button>
           </div>
@@ -1871,7 +1875,7 @@ $hidden_pages = ['help.php', 'about.php'];
 
         <a href="javascript:void(0)" onclick="navigateWithLoading('../otherpage/index-profile-page-6')"
           class="p-2 rounded-lg hover:bg-orange-50 <?= strpos($_SERVER['REQUEST_URI'], 'index-profile-page-6') !== false ? 'text-orange-600 underline ' : 'text-black' ?> hover:text-orange-500 transition text-md flex items-center gap-3 relative group">
-        <i class="fa-solid fa-clipboard"></i>
+          <i class="fa-solid fa-clipboard"></i>
 
           <!-- Tooltip -->
           <span
@@ -1938,62 +1942,71 @@ $hidden_pages = ['help.php', 'about.php'];
         <!-- User Authentication -->
         <?php if (isset($_SESSION['user_name'])): ?>
           <div class="relative">
-            <button @click="profileOpen = !profileOpen" class="flex items-center gap-2 focus:outline-none">
-              <div class="w-8 h-8 rounded-full overflow-hidden border border-gray-300 bg-gray-100">
-                <?php if (!empty($_SESSION['user_picture'])): ?>
-                  <img src="<?= htmlspecialchars($_SESSION['user_picture']) ?>" alt="Profile"
-                    class="w-full h-full object-contain">
-                <?php else: ?>
-                  <div class="w-full h-full flex items-center justify-center bg-orange-100">
-                    <span class="text-xs font-bold text-orange-800 font-mont">
-                      <?= strtoupper(substr($_SESSION['user_name'], 0, 1)) ?>
-                    </span>
-                  </div>
-                <?php endif; ?>
+            <div class="relative group">
+              <button @click="profileOpen = !profileOpen" class="flex items-center gap-2 focus:outline-none">
+                <div class="w-8 h-8 rounded-full overflow-hidden border border-gray-300 bg-gray-100">
+                  <?php if (!empty($_SESSION['user_picture'])): ?>
+                    <img src="<?= htmlspecialchars($_SESSION['user_picture']) ?>" alt="Profile"
+                      class="w-full h-full object-contain">
+                  <?php else: ?>
+                    <div class="w-full h-full flex items-center justify-center bg-orange-100">
+                      <span class="text-xs font-bold text-orange-800 font-mont">
+                        <?= strtoupper(substr($_SESSION['user_name'], 0, 1)) ?>
+                      </span>
+                    </div>
+                  <?php endif; ?>
+                </div>
+              </button>
+
+              <!-- Tooltip -->
+              <div
+                class="absolute top-full left-1/2 -translate-x-1/2 mt-2 px-3 py-1.5 bg-gray-800 text-white text-xs font-mont rounded-md whitespace-nowrap opacity-0 group-hover:opacity-100 transition-opacity duration-200 pointer-events-none z-50">
+                Profile
+                <!-- Arrow sa taas -->
+                <div class="absolute -top-1 left-1/2 -translate-x-1/2 w-2 h-2 bg-gray-800 rotate-45"></div>
               </div>
-            </button>
+            </div>
+            <div x-show="profileOpen" x-cloak @click.outside="profileOpen = false" x-transition
+              class="absolute right-0 mt-2 w-45 bg-white border border-gray-200 rounded-md shadow-lg z-50">
 
-           <div x-show="profileOpen" x-cloak @click.outside="profileOpen = false" x-transition
-     class="absolute right-0 mt-2 w-45 bg-white border border-gray-200 rounded-md shadow-lg z-50">
-
-    <div class="py-2 px-3 text-sm text-gray-800 border-b bg-gray-50 rounded-sm">
-        <span class="block truncate font-medium">
-            <?= htmlspecialchars($_SESSION['user_name']) ?>
-        </span>
-    </div>
-
-    <a href="../otherpage/index-profilepersonal-page-7.php"
-       class="flex items-center gap-2 px-4 py-2 text-sm text-black hover:bg-red-50">
-        <i class="fa-solid fa-circle-user text-sm w-4 text-center"></i>
-        <span>Profile</span>
-    </a>
-
-    <a href="../otherpage/index-order_history-page-13.php"
-       class="flex items-center gap-2 px-4 py-2 text-sm text-black hover:bg-red-50">
-        <i class="fa-solid fa-cart-flatbed-suitcase text-sm w-4 text-center"></i>
-        <span>Order History</span>
-    </a>
-
-    <div x-data="chatNotif" x-init="init()">
-        <a href="../otherpage/index-chat_main-page-9.php"
-           class="flex items-center gap-2 px-4 py-2 text-sm text-black hover:bg-red-50 relative">
-            <i class="fa-solid fa-headset text-sm w-4 text-center"></i>
-            <span>Customer Service</span>
-            <template x-if="unreadCount > 0">
-                <span class="ml-auto bg-red-500 text-white text-xs w-4 h-4 flex items-center justify-center rounded-full"
-                      x-text="unreadCount">
+              <div class="py-2 px-3 text-sm text-gray-800 border-b bg-gray-50 rounded-sm">
+                <span class="block truncate font-medium">
+                  <?= htmlspecialchars($_SESSION['user_name']) ?>
                 </span>
-            </template>
-        </a>
-    </div>
+              </div>
 
-    <a href="../logout.php"
-       class="flex items-center gap-2 px-4 py-2 text-sm text-black hover:bg-red-50">
-        <i data-lucide="log-out" class="w-4 h-4"></i>
-        <span>Logout</span>
-    </a>
+              <a href="../otherpage/index-profilepersonal-page-7.php"
+                class="flex items-center gap-2 px-4 py-2 text-sm text-gray-700 hover:bg-orange-50">
+                <i class="fa-solid fa-circle-user text-sm text-center bg-gray-300 p-2 rounded-lg"></i>
+                <span>Profile</span>
+              </a>
 
-</div>
+              <a href="../otherpage/index-order_history-page-13.php"
+                class="flex items-center gap-2 px-4 py-2 text-sm text-gray-700 hover:bg-orange-50">
+                <i class="fa-solid fa-cart-flatbed-suitcase text-sm text-center bg-gray-300 p-2 rounded-lg"></i>
+                <span>Order History</span>
+              </a>
+
+              <div x-data="chatNotif" x-init="init()">
+                <a href="../otherpage/index-chat_main-page-9.php"
+                  class="flex items-center gap-2 px-4 py-2 text-sm text-gray-700 hover:bg-orange-50 relative">
+                  <i class="fa-solid fa-headset text-sm text-center bg-gray-300 p-2 rounded-lg"></i>
+                  <span>Customer Service</span>
+                  <template x-if="unreadCount > 0">
+                    <span
+                      class="ml-auto bg-red-500 text-white text-xs w-4 h-4 flex items-center justify-center rounded-full"
+                      x-text="unreadCount">
+                    </span>
+                  </template>
+                </a>
+              </div>
+
+              <a href="../logout.php" class="flex items-center gap-2 px-4 py-2 text-sm text-gray-700 hover:bg-orange-50">
+                <i class="fa-solid fa-arrow-right-from-bracket text-sm text-center bg-gray-300 p-2 rounded-lg"></i>
+                <span>Logout</span>
+              </a>
+
+            </div>
           </div>
         <?php else: ?>
           <!-- ===== GUEST MODE ===== -->
@@ -2943,8 +2956,8 @@ $hidden_pages = ['help.php', 'about.php'];
               </div>
             </div>
             <button @click="newProductsModal = false"
-              class="text-white hover:text-orange-200 text-2xl w-8 h-8 flex items-center justify-center rounded-full hover:bg-white/20 transition-all">
-              ×
+              class="text-white text-2xl w-8 h-8 flex items-center justify-center transition-all">
+            <i class="fa-solid fa-circle-xmark"></i>
             </button>
           </div>
 
@@ -3022,12 +3035,7 @@ $hidden_pages = ['help.php', 'about.php'];
                         <?php endif; ?>
                       </div>
 
-                      <?php if (!empty($product['description'])): ?>
-                        <p class="text-xs text-gray-600 mb-2 line-clamp-2">
-                          <?php echo htmlspecialchars($product['description']); ?>
-                        </p>
-                      <?php endif; ?>
-
+               
                       <!-- Meta Info -->
                       <div class="flex flex-wrap items-center gap-3 text-xs text-gray-500 mb-3">
                         <span class="flex items-center gap-1">
@@ -3077,7 +3085,7 @@ $hidden_pages = ['help.php', 'about.php'];
           <!-- Modal Footer -->
           <div class="p-4 bg-gray-50 border-t shrink-0">
             <div class="flex flex-col sm:flex-row gap-2">
-              <button onclick="window.location.href='allproduct'"
+              <button onclick="window.location.href='../otherpage/index-allproduct-page-3.php'"
                 class="flex-1 bg-black hover:bg-orange-600 text-white py-2.5 px-4 transition-all flex items-center justify-center gap-2 text-sm">
                 <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"

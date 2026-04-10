@@ -14,6 +14,9 @@ if (isset($_SESSION['user_id']) && !empty($_SESSION['user_id'])) {
     assignReferralToUser($conn, $_SESSION['user_id']);
 }
 
+// Include the banner promotion
+include 'index-promotion-banner-front.php';
+
 // Include the handler
 include 'index-recent_views_handler-page-14.php';
 
@@ -41,8 +44,6 @@ if (isset($_POST['acceptCookies'])) {
 
 $cookieAccepted = isset($_COOKIE['cookiesAccepted']) && $_COOKIE['cookiesAccepted'] === 'true';
 
-
-
 // 3. Discount 10% materials - WITH VIEW COUNT, RATING & SOLD COUNT
 $material_querys = "
     SELECT 
@@ -62,10 +63,10 @@ $material_querys = "
         AVG(r.rating) AS avg_rating,
         COUNT(DISTINCT r.id) AS rating_count,
         COALESCE(SUM(si.quantity), 0) AS total_sold,
-        ANY_VALUE(pc.id) AS color_id,
-        ANY_VALUE(pc.color_name) AS color,
-        ANY_VALUE(pc.color_code) AS color_code,
-        ANY_VALUE(pc.price) AS color_price
+        pc.id AS color_id,
+        pc.color_name AS color,
+        pc.color_code,
+        pc.price AS color_price
     FROM product_variants pv
     INNER JOIN product_types pt ON pv.type_id = pt.id
     INNER JOIN products p ON pt.product_id = p.id
@@ -73,11 +74,11 @@ $material_querys = "
     LEFT JOIN sold_items si ON si.product_id = p.id
     LEFT JOIN product_colors pc 
         ON pc.product_id = p.id
-       AND pc.id = (
-           SELECT MIN(pc2.id) 
-           FROM product_colors pc2 
-           WHERE pc2.product_id = p.id
-       )
+        AND pc.id = (
+            SELECT MIN(pc2.id) 
+            FROM product_colors pc2 
+            WHERE pc2.product_id = p.id
+        )
     WHERE pv.discount > 0
     AND p.is_archived = 0
     GROUP BY pv.id
@@ -101,7 +102,6 @@ if (mysqli_num_rows($material_results) > 0) {
 }
 
 
-// 5. Fetch "new" status product variants - WITH VIEW COUNT, RATING & SOLD COUNT
 $material_querystwo = "
     SELECT 
         pv.*,
@@ -120,16 +120,22 @@ $material_querystwo = "
         AVG(r.rating) AS avg_rating,
         COUNT(DISTINCT r.id) AS rating_count,
         COALESCE(SUM(si.quantity), 0) AS total_sold,
-       ANY_VALUE(pc.id) AS color_id,
-        ANY_VALUE(pc.color_name) AS color,
-        ANY_VALUE(pc.color_code) AS color_code,
-        ANY_VALUE(pc.price) AS color_price
+        pc.id AS color_id,
+        pc.color_name AS color,
+        pc.color_code,
+        pc.price AS color_price
     FROM product_variants pv
     INNER JOIN product_types pt ON pv.type_id = pt.id
     INNER JOIN products p ON pt.product_id = p.id
     LEFT JOIN product_ratings r ON r.product_id = p.id
     LEFT JOIN sold_items si ON si.product_id = p.id
-    LEFT JOIN product_colors pc ON p.id = pc.product_id
+    LEFT JOIN product_colors pc 
+        ON pc.product_id = p.id
+        AND pc.id = (
+            SELECT MIN(pc2.id) 
+            FROM product_colors pc2 
+            WHERE pc2.product_id = p.id
+        )
     WHERE pv.status = 'new'
     AND p.is_archived = 0
     GROUP BY pv.id
@@ -574,7 +580,8 @@ $bestsellerData = $bestsellerItems->fetch_all(MYSQLI_ASSOC);
 
                 <div class="px-0.5 flex flex-col h-full">
                     <!-- Product name -->
-                    <h3 class="text-[13px] group-hover:text-orange-600 transition-colors mb-1.5 line-clamp-2 font-semibold uppercase">
+                    <h3
+                        class="text-[13px] group-hover:text-orange-600 transition-colors mb-1.5 line-clamp-2 font-semibold uppercase">
                         <?= htmlspecialchars($row['product_name']) ?>
                         <?php if (!empty($row['size'])): ?>         <?= htmlspecialchars($row['size']) ?>     <?php endif; ?>
                         <?php if ($firstColor): ?>         <?= htmlspecialchars($firstColor) ?>     <?php endif; ?>
@@ -620,7 +627,7 @@ $bestsellerData = $bestsellerItems->fetch_all(MYSQLI_ASSOC);
 
                     <!-- View count + Sold count -->
                     <?php if (!empty($row['view_count']) || $total_sold > 0): ?>
-                        <div class="text-[9px] font-medium" >
+                        <div class="text-[9px] font-medium">
                             <?php if (!empty($row['view_count']) && $row['view_count'] > 0): ?>
                                 <?= formatViewCount($row['view_count']) ?> viewing
                             <?php endif; ?>
@@ -769,53 +776,7 @@ $bestsellerData = $bestsellerItems->fetch_all(MYSQLI_ASSOC);
         setupModalSchedule();
     </script>
 
-
-
-    <section class="px-4 sm:px-6 lg:px-8 ">
-        <h2 class="sm:text-2xl font-semibold flex items-center gap-3 p-1">Build Your Future<span
-                class="text-yellow-500 font-semibold">With Us</span>
-            <span
-                style="flex: 1; height: 2px; background: linear-gradient(to right, #ca8a04, transparent); display: inline-block; vertical-align: middle; max-width: 200px;"></span>
-        </h2>
-        <div class="max-w-full mx-auto">
-            <!-- Banner -->
-            <a href="https://www.yfk20.com/login"
-                class="group block relative overflow-hidden transition-all duration-300 pointer-events-none cursor-not-allowed"
-                data-aos="fade-up">
-                <!-- Rectangle Container -->
-                <div class="relative bg-white overflow-hidden flex items-center justify-center inline-block">
-                    <!-- Skeleton Loading -->
-                    <div
-                        class="skeleton-loader absolute inset-0 bg-gradient-to-r from-neutral-200 via-neutral-300 to-neutral-200 bg-[length:200%_100%] animate-shimmer">
-                    </div>
-
-                    <img src="../img/kd.png" alt="Promotion Banner"
-                        class="banner-image w-full h-auto object-contain opacity-0 transition-opacity duration-300 z-5 rounded-lg"
-                        onload="this.style.opacity='1'; this.previousElementSibling.style.display='none';">
-                </div>
-            </a>
-        </div>
-
-        <style>
-            @keyframes shimmer {
-                0% {
-                    background-position: -200% 0;
-                }
-
-                100% {
-                    background-position: 200% 0;
-                }
-            }
-
-            .animate-shimmer {
-                animation: shimmer 1.5s ease-in-out infinite;
-            }
-
-            .banner-image {
-                transition: opacity 0.3s ease-in-out;
-            }
-        </style>
-    </section>
+    <?php include_banner(1); ?>
 
     <section class="py-6 bg-white" id="bestseller-section">
         <div class="w-full px-4 md:px-6 lg:px-8">
@@ -975,7 +936,8 @@ $bestsellerData = $bestsellerItems->fetch_all(MYSQLI_ASSOC);
                                     <!-- Info - Centered like New Arrival -->
                                     <div class="px-0.5">
                                         <!-- Title -->
-                                        <h3 class="text-[13px] font-semibold line-clamp-2 mb-1.5 group-hover:text-orange-600 transition-colors text-left">
+                                        <h3
+                                            class="text-[13px] font-semibold line-clamp-2 mb-1.5 group-hover:text-orange-600 transition-colors text-left">
                                             <?= htmlspecialchars($row['product_name']) ?>
                                         </h3>
 
@@ -1112,7 +1074,8 @@ $bestsellerData = $bestsellerItems->fetch_all(MYSQLI_ASSOC);
                                     <!-- Info -->
                                     <div class="px-0.5">
                                         <!-- Title -->
-                                        <h3 class="text-[13px] font-semibold line-clamp-2 mb-1.5 group-hover:text-orange-600 transition-colors">
+                                        <h3
+                                            class="text-[13px] font-semibold line-clamp-2 mb-1.5 group-hover:text-orange-600 transition-colors">
                                             <?= htmlspecialchars($row['product_name']) ?>
                                         </h3>
 
@@ -1187,6 +1150,11 @@ $bestsellerData = $bestsellerItems->fetch_all(MYSQLI_ASSOC);
     </script>
 
 
+    <?php include_banner(3); ?>
+
+
+    <?php include_banner(2); ?>
+
     <?php if (!$cookieAccepted): ?>
         <section id="cookie-banner"
             class="fixed bottom-4 left-4 right-4 bg-white border shadow-lg rounded-lg p-4 flex items-center justify-between z-50">
@@ -1204,6 +1172,51 @@ $bestsellerData = $bestsellerItems->fetch_all(MYSQLI_ASSOC);
             </form>
         </section>
     <?php endif; ?>
+
+
+   <section class="py-8 px-4">
+        <div class="w-full mx-auto">
+            <!-- Features Horizontal -->
+            <div class="flex flex-col md:flex-row items-start justify-between gap-8 md:gap-6 lg:gap-12">
+                <!-- Feature 1 -->
+                <div class="flex flex-col items-center text-center flex-1">
+                    <div class="w-16 h-16 rounded-full bg-gray-100 flex items-center justify-center mb-4">
+                        <i class="fa-solid fa-truck text-3xl text-gray-700"></i>
+                    </div>
+                    <h3 class="text-base font-semibold text-gray-900 mb-1">Quality products</h3>
+                    <p class="text-sm text-gray-600">All products are carefully inspected to ensure top-notch quality.</p>
+                </div>
+ 
+                <!-- Feature 2 -->
+                <div class="flex flex-col items-center text-center flex-1">
+                    <div class="w-16 h-16 rounded-full bg-gray-100 flex items-center justify-center mb-4">
+                        <i class="fa-solid fa-headset text-3xl text-gray-700"></i>
+                    </div>
+                    <h3 class="text-base font-semibold text-gray-900 mb-1">Support Services</h3>
+                    <p class="text-sm text-gray-600">Monday - Friday 8:00 AM - 5:00 PM - Saturday 8:00 AM - 12:00 PM</p>
+                </div>
+ 
+                <!-- Feature 3 -->
+                <div class="flex flex-col items-center text-center flex-1">
+                    <div class="w-16 h-16 rounded-full bg-gray-100 flex items-center justify-center mb-4">
+                        <i class="fa-solid fa-dollar-sign text-3xl text-gray-700"></i>
+                    </div>
+                    <h3 class="text-base font-semibold text-gray-900 mb-1">Secured Payment</h3>
+                    <p class="text-sm text-gray-600">Safe and encrypted payment options for your peace of mind.</p>
+                </div>
+ 
+                <!-- Feature 4 -->
+                <div class="flex flex-col items-center text-center flex-1">
+                    <div class="w-16 h-16 rounded-full bg-gray-100 flex items-center justify-center mb-4">
+                        <i class="fa-solid fa-tag text-3xl text-gray-700"></i>
+                    </div>
+                    <h3 class="text-base font-semibold text-gray-900 mb-1">Exclusive Deals & Discounts</h3>
+                    <p class="text-sm text-gray-600">Get special offers and discounts when you shop with us.</p>
+                </div>
+            </div>
+        </div>
+    </section>
+
 
     <?php include '../navbar/footer.php'; ?>
 

@@ -540,53 +540,53 @@ $recent_count = $recent_products->num_rows;
     // ====================================
     // GET RECENTLY VIEWED BY USER (for order_history.php)
     // ====================================
-    function getRecentlyViewedByUser($conn, $user_id, $limit = 10)
-    {
-        $sql = "SELECT 
-                p.*,
-                p.descrip6,
-                p.descrip7,
-                p.view_count,
-                p.unique_view_count,
-            ANY_VALUE(v.origin) as origin,
-            ANY_VALUE(v.discount) as discount,
-            ANY_VALUE(v.percent) as percent,
-            ANY_VALUE(v.status) as status,
-                
-                -- 🔥 SIZE PRICES (variant prices only)
-                COALESCE(MIN(pv.price), 0) as min_size_price,  
-                COALESCE(MAX(pv.price), 0) as max_size_price,  
-                
-                -- 🔥 COLOR PRICES (color prices only - kept separate)
-                COALESCE(MIN(pc.price), 0) as min_color_price,
-                COALESCE(MAX(pc.price), 0) as max_color_price,
-                
-                COUNT(DISTINCT pc.id) as color_count,
-                AVG(r.rating) AS avg_rating,
-                COUNT(DISTINCT r.id) AS rating_count,
-                COALESCE((
-                    SELECT SUM(quantity) FROM sold_items WHERE product_id = p.id
-                ), 0) AS total_sold,
-                
-                MAX(rv.viewed_at) as last_viewed
-            FROM recent_views rv
-            INNER JOIN products p ON rv.product_id = p.id
-            LEFT JOIN product_variants v ON v.product_id = p.id
-            LEFT JOIN product_variants pv ON p.id = pv.product_id
-            LEFT JOIN product_colors pc ON p.id = pc.product_id
-            LEFT JOIN product_ratings r ON r.product_id = p.id
-            LEFT JOIN sold_items si ON si.product_id = p.id
-            WHERE rv.user_id = ?
-            GROUP BY p.id
-            ORDER BY MAX(rv.viewed_at) DESC
-            LIMIT ?";
+function getRecentlyViewedByUser($conn, $user_id, $limit = 10)
+{
+    $sql = "SELECT 
+            p.*,
+            p.descrip6,
+            p.descrip7,
+            p.view_count,
+            p.unique_view_count,
+        SUBSTRING_INDEX(GROUP_CONCAT(DISTINCT v.origin), ',', 1) as origin,
+        SUBSTRING_INDEX(GROUP_CONCAT(DISTINCT v.discount), ',', 1) as discount,
+        SUBSTRING_INDEX(GROUP_CONCAT(DISTINCT v.percent), ',', 1) as percent,
+        SUBSTRING_INDEX(GROUP_CONCAT(DISTINCT v.status), ',', 1) as status,
+            
+            -- 🔥 SIZE PRICES (variant prices only)
+            COALESCE(MIN(pv.price), 0) as min_size_price,  
+            COALESCE(MAX(pv.price), 0) as max_size_price,  
+            
+            -- 🔥 COLOR PRICES (color prices only - kept separate)
+            COALESCE(MIN(pc.price), 0) as min_color_price,
+            COALESCE(MAX(pc.price), 0) as max_color_price,
+            
+            COUNT(DISTINCT pc.id) as color_count,
+            AVG(r.rating) AS avg_rating,
+            COUNT(DISTINCT r.id) AS rating_count,
+            COALESCE((
+                SELECT SUM(quantity) FROM sold_items WHERE product_id = p.id
+            ), 0) AS total_sold,
+            
+            MAX(rv.viewed_at) as last_viewed
+        FROM recent_views rv
+        INNER JOIN products p ON rv.product_id = p.id
+        LEFT JOIN product_variants v ON v.product_id = p.id
+        LEFT JOIN product_variants pv ON p.id = pv.product_id
+        LEFT JOIN product_colors pc ON p.id = pc.product_id
+        LEFT JOIN product_ratings r ON r.product_id = p.id
+        LEFT JOIN sold_items si ON si.product_id = p.id
+        WHERE rv.user_id = ?
+        GROUP BY p.id
+        ORDER BY MAX(rv.viewed_at) DESC
+        LIMIT ?";
 
-        $stmt = $conn->prepare($sql);
-        $stmt->bind_param("ii", $user_id, $limit);
-        $stmt->execute();
+    $stmt = $conn->prepare($sql);
+    $stmt->bind_param("ii", $user_id, $limit);
+    $stmt->execute();
 
-        return $stmt->get_result();
-    }
+    return $stmt->get_result();
+}
 
     // ====================================
     // RENDER PRODUCT CARD FOR ORDER HISTORY

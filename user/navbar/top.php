@@ -147,8 +147,8 @@ $current_page = basename($_SERVER['PHP_SELF']);
 $hidden_pages = ['help.php', 'about.php'];
 ?>
 
-<!-- Tailwind + Alpine CDN -->
-<script src="https://cdn.tailwindcss.com"></script>
+    <!-- ✅ PRODUCTION: Use minified Tailwind (not CDN) -->
+    <link href="../../output.css" rel="stylesheet">
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/swiper@11/swiper-bundle.min.css" />
 
 <!-- CORRECT - both need defer, Alpine core loaded LAST -->
@@ -224,18 +224,6 @@ $hidden_pages = ['help.php', 'about.php'];
 </style>
 
 <script>
-  tailwind.config = {
-    theme: {
-      extend: {
-        fontFamily: {
-          // Sans-serif fonts
-          mont: ['Roboto', 'sans-serif'],
-
-        }
-      }
-    }
-  }
-
 
   // Simple global loading functions
   function showLoading() {
@@ -263,7 +251,7 @@ $hidden_pages = ['help.php', 'about.php'];
 
 <!-- Loading Overlay -->
 <div id="loadingOverlay" style="display: none;"
-  class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-[9999]">
+  class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-9999">
 
   <!-- Truck Loader -->
   <div class="loader">
@@ -439,7 +427,7 @@ $hidden_pages = ['help.php', 'about.php'];
 
         <!-- Logo -->
         <a href="javascript:void(0)" onclick="navigateWithLoading('../otherpage/index-page-1-A-B-C-D-E')"
-          class="flex items-center space-x-2 sm:space-x-3 hover:opacity-80 transition duration-200 flex-shrink-0">
+          class="flex items-center space-x-2 sm:space-x-3 hover:opacity-80 transition duration-200 shrink-0">
           <div class="w-8 h-8 sm:w-10 sm:h-10 lg:w-12 lg:h-12 overflow-hidden">
             <img src="../img/logo.png" alt="Noble Home Logo" class="w-full h-full object-contain">
           </div>
@@ -635,7 +623,7 @@ $hidden_pages = ['help.php', 'about.php'];
                         :class="selectedCategory === 'cat_<?= $category['id'] ?>' ? 'bg-white border-l-2 border-orange-500 shadow-sm' : ''">
 
                         <?php if (!empty($category['image_path'])): ?>
-                          <div class="flex-shrink-0">
+                          <div class="shrink-0">
                             <img src="../../uploads/categories/<?= htmlspecialchars($category['image_path']) ?>"
                               alt="<?= htmlspecialchars($category['name']) ?>" class="w-8 h-8 object-contain rounded"
                               loading="lazy" onerror="this.style.display='none'">
@@ -650,7 +638,7 @@ $hidden_pages = ['help.php', 'about.php'];
 
                         </div>
 
-                        <svg class="w-3 h-3 flex-shrink-0 transition-colors"
+                        <svg class="w-3 h-3 shrink-0 transition-colors"
                           :class="selectedCategory === 'cat_<?= $category['id'] ?>' ? 'text-orange-500' : 'text-gray-400'"
                           fill="none" stroke="currentColor" viewBox="0 0 24 24">
                           <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7" />
@@ -711,7 +699,7 @@ $hidden_pages = ['help.php', 'about.php'];
                             :class="selectedSubcategory === 'sub_<?= $sub['id'] ?>' ? 'bg-white border-l-2 border-orange-500 shadow-sm' : ''">
 
                             <?php if (!empty($sub['image_path'])): ?>
-                              <div class="flex-shrink-0">
+                              <div class="shrink-0">
                                 <img
                                   src="../../uploads/<?= htmlspecialchars($sub['slug']) ?>/<?= htmlspecialchars($sub['image_path']) ?>"
                                   alt="<?= htmlspecialchars($sub['name']) ?>" class="w-9 h-9 object-cover rounded" loading="lazy"
@@ -727,7 +715,7 @@ $hidden_pages = ['help.php', 'about.php'];
 
                             </div>
 
-                            <svg class="w-3 h-3 text-gray-400 group-hover:text-orange-500 transition flex-shrink-0"
+                            <svg class="w-3 h-3 text-gray-400 group-hover:text-orange-500 transition shrink-0"
                               :class="selectedSubcategory === 'sub_<?= $sub['id'] ?>' ? 'text-orange-500' : ''" fill="none"
                               stroke="currentColor" viewBox="0 0 24 24">
                               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7" />
@@ -783,7 +771,7 @@ $hidden_pages = ['help.php', 'about.php'];
                                 class="flex items-center gap-2 p-1.5 rounded hover:bg-purple-50 transition-all duration-200 group cursor-pointer border border-transparent hover:border-orange-200">
 
                                 <?php if (!empty($subsub['image_path'])): ?>
-                                  <div class="flex-shrink-0">
+                                  <div class="shrink-0">
                                     <img
                                       src="../../uploads/<?= htmlspecialchars($subsub['parent_slug']) ?>/<?= htmlspecialchars($subsub['slug']) ?>/<?= htmlspecialchars($subsub['image_path']) ?>"
                                       alt="<?= htmlspecialchars($subsub['name']) ?>" class="w-10 h-10 object-cover rounded"
@@ -799,7 +787,7 @@ $hidden_pages = ['help.php', 'about.php'];
 
                                 </div>
 
-                                <svg class="w-3 h-3 text-gray-400 group-hover:text-orange-600 transition flex-shrink-0" fill="none"
+                                <svg class="w-3 h-3 text-gray-400 group-hover:text-orange-600 transition shrink-0" fill="none"
                                   stroke="currentColor" viewBox="0 0 24 24">
                                   <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7" />
                                 </svg>
@@ -1020,7 +1008,7 @@ $hidden_pages = ['help.php', 'about.php'];
             x-transition:enter="transition ease-out duration-300" x-transition:enter-start="opacity-0"
             x-transition:enter-end="opacity-100" x-transition:leave="transition ease-in duration-200"
             x-transition:leave-start="opacity-100" x-transition:leave-end="opacity-0"
-            class="fixed inset-0 z-[9999] bg-black bg-opacity-50 flex items-start justify-center p-2 pt-20">
+            class="fixed inset-0 z-9999 bg-black bg-opacity-50 flex items-start justify-center p-2 pt-20">
 
             <!-- Modal Content -->
             <div x-show="searchModalOpen" x-transition:enter="transition ease-out duration-300"
@@ -1071,7 +1059,7 @@ $hidden_pages = ['help.php', 'about.php'];
               <div class="p-2 border-b bg-gray-50 shrink-0">
                 <div
                   class="flex items-center gap-2 bg-white border border-gray-300 rounded-full px-3 py-2 focus-within:border-orange-500 transition-all">
-                  <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 text-gray-400 flex-shrink-0" fill="none"
+                  <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 text-gray-400 shrink-0" fill="none"
                     viewBox="0 0 24 24" stroke="currentColor">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                       d="M21 21l-4.35-4.35M11 19a8 8 0 100-16 8 8 0 000 16z" />
@@ -1084,7 +1072,7 @@ $hidden_pages = ['help.php', 'about.php'];
 
                   <!-- Clear Button -->
                   <button x-show="search.length > 0" @click="search = ''; results = []; $refs.searchInput.focus()"
-                    class="text-gray-400 hover:text-gray-600 transition flex-shrink-0">
+                    class="text-gray-400 hover:text-gray-600 transition shrink-0">
                     <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
                     </svg>
@@ -1092,7 +1080,7 @@ $hidden_pages = ['help.php', 'about.php'];
 
                   <!-- Search Button -->
                   <button @click="fetchResults"
-                    class="bg-black hover:bg-orange-600 text-white px-4 py-1.5 rounded-full text-xs font-medium transition-all flex-shrink-0">
+                    class="bg-black hover:bg-orange-600 text-white px-4 py-1.5 rounded-full text-xs font-medium transition-all shrink-0">
                     Search
                   </button>
                 </div>
@@ -1124,7 +1112,7 @@ $hidden_pages = ['help.php', 'about.php'];
                   <template x-for="item in results" :key="item.id">
                     <a :href="'index-shop-page-2.php?search=' + encodeURIComponent(item.product_name)"
                       class="flex items-center gap-4 p-3 hover:bg-orange-50 rounded-lg transition-all border border-transparent hover:border-orange-200 group">
-                      <div class="flex-shrink-0">
+                      <div class="shrink-0">
                         <img :src="item.main_image" alt=""
                           class="w-16 h-16 object-contain rounded-lg border border-gray-200 group-hover:border-orange-300 transition">
                       </div>
@@ -1133,7 +1121,7 @@ $hidden_pages = ['help.php', 'about.php'];
                           x-text="item.product_name"></h3>
                         <p class="text-xs text-gray-500 mt-1" x-text="item.category_name || 'Product'"></p>
                       </div>
-                      <svg class="w-5 h-5 text-gray-400 group-hover:text-orange-500 transition flex-shrink-0"
+                      <svg class="w-5 h-5 text-gray-400 group-hover:text-orange-500 transition shrink-0"
                         fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7" />
                       </svg>
@@ -1390,7 +1378,7 @@ $hidden_pages = ['help.php', 'about.php'];
 
           <!-- Cart Hover Modal -->
           <div id="cart-modal"
-            class="cart-modal fixed right-4 top-16 w-80 sm:w-96 bg-white rounded-xl shadow-2xl border border-gray-200 z-[9999] max-h-[80vh] overflow-hidden max-w-[calc(100vw-2rem)] opacity-0 invisible">
+            class="cart-modal fixed right-4 top-16 w-80 sm:w-96 bg-white rounded-xl shadow-2xl border border-gray-200 z-9999 max-h-[80vh] overflow-hidden max-w-[calc(100vw-2rem)] opacity-0 invisible">
             <!-- Modal Header -->
             <div class="bg-black text-white p-4 rounded-t-xl">
               <div class="flex items-center justify-between">
@@ -1446,10 +1434,10 @@ $hidden_pages = ['help.php', 'about.php'];
                       <?php if ($has_image): ?>
                         <img src="../../<?= htmlspecialchars($guest_img_row['main_image']) ?>"
                           alt="<?= htmlspecialchars($item['product_name']) ?>"
-                          class="w-10 h-10 sm:w-12 sm:h-12 object-contain rounded-lg flex-shrink-0 bg-gray-50">
+                          class="w-10 h-10 sm:w-12 sm:h-12 object-contain rounded-lg shrink-0 bg-gray-50">
                       <?php else: ?>
                         <div
-                          class="w-10 h-10 sm:w-12 sm:h-12 bg-gray-200 rounded-lg flex items-center justify-center flex-shrink-0">
+                          class="w-10 h-10 sm:w-12 sm:h-12 bg-gray-200 rounded-lg flex items-center justify-center shrink-0">
                           <i class="fas fa-image text-gray-400 text-xs"></i>
                         </div>
                       <?php endif; ?>
@@ -1479,7 +1467,7 @@ $hidden_pages = ['help.php', 'about.php'];
                       </div>
 
                       <!-- Remove Button (Disabled for guests) -->
-                      <button onclick="showGuestLoginAlert()" class="text-gray-400 cursor-not-allowed p-1 flex-shrink-0"
+                      <button onclick="showGuestLoginAlert()" class="text-gray-400 cursor-not-allowed p-1 shrink-0"
                         title="Login to remove items">
                         <i class="fas fa-times text-xs"></i>
                       </button>
@@ -1520,16 +1508,16 @@ $hidden_pages = ['help.php', 'about.php'];
                       class="flex items-center gap-2 sm:gap-3 p-2 sm:p-3 border border-gray-100 rounded-lg hover:bg-gray-50 transition cart-item-slide">
                       <?php if (!empty($item['pc_image'])): ?>
                         <img src="../../<?= htmlspecialchars($item['pc_image']) ?>" alt="Product"
-                          class="w-10 h-10 sm:w-12 sm:h-12 object-contain rounded-lg flex-shrink-0">
+                          class="w-10 h-10 sm:w-12 sm:h-12 object-contain rounded-lg shrink-0">
                       <?php elseif (!empty($item['type_image'])): ?>
                         <img src="../../<?= htmlspecialchars($item['type_image']) ?>" alt="Product"
-                          class="w-10 h-10 sm:w-12 sm:h-12 object-contain rounded-lg flex-shrink-0">
+                          class="w-10 h-10 sm:w-12 sm:h-12 object-contain rounded-lg shrink-0">
                       <?php elseif (!empty($item['main_image'])): ?>
                         <img src="../../<?= htmlspecialchars($item['main_image']) ?>" alt="Product"
-                          class="w-10 h-10 sm:w-12 sm:h-12 object-contain rounded-lg flex-shrink-0">
+                          class="w-10 h-10 sm:w-12 sm:h-12 object-contain rounded-lg shrink-0">
                       <?php else: ?>
                         <div
-                          class="w-10 h-10 sm:w-12 sm:h-12 bg-gray-200 rounded-lg flex items-center justify-center flex-shrink-0">
+                          class="w-10 h-10 sm:w-12 sm:h-12 bg-gray-200 rounded-lg flex items-center justify-center shrink-0">
                           <i class="fas fa-image text-gray-400 text-xs"></i>
                         </div>
                       <?php endif; ?>
@@ -1559,7 +1547,7 @@ $hidden_pages = ['help.php', 'about.php'];
                       </div>
 
                       <a href="javascript:void(0)" onclick="removeFromCart(<?= $item['id'] ?>)"
-                        class="text-red-500 hover:text-red-700 transition p-1 flex-shrink-0">
+                        class="text-red-500 hover:text-red-700 transition p-1 shrink-0">
                         <i class="fas fa-times text-xs"></i>
                       </a>
                     </div>
@@ -1591,7 +1579,7 @@ $hidden_pages = ['help.php', 'about.php'];
                 $footer_total += floatval($item['price']) * intval($item['quantity']);
               }
               ?>
-              <div class="border-t border-gray-200 p-3 sm:p-4 bg-gradient-to-r from-orange-50 to-orange-100 rounded-b-xl"
+              <div class="border-t border-gray-200 p-3 sm:p-4 bg-linear-to-r from-orange-50 to-orange-100 rounded-b-xl"
                 id="cart-footer">
                 <!-- Total Price -->
                 <div class="flex justify-between items-center mb-3">
@@ -2182,7 +2170,7 @@ $hidden_pages = ['help.php', 'about.php'];
       x-transition:enter="transition ease-out duration-300" x-transition:enter-start="opacity-0"
       x-transition:enter-end="opacity-100" x-transition:leave="transition ease-in duration-200"
       x-transition:leave-start="opacity-100" x-transition:leave-end="opacity-0"
-      class="lg:hidden fixed inset-0 z-[9999] bg-black bg-opacity-50">
+      class="lg:hidden fixed inset-0 z-9999 bg-black bg-opacity-50">
 
       <div x-show="mobileOpen" x-transition:enter="transition ease-out duration-300 transform"
         x-transition:enter-start="-translate-x-full" x-transition:enter-end="translate-x-0"
@@ -2436,7 +2424,7 @@ $hidden_pages = ['help.php', 'about.php'];
 
               <!-- Badge positioned on button -->
               <span x-show="unreadCount > 0" x-text="unreadCount"
-                class="bg-red-500 text-white text-xs px-2 py-0.5 rounded-full font-semibold min-w-[20px] text-center flex-shrink-0"></span>
+                class="bg-red-500 text-white text-xs px-2 py-0.5 rounded-full font-semibold min-w-[20px] text-center shrink-0"></span>
             </button>
 
             <!-- Mobile Notification Dropdown - Positioned inside sidebar flow -->
@@ -2567,7 +2555,7 @@ $hidden_pages = ['help.php', 'about.php'];
         x-transition:enter="transition ease-out duration-300" x-transition:enter-start="opacity-0"
         x-transition:enter-end="opacity-100" x-transition:leave="transition ease-in duration-200"
         x-transition:leave-start="opacity-100" x-transition:leave-end="opacity-0"
-        class="lg:hidden fixed inset-0 z-[9999] bg-black bg-opacity-50">
+        class="lg:hidden fixed inset-0 z-9999 bg-black bg-opacity-50">
       </div>
 
       <!-- Sidebar Panel -->
@@ -2575,7 +2563,7 @@ $hidden_pages = ['help.php', 'about.php'];
         x-transition:enter-start="-translate-x-full" x-transition:enter-end="translate-x-0"
         x-transition:leave="transition ease-in duration-200 transform" x-transition:leave-start="translate-x-0"
         x-transition:leave-end="-translate-x-full"
-        class="lg:hidden fixed left-0 top-0 h-full w-80 max-w-[85vw] bg-white shadow-2xl z-[10000] flex flex-col">
+        class="lg:hidden fixed left-0 top-0 h-full w-80 max-w-[85vw] bg-white shadow-2xl z-10000 flex flex-col">
 
         <!-- Sidebar Header -->
         <div class="flex justify-between items-center p-4 border-b bg-black text-white shrink-0">
@@ -2603,7 +2591,7 @@ $hidden_pages = ['help.php', 'about.php'];
                 class="border border-gray-200 rounded-lg p-3 hover:shadow-md transition-all duration-300 hover:border-orange-400">
                 <div class="flex gap-3">
                   <!-- Product Image -->
-                  <div class="relative flex-shrink-0">
+                  <div class="relative shrink-0">
                     <?php if (!empty($product['main_image'])): ?>
                       <img src="../../<?php echo htmlspecialchars($product['main_image']); ?>"
                         alt="<?php echo htmlspecialchars($product['name']); ?>" class="w-20 h-20 object-contain rounded"
@@ -2715,7 +2703,7 @@ $hidden_pages = ['help.php', 'about.php'];
 
     <!-- Login Modal - Full Screen on Mobile -->
     <div x-show="loginOpen" x-cloak x-transition
-      class="fixed inset-0 z-[9999] flex items-center justify-center bg-black bg-opacity-50 p-4 lg:hidden">
+      class="fixed inset-0 z-9999 flex items-center justify-center bg-black bg-opacity-50 p-4 lg:hidden">
 
       <div class="bg-white w-full max-w-md max-h-[95vh] overflow-y-auto rounded-lg shadow-lg relative">
 
@@ -2859,7 +2847,7 @@ $hidden_pages = ['help.php', 'about.php'];
 
     <!-- Register Modal -->
     <div x-show="registerOpen" x-cloak x-transition
-      class="fixed inset-0 z-[9999] flex items-center justify-center bg-black bg-opacity-50 p-4">
+      class="fixed inset-0 z-9999 flex items-center justify-center bg-black bg-opacity-50 p-4">
       <div class="bg-white w-full max-w-md max-h-[95vh] overflow-y-auto rounded-lg shadow-lg relative">
 
         <!-- Modal Header -->
@@ -2934,7 +2922,7 @@ $hidden_pages = ['help.php', 'about.php'];
         x-transition:enter="transition ease-out duration-300" x-transition:enter-start="opacity-0"
         x-transition:enter-end="opacity-100" x-transition:leave="transition ease-in duration-200"
         x-transition:leave-start="opacity-100" x-transition:leave-end="opacity-0"
-        class="fixed inset-0 z-[9999] bg-black bg-opacity-50 flex items-center justify-center p-4">
+        class="fixed inset-0 z-9999 bg-black bg-opacity-50 flex items-center justify-center p-4">
 
         <!-- Modal Content -->
         <div x-show="newProductsModal" x-transition:enter="transition ease-out duration-300"
@@ -2979,7 +2967,7 @@ $hidden_pages = ['help.php', 'about.php'];
                 <div class="p-4 hover:bg-orange-50 transition-all duration-200 group">
                   <div class="flex gap-4">
                     <!-- Product Image -->
-                    <div class="flex-shrink-0 relative">
+                    <div class="shrink-0 relative">
                       <?php if (!empty($product['main_image'])): ?>
                         <img src="../../<?php echo htmlspecialchars($product['main_image']); ?>"
                           alt="<?php echo htmlspecialchars($product['name']); ?>"
@@ -3022,13 +3010,13 @@ $hidden_pages = ['help.php', 'about.php'];
                         <!-- Stock Status Badge -->
                         <?php if ($product['stock_status'] === 'In Stock'): ?>
                           <span
-                            class="inline-flex items-center gap-1 text-[10px] text-green-600 bg-green-50 px-2 py-0.5 rounded-full whitespace-nowrap flex-shrink-0">
+                            class="inline-flex items-center gap-1 text-[10px] text-green-600 bg-green-50 px-2 py-0.5 rounded-full whitespace-nowrap shrink-0">
                             <span class="w-1.5 h-1.5 bg-green-600 rounded-full"></span>
                             In Stock
                           </span>
                         <?php else: ?>
                           <span
-                            class="inline-flex items-center gap-1 text-[10px] text-red-600 bg-red-50 px-2 py-0.5 rounded-full whitespace-nowrap flex-shrink-0">
+                            class="inline-flex items-center gap-1 text-[10px] text-red-600 bg-red-50 px-2 py-0.5 rounded-full whitespace-nowrap shrink-0">
                             <span class="w-1.5 h-1.5 bg-red-600 rounded-full"></span>
                             Out of Stock
                           </span>

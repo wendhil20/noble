@@ -166,42 +166,44 @@ $bestsellerData = $bestsellerItems->fetch_all(MYSQLI_ASSOC);
 <!DOCTYPE html>
 <html lang="en">
 
+<!-- 🚀 PRODUCTION-READY HEAD (No Console Errors) -->
 <head>
-    <!-- OPTIMIZED HEAD SECTION -->
-    <!-- Only load CRITICAL resources here -->
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <link rel="icon" type="image/png" sizes="96x96" href="../img/favicon.ico">
     <title>Noble Home - Modern Furnishing Supplies</title>
 
-    <!-- CSS Files (non-render blocking) -->
+    <!-- CSS Files -->
     <link href="../css/promotionslide.css" rel="stylesheet">
     <link href="../css/bannerPromo.css" rel="stylesheet">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/swiper@11/swiper-bundle.min.css" />
-    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap"
-        rel="stylesheet" />
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap" rel="stylesheet" />
+    
+    <!-- Font Awesome (for icons) -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
 
-    <!-- CRITICAL: Tailwind (required for initial render) -->
-    <script src="https://cdn.tailwindcss.com?plugins=aspect-ratio"></script>
+    <!-- ✅ CRITICAL SCRIPTS (must load before anything else) -->
+    <script src="https://cdn.jsdelivr.net/npm/swiper@11/swiper-bundle.min.js"></script>
 
-    <!-- Swiper library - CRITICAL for carousel -->
-    <script src="https://cdn.jsdelivr.net/npm/swiper@11/swiper-bundle.min.js" defer></script>
+    <!-- Deferred non-critical scripts -->
+    <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js"></script>
+    <script src="https://unpkg.com/lucide@latest/dist/umd/lucide.min.js" defer></script>
 
-    <!-- 🚀 DEFERRED: Non-critical libraries load AFTER page interactive -->
+    <!-- Load heavy libraries AFTER page interactive -->
     <script>
-        // Load AOS only if needed
-        if (document.querySelectorAll('[data-aos]').length > 0) {
-            const aoScript = document.createElement('script');
-            aoScript.src = 'https://unpkg.com/aos@2.3.4/dist/aos.js';
-            aoScript.async = true;
-            aoScript.onload = () => { if (window.AOS) AOS.init(); };
-            document.body.appendChild(aoScript);
-        }
-    </script>
-
-    <!-- Load Lenis after page is interactive (smooth scroll) -->
-    <script>
+        // Load AOS only if elements need it
         window.addEventListener('load', () => {
+            if (document.querySelectorAll('[data-aos]').length > 0) {
+                const aoScript = document.createElement('script');
+                aoScript.src = 'https://unpkg.com/aos@2.3.4/dist/aos.js';
+                aoScript.async = true;
+                aoScript.onload = () => {
+                    if (window.AOS) AOS.init();
+                };
+                document.body.appendChild(aoScript);
+            }
+
+            // Load Lenis for smooth scroll
             const lenisScript = document.createElement('script');
             lenisScript.src = 'https://cdn.jsdelivr.net/gh/studio-freight/lenis@1.0.19/bundled/lenis.min.js';
             lenisScript.async = true;
@@ -224,98 +226,66 @@ $bestsellerData = $bestsellerItems->fetch_all(MYSQLI_ASSOC);
         });
     </script>
 
-    <!-- Alpine JS (deferred loading) -->
-    <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js"></script>
-
-    <!-- Lucide icons (load asynchronously) -->
-    <script src="https://unpkg.com/lucide@latest/dist/umd/lucide.min.js" defer></script>
-
-    <!-- Styles -->
     <style>
-        footer * {
-            font-family: 'Plus Jakarta Sans', sans-serif;
-        }
-
-        .swiper-slide,
-        .swiper-slide-active {
-            opacity: 1 !important;
-        }
-
+        footer * { font-family: 'Plus Jakarta Sans', sans-serif; }
+        .swiper-slide, .swiper-slide-active { opacity: 1 !important; }
+        
         @keyframes float {
-
-            0%,
-            100% {
-                transform: translateY(0) rotate(0);
-            }
-
-            50% {
-                transform: translateY(-20px) rotate(180deg);
-            }
+            0%, 100% { transform: translateY(0) rotate(0); }
+            50% { transform: translateY(-20px) rotate(180deg); }
         }
-
+        
         .gradient-text {
             background: linear-gradient(135deg, #fff 0, #f97316 100%);
             -webkit-background-clip: text;
             -webkit-text-fill-color: transparent;
             background-clip: text;
         }
-
+        
         .btn-glow {
             box-shadow: 0 0 30px rgba(251, 146, 60, .3);
             transition: .3s;
         }
-
+        
         .btn-glow:hover {
             box-shadow: 0 0 40px rgba(251, 146, 60, .5);
             transform: translateY(-2px);
         }
-
-        .text-shadow {
-            text-shadow: 2px 2px 4px rgba(0, 0, 0, .5);
-        }
-
-        .backdrop-blur-sm {
-            backdrop-filter: blur(4px);
-        }
-
-        [x-cloak] {
-            display: none !important;
-        }
-
+        
+        .text-shadow { text-shadow: 2px 2px 4px rgba(0, 0, 0, .5); }
+        .backdrop-blur-sm { backdrop-filter: blur(4px); }
+        [x-cloak] { display: none !important; }
+        
         .swiper-slide {
             transition: opacity .5s ease-in-out;
         }
-
+        
         .swiper-slide:not(.swiper-slide-active) {
             opacity: .3;
         }
-
-        .swiper-button-next,
-        .swiper-button-prev {
+        
+        .swiper-button-next, .swiper-button-prev {
             width: 2rem;
             height: 2rem;
             background-color: rgba(255, 255, 255, .8);
             border-radius: 9999px;
             box-shadow: 0 2px 8px rgba(0, 0, 0, .2);
         }
-
-        .swiper-button-next::after,
-        .swiper-button-prev::after {
+        
+        .swiper-button-next::after, .swiper-button-prev::after {
             font-size: 12px !important;
             color: #111;
         }
-
-        .carousel-item {
-            transition: .6s cubic-bezier(.4, 0, .2, 1);
-        }
-
+        
+        .carousel-item { transition: .6s cubic-bezier(.4, 0, .2, 1); }
+        
         .category-swiper .swiper-pagination,
         .contact-swiper .swiper-pagination {
             position: relative !important;
             bottom: auto !important;
             margin-top: 2rem !important;
         }
-
+        
         .swiper-pagination-bullet {
             width: 30px !important;
             height: 4px !important;
@@ -323,65 +293,53 @@ $bestsellerData = $bestsellerItems->fetch_all(MYSQLI_ASSOC);
             background: rgba(255, 255, 255, 0.5) !important;
             opacity: 1 !important;
         }
-
+        
         @keyframes fadeIn {
             from {
                 opacity: 0;
                 transform: scale(.95);
             }
-
             to {
                 opacity: 1;
                 transform: scale(1);
             }
         }
-
-        .modal-enter {
-            animation: .2s ease-out fadeIn;
-        }
-
+        
+        .modal-enter { animation: .2s ease-out fadeIn; }
+        
         .swiper-pagination-bullet {
             background: #fb923c;
             opacity: .5;
         }
-
+        
         .swiper-pagination-bullet-active {
             background: #fb923c;
             opacity: 1;
         }
-
+        
         @keyframes shimmer {
-            0% {
-                background-position: -200% 0;
-            }
-
-            100% {
-                background-position: 200% 0;
-            }
+            0% { background-position: -200% 0; }
+            100% { background-position: 200% 0; }
         }
-
+        
         .animate-shimmer {
             animation: shimmer 1.5s ease-in-out infinite;
         }
-
+        
         .banner-image {
             transition: opacity 0.3s ease-in-out;
         }
-
+        
         .mySwiper {
             min-height: 150px;
         }
-
+        
         @media (min-width: 640px) {
-            .mySwiper {
-                min-height: 250px;
-            }
+            .mySwiper { min-height: 250px; }
         }
-
+        
         @media (min-width: 1024px) {
-            .mySwiper {
-                min-height: 350px;
-            }
+            .mySwiper { min-height: 350px; }
         }
     </style>
 
@@ -463,7 +421,7 @@ $bestsellerData = $bestsellerItems->fetch_all(MYSQLI_ASSOC);
                                 class="swiper-slide block cursor-pointer hover:opacity-90 transition-opacity group">
                                 <div class="relative w-full overflow-hidden flex items-center justify-center bg-gray-100">
                                     <div
-                                        class="skeleton-loader absolute inset-0 bg-gradient-to-r from-neutral-200 via-neutral-300 to-neutral-200 bg-[length:200%_100%] animate-shimmer">
+                                        class="skeleton-loader absolute inset-0 bg-linear-to-r from-neutral-200 via-neutral-300 to-neutral-200 bg-size-[200%_100%] animate-shimmer">
                                     </div>
                                     <img src="../../uploads/<?= basename($banner['filename']) ?>"
                                         alt="<?= htmlspecialchars($banner['category_name'] ?? 'Banner') ?>"
@@ -710,7 +668,7 @@ $bestsellerData = $bestsellerItems->fetch_all(MYSQLI_ASSOC);
     </section>
 
     <!-- POPUP MODAL -->
-    <div id="promoPopup" class="fixed inset-0 bg-black bg-opacity-60 flex items-center justify-center hidden z-50">
+    <div id="promoPopup" class="fixed inset-0 bg-black bg-opacity-60 items-center justify-center hidden z-50">
         <div class="relative max-w-4xl w-full mx-4">
             <!-- Close Button -->
             <button onclick="hidePromoModal()"
@@ -722,7 +680,7 @@ $bestsellerData = $bestsellerItems->fetch_all(MYSQLI_ASSOC);
                     class="relative group flex items-center justify-center">
                     <img src="../img/sale/c.png" alt="Special Sale" class="max-w-full max-h-[80vh] object-contain">
                     <div
-                        class="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent opacity-0 group-hover:opacity-50 transition-opacity duration-300 flex items-end justify-center pb-8">
+                        class="absolute inset-0 bg-linear-to-t from-black/60 via-transparent to-transparent opacity-0 group-hover:opacity-50 transition-opacity duration-300 flex items-end justify-center pb-8">
                         <span class="text-white text-4xl font-extrabold tracking-wide">Shop Now!</span>
                     </div>
                 </a>

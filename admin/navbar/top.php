@@ -61,7 +61,8 @@ if (!isset($_SESSION['noble_name']) || !isset($_SESSION['noble_lvl']) || !isset(
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Noble Home - Admin Panels</title>
-    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- ✅ PRODUCTION: Use minified Tailwind (not CDN) -->
+    <link href="../../output.css" rel="stylesheet">
     <script src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js" defer></script>
     <link href="https://cdn.jsdelivr.net/npm/remixicon@3.5.0/fonts/remixicon.css" rel="stylesheet">
     <style>
@@ -184,7 +185,7 @@ if (!isset($_SESSION['noble_name']) || !isset($_SESSION['noble_lvl']) || !isset(
                         </div>
                         <div>
                             <span
-                                class="text-xl font-bold bg-gradient-to-r from-orange-500 to-red-500 bg-clip-text text-transparent">
+                                class="text-xl font-bold bg-linear-to-r from-orange-500 to-red-500 bg-clip-text text-transparent">
                                 Admin Panel
                             </span>
                             <p class="text-xs text-gray-500">Management System</p>
@@ -197,10 +198,10 @@ if (!isset($_SESSION['noble_name']) || !isset($_SESSION['noble_lvl']) || !isset(
 
                 <!-- User Info Card -->
                 <div
-                    class="bg-gradient-to-br from-orange-50 to-red-50 rounded-xl p-4 shadow-sm border border-orange-100">
+                    class="bg-linear-to-br from-orange-50 to-red-50 rounded-xl p-4 shadow-sm border border-orange-100">
                     <div class="flex items-center space-x-3">
                         <div
-                            class="w-12 h-12 bg-gradient-to-br from-orange-400 to-red-500 rounded-full flex items-center justify-center shadow-lg">
+                            class="w-12 h-12 bg-linear-to-br from-orange-400 to-red-500 rounded-full flex items-center justify-center shadow-lg">
                             <i class="ri-user-line text-white text-xl"></i>
                         </div>
                         <div class="flex-1 min-w-0">
@@ -300,23 +301,23 @@ if (!isset($_SESSION['noble_name']) || !isset($_SESSION['noble_lvl']) || !isset(
     </aside>
 
     <!-- Desktop Navigation -->
-    <nav class="bg-white border-b border-black/[0.06] shadow-[0_2px_16px_rgba(0,0,0,0.06)] sticky top-0 z-30">
+    <nav class="bg-white border-b border-black/6 shadow-[0_2px_16px_rgba(0,0,0,0.06)] sticky top-0 z-30">
         <div class="flex items-center justify-between h-[60px] px-6 gap-4">
 
             <!-- ── LOGO ── -->
-            <div class="flex items-center gap-2.5 flex-shrink-0">
+            <div class="flex items-center gap-2.5 shrink-0">
                 <!-- Mobile hamburger -->
                 <button @click="sidebarOpen = true"
                     class="md:hidden w-9 h-9 flex items-center justify-center rounded-[10px] border border-[#e8e4df] text-gray-500 hover:border-orange-400 hover:bg-orange-50 hover:text-orange-500 transition-all">
                     <i class="ri-menu-line text-lg"></i>
                 </button>
 
-                <div class="w-9 h-9 rounded-[10px] overflow-hidden shadow-sm flex-shrink-0">
+                <div class="w-9 h-9 rounded-[10px] overflow-hidden shadow-sm shrink-0">
                     <img src="../img/logo/logo.png" alt="Logo" class="w-full h-full object-cover">
                 </div>
                 <div class="hidden sm:flex flex-col leading-none">
                     <span
-                        class="font-extrabold text-[17px] bg-gradient-to-r from-orange-500 to-red-500 bg-clip-text text-transparent tracking-tight"
+                        class="font-extrabold text-[17px] bg-linear-to-r from-orange-500 to-red-500 bg-clip-text text-transparent tracking-tight"
                         style="font-family:'Syne',sans-serif;">Administration</span>
                     <span class="text-[10px] text-gray-400 mt-0.5">Noble Home Management</span>
                 </div>
@@ -342,7 +343,7 @@ if (!isset($_SESSION['noble_name']) || !isset($_SESSION['noble_lvl']) || !isset(
             </div>
 
             <!-- ── RIGHT CONTROLS ── -->
-            <div class="flex items-center gap-1.5 flex-shrink-0">
+            <div class="flex items-center gap-1.5 shrink-0">
 
                 <!-- Quick Actions -->
                 <div class="static sm:relative">
@@ -350,7 +351,7 @@ if (!isset($_SESSION['noble_name']) || !isset($_SESSION['noble_lvl']) || !isset(
                         class="flex items-center gap-2 px-3 h-[38px] rounded-[10px] border border-[#e8e4df] bg-white text-[13px] font-medium text-gray-500 hover:border-orange-400 hover:bg-orange-50 hover:text-orange-600 hover:shadow-[0_0_0_4px_rgba(232,93,38,0.07)] transition-all"
                         :class="quickActionsOpen ? 'border-orange-400 bg-orange-50 text-orange-600' : ''">
                         <div
-                            class="w-5 h-5 bg-gradient-to-br from-orange-500 to-red-600 rounded-[6px] flex items-center justify-center text-white text-[11px] flex-shrink-0">
+                            class="w-5 h-5 bg-linear-to-br from-orange-500 to-red-600 rounded-[6px] flex items-center justify-center text-white text-[11px] shrink-0">
                             <i class="ri-flashlight-line"></i>
                         </div>
                         <span class="hidden sm:inline">Quick Actions</span>
@@ -366,7 +367,7 @@ if (!isset($_SESSION['noble_name']) || !isset($_SESSION['noble_lvl']) || !isset(
                         x-transition:leave="transition ease-in duration-150"
                         x-transition:leave-start="opacity-100 scale-100"
                         x-transition:leave-end="opacity-0 scale-95 -translate-y-1" x-cloak
-                        class="absolute left-1/2 -translate-x-1/2 sm:left-0 sm:translate-x-0 top-full mt-2 w-[92vw] max-w-[300px] bg-white rounded-2xl shadow-[0_20px_60px_rgba(0,0,0,0.12)] border border-black/[0.06] overflow-hidden z-50 flex flex-col">
+                        class="absolute left-1/2 -translate-x-1/2 sm:left-0 sm:translate-x-0 top-full mt-2 w-[92vw] max-w-[300px] bg-white rounded-2xl shadow-[0_20px_60px_rgba(0,0,0,0.12)] border border-black/6 overflow-hidden z-50 flex flex-col">
                         <!-- (ilagay dito ang Quick Actions dropdown content mula sa previous response) -->
                         <div class="py-2">
 
@@ -444,7 +445,7 @@ if (!isset($_SESSION['noble_name']) || !isset($_SESSION['noble_lvl']) || !isset(
                                     <a href="../shop/main-adminshop-page-1.php"
                                         class="qa-item flex items-center gap-2.5 px-2.5 py-2 rounded-[10px] text-[13px] text-gray-600 hover:bg-orange-50 hover:text-orange-600 transition-all duration-150 group">
                                         <div
-                                            class="w-[30px] h-[30px] rounded-lg bg-gray-100 group-hover:bg-orange-100 flex items-center justify-center text-sm text-gray-500 group-hover:text-orange-500 transition-colors flex-shrink-0">
+                                            class="w-[30px] h-[30px] rounded-lg bg-gray-100 group-hover:bg-orange-100 flex items-center justify-center text-sm text-gray-500 group-hover:text-orange-500 transition-colors shrink-0">
                                             <i class="ri-add-circle-line"></i>
                                         </div>
                                         Add Product
@@ -453,7 +454,7 @@ if (!isset($_SESSION['noble_name']) || !isset($_SESSION['noble_lvl']) || !isset(
                                     <a href="../shop/main-adminupdateshop-page-2.php"
                                         class="qa-item flex items-center gap-2.5 px-2.5 py-2 rounded-[10px] text-[13px] text-gray-600 hover:bg-orange-50 hover:text-orange-600 transition-all duration-150 group">
                                         <div
-                                            class="w-[30px] h-[30px] rounded-lg bg-gray-100 group-hover:bg-orange-100 flex items-center justify-center text-sm text-gray-500 group-hover:text-orange-500 transition-colors flex-shrink-0">
+                                            class="w-[30px] h-[30px] rounded-lg bg-gray-100 group-hover:bg-orange-100 flex items-center justify-center text-sm text-gray-500 group-hover:text-orange-500 transition-colors shrink-0">
                                             <i class="ri-edit-line"></i>
                                         </div>
                                         Update Product
@@ -464,7 +465,7 @@ if (!isset($_SESSION['noble_name']) || !isset($_SESSION['noble_lvl']) || !isset(
                                         <a href="../shop/main-banner-page-6.php"
                                             class="qa-item flex items-center gap-2.5 px-2.5 py-2 rounded-[10px] text-[13px] text-gray-600 hover:bg-orange-50 hover:text-orange-600 transition-all duration-150 group">
                                             <div
-                                                class="w-[30px] h-[30px] rounded-lg bg-gray-100 group-hover:bg-orange-100 flex items-center justify-center text-sm text-gray-500 group-hover:text-orange-500 transition-colors flex-shrink-0">
+                                                class="w-[30px] h-[30px] rounded-lg bg-gray-100 group-hover:bg-orange-100 flex items-center justify-center text-sm text-gray-500 group-hover:text-orange-500 transition-colors shrink-0">
                                                 <i class="ri-price-tag-3-line"></i>
                                             </div>
                                             Banner Discount
@@ -473,7 +474,7 @@ if (!isset($_SESSION['noble_name']) || !isset($_SESSION['noble_lvl']) || !isset(
                                         <a href="../supplier_management/suppliers_list"
                                             class="qa-item flex items-center gap-2.5 px-2.5 py-2 rounded-[10px] text-[13px] text-gray-600 hover:bg-orange-50 hover:text-orange-600 transition-all duration-150 group">
                                             <div
-                                                class="w-[30px] h-[30px] rounded-lg bg-gray-100 group-hover:bg-orange-100 flex items-center justify-center text-sm text-gray-500 group-hover:text-orange-500 transition-colors flex-shrink-0">
+                                                class="w-[30px] h-[30px] rounded-lg bg-gray-100 group-hover:bg-orange-100 flex items-center justify-center text-sm text-gray-500 group-hover:text-orange-500 transition-colors shrink-0">
                                                 <i class="ri-truck-line"></i>
                                             </div>
                                             Supplier Management
@@ -482,7 +483,7 @@ if (!isset($_SESSION['noble_name']) || !isset($_SESSION['noble_lvl']) || !isset(
                                         <a href="../shop/main-category-product-page-3.php"
                                             class="qa-item flex items-center gap-2.5 px-2.5 py-2 rounded-[10px] text-[13px] text-gray-600 hover:bg-orange-50 hover:text-orange-600 transition-all duration-150 group">
                                             <div
-                                                class="w-[30px] h-[30px] rounded-lg bg-gray-100 group-hover:bg-orange-100 flex items-center justify-center text-sm text-gray-500 group-hover:text-orange-500 transition-colors flex-shrink-0">
+                                                class="w-[30px] h-[30px] rounded-lg bg-gray-100 group-hover:bg-orange-100 flex items-center justify-center text-sm text-gray-500 group-hover:text-orange-500 transition-colors shrink-0">
                                                 <i class="ri-folder-line"></i>
                                             </div>
                                             Category Management
@@ -491,7 +492,7 @@ if (!isset($_SESSION['noble_name']) || !isset($_SESSION['noble_lvl']) || !isset(
                                         <a href="../shop/main-add_bestseller-page-4.php"
                                             class="qa-item flex items-center gap-2.5 px-2.5 py-2 rounded-[10px] text-[13px] text-gray-600 hover:bg-orange-50 hover:text-orange-600 transition-all duration-150 group">
                                             <div
-                                                class="w-[30px] h-[30px] rounded-lg bg-gray-100 group-hover:bg-orange-100 flex items-center justify-center text-sm text-gray-500 group-hover:text-orange-500 transition-colors flex-shrink-0">
+                                                class="w-[30px] h-[30px] rounded-lg bg-gray-100 group-hover:bg-orange-100 flex items-center justify-center text-sm text-gray-500 group-hover:text-orange-500 transition-colors shrink-0">
                                                 <i class="ri-star-line"></i>
                                             </div>
                                             Bestseller Management
@@ -500,7 +501,7 @@ if (!isset($_SESSION['noble_name']) || !isset($_SESSION['noble_lvl']) || !isset(
                                         <a href="../qrcodeperproduct/qrcodeitem"
                                             class="qa-item flex items-center gap-2.5 px-2.5 py-2 rounded-[10px] text-[13px] text-gray-600 hover:bg-orange-50 hover:text-orange-600 transition-all duration-150 group">
                                             <div
-                                                class="w-[30px] h-[30px] rounded-lg bg-gray-100 group-hover:bg-orange-100 flex items-center justify-center text-sm text-gray-500 group-hover:text-orange-500 transition-colors flex-shrink-0">
+                                                class="w-[30px] h-[30px] rounded-lg bg-gray-100 group-hover:bg-orange-100 flex items-center justify-center text-sm text-gray-500 group-hover:text-orange-500 transition-colors shrink-0">
                                                 <i class="ri-qr-code-line"></i>
                                             </div>
                                             Product QR Codes
@@ -509,7 +510,7 @@ if (!isset($_SESSION['noble_name']) || !isset($_SESSION['noble_lvl']) || !isset(
                                         <a href="../shop/quantity-management"
                                             class="qa-item flex items-center gap-2.5 px-2.5 py-2 rounded-[10px] text-[13px] text-gray-600 hover:bg-orange-50 hover:text-orange-600 transition-all duration-150 group">
                                             <div
-                                                class="w-[30px] h-[30px] rounded-lg bg-gray-100 group-hover:bg-orange-100 flex items-center justify-center text-sm text-gray-500 group-hover:text-orange-500 transition-colors flex-shrink-0">
+                                                class="w-[30px] h-[30px] rounded-lg bg-gray-100 group-hover:bg-orange-100 flex items-center justify-center text-sm text-gray-500 group-hover:text-orange-500 transition-colors shrink-0">
                                                 <i class="ri-shopping-cart-line"></i>
                                             </div>
                                             Minimum Order Quantity
@@ -518,7 +519,7 @@ if (!isset($_SESSION['noble_name']) || !isset($_SESSION['noble_lvl']) || !isset(
                                         <a href="../shop/promotion-discount"
                                             class="qa-item flex items-center gap-2.5 px-2.5 py-2 rounded-[10px] text-[13px] text-gray-600 hover:bg-orange-50 hover:text-orange-600 transition-all duration-150 group">
                                             <div
-                                                class="w-[30px] h-[30px] rounded-lg bg-gray-100 group-hover:bg-orange-100 flex items-center justify-center text-sm text-gray-500 group-hover:text-orange-500 transition-colors flex-shrink-0">
+                                                class="w-[30px] h-[30px] rounded-lg bg-gray-100 group-hover:bg-orange-100 flex items-center justify-center text-sm text-gray-500 group-hover:text-orange-500 transition-colors shrink-0">
                                                 <i class="ri-price-tag-3-line"></i>
                                             </div>
                                             Promotion Discount Banner
@@ -559,8 +560,7 @@ if (!isset($_SESSION['noble_name']) || !isset($_SESSION['noble_lvl']) || !isset(
                                         <span>Customize Quotation Request</span>
 
                                         <!-- Notification Badge -->
-                                        <span id="quote-notification" class="absolute -top-1 -right-1 bg-red-500 text-white text-xs font-bold rounded-full w-5 h-5 
-               flex items-center justify-center hidden">
+                                        <span id="quote-notification" class="absolute -top-1 -right-1 bg-red-500 text-white text-xs font-bold rounded-full w-5 h-5 items-center justify-center hidden">
                                             <span id="quote-count">0</span>
                                         </span>
                                     </a>
@@ -825,7 +825,7 @@ if (!isset($_SESSION['noble_name']) || !isset($_SESSION['noble_lvl']) || !isset(
                 </div>
 
                 <!-- Vertical divider -->
-                <div class="w-px h-6 bg-[#e8e4df] flex-shrink-0"></div>
+                <div class="w-px h-6 bg-[#e8e4df] shrink-0"></div>
 
                 <!-- Notifications -->
                 <div class="relative" x-data="notificationPanel()">
@@ -849,13 +849,13 @@ if (!isset($_SESSION['noble_name']) || !isset($_SESSION['noble_lvl']) || !isset(
                         x-transition:leave="transition ease-in duration-150"
                         x-transition:leave-start="opacity-100 scale-100"
                         x-transition:leave-end="opacity-0 scale-95 -translate-y-1" x-cloak
-                        class="absolute right-0 top-full mt-2.5 w-[360px] bg-white rounded-[18px] shadow-[0_20px_60px_rgba(0,0,0,0.12),0_4px_16px_rgba(0,0,0,0.06)] border border-black/[0.06] overflow-hidden z-50 flex flex-col">
+                        class="absolute right-0 top-full mt-2.5 w-[360px] bg-white rounded-[18px] shadow-[0_20px_60px_rgba(0,0,0,0.12),0_4px_16px_rgba(0,0,0,0.06)] border border-black/6 overflow-hidden z-50 flex flex-col">
 
                         <!-- Header -->
                         <div class="flex items-center justify-between px-4 py-3.5 border-b border-orange-50">
                             <div class="flex items-center gap-2">
                                 <div
-                                    class="w-[30px] h-[30px] bg-gradient-to-br from-orange-500 to-red-600 rounded-lg flex items-center justify-center text-white text-sm flex-shrink-0">
+                                    class="w-[30px] h-[30px] bg-linear-to-br from-orange-500 to-red-600 rounded-lg flex items-center justify-center text-white text-sm shrink-0">
                                     <i class="ri-notification-3-line"></i>
                                 </div>
                                 <span class="font-bold text-sm text-gray-900"
@@ -909,7 +909,7 @@ if (!isset($_SESSION['noble_name']) || !isset($_SESSION['noble_lvl']) || !isset(
                                         class="absolute left-1.5 top-1/2 -translate-y-1/2 w-1.5 h-1.5 rounded-full bg-orange-500"></span>
 
                                     <!-- Icon -->
-                                    <div class="w-9 h-9 rounded-[10px] flex items-center justify-center flex-shrink-0 text-base"
+                                    <div class="w-9 h-9 rounded-[10px] flex items-center justify-center shrink-0 text-base"
                                         :class="getIconBg(notif.color_class)">
                                         <i :class="notif.icon_class"></i>
                                     </div>
@@ -926,7 +926,7 @@ if (!isset($_SESSION['noble_name']) || !isset($_SESSION['noble_lvl']) || !isset(
 
                                     <!-- Hover actions -->
                                     <div
-                                        class="flex items-center gap-0.5 opacity-0 group-hover:opacity-100 transition-opacity flex-shrink-0 self-center">
+                                        class="flex items-center gap-0.5 opacity-0 group-hover:opacity-100 transition-opacity shrink-0 self-center">
                                         <button @click.stop="toggleRead(notif.id, notif.is_read)"
                                             :title="notif.is_read ? 'Mark as unread' : 'Mark as read'"
                                             class="w-[26px] h-[26px] rounded-md flex items-center justify-center text-gray-300 hover:bg-gray-100 hover:text-gray-500 transition-all text-[13px]">
@@ -950,7 +950,7 @@ if (!isset($_SESSION['noble_name']) || !isset($_SESSION['noble_lvl']) || !isset(
                 </div>
 
                 <!-- Vertical divider -->
-                <div class="w-px h-6 bg-[#e8e4df] flex-shrink-0"></div>
+                <div class="w-px h-6 bg-[#e8e4df] shrink-0"></div>
 
                 <!-- Profile -->
                 <div class="relative" x-data>
@@ -965,7 +965,7 @@ if (!isset($_SESSION['noble_name']) || !isset($_SESSION['noble_lvl']) || !isset(
                             </div>
                         </div>
                         <div
-                            class="w-8 h-8 bg-gradient-to-br from-orange-500 to-red-600 rounded-full flex items-center justify-center shadow-md flex-shrink-0">
+                            class="w-8 h-8 bg-linear-to-br from-orange-500 to-red-600 rounded-full flex items-center justify-center shadow-md shrink-0">
                             <i class="ri-user-line text-white text-sm"></i>
                         </div>
                     </button>
@@ -983,7 +983,7 @@ if (!isset($_SESSION['noble_name']) || !isset($_SESSION['noble_lvl']) || !isset(
 
                         <!-- Header -->
                         <div
-                            class="px-4 py-4 bg-gradient-to-br from-orange-50 to-red-50 border-b border-orange-100 relative overflow-hidden">
+                            class="px-4 py-4 bg-linear-to-br from-orange-50 to-red-50 border-b border-orange-100 relative overflow-hidden">
                             <!-- decorative blob -->
                             <div
                                 class="absolute -right-4 -top-4 w-20 h-20 rounded-full bg-orange-200/30 blur-xl pointer-events-none">

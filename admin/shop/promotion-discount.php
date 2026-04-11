@@ -197,7 +197,7 @@ if ($action === 'list') {
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
 </head>
-<body class="bg-gradient-to-br from-slate-50 to-slate-100 min-h-screen">
+<body class="bg-linear-to-br from-slate-50 to-slate-100 min-h-screen">
     <?php include '../navbar/top.php'; ?>
     
     <?php if ($action === 'list'): ?>
@@ -210,7 +210,7 @@ if ($action === 'list') {
                     <h1 class="text-4xl font-bold text-gray-900">Promotion Discounts</h1>
                     <p class="text-gray-600 mt-2">Manage all your promotion banners and discounts</p>
                 </div>
-                <a href="?action=add" class="inline-flex items-center gap-2 bg-gradient-to-r from-blue-500 to-indigo-600 hover:from-blue-600 hover:to-indigo-700 text-white font-bold py-3 px-6 rounded-lg transition shadow-lg">
+                <a href="?action=add" class="inline-flex items-center gap-2 bg-linear-to-r from-blue-500 to-indigo-600 hover:from-blue-600 hover:to-indigo-700 text-white font-bold py-3 px-6 rounded-lg transition shadow-lg">
                     <i class="fas fa-plus text-lg"></i>
                     Add New Promotion
                 </a>
@@ -283,7 +283,7 @@ if ($action === 'list') {
                     <div class="text-6xl text-gray-400 mx-auto mb-4"><i class="fas fa-image"></i></div>
                     <h3 class="text-xl font-bold text-gray-900 mb-2">No Promotions Yet</h3>
                     <p class="text-gray-600 mb-6">Create your first promotion banner to get started.</p>
-                    <a href="?action=add" class="inline-flex items-center gap-2 bg-gradient-to-r from-blue-500 to-indigo-600 hover:from-blue-600 hover:to-indigo-700 text-white font-bold py-3 px-6 rounded-lg transition">
+                    <a href="?action=add" class="inline-flex items-center gap-2 bg-linear-to-r from-blue-500 to-indigo-600 hover:from-blue-600 hover:to-indigo-700 text-white font-bold py-3 px-6 rounded-lg transition">
                         <i class="fas fa-plus text-lg"></i>
                         Create Promotion
                     </a>
@@ -299,7 +299,7 @@ if ($action === 'list') {
             <!-- Header Section -->
             <div class="mb-8">
                 <div class="flex items-center gap-3 mb-3">
-                    <div class="p-2 bg-gradient-to-br from-blue-500 to-indigo-600 rounded-lg text-2xl text-white">
+                    <div class="p-2 bg-linear-to-br from-blue-500 to-indigo-600 rounded-lg text-2xl text-white">
                         <i class="fas fa-plus"></i>
                     </div>
                     <div>
@@ -416,7 +416,7 @@ if ($action === 'list') {
                     <div class="flex gap-4 pt-6 border-t border-gray-200">
                         <button 
                             type="submit" 
-                            class="flex-1 bg-gradient-to-r from-blue-500 to-indigo-600 hover:from-blue-600 hover:to-indigo-700 active:scale-95 text-white font-bold py-3 px-4 rounded-lg transition transform duration-200 shadow-lg hover:shadow-xl flex items-center justify-center gap-2"
+                            class="flex-1 bg-linear-to-r from-blue-500 to-indigo-600 hover:from-blue-600 hover:to-indigo-700 active:scale-95 text-white font-bold py-3 px-4 rounded-lg transition transform duration-200 shadow-lg hover:shadow-xl flex items-center justify-center gap-2"
                         >
                             <i class="fas fa-save"></i>
                             Add Banner
@@ -435,7 +435,7 @@ if ($action === 'list') {
             <!-- Info Box -->
             <div class="mt-8 bg-blue-50 border border-blue-200 rounded-lg p-6">
                 <div class="flex gap-3">
-                    <div class="text-2xl flex-shrink-0"><i class="fas fa-lightbulb text-blue-600"></i></div>
+                    <div class="text-2xl shrink-0"><i class="fas fa-lightbulb text-blue-600"></i></div>
                     <div>
                         <h3 class="font-semibold text-blue-900">Tip for best results</h3>
                         <p class="text-blue-800 text-sm mt-1">Use high-quality images with 16:9 aspect ratio for optimal display on all devices. Keep titles concise and discount percentages clear.</p>
@@ -452,7 +452,7 @@ if ($action === 'list') {
             <!-- Header Section -->
             <div class="mb-8">
                 <div class="flex items-center gap-3 mb-3">
-                    <div class="p-2 bg-gradient-to-br from-blue-500 to-indigo-600 rounded-lg text-2xl text-white">
+                    <div class="p-2 bg-linear-to-br from-blue-500 to-indigo-600 rounded-lg text-2xl text-white">
                         <i class="fas fa-edit"></i>
                     </div>
                     <div>
@@ -586,7 +586,7 @@ if ($action === 'list') {
                     <div class="flex gap-4 pt-6 border-t border-gray-200">
                         <button 
                             type="submit" 
-                            class="flex-1 bg-gradient-to-r from-blue-500 to-indigo-600 hover:from-blue-600 hover:to-indigo-700 active:scale-95 text-white font-bold py-3 px-4 rounded-lg transition transform duration-200 shadow-lg hover:shadow-xl flex items-center justify-center gap-2"
+                            class="flex-1 bg-linear-to-r from-blue-500 to-indigo-600 hover:from-blue-600 hover:to-indigo-700 active:scale-95 text-white font-bold py-3 px-4 rounded-lg transition transform duration-200 shadow-lg hover:shadow-xl flex items-center justify-center gap-2"
                         >
                             <i class="fas fa-save"></i>
                             Update Promotion
@@ -605,7 +605,7 @@ if ($action === 'list') {
             <!-- Info Box -->
             <div class="mt-8 bg-blue-50 border border-blue-200 rounded-lg p-6">
                 <div class="flex gap-3">
-                    <div class="text-2xl flex-shrink-0"><i class="fas fa-lightbulb text-blue-600"></i></div>
+                    <div class="text-2xl shrink-0"><i class="fas fa-lightbulb text-blue-600"></i></div>
                     <div>
                         <h3 class="font-semibold text-blue-900">Editing tips</h3>
                         <p class="text-blue-800 text-sm mt-1">You can update the title and discount percentage without changing the image. If you want a new image, upload it above and the old one will be replaced automatically.</p>

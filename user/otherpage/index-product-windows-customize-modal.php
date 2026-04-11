@@ -1,5 +1,5 @@
 <div id="customizeModal"
-  class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-[9999] hidden">
+  class="fixed inset-0 bg-black bg-opacity-50 items-center justify-center z-9999 hidden">
   <div class="bg-white rounded-2xl p-6 lg:p-8 max-w-2xl w-full mx-4 relative max-h-[90vh] overflow-y-auto">
  
     <!-- Close Button -->
@@ -12,6 +12,7 @@
  
     <!-- Modal Header -->
     <div class="mb-6">
+      
       <div class="flex items-center gap-3 mb-2">
         <div>
           <h3 class="text-2xl lg:text-3xl font-bold text-gray-900">Customize Your Windows</h3>
@@ -21,7 +22,7 @@
     </div>
  
     <!-- Product Summary -->
-    <div class="bg-gradient-to-r from-blue-50 to-purple-50 p-4 rounded-lg mb-6 border border-blue-200">
+    <div class="bg-linear-to-r from-blue-50 to-purple-50 p-4 rounded-lg mb-6 border border-blue-200">
       <h4 class="font-semibold text-gray-900 mb-2">Product Details</h4>
       <p id="customizeProductName" class="text-gray-700 font-medium mb-1"></p>
       <p id="customizeProductInfo" class="text-sm text-gray-600"></p>
@@ -184,7 +185,7 @@
 <!-- ============================================================ -->
 <!-- SCRIPTS                                                      -->
 <!-- ============================================================ -->
- 
+
 <script>
   // Open customize modal
   function openCustomizeModal() {

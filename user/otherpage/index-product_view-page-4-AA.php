@@ -1084,7 +1084,7 @@ $is_guest = !isset($_SESSION['user_id']);
                 <div class="flex gap-1 sm:gap-2 pb-2 justify-center lg:justify-start">
 
                   <!-- Main Thumbnail -->
-                  <div class="thumbnail-item cursor-pointer flex-shrink-0 border border-gray-200 rounded-lg"
+                  <div class="thumbnail-item cursor-pointer shrink-0 border border-gray-200 rounded-lg"
                     data-index="0">
                     <img src="../../<?= htmlspecialchars($display_image) ?>" loading="lazy"
                       class="w-12 h-12 sm:w-14 sm:h-14 md:w-16 md:h-16 object-contain rounded-lg border-2 border-transparent hover:border-blue-500 transition-all duration-200 thumbnail-active"
@@ -1093,7 +1093,7 @@ $is_guest = !isset($_SESSION['user_id']);
 
                   <!-- Sub Images Thumbnails - FIXED PATH -->
                   <?php foreach ($sub_images as $index => $sub_image): ?>
-                    <div class="thumbnail-item cursor-pointer flex-shrink-0 border border-gray-200 rounded-lg"
+                    <div class="thumbnail-item cursor-pointer shrink-0 border border-gray-200 rounded-lg"
                       data-index="<?= $index + 1 ?>">
                       <img src="../../uploads/<?= htmlspecialchars($sub_image) ?>" loading="lazy"
                         class="w-12 h-12 sm:w-14 sm:h-14 md:w-16 md:h-16 object-contain rounded-lg border-2 border-transparent hover:border-blue-500 transition-all duration-200"
@@ -1108,18 +1108,18 @@ $is_guest = !isset($_SESSION['user_id']);
 
         <!-- Mobile Sidebar Toggle Button -->
         <button id="mobileSidebarToggle"
-          class="lg:hidden fixed bottom-3 right-3 z-[90] bg-black text-white px-4 py-2 text-sm rounded-full shadow-md hover:bg-orange-600 transition-all active:scale-95">
+          class="lg:hidden fixed bottom-3 right-3 z-90 bg-black text-white px-4 py-2 text-sm rounded-full shadow-md hover:bg-orange-600 transition-all active:scale-95">
           <i class="fas fa-shopping-cart text-xs lg:text-base"></i>
           <span>Add to Cart</span>
         </button>
 
         <!-- Overlay for mobile sidebar -->
-        <div id="sidebarOverlay" class="fixed inset-0 bg-black bg-opacity-50 z-[100] hidden lg:hidden"></div>
+        <div id="sidebarOverlay" class="fixed inset-0 bg-black bg-opacity-50 z-100 hidden lg:hidden"></div>
 
         <!-- Product Options Section - Sidebar on mobile, normal on desktop -->
         <div id="productOptionsContainer" class="fixed lg:relative top-0 right-0 h-full lg:h-auto w-full sm:w-80 lg:w-full 
          transform translate-x-full lg:translate-x-0 transition-transform duration-300 ease-in-out
-         z-[101] lg:z-auto bg-white lg:bg-white shadow-xl lg:shadow-none overflow-y-auto">
+         z-101 lg:z-auto bg-white lg:bg-white shadow-xl lg:shadow-none overflow-y-auto">
 
           <!-- Mobile Sidebar Header -->
           <div
@@ -1868,7 +1868,7 @@ $is_guest = !isset($_SESSION['user_id']);
 
                 <!-- See More / See Less button -->
                 <button id="toggle-sku-btn" onclick="toggleSkuContent()"
-                  class="hidden mt-3 text-orange-600 hover:text-orange-700 font-medium text-sm flex items-center gap-1 transition">
+                  class="mt-3 text-orange-600 hover:text-orange-700 font-medium text-sm flex items-center gap-1 transition">
                   <span id="toggle-sku-text">See More</span>
                   <i id="toggle-sku-icon" class="fas fa-chevron-down text-xs"></i>
                 </button>
@@ -1939,7 +1939,7 @@ $is_guest = !isset($_SESSION['user_id']);
 
 
               <!-- Total Price Display -->
-              <div class="bg-gradient-to-r from-green-50 to-blue-50 p-2 lg:p-5 ">
+              <div class="bg-linear-to-r from-green-50 to-blue-50 p-2 lg:p-5 ">
                 <div class="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-2">
                   <div>
                     <p class="text-xs lg:text-sm text-gray-600 mb-1 font-medium">Total Price</p>
@@ -2209,7 +2209,7 @@ $is_guest = !isset($_SESSION['user_id']);
             <div class="space-y-6">
 
               <!-- Rating Summary -->
-              <div class="bg-gradient-to-r from-orange-50 to-yellow-50 rounded-lg p-6 border border-orange-100">
+              <div class="bg-linear-to-r from-orange-50 to-yellow-50 rounded-lg p-6 border border-orange-100">
                 <div class="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-6">
 
                   <!-- Average Rating -->
@@ -2311,7 +2311,7 @@ $is_guest = !isset($_SESSION['user_id']);
                       <div class="flex items-start gap-4">
 
                         <!-- User Avatar -->
-                        <div class="flex-shrink-0">
+                        <div class="shrink-0">
                           <?php if (!empty($review['profile_picture'])): ?>
                             <img src="<?= htmlspecialchars($review['profile_picture']) ?>"
                               alt="<?= htmlspecialchars($review['user_name']) ?>" class="w-10 h-10 rounded-full object-cover">
@@ -2428,7 +2428,7 @@ $is_guest = !isset($_SESSION['user_id']);
                       <!-- ✅ FIXED: Use pre-processed $product_images array -->
                       <?php foreach ($product_images as $imageData): ?>
                         <div
-                          class="group relative overflow-hidden rounded-xl bg-gradient-to-br from-gray-50 to-gray-100 shadow-md hover:shadow-2xl transition-all duration-300">
+                          class="group relative overflow-hidden rounded-xl bg-linear-to-br from-gray-50 to-gray-100 shadow-md hover:shadow-2xl transition-all duration-300">
 
                           <!-- Zoom Icon -->
                           <div
@@ -2456,7 +2456,7 @@ $is_guest = !isset($_SESSION['user_id']);
 
                           <!-- Hover Overlay -->
                           <div
-                            class="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex items-end p-4">
+                            class="absolute inset-0 bg-linear-to-t from-black/60 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex items-end p-4">
                             <span class="text-white text-sm font-medium">Click to enlarge</span>
                           </div>
                         </div>
@@ -2466,7 +2466,7 @@ $is_guest = !isset($_SESSION['user_id']);
                     <!-- Empty State -->
                     <div class="text-center py-16 px-4">
                       <div
-                        class="inline-flex items-center justify-center w-20 h-20 bg-gradient-to-br from-gray-100 to-gray-200 rounded-2xl mb-4">
+                        class="inline-flex items-center justify-center w-20 h-20 bg-linear-to-br from-gray-100 to-gray-200 rounded-2xl mb-4">
                         <i class="fas fa-images text-4xl text-gray-400"></i>
                       </div>
                       <h4 class="text-lg font-semibold text-gray-700 mb-2">No Images Available</h4>

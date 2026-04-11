@@ -1,19 +1,19 @@
 <!-- Mobile Trigger Button (Bottom Right) -->
 <button id="relatedProductsTrigger"
-    class="lg:hidden fixed bottom-20 right-4 z-[80] bg-black text-white px-4 py-2 text-sm rounded-full shadow-md hover:shadow-lg transition-all active:scale-95 flex items-center gap-1">
+    class="lg:hidden fixed bottom-20 right-4 z-80 bg-black text-white px-4 py-2 text-sm rounded-full shadow-md hover:shadow-lg transition-all active:scale-95 flex items-center gap-1">
     <i class="fas fa-th-large text-sm"></i>
     <span>Related (<?= $related_products->num_rows ?>)</span>
 </button>
 
 <!-- Overlay for mobile sidebar -->
 <div id="relatedOverlay"
-    class="fixed inset-0 bg-black bg-opacity-50 z-[110] hidden lg:hidden transition-opacity duration-300"></div>
+    class="fixed inset-0 bg-black bg-opacity-50 z-110 hidden lg:hidden transition-opacity duration-300"></div>
 
 <!-- Related Products Section - Bottom Sheet on Mobile, Hidden on Desktop -->
 <section id="relatedProductsContainer" class="fixed bottom-0 left-0 right-0
        transform translate-y-full
        transition-transform duration-300 ease-out
-       z-[111] bg-white 
+       z-111 bg-white 
        shadow-2xl rounded-t-3xl 
        max-h-[80vh] overflow-hidden flex flex-col
        lg:hidden">
@@ -154,7 +154,7 @@
                             <div class="swiper-slide">
                                 <!-- Buong card ay clickable na -->
                                 <a href="index-product_view-page-4-AA.php?id=<?= $row['id'] ?>"
-                                    class="group block bg-white rounded-lg overflow-hidden hover:shadow-xl transition-all duration-300 h-full flex flex-col cursor-pointer">
+                                    class="group block bg-white rounded-lg overflow-hidden hover:shadow-xl transition-all duration-300 h-full flex-col cursor-pointer">
 
                                     <!-- Product Image -->
                                     <div class="relative overflow-hidden bg-gray-100" style="height: 200px;">

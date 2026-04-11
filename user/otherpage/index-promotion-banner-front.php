@@ -88,7 +88,7 @@ if (!function_exists('include_banner')) {
                     <div class="promo-shimmer"></div>
 
                     <img src="<?= $img_src ?>" alt="<?= $has_title ? htmlspecialchars($title) : 'Promotion Banner' ?>"
-                        class="promo-img w-full object-contain opacity-0 relative z-10 rounded-xl block"
+                        class="promo-img w-full object-contain opacity-0 relative z-10 rounded-xl block" loading="lazy"
                         onload="this.style.opacity='1';this.previousElementSibling.style.display='none';"
                         onerror="this.closest('section').remove();">
 

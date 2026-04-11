@@ -22,10 +22,12 @@ include 'index-recent_views_handler-page-14.php';
 
 // Fetch recent views
 $recent_views = getRecentViews($conn, 10);
+
 $recent_count = mysqli_num_rows($recent_views);
 
 // 🆕 Fetch recommended products (with view counts)
 $recommended_products = getRecommendedProducts($conn, 10);
+
 $recommended_count = mysqli_num_rows($recommended_products);
 
 // Check login notification                     
@@ -101,7 +103,6 @@ if (mysqli_num_rows($material_results) > 0) {
     mysqli_data_seek($material_results, 0);
 }
 
-
 $material_querystwo = "
     SELECT 
         pv.*,
@@ -166,32 +167,70 @@ $bestsellerData = $bestsellerItems->fetch_all(MYSQLI_ASSOC);
 <html lang="en">
 
 <head>
+    <!-- OPTIMIZED HEAD SECTION -->
+    <!-- Only load CRITICAL resources here -->
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <link rel="icon" type="image/png" sizes="96x96" href="../img/favicon.ico">
     <title>Noble Home - Modern Furnishing Supplies</title>
+
+    <!-- CSS Files (non-render blocking) -->
     <link href="../css/promotionslide.css" rel="stylesheet">
     <link href="../css/bannerPromo.css" rel="stylesheet">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/swiper@11/swiper-bundle.min.css" />
     <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap"
         rel="stylesheet" />
-    <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js"></script>
+
+    <!-- CRITICAL: Tailwind (required for initial render) -->
     <script src="https://cdn.tailwindcss.com?plugins=aspect-ratio"></script>
-    <script src="https://unpkg.com/aos@2.3.4/dist/aos.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/swiper@11/swiper-bundle.min.js"></script>
-    <script src="https://unpkg.com/lucide@latest/dist/umd/lucide.min.js" defer></script>
-    <script src="https://cdn.jsdelivr.net/gh/studio-freight/lenis@1.0.19/bundled/lenis.min.js"></script>
+
+    <!-- Swiper library - CRITICAL for carousel -->
+    <script src="https://cdn.jsdelivr.net/npm/swiper@11/swiper-bundle.min.js" defer></script>
+
+    <!-- 🚀 DEFERRED: Non-critical libraries load AFTER page interactive -->
     <script>
-        // Function to hide the notification after 5 seconds
-        setTimeout(function () {
-            const notification = document.getElementById('loginNotification');
-            if (notification) {
-                notification.style.display = 'none';
-            }
-        }, 5000); // 5000ms = 5 seconds
-
-
+        // Load AOS only if needed
+        if (document.querySelectorAll('[data-aos]').length > 0) {
+            const aoScript = document.createElement('script');
+            aoScript.src = 'https://unpkg.com/aos@2.3.4/dist/aos.js';
+            aoScript.async = true;
+            aoScript.onload = () => { if (window.AOS) AOS.init(); };
+            document.body.appendChild(aoScript);
+        }
     </script>
+
+    <!-- Load Lenis after page is interactive (smooth scroll) -->
+    <script>
+        window.addEventListener('load', () => {
+            const lenisScript = document.createElement('script');
+            lenisScript.src = 'https://cdn.jsdelivr.net/gh/studio-freight/lenis@1.0.19/bundled/lenis.min.js';
+            lenisScript.async = true;
+            lenisScript.onload = () => {
+                if (window.Lenis) {
+                    const lenis = new Lenis({
+                        duration: 3,
+                        easing: (t) => Math.min(1, 1.001 - Math.pow(2, -10 * t)),
+                        direction: 'vertical',
+                        smooth: true
+                    });
+                    function raf(time) {
+                        lenis.raf(time);
+                        requestAnimationFrame(raf);
+                    }
+                    requestAnimationFrame(raf);
+                }
+            };
+            document.body.appendChild(lenisScript);
+        });
+    </script>
+
+    <!-- Alpine JS (deferred loading) -->
+    <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js"></script>
+
+    <!-- Lucide icons (load asynchronously) -->
+    <script src="https://unpkg.com/lucide@latest/dist/umd/lucide.min.js" defer></script>
+
+    <!-- Styles -->
     <style>
         footer * {
             font-family: 'Plus Jakarta Sans', sans-serif;
@@ -199,18 +238,18 @@ $bestsellerData = $bestsellerItems->fetch_all(MYSQLI_ASSOC);
 
         .swiper-slide,
         .swiper-slide-active {
-            opacity: 1 !important
+            opacity: 1 !important;
         }
 
         @keyframes float {
 
             0%,
             100% {
-                transform: translateY(0) rotate(0)
+                transform: translateY(0) rotate(0);
             }
 
             50% {
-                transform: translateY(-20px) rotate(180deg)
+                transform: translateY(-20px) rotate(180deg);
             }
         }
 
@@ -218,37 +257,37 @@ $bestsellerData = $bestsellerItems->fetch_all(MYSQLI_ASSOC);
             background: linear-gradient(135deg, #fff 0, #f97316 100%);
             -webkit-background-clip: text;
             -webkit-text-fill-color: transparent;
-            background-clip: text
+            background-clip: text;
         }
 
         .btn-glow {
             box-shadow: 0 0 30px rgba(251, 146, 60, .3);
-            transition: .3s
+            transition: .3s;
         }
 
         .btn-glow:hover {
             box-shadow: 0 0 40px rgba(251, 146, 60, .5);
-            transform: translateY(-2px)
+            transform: translateY(-2px);
         }
 
         .text-shadow {
-            text-shadow: 2px 2px 4px rgba(0, 0, 0, .5)
+            text-shadow: 2px 2px 4px rgba(0, 0, 0, .5);
         }
 
         .backdrop-blur-sm {
-            backdrop-filter: blur(4px)
+            backdrop-filter: blur(4px);
         }
 
         [x-cloak] {
-            display: none !important
+            display: none !important;
         }
 
         .swiper-slide {
-            transition: opacity .5s ease-in-out
+            transition: opacity .5s ease-in-out;
         }
 
         .swiper-slide:not(.swiper-slide-active) {
-            opacity: .3
+            opacity: .3;
         }
 
         .swiper-button-next,
@@ -257,24 +296,24 @@ $bestsellerData = $bestsellerItems->fetch_all(MYSQLI_ASSOC);
             height: 2rem;
             background-color: rgba(255, 255, 255, .8);
             border-radius: 9999px;
-            box-shadow: 0 2px 8px rgba(0, 0, 0, .2)
+            box-shadow: 0 2px 8px rgba(0, 0, 0, .2);
         }
 
         .swiper-button-next::after,
         .swiper-button-prev::after {
             font-size: 12px !important;
-            color: #111
+            color: #111;
         }
 
         .carousel-item {
-            transition: .6s cubic-bezier(.4, 0, .2, 1)
+            transition: .6s cubic-bezier(.4, 0, .2, 1);
         }
 
         .category-swiper .swiper-pagination,
         .contact-swiper .swiper-pagination {
             position: relative !important;
             bottom: auto !important;
-            margin-top: 2rem !important
+            margin-top: 2rem !important;
         }
 
         .swiper-pagination-bullet {
@@ -285,33 +324,31 @@ $bestsellerData = $bestsellerItems->fetch_all(MYSQLI_ASSOC);
             opacity: 1 !important;
         }
 
-
         @keyframes fadeIn {
             from {
                 opacity: 0;
-                transform: scale(.95)
+                transform: scale(.95);
             }
 
             to {
                 opacity: 1;
-                transform: scale(1)
+                transform: scale(1);
             }
         }
 
         .modal-enter {
-            animation: .2s ease-out fadeIn
+            animation: .2s ease-out fadeIn;
         }
 
         .swiper-pagination-bullet {
             background: #fb923c;
-            opacity: .5
+            opacity: .5;
         }
 
         .swiper-pagination-bullet-active {
             background: #fb923c;
-            opacity: 1
+            opacity: 1;
         }
-
 
         @keyframes shimmer {
             0% {
@@ -327,13 +364,10 @@ $bestsellerData = $bestsellerItems->fetch_all(MYSQLI_ASSOC);
             animation: shimmer 1.5s ease-in-out infinite;
         }
 
-
-
         .banner-image {
             transition: opacity 0.3s ease-in-out;
         }
 
-        /* Main slider responsive sizing */
         .mySwiper {
             min-height: 150px;
         }
@@ -350,11 +384,13 @@ $bestsellerData = $bestsellerItems->fetch_all(MYSQLI_ASSOC);
             }
         }
     </style>
+
 </head>
 
 <body class="">
 
     <?php include '../navbar/top.php'; ?>
+
     <?php include 'push-notification.php'; ?>
 
     <?php include 'index-flash_notification-D.php'; ?>
@@ -1009,6 +1045,10 @@ $bestsellerData = $bestsellerItems->fetch_all(MYSQLI_ASSOC);
         });
     </script>
 
+    <section>
+
+    </section>
+
     <?php $row_count = mysqli_num_rows($material_resultstwo); ?>
     <section class="px-4 sm:px-5 lg:px-7 py-4 bg-white">
         <?php if ($row_count > 0): ?>
@@ -1149,9 +1189,7 @@ $bestsellerData = $bestsellerItems->fetch_all(MYSQLI_ASSOC);
         });
     </script>
 
-
     <?php include_banner(3); ?>
-
 
     <?php include_banner(2); ?>
 
@@ -1173,8 +1211,7 @@ $bestsellerData = $bestsellerItems->fetch_all(MYSQLI_ASSOC);
         </section>
     <?php endif; ?>
 
-
-   <section class="py-8 px-4">
+    <section class="py-8 px-4">
         <div class="w-full mx-auto">
             <!-- Features Horizontal -->
             <div class="flex flex-col md:flex-row items-start justify-between gap-8 md:gap-6 lg:gap-12">
@@ -1184,9 +1221,10 @@ $bestsellerData = $bestsellerItems->fetch_all(MYSQLI_ASSOC);
                         <i class="fa-solid fa-truck text-3xl text-gray-700"></i>
                     </div>
                     <h3 class="text-base font-semibold text-gray-900 mb-1">Quality products</h3>
-                    <p class="text-sm text-gray-600">All products are carefully inspected to ensure top-notch quality.</p>
+                    <p class="text-sm text-gray-600">All products are carefully inspected to ensure top-notch quality.
+                    </p>
                 </div>
- 
+
                 <!-- Feature 2 -->
                 <div class="flex flex-col items-center text-center flex-1">
                     <div class="w-16 h-16 rounded-full bg-gray-100 flex items-center justify-center mb-4">
@@ -1195,7 +1233,7 @@ $bestsellerData = $bestsellerItems->fetch_all(MYSQLI_ASSOC);
                     <h3 class="text-base font-semibold text-gray-900 mb-1">Support Services</h3>
                     <p class="text-sm text-gray-600">Monday - Friday 8:00 AM - 5:00 PM - Saturday 8:00 AM - 12:00 PM</p>
                 </div>
- 
+
                 <!-- Feature 3 -->
                 <div class="flex flex-col items-center text-center flex-1">
                     <div class="w-16 h-16 rounded-full bg-gray-100 flex items-center justify-center mb-4">
@@ -1204,7 +1242,7 @@ $bestsellerData = $bestsellerItems->fetch_all(MYSQLI_ASSOC);
                     <h3 class="text-base font-semibold text-gray-900 mb-1">Secured Payment</h3>
                     <p class="text-sm text-gray-600">Safe and encrypted payment options for your peace of mind.</p>
                 </div>
- 
+
                 <!-- Feature 4 -->
                 <div class="flex flex-col items-center text-center flex-1">
                     <div class="w-16 h-16 rounded-full bg-gray-100 flex items-center justify-center mb-4">
@@ -1217,86 +1255,170 @@ $bestsellerData = $bestsellerItems->fetch_all(MYSQLI_ASSOC);
         </div>
     </section>
 
-
     <?php include '../navbar/footer.php'; ?>
 
     <script>
-        AOS.init();
-        // Initialize Lenis
-        const lenis = new Lenis({
-            duration: 3,
-            easing: (t) => Math.min(1, 1.001 - Math.pow(2, -10 * t)),
-            direction: 'vertical',
-            smooth: true
+        // 🚀 OPTIMIZED SWIPER INITIALIZATION
+        // Deferred loading to prevent blocking main thread
+
+        const swiperConfigs = [
+            {
+                selector: '.bestsellerSwiper2',
+                options: {
+                    slidesPerView: 7,
+                    spaceBetween: 16,
+                    navigation: {
+                        nextEl: '.bs-next',
+                        prevEl: '.bs-prev',
+                    },
+                    breakpoints: {
+                        320: { slidesPerView: 2, spaceBetween: 10 },
+                        640: { slidesPerView: 3, spaceBetween: 12 },
+                        768: { slidesPerView: 4, spaceBetween: 14 },
+                        1024: { slidesPerView: 5, spaceBetween: 16 },
+                        1280: { slidesPerView: 6, spaceBetween: 16 },
+                        1536: { slidesPerView: 7, spaceBetween: 16 },
+                    }
+                }
+            },
+            {
+                selector: '.topSalesSwiper',
+                options: {
+                    slidesPerView: 7,
+                    spaceBetween: 16,
+                    navigation: {
+                        nextEl: '.ts-next',
+                        prevEl: '.ts-prev',
+                    },
+                    breakpoints: {
+                        320: { slidesPerView: 2, spaceBetween: 10 },
+                        640: { slidesPerView: 3, spaceBetween: 12 },
+                        768: { slidesPerView: 4, spaceBetween: 14 },
+                        1024: { slidesPerView: 5, spaceBetween: 16 },
+                        1280: { slidesPerView: 6, spaceBetween: 16 },
+                        1536: { slidesPerView: 7, spaceBetween: 16 },
+                    }
+                }
+            },
+            {
+                selector: '.newArrivalSwiper',
+                options: {
+                    slidesPerView: 7,
+                    spaceBetween: 16,
+                    navigation: {
+                        nextEl: '.na-next',
+                        prevEl: '.na-prev',
+                    },
+                    breakpoints: {
+                        320: { slidesPerView: 2, spaceBetween: 10 },
+                        640: { slidesPerView: 3, spaceBetween: 12 },
+                        768: { slidesPerView: 4, spaceBetween: 14 },
+                        1024: { slidesPerView: 5, spaceBetween: 16 },
+                        1280: { slidesPerView: 6, spaceBetween: 16 },
+                        1536: { slidesPerView: 7, spaceBetween: 16 },
+                    }
+                }
+            },
+            {
+                selector: '.mySwiper-recommended',
+                options: {
+                    slidesPerView: 2,
+                    spaceBetween: 10,
+                    navigation: {
+                        nextEl: '.swiper-button-next-recommended',
+                        prevEl: '.swiper-button-prev-recommended',
+                    },
+                    breakpoints: {
+                        480: { slidesPerView: 2, spaceBetween: 12 },
+                        640: { slidesPerView: 2, spaceBetween: 15 },
+                        768: { slidesPerView: 3, spaceBetween: 15 },
+                        1024: { slidesPerView: 4, spaceBetween: 18 },
+                        1280: { slidesPerView: 5, spaceBetween: 20 },
+                        1536: { slidesPerView: 7, spaceBetween: 25 }
+                    }
+                }
+            }
+        ];
+
+        // 🚀 Initialize Swipers after page is interactive
+        function initializeSwipers() {
+            swiperConfigs.forEach(config => {
+                const element = document.querySelector(config.selector);
+                if (element && typeof Swiper !== 'undefined') {
+                    new Swiper(config.selector, config.options);
+                }
+            });
+        }
+
+        // Use requestIdleCallback for deferred execution
+        if ('requestIdleCallback' in window) {
+            requestIdleCallback(initializeSwipers, { timeout: 3000 });
+        } else {
+            // Fallback for browsers without requestIdleCallback
+            setTimeout(initializeSwipers, 2000);
+        }
+
+        // Alternative: Initialize after DOM content is loaded
+        document.addEventListener('DOMContentLoaded', () => {
+            if (typeof Swiper === 'undefined') {
+                console.warn('Swiper library not loaded yet');
+                return;
+            }
+
+            // 🚀 MAIN HERO SWIPER
+            const heroSlideCount = document.querySelector('.mySwiper')?.querySelectorAll('.swiper-slide').length || 0;
+            if (document.querySelector('.mySwiper')) {
+                new Swiper('.mySwiper', {
+                    slidesPerView: 1,
+                    spaceBetween: 0,
+                    loop: heroSlideCount > 1,
+                    autoplay: heroSlideCount > 1 ? {
+                        delay: 4000,
+                        disableOnInteraction: false,
+                        pauseOnMouseEnter: true
+                    } : false,
+                    pagination: {
+                        el: ".swiper-pagination",
+                        clickable: true
+                    },
+                    navigation: {
+                        nextEl: ".swiper-button-next",
+                        prevEl: ".swiper-button-prev"
+                    },
+                    speed: 1000,
+                    effect: 'slide'
+                });
+            }
+
+            // 🚀 RECENT VIEWS SWIPER
+            const recentSlideCount = document.querySelector('.mySwiper-recent')?.querySelectorAll('.swiper-slide').length || 0;
+            if (recentSlideCount > 0) {
+                new Swiper('.mySwiper-recent', {
+                    slidesPerView: 2,
+                    spaceBetween: 10,
+                    loop: recentSlideCount >= 4,
+                    navigation: {
+                        nextEl: '.swiper-button-next-recent',
+                        prevEl: '.swiper-button-prev-recent',
+                    },
+                    pagination: {
+                        el: '.swiper-pagination-recent',
+                        clickable: true,
+                    },
+                    breakpoints: {
+                        480: { slidesPerView: 2, spaceBetween: 12 },
+                        640: { slidesPerView: 3, spaceBetween: 15 },
+                        768: { slidesPerView: 4, spaceBetween: 15 },
+                        1024: { slidesPerView: 4, spaceBetween: 18 },
+                        1536: { slidesPerView: 5, spaceBetween: 25 }
+                    }
+                });
+            }
         });
 
-        function raf(time) {
-            lenis.raf(time);
-            requestAnimationFrame(raf);
-        }
-        requestAnimationFrame(raf);
-        //  Universal Swiper initializer
-        function initSwiper(selector, options) {
-            if (document.querySelector(selector)) {
-                return new Swiper(selector, options);
-            }
-        }
-
-        // Product form submit handler
-        async function handleProductFormSubmit(e) {
-            e.preventDefault();
-
-            const form = this;
-            const formData = new FormData(form);
-            const button = form.querySelector('button[type="submit"]');
-            const originalText = button.textContent;
-            const originalClasses = button.className;
-
-            // Show loading state
-            button.disabled = true;
-            button.textContent = 'Adding...';
-            button.classList.add('opacity-60');
-
-            try {
-                // Defaults
-                formData.set('selected_color_id', formData.get('selected_color_id') || '1');
-                formData.set('selected_color_name', formData.get('selected_color_name') || 'Default');
-                formData.set('color_price', formData.get('color_price') || '0');
-
-                const response = await fetch('../cart/add_to_cart', {
-                    method: 'POST',
-                    body: formData
-                });
-
-                const data = await response.json();
-
-                if (data.success) {
-                    showNotification(data.message || 'Added to cart', 'success');
-                    updateCartCount(data.cart_count);
-
-                    // Simple text feedback - no styling changes
-                    button.textContent = 'Added';
-                    button.disabled = true;
-
-                    setTimeout(() => {
-                        button.textContent = originalText;
-                        button.className = originalClasses;
-                        button.disabled = false;
-                    }, 2000);
-                } else {
-                    throw new Error(data.message || 'Add to cart failed.');
-                }
-            } catch (error) {
-                showNotification(' ' + error.message, 'error');
-                console.error('Add to cart error:', error);
-
-                button.textContent = originalText;
-                button.className = originalClasses;
-                button.disabled = false;
-            }
-        }
-
-        // 🔔 Notification utility
+        // ============================================
+        // NOTIFICATION UTILITIES (Keep these)
+        // ============================================
         function showNotification(message, type = 'info') {
             const notification = document.createElement('div');
             const bgColor = {
@@ -1307,7 +1429,6 @@ $bestsellerData = $bestsellerItems->fetch_all(MYSQLI_ASSOC);
 
             notification.className = `fixed top-4 text-xs left-1/2 -translate-x-1/2 p-2 rounded-lg z-50 ${bgColor} text-white shadow-lg transform transition-all duration-300`;
             notification.textContent = message;
-
             document.body.appendChild(notification);
 
             setTimeout(() => {
@@ -1322,7 +1443,6 @@ $bestsellerData = $bestsellerItems->fetch_all(MYSQLI_ASSOC);
             }, 3000);
         }
 
-        // 🛒 Cart count updater
         function updateCartCount(count) {
             document.querySelectorAll('.cart-count, #cart-count, [data-cart-count]').forEach(el => {
                 el.textContent = count;
@@ -1336,189 +1456,59 @@ $bestsellerData = $bestsellerItems->fetch_all(MYSQLI_ASSOC);
             }
         }
 
-        document.addEventListener('DOMContentLoaded', () => {
-            if (typeof Swiper === 'undefined') {
-                console.error('Swiper library is not loaded.');
-                return;
-            }
+        // Product form submit handler
+        async function handleProductFormSubmit(e) {
+            e.preventDefault();
 
-            // ✅ MAIN HERO SWIPER
-            const heroSlideCount = document.querySelector('.mySwiper')?.querySelectorAll('.swiper-slide').length || 0;
-            initSwiper('.mySwiper', {
-                slidesPerView: 1,
-                spaceBetween: 0,
-                loop: heroSlideCount > 1,
-                autoplay: heroSlideCount > 1 ? {
-                    delay: 4000,
-                    disableOnInteraction: false,
-                    pauseOnMouseEnter: true
-                } : false,
-                pagination: {
-                    el: ".swiper-pagination",
-                    clickable: true
-                },
-                navigation: {
-                    nextEl: ".swiper-button-next",
-                    prevEl: ".swiper-button-prev"
-                },
-                speed: 1000,
-                effect: 'slide'
-            });
+            const form = this;
+            const formData = new FormData(form);
+            const button = form.querySelector('button[type="submit"]');
+            const originalText = button.textContent;
+            const originalClasses = button.className;
 
+            button.disabled = true;
+            button.textContent = 'Adding...';
+            button.classList.add('opacity-60');
 
-            // 🛒 OTHER PRODUCTS SWIPER - Multi-instance (excludes furniture)
-            document.querySelectorAll('.mySwiper-products').forEach((element, index) => {
-                const productSlideCount = element.querySelectorAll('.swiper-slide').length || 0;
+            try {
+                formData.set('selected_color_id', formData.get('selected_color_id') || '1');
+                formData.set('selected_color_name', formData.get('selected_color_name') || 'Default');
+                formData.set('color_price', formData.get('color_price') || '0');
 
-                new Swiper(element, {
-                    slidesPerView: 2,
-                    spaceBetween: 10,
-                    loop: productSlideCount >= 4,
-                    autoplay: productSlideCount > 2 ? {
-                        delay: 3000 + (index * 500),
-                        disableOnInteraction: false,
-                        pauseOnMouseEnter: true
-                    } : false,
-                    pagination: {
-                        el: element.querySelector(".swiper-pagination"),
-                        clickable: true
-                    },
-                    navigation: {
-                        nextEl: element.querySelector(".swiper-button-next"),
-                        prevEl: element.querySelector(".swiper-button-prev")
-                    },
-                    breakpoints: {
-                        480: {
-                            slidesPerView: 2,
-                            spaceBetween: 12,
-                            loop: productSlideCount >= 4
-                        },
-                        640: {
-                            slidesPerView: 2,
-                            spaceBetween: 15,
-                            loop: productSlideCount >= 4
-                        },
-                        768: {
-                            slidesPerView: 3,
-                            spaceBetween: 15,
-                            loop: productSlideCount >= 6
-                        },
-                        1024: {
-                            slidesPerView: 4,
-                            spaceBetween: 18,
-                            loop: productSlideCount >= 10
-                        },
-                        1280: {
-                            slidesPerView: 5,
-                            spaceBetween: 20,
-                            loop: productSlideCount >= 10
-                        },
-                        1536: {
-                            slidesPerView: 7,
-                            spaceBetween: 25,
-                            loop: productSlideCount >= 14
-                        }
-                    }
+                const response = await fetch('../cart/add_to_cart', {
+                    method: 'POST',
+                    body: formData
                 });
-            });
 
-            // Product forms
+                const data = await response.json();
+
+                if (data.success) {
+                    showNotification(data.message || 'Added to cart', 'success');
+                    updateCartCount(data.cart_count);
+                    button.textContent = 'Added';
+
+                    setTimeout(() => {
+                        button.textContent = originalText;
+                        button.className = originalClasses;
+                        button.disabled = false;
+                    }, 2000);
+                } else {
+                    throw new Error(data.message || 'Add to cart failed.');
+                }
+            } catch (error) {
+                showNotification(' ' + error.message, 'error');
+                console.error('Add to cart error:', error);
+                button.textContent = originalText;
+                button.className = originalClasses;
+                button.disabled = false;
+            }
+        }
+
+        // Attach form handlers
+        document.addEventListener('DOMContentLoaded', () => {
             document.querySelectorAll('.productForm').forEach(form => {
                 form.addEventListener('submit', handleProductFormSubmit);
             });
-
-            // Recent Views Swiper
-            const recentSlideCount = document.querySelector('.mySwiper-recent')?.querySelectorAll('.swiper-slide').length || 0;
-            if (recentSlideCount > 0) {
-                initSwiper('.mySwiper-recent', {
-                    slidesPerView: 2,
-                    spaceBetween: 10,
-                    loop: recentSlideCount >= 4,
-                    autoplay: false,
-                    navigation: {
-                        nextEl: '.swiper-button-next-recent',
-                        prevEl: '.swiper-button-prev-recent',
-                    },
-                    pagination: {
-                        el: '.swiper-pagination-recent',
-                        clickable: true,
-                    },
-                    breakpoints: {
-                        480: {
-                            slidesPerView: 2,
-                            spaceBetween: 12,
-                            loop: recentSlideCount >= 4
-                        },
-                        640: {
-                            slidesPerView: 3,
-                            spaceBetween: 15,
-                            loop: recentSlideCount >= 6
-                        },
-                        768: {
-                            slidesPerView: 4,
-                            spaceBetween: 15,
-                            loop: recentSlideCount >= 8
-                        },
-                        1024: {
-                            slidesPerView: 4,
-                            spaceBetween: 18,
-                            loop: recentSlideCount >= 10
-                        },
-                        1536: {
-                            slidesPerView: 5,
-                            spaceBetween: 25,
-                            loop: recentSlideCount >= 14
-                        }
-                    }
-                });
-            }
-
-            const recommendedSlideCount = document.querySelector('.mySwiper-recommended')?.querySelectorAll('.swiper-slide').length || 0;
-
-            new Swiper('.mySwiper-recommended', {
-                slidesPerView: 2,
-                spaceBetween: 10,
-                loop: recommendedSlideCount >= 2,
-                navigation: {
-                    nextEl: '.swiper-button-next-recommended',
-                    prevEl: '.swiper-button-prev-recommended',
-                },
-                breakpoints: {
-                    480: { slidesPerView: 2, spaceBetween: 12, loop: recommendedSlideCount >= 2 },
-                    640: { slidesPerView: 2, spaceBetween: 15, loop: recommendedSlideCount >= 2 },
-                    768: { slidesPerView: 3, spaceBetween: 15, loop: recommendedSlideCount >= 6 },
-                    1024: { slidesPerView: 4, spaceBetween: 18, loop: recommendedSlideCount >= 10 },
-                    1280: { slidesPerView: 5, spaceBetween: 20, loop: recommendedSlideCount >= 10 },
-                    1536: { slidesPerView: 7, spaceBetween: 25, loop: recommendedSlideCount >= 14 }
-                }
-            });
-
-            function updateRecommendedNav(swiper) {
-                const prevBtn = document.querySelector('.swiper-button-prev-recommended');
-                const nextBtn = document.querySelector('.swiper-button-next-recommended');
-
-                // Kunin ang ACTUAL na slidesPerView na ginagamit ngayon
-                const perView = swiper.params.slidesPerView;
-                const totalSlides = swiper.slides.length;
-                const activeIndex = swiper.activeIndex;
-
-                const isAtBeginning = activeIndex === 0;
-                const isAtEnd = activeIndex + perView >= totalSlides; // ← key fix
-
-                if (prevBtn) {
-                    prevBtn.disabled = isAtBeginning;
-                    prevBtn.classList.toggle('opacity-30', isAtBeginning);
-                    prevBtn.classList.toggle('cursor-not-allowed', isAtBeginning);
-                    prevBtn.classList.toggle('pointer-events-none', isAtBeginning);
-                }
-
-                if (nextBtn) {
-                    nextBtn.disabled = isAtEnd;
-                    nextBtn.classList.toggle('opacity-30', isAtEnd);
-                    nextBtn.classList.toggle('cursor-not-allowed', isAtEnd);
-                    nextBtn.classList.toggle('pointer-events-none', isAtEnd);
-                }
-            }
         });
     </script>
 

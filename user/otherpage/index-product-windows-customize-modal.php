@@ -184,6 +184,7 @@
 <!-- ============================================================ -->
 <!-- SCRIPTS                                                      -->
 <!-- ============================================================ -->
+ 
 <script>
   // Open customize modal
   function openCustomizeModal() {
@@ -249,4 +250,4 @@
   document.addEventListener('keydown', function (e) {
     if (e.key === 'Escape') closeCustomizeModal();
   });
-</script>
+</script>  

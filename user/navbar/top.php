@@ -2181,7 +2181,7 @@ $hidden_pages = ['help.php', 'about.php'];
       x-transition:enter="transition ease-out duration-300" x-transition:enter-start="opacity-0"
       x-transition:enter-end="opacity-100" x-transition:leave="transition ease-in duration-200"
       x-transition:leave-start="opacity-100" x-transition:leave-end="opacity-0"
-      class="lg:hidden fixed inset-0 z-9999 bg-black bg-opacity-50">
+      class="lg:hidden fixed inset-0 z-9999 bg-black/30 bg-opacity-50">
 
       <div x-show="mobileOpen" x-transition:enter="transition ease-out duration-300 transform"
         x-transition:enter-start="-translate-x-full" x-transition:enter-end="translate-x-0"
@@ -2714,13 +2714,13 @@ $hidden_pages = ['help.php', 'about.php'];
 
     <!-- Login Modal - Full Screen on Mobile -->
     <div x-show="loginOpen" x-cloak x-transition
-      class="fixed inset-0 z-9999 flex items-center justify-center bg-black bg-opacity-50 p-4 lg:hidden">
+      class="fixed inset-0 z-9999 flex items-center justify-center bg-black/40 bg-opacity-50 p-4 lg:hidden">
 
       <div class="bg-white w-full max-w-md max-h-[95vh] overflow-y-auto rounded-lg shadow-lg relative">
 
         <!-- Modal Header -->
         <div class="sticky top-0 bg-white border-b px-6 py-4 flex items-center justify-between">
-          <h2 class="text-xl font-bold text-gray-800">Login</h2>
+          <h2 class="text-xl font-bold text-gray-800">Logins</h2>
           <button @click="loginOpen = false" class="text-gray-500 hover:text-gray-800 text-2xl font-bold p-1">
             &times;
           </button>

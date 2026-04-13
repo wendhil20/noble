@@ -554,15 +554,15 @@ if ($order && !empty($order['reference_no'])) {
                 <h3 class="text-xl font-bold text-gray-800 mb-4">What happens next?</h3>
                 <div class="space-y-3 text-gray-700">
                     <div class="flex items-start">
-                        <div class="flex-shrink-0 w-6 h-6 bg-blue-600 text-white rounded-full flex items-center justify-center text-xs font-bold mr-3 mt-1">1</div>
+                        <div class="shrink-0 w-6 h-6 bg-blue-600 text-white rounded-full flex items-center justify-center text-xs font-bold mr-3 mt-1">1</div>
                         <div><div class="font-medium">Order Confirmation</div><div class="text-sm text-gray-600">You'll receive an email confirmation within 5 minutes.</div></div>
                     </div>
                     <div class="flex items-start">
-                        <div class="flex-shrink-0 w-6 h-6 bg-blue-600 text-white rounded-full flex items-center justify-center text-xs font-bold mr-3 mt-1">2</div>
+                        <div class="shrink-0 w-6 h-6 bg-blue-600 text-white rounded-full flex items-center justify-center text-xs font-bold mr-3 mt-1">2</div>
                         <div><div class="font-medium">Order Processing</div><div class="text-sm text-gray-600">Our team will prepare your items for delivery.</div></div>
                     </div>
                     <div class="flex items-start">
-                        <div class="flex-shrink-0 w-6 h-6 bg-blue-600 text-white rounded-full flex items-center justify-center text-xs font-bold mr-3 mt-1">3</div>
+                        <div class="shrink-0 w-6 h-6 bg-blue-600 text-white rounded-full flex items-center justify-center text-xs font-bold mr-3 mt-1">3</div>
                         <div><div class="font-medium">Delivery Updates</div><div class="text-sm text-gray-600">We'll notify you when your order is ready for delivery.</div></div>
                     </div>
                 </div>

@@ -42,40 +42,48 @@ try {
 
     switch ($user['login_method']) {
         case 'google':
-            throw new Exception("This email is registered via Google. Please login with Google.");
-        
+            // Allow password login kahit google — basta may password
+            if (empty($password)) {
+                throw new Exception("Password is required.");
+            }
+            if (empty($user['password'])) {
+                throw new Exception("This account has no password. Please login with Google.");
+            }
+            if (!password_verify($password, $user['password'])) {
+                throw new Exception("Incorrect password.");
+            }
+            break;
+
         case 'otp':
             if (empty($otp)) {
                 throw new Exception("OTP is required.");
             }
-
-            // 🔐 Validate OTP (must be stored in session before this)
             if (!isset($_SESSION['otp_code']) || !isset($_SESSION['otp_email']) || $_SESSION['otp_email'] !== $user['email']) {
                 throw new Exception("OTP session is missing. Please request a new code.");
             }
-
             if ($otp !== $_SESSION['otp_code']) {
                 throw new Exception("Incorrect OTP.");
             }
-
-            // OTP success — destroy session OTP
             unset($_SESSION['otp_code'], $_SESSION['otp_email']);
-
             break;
 
         case 'normal':
             if (empty($password)) {
                 throw new Exception("Password is required.");
             }
-
             if (!password_verify($password, $user['password'])) {
                 throw new Exception("Incorrect password.");
             }
-
             break;
 
         default:
             throw new Exception("Unknown login method.");
+    }
+
+
+    // ← DITO ILAGAY - pagkatapos ng closing brace ng switch
+    if (!$user['is_verified']) {
+        throw new Exception("Please verify your email first. Check your inbox.");
     }
 
     // ✅ Finalize login
@@ -83,6 +91,11 @@ try {
     $_SESSION['user_name'] = $user['name'];
     $_SESSION['user_email'] = $user['email'];
     $_SESSION['user_mobile'] = $user['mobile'];
+
+    if (!empty($user['profile_picture'])) {
+    $_SESSION['user_picture'] = $user['profile_picture'];
+}
+
     // ✅ Assign referral code if user came from a referral link
     require_once '../includes/referral_tracker.php';
     assignReferralToUser($conn, $user['id']);

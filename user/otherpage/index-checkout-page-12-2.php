@@ -86,7 +86,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <link rel="icon" type="image/png" sizes="96x96" href="../img/favicon.ico">
     <title>Step 2: Delivery Address - Noble Home</title>
-    <script src="https://cdn.tailwindcss.com"></script>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Montserrat:wght@300;400;600;700&display=swap">
 </head>
@@ -365,7 +364,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         </form>
     </div>
     <?php include '../navbar/footer.php'; ?>
-    <script src="js/index-checkout-addressZone-page-12-2.obfuscated.js?v=<?= filemtime('js/index-checkout-addressZone-page-12-2.obfuscated.js')?>"></script>
+    <script src="js/index-checkout-addressZone-page-12-2.obfuscated.js?v=<?= filemtime('js/index-checkout-addressZone-page-12-2.obfuscated.js')?>"></link>
 
     <script>
     console.log('🚀 Initializing Step 2 with Modal...');

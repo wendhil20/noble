@@ -19,6 +19,19 @@ $id = intval($_GET['id'] ?? 0);
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action_type'])) {
     $action_type = $_POST['action_type'];
 
+    // TOGGLE STATUS
+if ($action_type === 'toggle_status') {
+    $id = intval($_POST['id'] ?? 0);
+    $toggle_query = "UPDATE promotion_discount SET status = IF(status='active','inactive','active') WHERE id = ?";
+    $toggle_stmt = $conn->prepare($toggle_query);
+    $toggle_stmt->bind_param("i", $id);
+    $toggle_stmt->execute();
+    $toggle_stmt->close();
+    header("Location: ?action=list&success=updated");
+    exit();
+}
+
+
     // ADD NEW PROMOTION
     if ($action_type === 'add') {
         $title = trim($_POST['title'] ?? '');
@@ -49,20 +62,21 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action_type'])) {
                 if (move_uploaded_file($image['tmp_name'], $image_path)) {
                     $query = "INSERT INTO promotion_discount (title, discount, image) VALUES (?, ?, ?)";
                     $stmt = $conn->prepare($query);
-                    
+
                     if ($stmt) {
                         $stmt->bind_param("sds", $title, $discount, $image_filename);
-                        
+
                         if ($stmt->execute()) {
-                            $message = 'Promotion banner added successfully!';
-                            $message_type = 'success';
-                            $action = 'list';
+                            $stmt->close();
+                            // PRG: redirect after success
+                            header("Location: ?action=list&success=added");
+                            exit();
                         } else {
                             $message = 'Error inserting banner: ' . $stmt->error;
                             $message_type = 'error';
                             unlink($image_path);
+                            $stmt->close();
                         }
-                        $stmt->close();
                     } else {
                         $message = 'Database error: ' . $conn->error;
                         $message_type = 'error';
@@ -133,19 +147,20 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action_type'])) {
             if ($message_type !== 'error') {
                 $update_query = "UPDATE promotion_discount SET title = ?, discount = ?, image = ? WHERE id = ?";
                 $update_stmt = $conn->prepare($update_query);
-                
+
                 if ($update_stmt) {
                     $update_stmt->bind_param("sdsi", $title, $discount, $new_image_filename, $id);
-                    
+
                     if ($update_stmt->execute()) {
-                        $message = 'Promotion updated successfully!';
-                        $message_type = 'success';
-                        $action = 'list';
+                        $update_stmt->close();
+                        // PRG: redirect after success
+                        header("Location: ?action=list&success=updated");
+                        exit();
                     } else {
                         $message = 'Error updating promotion: ' . $update_stmt->error;
                         $message_type = 'error';
+                        $update_stmt->close();
                     }
-                    $update_stmt->close();
                 } else {
                     $message = 'Database error: ' . $conn->error;
                     $message_type = 'error';
@@ -153,9 +168,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action_type'])) {
             }
         }
     }
-
-
 }
+
 
 // Fetch promotion for edit
 $promotion = [];
@@ -178,6 +192,14 @@ if ($action === 'edit' && $id > 0) {
 // Fetch all promotions for list view
 $promotions = [];
 if ($action === 'list') {
+    // Success message from PRG redirect
+    if (isset($_GET['success'])) {
+        $message = $_GET['success'] === 'added'
+            ? 'Promotion banner added successfully!'
+            : 'Promotion updated successfully!';
+        $message_type = 'success';
+    }
+
     $query = "SELECT * FROM promotion_discount ORDER BY created_at DESC";
     $result = $conn->query($query);
     if ($result) {
@@ -196,12 +218,31 @@ if ($action === 'list') {
     <title>Promotion Discount Management</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        .table-scroll {
+            overflow-x: auto;
+        }
+        .table-scroll::-webkit-scrollbar {
+            height: 8px;
+        }
+        .table-scroll::-webkit-scrollbar-track {
+            background: #f1f5f9;
+            border-radius: 10px;
+        }
+        .table-scroll::-webkit-scrollbar-thumb {
+            background: #cbd5e1;
+            border-radius: 10px;
+        }
+        .table-scroll::-webkit-scrollbar-thumb:hover {
+            background: #94a3b8;
+        }
+    </style>
 </head>
-<body class="bg-linear-to-br from-slate-50 to-slate-100 min-h-screen">
+<body class="bg-gradient-to-br from-slate-50 to-slate-100 min-h-screen">
     <?php include '../navbar/top.php'; ?>
     
     <?php if ($action === 'list'): ?>
-    <!-- LIST VIEW -->
+    <!-- LIST VIEW - TABLE STYLE -->
     <div class="min-h-screen py-12 px-4">
         <div class="max-w-7xl mx-auto">
             <!-- Header Section -->
@@ -210,7 +251,7 @@ if ($action === 'list') {
                     <h1 class="text-4xl font-bold text-gray-900">Promotion Discounts</h1>
                     <p class="text-gray-600 mt-2">Manage all your promotion banners and discounts</p>
                 </div>
-                <a href="?action=add" class="inline-flex items-center gap-2 bg-linear-to-r from-blue-500 to-indigo-600 hover:from-blue-600 hover:to-indigo-700 text-white font-bold py-3 px-6 rounded-lg transition shadow-lg">
+                <a href="?action=add" class="inline-flex items-center gap-2 bg-gradient-to-r from-blue-500 to-indigo-600 hover:from-blue-600 hover:to-indigo-700 text-black font-bold py-3 px-6 rounded-lg transition shadow-lg">
                     <i class="fas fa-plus text-lg"></i>
                     Add New Promotion
                 </a>
@@ -236,59 +277,162 @@ if ($action === 'list') {
                 </div>
             <?php endif; ?>
 
-            <!-- Promotions Grid -->
+            <!-- Table Container -->
             <?php if (count($promotions) > 0): ?>
-                <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                    <?php foreach ($promotions as $promo): ?>
-                        <div class="bg-white rounded-xl shadow-lg overflow-hidden hover:shadow-xl transition duration-300 group">
-                            <!-- Image -->
-                            <div class="relative h-48 bg-gray-200 overflow-hidden">
-                                <img 
-                                    src="../../uploads/promotion_banners/<?php echo htmlspecialchars($promo['image']); ?>" 
-                                    alt="<?php echo htmlspecialchars($promo['title']); ?>"
-                                    class="w-full h-full object-cover group-hover:scale-105 transition duration-300"
-                                >
-                                <!-- Discount Badge -->
-                                <div class="absolute top-3 left-3 bg-red-500 text-white px-4 py-2 rounded-lg font-bold text-lg">
-                                    <?php echo htmlspecialchars($promo['discount']); ?>%
-                                </div>
-                            </div>
+                <div class="bg-white rounded-xl shadow-lg overflow-hidden">
+                    <!-- Responsive Table Wrapper -->
+                    <div class="table-scroll">
+                        <table class="w-full">
+                            <!-- Table Head -->
+                            <thead>
+                                <tr class="bg-gradient-to-r from-gray-50 to-gray-100 border-b-2 border-gray-200">
+                                    <th class="px-6 py-4 text-left text-xs font-bold text-gray-700 uppercase tracking-wider">
+                                        <i class="fas fa-image mr-2"></i>Banner
+                                    </th>
+                                    <th class="px-6 py-4 text-left text-xs font-bold text-gray-700 uppercase tracking-wider">
+                                        <i class="fas fa-heading mr-2"></i>Title
+                                    </th>
+                                    <th class="px-6 py-4 text-left text-xs font-bold text-gray-700 uppercase tracking-wider">
+                                        <i class="fas fa-percentage mr-2"></i>Discount
+                                    </th>
+                                    <th class="px-6 py-4 text-left text-xs font-bold text-gray-700 uppercase tracking-wider">
+                                        <i class="fas fa-calendar mr-2"></i>Created
+                                    </th>
+                                    <th class="px-6 py-4 text-left text-xs font-bold text-gray-700 uppercase tracking-wider">
+                                        <i class="fas fa-toggle-on mr-2"></i>Status
+                                    </th>
+                                    <th class="px-6 py-4 text-center text-xs font-bold text-gray-700 uppercase tracking-wider">
+                                        <i class="fas fa-cog mr-2"></i>Actions
+                                    </th>
+                                </tr>
+                            </thead>
+                            <!-- Table Body -->
+                            <tbody class="divide-y divide-gray-200">
+                                <?php foreach ($promotions as $index => $promo): ?>
+                                    <tr class="hover:bg-blue-50 transition duration-200">
+                                        <!-- Banner Image -->
+                                        <td class="px-6 py-4 whitespace-nowrap">
+                                            <div class="flex items-center">
+                                                <img 
+                                                    src="../../uploads/promotion_banners/<?php echo htmlspecialchars($promo['image']); ?>" 
+                                                    alt="<?php echo htmlspecialchars($promo['title']); ?>"
+                                                    class="h-16 w-24 rounded-lg object-cover shadow-md border border-gray-200"
+                                                    onclick="openImageModal('../../uploads/promotion_banners/<?php echo htmlspecialchars($promo['image']); ?>', '<?php echo htmlspecialchars($promo['title']); ?>')"
+                                                    style="cursor: pointer;"
+                                                >
+                                            </div>
+                                        </td>
+                                        <!-- Title -->
+                                        <td class="px-6 py-4">
+                                            <div class="text-sm font-semibold text-gray-900">
+                                                <?php echo htmlspecialchars($promo['title']); ?>
+                                            </div>
+                                        </td>
+                                        <!-- Discount -->
+                                        <td class="px-6 py-4 whitespace-nowrap">
+                                            <span class="inline-flex items-center justify-center bg-red-100 text-red-700 font-bold py-2 px-3 rounded-lg text-sm">
+                                                <i class="fas fa-tag mr-2"></i>
+                                                <?php echo htmlspecialchars($promo['discount']); ?>%
+                                            </span>
+                                        </td>
+                                        <!-- Created Date -->
+                                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-600">
+                                            <i class="fas fa-calendar-alt mr-2 text-gray-400"></i>
+                                            <?php echo date('M d, Y', strtotime($promo['created_at'])); ?>
+                                        </td>
+                                        <!-- Status -->
+                                        <td class="px-6 py-4 whitespace-nowrap">
+                                            <form method="POST" class="inline">
+                                                <input type="hidden" name="action_type" value="toggle_status">
+                                                <input type="hidden" name="id" value="<?php echo $promo['id']; ?>">
+                                                <button 
+                                                    type="submit"
+                                                    onclick="return confirm('<?php echo $promo['status'] === 'active' ? 'Deactivate' : 'Activate'; ?> this promotion?')"
+                                                    class="inline-flex items-center gap-2 px-4 py-2 rounded-lg font-semibold transition-all duration-200 text-sm
+                                                    <?php echo $promo['status'] === 'active' 
+                                                        ? 'bg-green-100 text-green-700 hover:bg-green-200 border border-green-300' 
+                                                        : 'bg-gray-100 text-gray-600 hover:bg-gray-200 border border-gray-300'; ?>"
+                                                >
+                                                    <?php if ($promo['status'] === 'active'): ?>
+                                                        <i class="fas fa-check-circle"></i>
+                                                        <span>Active</span>
+                                                    <?php else: ?>
+                                                        <i class="fas fa-ban"></i>
+                                                        <span>Inactive</span>
+                                                    <?php endif; ?>
+                                                </button>
+                                            </form>
+                                        </td>
+                                        <!-- Actions -->
+                                        <td class="px-6 py-4 whitespace-nowrap text-center">
+                                            <div class="flex items-center justify-center gap-3">
+                                                <a 
+                                                    href="?action=edit&id=<?php echo $promo['id']; ?>"
+                                                    class="inline-flex items-center gap-2 bg-blue-500 hover:bg-blue-600 text-white font-semibold py-2 px-4 rounded-lg transition duration-200"
+                                                    title="Edit promotion"
+                                                >
+                                                    <i class="fas fa-edit"></i>
+                                                    <span>Edit</span>
+                                                </a>
+                                                <button 
+                                                    onclick="deletePromotion(<?php echo $promo['id']; ?>)"
+                                                    class="inline-flex items-center gap-2 bg-red-500 hover:bg-red-600 text-white font-semibold py-2 px-4 rounded-lg transition duration-200"
+                                                    title="Delete promotion"
+                                                >
+                                                    <i class="fas fa-trash"></i>
+                                                    <span>Delete</span>
+                                                </button>
+                                            </div>
+                                        </td>
+                                    </tr>
+                                <?php endforeach; ?>
+                            </tbody>
+                        </table>
+                    </div>
 
-                            <!-- Content -->
-                            <div class="p-5">
-                                <h3 class="text-lg font-bold text-gray-900 mb-2">
-                                    <?php echo htmlspecialchars($promo['title']); ?>
-                                </h3>
-                                <p class="text-xs text-gray-600 mb-4">
-                                    Created: <?php echo date('M d, Y', strtotime($promo['created_at'])); ?>
-                                </p>
-
-                                <!-- Action Buttons -->
-                                <div class="flex gap-2">
-                                    <a 
-                                        href="?action=edit&id=<?php echo $promo['id']; ?>"
-                                        class="w-full bg-blue-500 hover:bg-blue-600 text-white font-semibold py-2 px-3 rounded-lg transition text-center text-sm flex items-center justify-center gap-2"
-                                    >
-                                        <i class="fas fa-edit"></i>
-                                        Edit
-                                    </a>
-                                </div>
-                            </div>
+                    <!-- Table Footer with Stats -->
+                    <div class="bg-gray-50 border-t border-gray-200 px-6 py-4 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+                        <div class="text-sm text-gray-600">
+                            <span class="font-semibold text-gray-900"><?php echo count($promotions); ?></span> 
+                            total promotion<?php echo count($promotions) !== 1 ? 's' : ''; ?>
                         </div>
-                    <?php endforeach; ?>
+                        <div class="text-sm text-gray-600">
+                            Active: <span class="font-semibold text-green-600">
+                                <?php echo count(array_filter($promotions, fn($p) => $p['status'] === 'active')); ?>
+                            </span> | 
+                            Inactive: <span class="font-semibold text-gray-600">
+                                <?php echo count(array_filter($promotions, fn($p) => $p['status'] === 'inactive')); ?>
+                            </span>
+                        </div>
+                    </div>
                 </div>
             <?php else: ?>
                 <!-- Empty State -->
                 <div class="bg-white rounded-xl shadow-lg p-12 text-center">
-                    <div class="text-6xl text-gray-400 mx-auto mb-4"><i class="fas fa-image"></i></div>
+                    <div class="text-6xl text-gray-400 mx-auto mb-4"><i class="fas fa-inbox"></i></div>
                     <h3 class="text-xl font-bold text-gray-900 mb-2">No Promotions Yet</h3>
                     <p class="text-gray-600 mb-6">Create your first promotion banner to get started.</p>
-                    <a href="?action=add" class="inline-flex items-center gap-2 bg-linear-to-r from-blue-500 to-indigo-600 hover:from-blue-600 hover:to-indigo-700 text-white font-bold py-3 px-6 rounded-lg transition">
+                    <a href="?action=add" class="inline-flex items-center gap-2 bg-gradient-to-r from-blue-500 to-indigo-600 hover:from-blue-600 hover:to-indigo-700 text-white font-bold py-3 px-6 rounded-lg transition">
                         <i class="fas fa-plus text-lg"></i>
                         Create Promotion
                     </a>
                 </div>
             <?php endif; ?>
+        </div>
+    </div>
+
+    <!-- Image Modal for Preview -->
+    <div id="imageModal" class="hidden fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center p-4" onclick="closeImageModal(event)">
+        <div class="bg-white rounded-xl shadow-2xl max-w-2xl w-full" onclick="event.stopPropagation()">
+            <div class="p-4 border-b border-gray-200 flex items-center justify-between">
+                <h3 id="modalTitle" class="text-lg font-bold text-gray-900"></h3>
+                <button onclick="closeImageModal()" class="text-gray-500 hover:text-gray-700">
+                    <i class="fas fa-times text-xl"></i>
+                </button>
+            </div>
+            <div class="p-6 flex items-center justify-center bg-gray-50">
+                <img id="modalImage" class="max-w-full h-auto rounded-lg" alt="Banner preview">
+            </div>
         </div>
     </div>
 
@@ -299,7 +443,7 @@ if ($action === 'list') {
             <!-- Header Section -->
             <div class="mb-8">
                 <div class="flex items-center gap-3 mb-3">
-                    <div class="p-2 bg-linear-to-br from-blue-500 to-indigo-600 rounded-lg text-2xl text-white">
+                    <div class="p-2 bg-gradient-to-br from-blue-500 to-indigo-600 rounded-lg text-2xl text-white">
                         <i class="fas fa-plus"></i>
                     </div>
                     <div>
@@ -416,7 +560,7 @@ if ($action === 'list') {
                     <div class="flex gap-4 pt-6 border-t border-gray-200">
                         <button 
                             type="submit" 
-                            class="flex-1 bg-linear-to-r from-blue-500 to-indigo-600 hover:from-blue-600 hover:to-indigo-700 active:scale-95 text-white font-bold py-3 px-4 rounded-lg transition transform duration-200 shadow-lg hover:shadow-xl flex items-center justify-center gap-2"
+                            class="flex-1 bg-gradient-to-r from-blue-500 to-indigo-600 hover:from-blue-600 hover:to-indigo-700 active:scale-95 text-white font-bold py-3 px-4 rounded-lg transition transform duration-200 shadow-lg hover:shadow-xl flex items-center justify-center gap-2"
                         >
                             <i class="fas fa-save"></i>
                             Add Banner
@@ -452,7 +596,7 @@ if ($action === 'list') {
             <!-- Header Section -->
             <div class="mb-8">
                 <div class="flex items-center gap-3 mb-3">
-                    <div class="p-2 bg-linear-to-br from-blue-500 to-indigo-600 rounded-lg text-2xl text-white">
+                    <div class="p-2 bg-gradient-to-br from-blue-500 to-indigo-600 rounded-lg text-2xl text-white">
                         <i class="fas fa-edit"></i>
                     </div>
                     <div>
@@ -586,7 +730,7 @@ if ($action === 'list') {
                     <div class="flex gap-4 pt-6 border-t border-gray-200">
                         <button 
                             type="submit" 
-                            class="flex-1 bg-linear-to-r from-blue-500 to-indigo-600 hover:from-blue-600 hover:to-indigo-700 active:scale-95 text-white font-bold py-3 px-4 rounded-lg transition transform duration-200 shadow-lg hover:shadow-xl flex items-center justify-center gap-2"
+                            class="flex-1 bg-gradient-to-r from-blue-500 to-indigo-600 hover:from-blue-600 hover:to-indigo-700 active:scale-95 text-white font-bold py-3 px-4 rounded-lg transition transform duration-200 shadow-lg hover:shadow-xl flex items-center justify-center gap-2"
                         >
                             <i class="fas fa-save"></i>
                             Update Promotion
@@ -644,6 +788,25 @@ if ($action === 'list') {
         function removeImage() {
             document.getElementById('image').value = '';
             document.getElementById('previewContainer').classList.add('hidden');
+        }
+
+        function openImageModal(imageSrc, imageTitle) {
+            document.getElementById('modalImage').src = imageSrc;
+            document.getElementById('modalTitle').textContent = imageTitle;
+            document.getElementById('imageModal').classList.remove('hidden');
+        }
+
+        function closeImageModal(event) {
+            if (!event || event.target.id === 'imageModal') {
+                document.getElementById('imageModal').classList.add('hidden');
+            }
+        }
+
+        function deletePromotion(id) {
+            if (confirm('Are you sure you want to delete this promotion? This action cannot be undone.')) {
+                // Note: Add delete functionality in PHP if needed
+                alert('Delete functionality needs to be implemented in PHP');
+            }
         }
 
         const uploadArea = document.querySelector('.border-dashed');

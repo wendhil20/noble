@@ -103,7 +103,6 @@ if ($_POST && isset($_POST['add_address'])) {
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width,initial-scale=1.0" />
     <title>Add Billing Address</title>
-    <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://api.mapbox.com/mapbox-gl-js/v3.3.0/mapbox-gl.css" rel="stylesheet" />
     <script src="https://api.mapbox.com/mapbox-gl-js/v3.3.0/mapbox-gl.js"></script>
     <style>
@@ -161,7 +160,7 @@ if ($_POST && isset($_POST['add_address'])) {
     <?php if (isset($redirect_script))
         echo $redirect_script; ?>
 
-    <div class="max-w-2xl mx-auto">
+    <div class="max-w-2xl mx-auto p-3">
 
         <div class="mb-8 mt-5">
             <div class="flex items-center gap-3 mb-1">

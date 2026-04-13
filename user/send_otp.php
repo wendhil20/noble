@@ -1,4 +1,5 @@
 <?php
+// send_otp.php
 session_name("nobleuser");
 session_start();
 
@@ -71,11 +72,6 @@ try {
         $current_login_method = $user['login_method'];
         $is_new_user = false;
 
-        if ($current_login_method === 'google') {
-            echo json_encode(['success' => false, 'message' => 'This email is registered with Google. Please use Google login.']);
-            exit;
-        }
-
         $valid_methods = ['normal', 'otp', 'google'];
         if (!in_array($current_login_method, $valid_methods)) {
             // Fix corrupted login_method
@@ -97,12 +93,12 @@ try {
     $mail->isSMTP();
     $mail->Host = 'smtp.gmail.com';
     $mail->SMTPAuth = true;
-    $mail->Username = 'wendhil10@gmail.com';
-    $mail->Password = 'tnjqjsuopqlwzoug';
+    $mail->Username = 'noblehomeconst.ph@gmail.com';
+    $mail->Password = 'vlci nqlz hwhq smva';
     $mail->SMTPSecure = PHPMailer::ENCRYPTION_STARTTLS;
     $mail->Port = 587;
 
-    $mail->setFrom('wendhil10@gmail.com', 'NobleHome');
+    $mail->setFrom('noblehomeconst.ph@gmail.com', 'NobleHome');
     $mail->addAddress($email, $user_name);
     $mail->isHTML(true);
     $mail->Subject = 'Your NobleHome Login Code';

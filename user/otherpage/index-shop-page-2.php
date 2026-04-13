@@ -76,7 +76,8 @@ $where_clause = implode(' AND ', $where_conditions);
 
 // ✅ FIX #2: Get total count - Add table alias
 $count_stmt = $conn->prepare("SELECT COUNT(*) as total FROM products p WHERE $where_clause");
-if (!empty($params)) $count_stmt->bind_param($types, ...$params);
+if (!empty($params))
+    $count_stmt->bind_param($types, ...$params);
 $count_stmt->execute();
 $total_products = $count_stmt->get_result()->fetch_assoc()['total'];
 $count_stmt->close();
@@ -85,7 +86,8 @@ $count_stmt->close();
 $stmt = $conn->prepare("SELECT p.id, p.product_name, p.main_image, p.description, p.codename FROM products p WHERE $where_clause ORDER BY $order_by LIMIT ? OFFSET ?");
 $final_params = array_merge($params, [$per_page, $offset]);
 $final_types = $types . 'ii';
-if (!empty($final_params)) $stmt->bind_param($final_types, ...$final_params);
+if (!empty($final_params))
+    $stmt->bind_param($final_types, ...$final_params);
 $stmt->execute();
 $products = $stmt->get_result();
 $stmt->close();
@@ -132,10 +134,10 @@ $is_guest = !isset($_SESSION['user_id']);
     <link rel="icon" type="image/png" sizes="96x96" href="../img/favicon.ico">
     <title>Shop Products - Noble Home</title>
     <meta name="description" content="Explore our premium collection of furniture, materials, and home décor items.">
-    <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://unpkg.com/aos@2.3.4/dist/aos.css" rel="stylesheet">
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" rel="stylesheet">
-    <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700;800&display=swap"
+        rel="stylesheet">
     <script src="https://cdn.jsdelivr.net/gh/studio-freight/lenis@1.0.19/bundled/lenis.min.js"></script>
     <style>
         .line-clamp-2 {
@@ -144,14 +146,6 @@ $is_guest = !isset($_SESSION['user_id']);
             line-clamp: 2;
             -webkit-box-orient: vertical;
             overflow: hidden;
-        }
-
-        .card-hover {
-            transition: all 0.3s ease;
-        }
-
-        .card-hover:hover {
-            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
         }
 
         .pagination-btn {
@@ -376,20 +370,7 @@ $is_guest = !isset($_SESSION['user_id']);
     </style>
 
     <script>
-        tailwind.config = {
-            theme: {
-                extend: {
-                    fontFamily: {
-                        'inter': ['Inter', 'sans-serif'],
-                        'playfair': ['Playfair Display', 'serif']
-                    },
-                    colors: {
-                        'primary': '#f97316',
-                        'primary-dark': '#ea580c'
-                    }
-                }
-            }
-        }
+
 
         function changeSort(value) {
             updateUrl({
@@ -437,12 +418,12 @@ $is_guest = !isset($_SESSION['user_id']);
         }
 
         // Auto-update dots on scroll
-        document.addEventListener('DOMContentLoaded', function() {
+        document.addEventListener('DOMContentLoaded', function () {
             const carousel = document.getElementById('actionCarousel');
             const dots = document.querySelectorAll('.carousel-dot');
 
             if (carousel && dots.length > 0) {
-                carousel.addEventListener('scroll', function() {
+                carousel.addEventListener('scroll', function () {
                     const scrollLeft = carousel.scrollLeft;
                     const itemWidth = carousel.children[0].offsetWidth;
                     const gap = 12;
@@ -469,40 +450,58 @@ $is_guest = !isset($_SESSION['user_id']);
             <!-- Two Container Buttons with Background Images -->
             <div class="grid grid-cols-1 md:grid-cols-2 gap-3 sm:gap-4">
                 <!-- Explore Products Container -->
-                <a href="index-allproduct-page-3" class="group relative overflow-hidden h-40 sm:h-52 lg:h-64 shadow-lg hover:shadow-2xl transition-all duration-300 transform hover:scale-[1.02]">
+                <a href="index-allproduct-page-3"
+                    class="group relative overflow-hidden h-40 sm:h-52 lg:h-64 shadow-lg hover:shadow-2xl transition-all duration-300 transform hover:scale-[1.02]">
                     <!-- Background Image with Overlay -->
-                    <div class="absolute inset-0 bg-cover bg-center" style="background-image: url('../img/saleandexplore/a.png');">
-                        <div class="absolute inset-0 bg-gradient-to-b from-black/40 via-black/50 to-black/70 group-hover:from-black/50 group-hover:via-black/60 group-hover:to-black/80 transition-all duration-300"></div>
+                    <div class="absolute inset-0 bg-cover bg-center"
+                        style="background-image: url('../img/saleandexplore/a.png');">
+                        <div
+                            class="absolute inset-0 bg-gradient-to-b from-black/40 via-black/50 to-black/70 group-hover:from-black/50 group-hover:via-black/60 group-hover:to-black/80 transition-all duration-300">
+                        </div>
                     </div>
 
                     <!-- Content -->
                     <div class="relative h-full flex flex-col items-center justify-center p-4 sm:p-6 text-white">
-                        <h3 class="text-lg sm:text-xl lg:text-3xl uppercase mb-1 sm:mb-2 tracking-wide font-semibold" style="font-family: 'Montserrat', sans-serif;">Explore Products</h3>
-                        <p class="text-white/90 text-xs sm:text-sm mb-2 sm:mb-4" style="font-family: 'Montserrat', sans-serif;">Browse our complete collection</p>
-                        <span class="inline-flex items-center gap-1 sm:gap-2 text-[10px] sm:text-xs bg-white/10 backdrop-blur-sm px-3 sm:px-4 py-1.5 sm:py-2 rounded-full border border-white/20 group-hover:bg-white/20 transition-all duration-300">
+                        <h3 class="text-lg sm:text-xl lg:text-3xl uppercase mb-1 sm:mb-2 tracking-wide font-semibold"
+                            style="font-family: 'Montserrat', sans-serif;">Explore Products</h3>
+                        <p class="text-white/90 text-xs sm:text-sm mb-2 sm:mb-4"
+                            style="font-family: 'Montserrat', sans-serif;">Browse our complete collection</p>
+                        <span
+                            class="inline-flex items-center gap-1 sm:gap-2 text-[10px] sm:text-xs bg-white/10 backdrop-blur-sm px-3 sm:px-4 py-1.5 sm:py-2 rounded-full border border-white/20 group-hover:bg-white/20 transition-all duration-300">
                             View Collection
-                            <svg class="w-3 h-3 sm:w-4 sm:h-4 transform group-hover:translate-x-1 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 8l4 4m0 0l-4 4m4-4H3" />
+                            <svg class="w-3 h-3 sm:w-4 sm:h-4 transform group-hover:translate-x-1 transition-transform"
+                                fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                    d="M17 8l4 4m0 0l-4 4m4-4H3" />
                             </svg>
                         </span>
                     </div>
                 </a>
 
                 <!-- On Sale Products Container -->
-                <a href="index-allproductsub-page-5" class="group relative overflow-hidden h-40 sm:h-52 lg:h-64 shadow-lg hover:shadow-2xl transition-all duration-300 transform hover:scale-[1.02]">
+                <a href="index-allproductsub-page-5"
+                    class="group relative overflow-hidden h-40 sm:h-52 lg:h-64 shadow-lg hover:shadow-2xl transition-all duration-300 transform hover:scale-[1.02]">
                     <!-- Background Image with Overlay -->
-                    <div class="absolute inset-0 bg-cover bg-center" style="background-image: url('../img/saleandexplore/b.png');">
-                        <div class="absolute inset-0 bg-gradient-to-b from-black/40 via-black/50 to-black/70 group-hover:from-black/50 group-hover:via-black/60 group-hover:to-black/80 transition-all duration-300"></div>
+                    <div class="absolute inset-0 bg-cover bg-center"
+                        style="background-image: url('../img/saleandexplore/b.png');">
+                        <div
+                            class="absolute inset-0 bg-gradient-to-b from-black/40 via-black/50 to-black/70 group-hover:from-black/50 group-hover:via-black/60 group-hover:to-black/80 transition-all duration-300">
+                        </div>
                     </div>
 
                     <!-- Content -->
                     <div class="relative h-full flex flex-col items-center justify-center p-4 sm:p-6 text-white">
-                        <h3 class="text-lg sm:text-xl lg:text-3xl uppercase mb-1 sm:mb-2 tracking-wide font-semibold" style="font-family: 'Montserrat', sans-serif;">On Sale Products</h3>
-                        <p class="text-white/90 text-xs sm:text-sm mb-2 sm:mb-4" style="font-family: 'Montserrat', sans-serif;">Limited time offers</p>
-                        <span class="inline-flex items-center gap-1 sm:gap-2 text-[10px] sm:text-xs bg-white/10 backdrop-blur-sm px-3 sm:px-4 py-1.5 sm:py-2 rounded-full border border-white/20 group-hover:bg-white/20 transition-all duration-300">
+                        <h3 class="text-lg sm:text-xl lg:text-3xl uppercase mb-1 sm:mb-2 tracking-wide font-semibold"
+                            style="font-family: 'Montserrat', sans-serif;">On Sale Products</h3>
+                        <p class="text-white/90 text-xs sm:text-sm mb-2 sm:mb-4"
+                            style="font-family: 'Montserrat', sans-serif;">Limited time offers</p>
+                        <span
+                            class="inline-flex items-center gap-1 sm:gap-2 text-[10px] sm:text-xs bg-white/10 backdrop-blur-sm px-3 sm:px-4 py-1.5 sm:py-2 rounded-full border border-white/20 group-hover:bg-white/20 transition-all duration-300">
                             Shop Deals
-                            <svg class="w-3 h-3 sm:w-4 sm:h-4 transform group-hover:translate-x-1 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 8l4 4m0 0l-4 4m4-4H3" />
+                            <svg class="w-3 h-3 sm:w-4 sm:h-4 transform group-hover:translate-x-1 transition-transform"
+                                fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                    d="M17 8l4 4m0 0l-4 4m4-4H3" />
                             </svg>
                         </span>
                     </div>
@@ -529,7 +528,8 @@ $is_guest = !isset($_SESSION['user_id']);
                         </span>
                     <?php endif; ?>
                 </div>
-                <button id="closeMobileSidebar" class="text-white hover:bg-white hover:bg-opacity-20 p-2 rounded-lg transition-all">
+                <button id="closeMobileSidebar"
+                    class="text-white hover:bg-white hover:bg-opacity-20 p-2 rounded-lg transition-all">
                     <i class="fas fa-times text-xl"></i>
                 </button>
             </div>
@@ -544,7 +544,8 @@ $is_guest = !isset($_SESSION['user_id']);
                             <i class="fas fa-search  mr-2"></i>
                             <span class="font-semibold">Search Products</span>
                         </div>
-                        <i class="fas fa-chevron-down text-gray-400 transition-transform" id="mobile-search-chevron"></i>
+                        <i class="fas fa-chevron-down text-gray-400 transition-transform"
+                            id="mobile-search-chevron"></i>
                     </div>
                     <div class="filter-section-content expanded" id="mobile-search-content">
                         <div class="px-1">
@@ -552,7 +553,8 @@ $is_guest = !isset($_SESSION['user_id']);
                                 <input type="text" name="search" value="<?= htmlspecialchars($search_keyword) ?>"
                                     placeholder="Search by name or description..."
                                     class="w-full pl-10 pr-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent">
-                                <i class="fas fa-search absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400"></i>
+                                <i
+                                    class="fas fa-search absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400"></i>
                             </div>
                         </div>
                     </div>
@@ -564,20 +566,24 @@ $is_guest = !isset($_SESSION['user_id']);
                         <div class="flex items-center" style="font-family: 'Montserrat', sans-serif; color: #2f1200;">
                             <i class="fas fa-th-large  mr-2"></i>
                             <span class="font-semibold ">Categories</span>
-                            <span class="ml-2 text-xs bg-gray-200 text-gray-600 px-2 py-1 rounded-full"><?= count($all_categories) ?></span>
+                            <span
+                                class="ml-2 text-xs bg-gray-200 text-gray-600 px-2 py-1 rounded-full"><?= count($all_categories) ?></span>
                         </div>
-                        <i class="fas fa-chevron-down text-gray-400 transition-transform" id="mobile-categories-chevron"></i>
+                        <i class="fas fa-chevron-down text-gray-400 transition-transform"
+                            id="mobile-categories-chevron"></i>
                     </div>
                     <div class="filter-section-content expanded" id="mobile-categories-content">
                         <div class="px-1 max-h-80 overflow-y-auto">
                             <?php foreach ($all_categories as $cat_key => $cat_name): ?>
-                                <label class="category-item <?= ($category_counts[$cat_key] ?? 0) == 0 ? 'opacity-50' : '' ?>">
+                                <label
+                                    class="category-item <?= ($category_counts[$cat_key] ?? 0) == 0 ? 'opacity-50' : '' ?>">
                                     <div class="flex items-center flex-1">
                                         <input type="checkbox" name="category[]" value="<?= $cat_key ?>"
                                             <?= in_array($cat_key, $selected_categories) ? 'checked' : '' ?>
                                             <?= ($category_counts[$cat_key] ?? 0) == 0 ? 'disabled' : '' ?>
                                             class="mr-3 text-primary border-gray-300 rounded focus:ring-primary w-4 h-4">
-                                        <span class="category-label text-sm" style="font-family: 'Montserrat', sans-serif; color: #2f1200;"><?= htmlspecialchars($cat_name) ?></span>
+                                        <span class="category-label text-sm"
+                                            style="font-family: 'Montserrat', sans-serif; color: #2f1200;"><?= htmlspecialchars($cat_name) ?></span>
                                     </div>
                                     <span class="text-xs bg-gray-100 text-gray-600 px-2.5 py-1 rounded-full font-semibold">
                                         <?= $category_counts[$cat_key] ?? 0 ?>
@@ -599,9 +605,12 @@ $is_guest = !isset($_SESSION['user_id']);
                     </div>
                     <div class="filter-section-content expanded" id="mobile-sort-content">
                         <div class="px-1">
-                            <select name="sort" class="w-full py-3 px-4 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary bg-white">
-                                <option value="name_asc" <?= $sort_by === 'name_asc' ? 'selected' : '' ?>>Name (A-Z)</option>
-                                <option value="name_desc" <?= $sort_by === 'name_desc' ? 'selected' : '' ?>>Name (Z-A)</option>
+                            <select name="sort"
+                                class="w-full py-3 px-4 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary bg-white">
+                                <option value="name_asc" <?= $sort_by === 'name_asc' ? 'selected' : '' ?>>Name (A-Z)
+                                </option>
+                                <option value="name_desc" <?= $sort_by === 'name_desc' ? 'selected' : '' ?>>Name (Z-A)
+                                </option>
                                 <option value="newest" <?= $sort_by === 'newest' ? 'selected' : '' ?>>Newest First</option>
                                 <option value="oldest" <?= $sort_by === 'oldest' ? 'selected' : '' ?>>Oldest First</option>
                             </select>
@@ -613,10 +622,14 @@ $is_guest = !isset($_SESSION['user_id']);
 
         <div class="sidebar-footer">
             <div class="space-y-3">
-                <button type="submit" form="mobileFilterForm" class="w-full bg-primary text-white px-6 py-3.5 rounded-lg hover:bg-primary-dark font-semibold shadow-lg transition-all" style="font-family: 'Montserrat', sans-serif; ">
+                <button type="submit" form="mobileFilterForm"
+                    class="w-full bg-primary text-white px-6 py-3.5 rounded-lg hover:bg-primary-dark font-semibold shadow-lg transition-all"
+                    style="font-family: 'Montserrat', sans-serif; ">
                     <i class="fas fa-check mr-2"></i>Apply Filters
                 </button>
-                <button type="button" onclick="clearAllFilters()" class="w-full bg-gray-100 text-gray-700 px-6 py-3.5 rounded-lg hover:bg-gray-200 font-semibold transition-all" style="font-family: 'Montserrat', sans-serif; ">
+                <button type="button" onclick="clearAllFilters()"
+                    class="w-full bg-gray-100 text-gray-700 px-6 py-3.5 rounded-lg hover:bg-gray-200 font-semibold transition-all"
+                    style="font-family: 'Montserrat', sans-serif; ">
                     <i class="fas fa-times mr-2"></i>Clear All
                 </button>
             </div>
@@ -625,11 +638,13 @@ $is_guest = !isset($_SESSION['user_id']);
 
     <!-- Mobile Filter Toggle Button -->
     <div class="mobile-filter-toggle">
-        <button id="mobileFilterToggle" class="bg-primary hover:bg-primary-dark text-white px-4 py-2.5 rounded-full font-semibold flex items-center shadow-lg transition-all hover:scale-105 text-sm">
+        <button id="mobileFilterToggle"
+            class="bg-primary hover:bg-primary-dark text-white px-4 py-2.5 rounded-full font-semibold flex items-center shadow-lg transition-all hover:scale-105 text-sm">
             <i class="fas fa-sliders-h mr-1.5 text-xs"></i>
             Filters
             <?php if ($active_filters > 0): ?>
-                <span class="ml-1.5 bg-white text-primary w-5 h-5 rounded-full flex items-center justify-center text-[10px] font-bold">
+                <span
+                    class="ml-1.5 bg-white text-primary w-5 h-5 rounded-full flex items-center justify-center text-[10px] font-bold">
                     <?= $active_filters ?>
                 </span>
             <?php endif; ?>
@@ -653,7 +668,9 @@ $is_guest = !isset($_SESSION['user_id']);
                                         <i class="fas fa-filter text-white text-sm"></i>
                                     </div>
                                     <div>
-                                        <h3 class="text-sm font-semibold " style="font-family: 'Montserrat', sans-serif; color: #2f1200;">Active Filters</h3>
+                                        <h3 class="text-sm font-semibold "
+                                            style="font-family: 'Montserrat', sans-serif; color: #2f1200;">Active Filters
+                                        </h3>
                                         <p class="text-xs text-gray-500"><?= count($selected_categories) ?> selected</p>
                                     </div>
                                 </div>
@@ -670,8 +687,10 @@ $is_guest = !isset($_SESSION['user_id']);
                                 <div class="flex gap-2 min-w-max sm:flex-wrap sm:min-w-0">
                                     <?php foreach ($selected_categories as $cat_key): ?>
                                         <?php if (isset($all_categories[$cat_key])): ?>
-                                            <div class="inline-flex items-center gap-2 bg-white border-2 border-gray-300 hover:border-black px-4 py-2 rounded-xl text-sm font-medium text-gray-900 shadow-sm hover:shadow transition-all group whitespace-nowrap">
-                                                <i class="fas fa-tag text-xs text-gray-400 group-hover:text-black transition-colors"></i>
+                                            <div
+                                                class="inline-flex items-center gap-2 bg-white border-2 border-gray-300 hover:border-black px-4 py-2 rounded-xl text-sm font-medium text-gray-900 shadow-sm hover:shadow transition-all group whitespace-nowrap">
+                                                <i
+                                                    class="fas fa-tag text-xs text-gray-400 group-hover:text-black transition-colors"></i>
                                                 <span class="uppercase"><?= htmlspecialchars($all_categories[$cat_key]) ?></span>
                                                 <a href="?<?= http_build_query(array_merge($_GET, ['category' => array_diff($selected_categories, [$cat_key]), 'page' => 1])) ?>"
                                                     class="flex items-center justify-center w-5 h-5 bg-gray-100 hover:bg-black rounded-full transition-colors group-hover:bg-red-500">
@@ -722,9 +741,12 @@ $is_guest = !isset($_SESSION['user_id']);
                         <!-- Sort Dropdown -->
                         <div class="flex items-center gap-3 w-full sm:w-auto">
                             <label class="text-sm font-medium text-black whitespace-nowrap">Sort by:</label>
-                            <select onchange="changeSort(this.value)" class="flex-1 sm:flex-none py-2.5 px-4 border border-gray-200 rounded-lg focus:ring-2 focus:ring-primary bg-white">
-                                <option value="name_asc" <?= $sort_by === 'name_asc' ? 'selected' : '' ?>>Name (A-Z)</option>
-                                <option value="name_desc" <?= $sort_by === 'name_desc' ? 'selected' : '' ?>>Name (Z-A)</option>
+                            <select onchange="changeSort(this.value)"
+                                class="flex-1 sm:flex-none py-2.5 px-4 border border-gray-200 rounded-lg focus:ring-2 focus:ring-primary bg-white">
+                                <option value="name_asc" <?= $sort_by === 'name_asc' ? 'selected' : '' ?>>Name (A-Z)
+                                </option>
+                                <option value="name_desc" <?= $sort_by === 'name_desc' ? 'selected' : '' ?>>Name (Z-A)
+                                </option>
                                 <option value="newest" <?= $sort_by === 'newest' ? 'selected' : '' ?>>Newest First</option>
                                 <option value="oldest" <?= $sort_by === 'oldest' ? 'selected' : '' ?>>Oldest First</option>
                             </select>
@@ -735,10 +757,11 @@ $is_guest = !isset($_SESSION['user_id']);
                 </div>
 
                 <!-- Product Grid -->
-                <div class="grid grid-cols-2 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-3 xl:grid-cols-4 gap-2 sm:gap-6 mb-12">
+                <div
+                    class="grid grid-cols-2 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-3 xl:grid-cols-4 gap-2 sm:gap-6 mb-12">
                     <?php while ($row = $products->fetch_assoc()): ?>
                         <?php
-                        $product_id = (int)$row['id'];
+                        $product_id = (int) $row['id'];
 
                         // Get variant count
                         $variant_stmt = $conn->prepare("SELECT COUNT(*) as total FROM product_variants pv JOIN product_types pt ON pv.type_id = pt.id WHERE pt.product_id = ?");
@@ -752,7 +775,7 @@ $is_guest = !isset($_SESSION['user_id']);
                         $view_stmt->bind_param("i", $product_id);
                         $view_stmt->execute();
                         $view_result = $view_stmt->get_result()->fetch_assoc();
-                        $view_count = (int)($view_result['view_count'] ?? 0);
+                        $view_count = (int) ($view_result['view_count'] ?? 0);
                         $view_stmt->close();
 
                         // Get sold count
@@ -760,7 +783,7 @@ $is_guest = !isset($_SESSION['user_id']);
                         $sold_stmt->bind_param("i", $product_id);
                         $sold_stmt->execute();
                         $sold_result = $sold_stmt->get_result()->fetch_assoc();
-                        $total_sold = (int)($sold_result['total_sold'] ?? 0);
+                        $total_sold = (int) ($sold_result['total_sold'] ?? 0);
                         $sold_stmt->close();
 
                         // Get rating
@@ -778,7 +801,8 @@ $is_guest = !isset($_SESSION['user_id']);
                         $empty_stars = 5 - $full_stars - $half_star;
                         ?>
 
-                        <div class="card-hover bg-white overflow-hidden flex flex-col group rounded-lg hover:shadow-xl transition-all duration-300">
+                        <div
+                            class="card-hover bg-white overflow-hidden flex flex-col group rounded-lg hover:shadow-xl transition-all duration-300">
                             <a href="index-product_view-page-4-AA.php?id=<?= $product_id ?>" class="flex flex-col h-full">
                                 <!-- Image Container - Fixed Square -->
                                 <div class="relative w-full " style="padding-bottom: 100%;">
@@ -796,29 +820,32 @@ $is_guest = !isset($_SESSION['user_id']);
                                     </div>
 
                                     <!-- Hover Overlay (Desktop Only) -->
-                                    <div class="hidden sm:flex absolute inset-0 bg-black bg-opacity-0 group-hover:bg-opacity-20 transition-all items-center justify-center">
-                                        <div class="opacity-0 group-hover:opacity-100 transition-opacity">
-                                            <span class="bg-white text-gray-900 px-4 py-2 rounded-full font-semibold shadow-lg text-sm">
-                                                <i class="fas fa-eye mr-2"></i>View Details
-                                            </span>
-                                        </div>
+                                    <div class="hidden sm:flex absolute inset-0 items-center justify-center opacity-0 group-hover:opacity-100 transition-all duration-300"
+                                        style="background: rgba(0,0,0,0.2);">
+                                        <span
+                                            class="bg-white text-gray-900 px-4 py-2 rounded-full font-semibold shadow-lg text-sm">
+                                            <i class="fas fa-eye mr-2"></i>View Details
+                                        </span>
                                     </div>
                                 </div>
 
                                 <!-- Content Container -->
                                 <div class="flex-1 flex flex-col p-2 sm:p-4">
                                     <!-- Product Name - Fixed 2 lines -->
-                                    <h3 class="text-[15px] sm:text-sm text-black mb-1 sm:mb-2 line-clamp-2 uppercase font-semibold leading-tight" style="min-height: 2rem; font-family: 'Montserrat', sans-serif; color: #2f1200;">
+                                    <h3 class="text-[15px] sm:text-sm text-black mb-1 sm:mb-2 line-clamp-2 uppercase font-semibold leading-tight"
+                                        style="min-height: 2rem; font-family: 'Montserrat', sans-serif; color: #2f1200;">
                                         <?= htmlspecialchars($row['product_name']) ?>
                                     </h3>
 
                                     <!-- Description - Fixed 2 lines -->
-                                    <p class="text-[13px] sm:text-xs text-gray-600 line-clamp-2 mb-1.5 sm:mb-2" style="min-height: 1.5rem; font-family: 'Montserrat', sans-serif; color: #2f1200;">
+                                    <p class="text-[13px] sm:text-xs text-gray-600 line-clamp-2 mb-1.5 sm:mb-2"
+                                        style="min-height: 1.5rem; font-family: 'Montserrat', sans-serif; color: #2f1200;">
                                         <?= htmlspecialchars($row['description'] ?? 'No description available.') ?>
                                     </p>
 
                                     <!-- Rating -->
-                                    <div class="flex items-center gap-1 mb-1.5 sm:mb-2" style="font-family: 'Montserrat', sans-serif; color: #2f1200;">
+                                    <div class="flex items-center gap-1 mb-1.5 sm:mb-2"
+                                        style="font-family: 'Montserrat', sans-serif; color: #2f1200;">
                                         <?php if ($total_raters > 0): ?>
                                             <div class="flex text-[9px] sm:text-[11px]">
                                                 <?php for ($i = 0; $i < $full_stars; $i++): ?>
@@ -831,7 +858,8 @@ $is_guest = !isset($_SESSION['user_id']);
                                                     <i class="far fa-star "></i>
                                                 <?php endfor; ?>
                                             </div>
-                                            <span class="text-[8px] sm:text-[10px] text-gray-500 font-medium">(<?= $total_raters ?>)</span>
+                                            <span
+                                                class="text-[8px] sm:text-[10px] text-gray-500 font-medium">(<?= $total_raters ?>)</span>
                                         <?php else: ?>
                                             <div class="flex text-gray-300 text-[9px] sm:text-[11px]">
                                                 <?php for ($i = 0; $i < 5; $i++): ?>
@@ -843,7 +871,8 @@ $is_guest = !isset($_SESSION['user_id']);
                                     </div>
 
                                     <!-- Bottom Section -->
-                                    <div class="mt-auto space-y-1 sm:space-y-2" style="font-family: 'Montserrat', sans-serif; color: #2f1200;">
+                                    <div class="mt-auto space-y-1 sm:space-y-2"
+                                        style="font-family: 'Montserrat', sans-serif; color: #2f1200;">
                                         <!-- View Count + Sold Count -->
                                         <?php if ($view_count > 0 || $total_sold > 0): ?>
                                             <div class="text-[8px] sm:text-[10px] font-medium">
@@ -873,13 +902,6 @@ $is_guest = !isset($_SESSION['user_id']);
                         overflow: hidden;
                     }
 
-                    .card-hover {
-                        transition: all 0.3s ease;
-                    }
-
-                    .card-hover:hover {
-                        transform: translateY(-4px);
-                    }
                 </style>
 
                 <!-- Pagination -->
@@ -925,14 +947,16 @@ $is_guest = !isset($_SESSION['user_id']);
             <aside class="desktop-sidebar-filter w-80 lg:order-2">
                 <div class="sticky-filter p-6 ">
                     <div class="mb-6">
-                        <h2 class="text-2xl mb-2 flex items-center" style="font-family: 'Montserrat', sans-serif; color: #2f1200;">
+                        <h2 class="text-2xl mb-2 flex items-center"
+                            style="font-family: 'Montserrat', sans-serif; color: #2f1200;">
                             <i class="fas fa-sliders-h  mr-3"></i>
                             Filters
                         </h2>
                         <?php if ($active_filters > 0): ?>
                             <div class="flex items-center justify-between mt-3">
                                 <span class="filter-badge"><?= $active_filters ?> active</span>
-                                <button onclick="clearAllFilters()" class="text-xs text-gray-600 hover:text-primary transition-colors font-medium">
+                                <button onclick="clearAllFilters()"
+                                    class="text-xs text-gray-600 hover:text-primary transition-colors font-medium">
                                     Clear All
                                 </button>
                             </div>
@@ -942,7 +966,8 @@ $is_guest = !isset($_SESSION['user_id']);
                     <form method="GET" class="space-y-6">
                         <!-- Search -->
                         <div>
-                            <label class="block text-sm font-semibold  mb-3 flex items-center" style="font-family: 'Montserrat', sans-serif; color: #2f1200;">
+                            <label class="block text-sm font-semibold  mb-3 items-center"
+                                style="font-family: 'Montserrat', sans-serif; color: #2f1200;">
                                 <i class="fas fa-search mr-2"></i>
                                 Search Products
                             </label>
@@ -950,30 +975,36 @@ $is_guest = !isset($_SESSION['user_id']);
                                 <input type="text" name="search" value="<?= htmlspecialchars($search_keyword) ?>"
                                     placeholder="Search..."
                                     class="w-full pl-10 pr-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent">
-                                <i class="fas fa-search absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400"></i>
+                                <i
+                                    class="fas fa-search absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400"></i>
                             </div>
                         </div>
 
                         <!-- Categories -->
                         <div>
-                            <label class="block text-sm font-semibold  mb-3 flex items-center justify-between" style="font-family: 'Montserrat', sans-serif; color: #2f1200;">
+                            <label class="text-sm font-semibold  mb-3 flex items-center justify-between"
+                                style="font-family: 'Montserrat', sans-serif; color: #2f1200;">
                                 <span class="flex items-center">
                                     <i class="fas fa-th-large  mr-2"></i>
                                     Categories
                                 </span>
-                                <span class="text-xs bg-gray-200 text-gray-600 px-2 py-1 rounded-full"><?= count($all_categories) ?></span>
+                                <span
+                                    class="text-xs bg-gray-200 text-gray-600 px-2 py-1 rounded-full"><?= count($all_categories) ?></span>
                             </label>
                             <div class="space-y-2 max-h-80 overflow-y-auto pr-2">
                                 <?php foreach ($all_categories as $cat_key => $cat_name): ?>
-                                    <label class="flex items-center justify-between p-3 rounded-lg border border-gray-200 hover:border-primary hover:bg-orange-50 transition-all cursor-pointer <?= ($category_counts[$cat_key] ?? 0) == 0 ? 'opacity-50' : '' ?>">
-                                        <div class="flex items-center flex-1" style="font-family: 'Montserrat', sans-serif; color: #2f1200;">
+                                    <label
+                                        class="flex items-center justify-between p-3 rounded-lg border border-gray-200 hover:border-primary hover:bg-orange-50 transition-all cursor-pointer <?= ($category_counts[$cat_key] ?? 0) == 0 ? 'opacity-50' : '' ?>">
+                                        <div class="flex items-center flex-1"
+                                            style="font-family: 'Montserrat', sans-serif; color: #2f1200;">
                                             <input type="checkbox" name="category[]" value="<?= $cat_key ?>"
                                                 <?= in_array($cat_key, $selected_categories) ? 'checked' : '' ?>
                                                 <?= ($category_counts[$cat_key] ?? 0) == 0 ? 'disabled' : '' ?>
                                                 class="mr-3 text-primary border-gray-300 rounded focus:ring-primary">
                                             <span class="text-sm "><?= htmlspecialchars($cat_name) ?></span>
                                         </div>
-                                        <span class="text-xs bg-gray-100 text-gray-600 px-2.5 py-1 rounded-full font-semibold">
+                                        <span
+                                            class="text-xs bg-gray-100 text-gray-600 px-2.5 py-1 rounded-full font-semibold">
                                             <?= $category_counts[$cat_key] ?? 0 ?>
                                         </span>
                                     </label>
@@ -983,24 +1014,31 @@ $is_guest = !isset($_SESSION['user_id']);
 
                         <!-- Sort -->
                         <div>
-                            <label class="block text-sm font-semibold  mb-3 flex items-center" style="font-family: 'Montserrat', sans-serif; color: #2f1200;">
+                            <label class="block text-sm font-semibold  mb-3 items-center"
+                                style="font-family: 'Montserrat', sans-serif; color: #2f1200;">
                                 <i class="fas fa-sort  mr-2"></i>
                                 Sort By
                             </label>
-                            <select name="sort" class="w-full py-3 px-4 border border-gray-300  focus:ring-2 focus:ring-primary bg-white">
-                                <option value="name_asc" <?= $sort_by === 'name_asc' ? 'selected' : '' ?>>Name (A-Z)</option>
-                                <option value="name_desc" <?= $sort_by === 'name_desc' ? 'selected' : '' ?>>Name (Z-A)</option>
+                            <select name="sort"
+                                class="w-full py-3 px-4 border border-gray-300  focus:ring-2 focus:ring-primary bg-white">
+                                <option value="name_asc" <?= $sort_by === 'name_asc' ? 'selected' : '' ?>>Name (A-Z)
+                                </option>
+                                <option value="name_desc" <?= $sort_by === 'name_desc' ? 'selected' : '' ?>>Name (Z-A)
+                                </option>
                                 <option value="newest" <?= $sort_by === 'newest' ? 'selected' : '' ?>>Newest First</option>
                                 <option value="oldest" <?= $sort_by === 'oldest' ? 'selected' : '' ?>>Oldest First</option>
                             </select>
                         </div>
 
                         <!-- Actions -->
-                        <div class="pt-4 border-t border-gray-200 space-y-3" style="font-family: 'Montserrat', sans-serif; ">
-                            <button type="submit" class="w-full bg-black text-white px-6 py-3.5  hover:bg-primary-dark  transition-all shadow-md hover:shadow-lg">
+                        <div class="pt-4 border-t border-gray-200 space-y-3"
+                            style="font-family: 'Montserrat', sans-serif; ">
+                            <button type="submit"
+                                class="w-full bg-black text-white px-6 py-3.5  hover:bg-primary-dark  transition-all shadow-md hover:shadow-lg">
                                 <i class="fas fa-check mr-2"></i>Apply Filters
                             </button>
-                            <button type="button" onclick="clearAllFilters()" class="w-full bg-gray-100 text-gray-700 px-6 py-3.5  hover:bg-gray-200  transition-all">
+                            <button type="button" onclick="clearAllFilters()"
+                                class="w-full bg-gray-100 text-gray-700 px-6 py-3.5  hover:bg-gray-200  transition-all">
                                 <i class="fas fa-times mr-2"></i>Clear All
                             </button>
                         </div>

@@ -65,6 +65,7 @@ if (!isset($_SESSION['noble_name']) || !isset($_SESSION['noble_lvl']) || !isset(
     <link href="../../output.css" rel="stylesheet">
     <script src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js" defer></script>
     <link href="https://cdn.jsdelivr.net/npm/remixicon@3.5.0/fonts/remixicon.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <style>
         [x-cloak] {
             display: none !important;
@@ -197,8 +198,7 @@ if (!isset($_SESSION['noble_name']) || !isset($_SESSION['noble_lvl']) || !isset(
                 </div>
 
                 <!-- User Info Card -->
-                <div
-                    class="bg-linear-to-br from-orange-50 to-red-50 rounded-xl p-4 shadow-sm border border-orange-100">
+                <div class="bg-linear-to-br from-orange-50 to-red-50 rounded-xl p-4 shadow-sm border border-orange-100">
                     <div class="flex items-center space-x-3">
                         <div
                             class="w-12 h-12 bg-linear-to-br from-orange-400 to-red-500 rounded-full flex items-center justify-center shadow-lg">
@@ -301,7 +301,8 @@ if (!isset($_SESSION['noble_name']) || !isset($_SESSION['noble_lvl']) || !isset(
     </aside>
 
     <!-- Desktop Navigation -->
-    <nav class="bg-white border-b border-black/6 shadow-[0_2px_16px_rgba(0,0,0,0.06)] sticky top-0 z-30">
+    <nav class="border-b border-black/6 shadow-[0_2px_16px_rgba(0,0,0,0.06)] sticky top-0 z-30"
+        style="background-color: white; z-index: 30;">
         <div class="flex items-center justify-between h-[60px] px-6 gap-4">
 
             <!-- ── LOGO ── -->
@@ -316,8 +317,7 @@ if (!isset($_SESSION['noble_name']) || !isset($_SESSION['noble_lvl']) || !isset(
                     <img src="../img/logo/logo.png" alt="Logo" class="w-full h-full object-cover">
                 </div>
                 <div class="hidden sm:flex flex-col leading-none">
-                    <span
-                        class="font-extrabold text-[17px] bg-linear-to-r from-orange-500 to-red-500 bg-clip-text text-transparent tracking-tight"
+                    <span class="font-semibold text-[17px] text-orange-500 tracking-tight"
                         style="font-family:'Syne',sans-serif;">Administration</span>
                     <span class="text-[10px] text-gray-400 mt-0.5">Noble Home Management</span>
                 </div>
@@ -348,14 +348,11 @@ if (!isset($_SESSION['noble_name']) || !isset($_SESSION['noble_lvl']) || !isset(
                 <!-- Quick Actions -->
                 <div class="static sm:relative">
                     <button @click="quickActionsOpen = !quickActionsOpen"
-                        class="flex items-center gap-2 px-3 h-[38px] rounded-[10px] border border-[#e8e4df] bg-white text-[13px] font-medium text-gray-500 hover:border-orange-400 hover:bg-orange-50 hover:text-orange-600 hover:shadow-[0_0_0_4px_rgba(232,93,38,0.07)] transition-all"
+                        class="flex items-center gap-2 px-3 h-[38px] rounded-[10px] border border-[#e8e4df] bg-white text-[13px] font-medium text-gray-600 hover:border-orange-400 hover:bg-orange-50 hover:text-orange-600 transition-all"
                         :class="quickActionsOpen ? 'border-orange-400 bg-orange-50 text-orange-600' : ''">
-                        <div
-                            class="w-5 h-5 bg-linear-to-br from-orange-500 to-red-600 rounded-[6px] flex items-center justify-center text-white text-[11px] shrink-0">
-                            <i class="ri-flashlight-line"></i>
-                        </div>
+
                         <span class="hidden sm:inline">Quick Actions</span>
-                        <i class="ri-arrow-down-s-line text-[15px] transition-transform duration-200"
+                        <i class="fa-solid fa-angles-down text-[15px] transition-transform duration-200"
                             :class="quickActionsOpen ? 'rotate-180' : ''"></i>
                     </button>
 
@@ -560,7 +557,8 @@ if (!isset($_SESSION['noble_name']) || !isset($_SESSION['noble_lvl']) || !isset(
                                         <span>Customize Quotation Request</span>
 
                                         <!-- Notification Badge -->
-                                        <span id="quote-notification" class="absolute -top-1 -right-1 bg-red-500 text-white text-xs font-bold rounded-full w-5 h-5 items-center justify-center hidden">
+                                        <span id="quote-notification"
+                                            class="absolute -top-1 -right-1 bg-red-500 text-white text-xs font-bold rounded-full w-5 h-5 items-center justify-center hidden">
                                             <span id="quote-count">0</span>
                                         </span>
                                     </a>
@@ -854,11 +852,10 @@ if (!isset($_SESSION['noble_name']) || !isset($_SESSION['noble_lvl']) || !isset(
                         <!-- Header -->
                         <div class="flex items-center justify-between px-4 py-3.5 border-b border-orange-50">
                             <div class="flex items-center gap-2">
-                                <div
-                                    class="w-[30px] h-[30px] bg-linear-to-br from-orange-500 to-red-600 rounded-lg flex items-center justify-center text-white text-sm shrink-0">
-                                    <i class="ri-notification-3-line"></i>
-                                </div>
-                                <span class="font-bold text-sm text-gray-900"
+                            <div class="w-[30px] h-[30px] bg-orange-500 rounded-lg flex items-center justify-center text-white text-sm shrink-0">
+    <i class="ri-notification-3-line"></i>
+</div>
+                                <span class="font-semibold text-sm text-gray-900"
                                     style="font-family: 'Syne', sans-serif;">Notifications</span>
                                 <span x-show="unreadCount > 0"
                                     class="text-[11px] font-semibold text-orange-600 bg-orange-50 border border-orange-200/50 px-2 py-0.5 rounded-full"
@@ -966,7 +963,7 @@ if (!isset($_SESSION['noble_name']) || !isset($_SESSION['noble_lvl']) || !isset(
                         </div>
                         <div
                             class="w-8 h-8 bg-linear-to-br from-orange-500 to-red-600 rounded-full flex items-center justify-center shadow-md shrink-0">
-                            <i class="ri-user-line text-white text-sm"></i>
+                         <i class="fa-solid fa-user-tie"></i>
                         </div>
                     </button>
                     <!-- (ilagay dito ang Profile dropdown content mula sa first response) -->

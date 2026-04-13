@@ -1,4 +1,5 @@
 <?php
+// verify_otp.php
 session_name("nobleuser");
 session_start();
 include '../connection/connect.php';
@@ -30,11 +31,6 @@ try {
     }
 
     $user = $result->fetch_assoc();
-
-    if ($user['login_method'] === 'google') {
-        echo json_encode(['success' => false, 'message' => 'Use Google login for this email.']);
-        exit;
-    }
 
     if (empty($user['otp_code'])) {
         echo json_encode(['success' => false, 'message' => 'No OTP found.']);

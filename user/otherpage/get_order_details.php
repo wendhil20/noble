@@ -276,7 +276,7 @@ $system_steps = ['Pending', 'Ongoing', 'Arrival', 'Customs'];
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
      <link rel="icon" type="image/png" sizes="96x96" href="../img/favicon.ico">
     <title>Order Tracking</title>
-    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
     <style>
         .animate-pulse {
             animation: pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
@@ -572,7 +572,7 @@ $system_steps = ['Pending', 'Ongoing', 'Arrival', 'Customs'];
             // You can customize this to open a modal, redirect to contact page, etc.
             alert('Contact Support: Please call our hotline or send us an email for assistance.');
         });
-    </script>
+    </link>
 </body>
 
 </html>

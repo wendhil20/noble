@@ -91,7 +91,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <link rel="icon" type="image/png" sizes="96x96" href="../img/favicon.ico">
     <title>Step 1: Customer Information - Noble Home</title>
-    <script src="https://cdn.tailwindcss.com"></script>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Montserrat:wght@300;400;600;700&display=swap">
 </head>
@@ -242,7 +241,7 @@ document.querySelector('input[name="mobile"]').addEventListener('input', functio
         e.target.setCustomValidity('');
     }
 });
-    </script>
+    </link>
 </body>
 
 </html>

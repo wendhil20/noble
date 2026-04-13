@@ -1003,9 +1003,7 @@ $bestsellerData = $bestsellerItems->fetch_all(MYSQLI_ASSOC);
         });
     </script>
 
-    <section>
-
-    </section>
+   <?php include 'index-promotion-discount-front.php'; ?>
 
     <?php $row_count = mysqli_num_rows($material_resultstwo); ?>
     <section class="px-4 sm:px-5 lg:px-7 py-4 bg-white">

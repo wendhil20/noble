@@ -103,7 +103,6 @@ function calculate_price($variant_price, $color_price, $percent = 0, $discount =
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <link rel="icon" type="image/png" href="../img/favicon.ico">
     <title>Products - Noble Store</title>
-    <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
     <link href="https://fonts.googleapis.com/css2?family=Roboto&display=swap" rel="stylesheet">
     <script src="https://cdn.jsdelivr.net/npm/dompurify@3.0.6/dist/purify.min.js"></script>
@@ -839,9 +838,12 @@ function calculate_price($variant_price, $color_price, $percent = 0, $discount =
 
             matchesDiscount(p) {
                 const discount = parseFloat((p.initial_variant || {}).discount || 0);
-                return this.filters.discount === 'all' ||
-                    (this.filters.discount === 'discounted' && discount > 0) ||
-                    (this.filters.discount === 'no-discount' && discount === 0);
+                if (this.filters.discount === 'no-discount') return discount === 0;
+                if (this.filters.discount === 'discounted') {
+                    const max = this.filters.minDiscount || 100;
+                    return discount > 0 && discount <= max;
+                }
+                return true;
             }
 
             matchesPriceRange(p) {
@@ -1429,12 +1431,59 @@ function calculate_price($variant_price, $color_price, $percent = 0, $discount =
         function openMobileFilters() { window.mobileFilterManager?.open(); }
         function closeMobileFilters() { window.mobileFilterManager?.close(); }
 
-        document.addEventListener('DOMContentLoaded', () => {
-            window.mobileFilterManager = new MobileFilterManager();
-            new DropdownManager();
-            window.productFilter = new ProductFilter();
-            new CartManager();
-        });
+      document.addEventListener('DOMContentLoaded', () => {
+    window.mobileFilterManager = new MobileFilterManager();
+    new DropdownManager();
+    window.productFilter = new ProductFilter();
+    new CartManager();
+
+    const urlParams = new URLSearchParams(window.location.search);
+    const filterParam = urlParams.get('filter');
+    const minDiscount = parseFloat(urlParams.get('min_discount') || 0);
+
+    if (filterParam === 'discounted' && minDiscount > 0) {
+        window.productFilter.filters.minDiscount = minDiscount;
+
+        const discountBtn = document.querySelector('.discount-filter[data-discount="discounted"]');
+        if (discountBtn) discountBtn.click();
+
+        // Inject the clear filter banner
+        const banner = document.createElement('div');
+        banner.id = 'promo-filter-banner';
+        banner.className = 'flex items-center justify-between bg-orange-50 border border-orange-300 rounded-lg px-4 py-2 mb-4 text-sm';
+        banner.innerHTML = `
+            <span class="text-orange-700 font-semibold">
+                <i class="fas fa-tag mr-1"></i>
+                Showing products with up to ${minDiscount}% discount
+            </span>
+            <button onclick="clearPromoFilter()"
+                class="ml-4 text-xs font-bold text-white bg-orange-500 hover:bg-orange-600 px-3 py-1 rounded-full transition">
+                ✕ Clear Filter
+            </button>
+        `;
+
+        // Insert before the products grid
+        const main = document.querySelector('main');
+        const grid = document.getElementById('productsGrid');
+        if (main && grid) main.insertBefore(banner, grid);
+    }
+});
+
+function clearPromoFilter() {
+    // Remove URL params and reset filter
+    const url = new URL(window.location.href);
+    url.searchParams.delete('filter');
+    url.searchParams.delete('min_discount');
+    window.history.replaceState({}, '', url);
+
+    // Remove banner
+    document.getElementById('promo-filter-banner')?.remove();
+
+    // Reset discount filter back to "All"
+    window.productFilter.filters.minDiscount = 0;
+    const allBtn = document.querySelector('.discount-filter[data-discount="all"]');
+    if (allBtn) allBtn.click();
+}
     </script>
 
 </body>

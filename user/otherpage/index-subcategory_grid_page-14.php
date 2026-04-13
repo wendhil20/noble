@@ -149,11 +149,11 @@ foreach ($subcategories as $sub) {
         p.product_name,
         p.main_image,
         p.view_count,
-        ANY_VALUE(pv.id) as variant_id,
-        ANY_VALUE(pv.price) as price,
-        ANY_VALUE(pv.discount) as discount,
-        ANY_VALUE(pv.size) as size,
-        ANY_VALUE(pv.color) as color,
+      MIN(pv.id) as variant_id,
+MIN(pv.price) as price,
+MIN(pv.discount) as discount,
+MIN(pv.size) as size,
+MIN(pv.color) as color,
         GROUP_CONCAT(DISTINCT pc.color_name) as color_name
     FROM products p
     INNER JOIN product_variants pv ON p.id = pv.product_id
@@ -205,7 +205,6 @@ foreach ($subcategories as $sub) {
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title><?= htmlspecialchars($displayName) ?> - Categories</title>
-    <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
     <style>
         .product-card {

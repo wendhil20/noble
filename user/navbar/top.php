@@ -147,8 +147,9 @@ $current_page = basename($_SERVER['PHP_SELF']);
 $hidden_pages = ['help.php', 'about.php'];
 ?>
 
-    <!-- ✅ PRODUCTION: Use minified Tailwind (not CDN) -->
-    <link href="../../output.css" rel="stylesheet">
+<!-- ✅ PRODUCTION: Use minified Tailwind (not CDN) -->
+<link href="../../output.css" rel="stylesheet">
+
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/swiper@11/swiper-bundle.min.css" />
 
 <!-- CORRECT - both need defer, Alpine core loaded LAST -->
@@ -249,9 +250,8 @@ $hidden_pages = ['help.php', 'about.php'];
   }
 </script>
 
-<!-- Loading Overlay -->
-<div id="loadingOverlay" style="display: none;"
-  class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-9999">
+<div id="loadingOverlay" style="display: none; z-index: 99999; position: fixed; inset: 0; background: rgba(0,0,0,0.5);"
+  class="flex items-center justify-center">
 
   <!-- Truck Loader -->
   <div class="loader">
@@ -572,12 +572,10 @@ $hidden_pages = ['help.php', 'about.php'];
           </a>
 
           <!-- Overlay -->
-          <div x-show="productsOpen" @click="productsOpen = false" x-transition:enter="transition ease-out duration-300"
-            x-transition:enter-start="opacity-0" x-transition:enter-end="opacity-100"
-            x-transition:leave="transition ease-in duration-200" x-transition:leave-start="opacity-100"
-            x-transition:leave-end="opacity-0" class="fixed inset-0 bg-black bg-opacity-30 z-40"
-            style="top: 80px; pointer-events: none;" x-cloak>
-          </div>
+<div x-show="productsOpen" @click="productsOpen = false" 
+  class="fixed inset-0 z-40"
+  style="top: 80px; pointer-events: none; background: transparent;" x-cloak>
+</div>
 
           <!-- Dropdown Menu - Three Columns with Search -->
           <div x-show="productsOpen" @mouseenter="clearTimeout(hoverTimeout); productsOpen = true;" @mouseleave="hoverTimeout = setTimeout(() => { 

@@ -572,10 +572,9 @@ $hidden_pages = ['help.php', 'about.php'];
           </a>
 
           <!-- Overlay -->
-<div x-show="productsOpen" @click="productsOpen = false" 
-  class="fixed inset-0 z-40"
-  style="top: 80px; pointer-events: none; background: transparent;" x-cloak>
-</div>
+          <div x-show="productsOpen" @click="productsOpen = false" class="fixed inset-0 z-40"
+            style="top: 80px; pointer-events: none; background: transparent;" x-cloak>
+          </div>
 
           <!-- Dropdown Menu - Three Columns with Search -->
           <div x-show="productsOpen" @mouseenter="clearTimeout(hoverTimeout); productsOpen = true;" @mouseleave="hoverTimeout = setTimeout(() => { 
@@ -905,28 +904,28 @@ $hidden_pages = ['help.php', 'about.php'];
       <!-- Desktop Navigation -->
       <div class="hidden lg:flex space-x-6 items-center">
 
-       <?php if (count($newProducts) > 0): ?>
-  <button @click="newProductsModal = true"
-    class="hidden xl:flex relative text-black hover:text-orange-500 transition font-semibold uppercase text-sm group">
-    <i class="fa-solid fa-box-open text-xl"></i>
-    <span
-      class="absolute -top-2 -right-2 bg-red-600 text-white rounded-full px-1.5 py-0.5 text-[10px] leading-none min-w-[18px] text-center">
-      <?php echo count($newProducts); ?>
-    </span>
+        <?php if (count($newProducts) > 0): ?>
+          <button @click="newProductsModal = true"
+            class="hidden xl:flex relative text-black hover:text-orange-500 transition font-semibold uppercase text-sm group">
+            <i class="fa-solid fa-box-open text-xl"></i>
+            <span
+              class="absolute -top-2 -right-2 bg-red-600 text-white rounded-full px-1.5 py-0.5 text-[10px] leading-none min-w-[18px] text-center">
+              <?php echo count($newProducts); ?>
+            </span>
 
-    <!-- Tooltip -->
-    <span class="absolute top-full left-1/2 -translate-x-1/2 mt-2 
+            <!-- Tooltip -->
+            <span class="absolute top-full left-1/2 -translate-x-1/2 mt-2 
                  bg-gray-900 text-white text-xs font-medium uppercase tracking-wide
                  px-2.5 py-1 rounded whitespace-nowrap
                  opacity-0 group-hover:opacity-100 transition-opacity duration-150
                  pointer-events-none z-50">
-      New Products
-      <!-- Arrow -->
-      <span class="absolute bottom-full left-1/2 -translate-x-1/2 
+              New Products
+              <!-- Arrow -->
+              <span class="absolute bottom-full left-1/2 -translate-x-1/2 
                    border-4 border-transparent border-b-gray-900"></span>
-    </span>
-  </button>
-<?php endif; ?>
+            </span>
+          </button>
+        <?php endif; ?>
         <!-- MORE DROPDOWN - Show on medium screens when space is tight -->
         <div x-data="{ moreOpen: false, searchModalOpen: false }" class="relative xl:hidden">
           <button @click="moreOpen = !moreOpen"
@@ -1119,8 +1118,8 @@ $hidden_pages = ['help.php', 'about.php'];
                           x-text="item.product_name"></h3>
                         <p class="text-xs text-gray-500 mt-1" x-text="item.category_name || 'Product'"></p>
                       </div>
-                      <svg class="w-5 h-5 text-gray-400 group-hover:text-orange-500 transition shrink-0"
-                        fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <svg class="w-5 h-5 text-gray-400 group-hover:text-orange-500 transition shrink-0" fill="none"
+                        stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7" />
                       </svg>
                     </a>
@@ -2020,9 +2019,23 @@ $hidden_pages = ['help.php', 'about.php'];
               </button>
             </div>
 
+<!-- Backdrop overlay - sa loob ng nav, bago ang Desktop Login Dropdown -->
+<div x-show="loginOpen" 
+     @click="loginOpen = false"
+     x-transition:enter="transition ease-out duration-200"
+     x-transition:enter-start="opacity-0"
+     x-transition:enter-end="opacity-100"
+     x-transition:leave="transition ease-in duration-150"
+     x-transition:leave-start="opacity-100"
+     x-transition:leave-end="opacity-0"
+     x-cloak
+     class="fixed inset-0 bg-black/40 bg-opacity-10 z-20"
+     style="top: 80px;">
+</div>
+
             <!-- Desktop Login Dropdown -->
             <div x-show="loginOpen" @click.away="loginOpen = false" x-transition x-cloak
-              class="absolute right-0 mt-2 w-80 bg-white border border-gray-200 rounded-lg shadow-lg p-6 z-50">
+              class="absolute right-0 mt-2 w-80 bg-white border border-gray-200 rounded-lg shadow-lg p-6 z-50  ">
 
               <h2 class="text-xl font-bold text-gray-800 mb-4">Login</h2>
 
@@ -2843,9 +2856,9 @@ $hidden_pages = ['help.php', 'about.php'];
       </div>
     </div>
 
-    <!-- Register Modal -->
     <div x-show="registerOpen" x-cloak x-transition
-      class="fixed inset-0 z-9999 flex items-center justify-center bg-black bg-opacity-50 p-4">
+      class="fixed inset-0 z-9999 flex items-center justify-center bg-black/50 p-4"
+      style="position: fixed; top: 0; left: 0; right: 0; bottom: 0;">
       <div class="bg-white w-full max-w-md max-h-[95vh] overflow-y-auto rounded-lg shadow-lg relative">
 
         <!-- Modal Header -->
@@ -2943,7 +2956,7 @@ $hidden_pages = ['help.php', 'about.php'];
             </div>
             <button @click="newProductsModal = false"
               class="text-white text-2xl w-8 h-8 flex items-center justify-center transition-all">
-            <i class="fa-solid fa-circle-xmark"></i>
+              <i class="fa-solid fa-circle-xmark"></i>
             </button>
           </div>
 
@@ -3021,7 +3034,7 @@ $hidden_pages = ['help.php', 'about.php'];
                         <?php endif; ?>
                       </div>
 
-               
+
                       <!-- Meta Info -->
                       <div class="flex flex-wrap items-center gap-3 text-xs text-gray-500 mb-3">
                         <span class="flex items-center gap-1">
@@ -3089,11 +3102,6 @@ $hidden_pages = ['help.php', 'about.php'];
       </div>
 
       <style>
-        /* Modal specific styles */
-        [x-cloak] {
-          display: none !important;
-        }
-
         /* Smooth scrollbar for modal */
         .overflow-y-auto::-webkit-scrollbar {
           width: 6px;

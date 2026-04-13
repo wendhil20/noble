@@ -173,61 +173,9 @@ $bestsellerData = $bestsellerItems->fetch_all(MYSQLI_ASSOC);
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <link rel="icon" type="image/png" sizes="96x96" href="../img/favicon.ico">
     <title>Noble Home - Modern Furnishing Supplies</title>
-
     <!-- CSS Files -->
     <link href="../css/promotionslide.css" rel="stylesheet">
     <link href="../css/bannerPromo.css" rel="stylesheet">
-    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/swiper@11/swiper-bundle.min.css" />
-    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap"
-        rel="stylesheet" />
-
-    <!-- Font Awesome (for icons) -->
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-
-    <!-- ✅ CRITICAL SCRIPTS (must load before anything else) -->
-    <script src="https://cdn.jsdelivr.net/npm/swiper@11/swiper-bundle.min.js"></script>
-
-    <!-- Deferred non-critical scripts -->
-    <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js"></script>
-    <script src="https://unpkg.com/lucide@latest/dist/umd/lucide.min.js" defer></script>
-
-    <!-- Load heavy libraries AFTER page interactive -->
-    <script>
-        // Load AOS only if elements need it
-        window.addEventListener('load', () => {
-            if (document.querySelectorAll('[data-aos]').length > 0) {
-                const aoScript = document.createElement('script');
-                aoScript.src = 'https://unpkg.com/aos@2.3.4/dist/aos.js';
-                aoScript.async = true;
-                aoScript.onload = () => {
-                    if (window.AOS) AOS.init();
-                };
-                document.body.appendChild(aoScript);
-            }
-
-            // Load Lenis for smooth scroll
-            const lenisScript = document.createElement('script');
-            lenisScript.src = 'https://cdn.jsdelivr.net/gh/studio-freight/lenis@1.0.19/bundled/lenis.min.js';
-            lenisScript.async = true;
-            lenisScript.onload = () => {
-                if (window.Lenis) {
-                    const lenis = new Lenis({
-                        duration: 3,
-                        easing: (t) => Math.min(1, 1.001 - Math.pow(2, -10 * t)),
-                        direction: 'vertical',
-                        smooth: true
-                    });
-                    function raf(time) {
-                        lenis.raf(time);
-                        requestAnimationFrame(raf);
-                    }
-                    requestAnimationFrame(raf);
-                }
-            };
-            document.body.appendChild(lenisScript);
-        });
-    </script>
-
     <style>
         footer * {
             font-family: 'Plus Jakarta Sans', sans-serif;

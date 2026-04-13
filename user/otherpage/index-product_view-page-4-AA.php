@@ -401,12 +401,6 @@ $is_guest = !isset($_SESSION['user_id']);
     <meta name="user-name" content="<?= htmlspecialchars($_SESSION['user_name'] ?? '') ?>">
   <?php endif; ?>
   <link rel="icon" type="image/png" sizes="96x96" href="../img/favicon.ico">
-  <title><?= htmlspecialchars($product['product_name']) ?> - Noble Home</title>
-  <script src="https://cdn.jsdelivr.net/npm/swiper@11/swiper-bundle.min.js"></script>
-  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/swiper@11/swiper-bundle.min.css" />
-  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap"
-    rel="stylesheet" />
-  <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
   <style>
     footer * {
       font-family: 'Plus Jakarta Sans', sans-serif;

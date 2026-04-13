@@ -198,9 +198,6 @@ $total_cart_items = count($cart_items);
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <link rel="icon" type="image/png" sizes="96x96" href="../img/favicon.ico">
   <title>Your Cart</title>
-  <link href="https://unpkg.com/aos@2.3.4/dist/aos.css" rel="stylesheet">
-  <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
-  <link href="https://fonts.googleapis.com/css2?family=Roboto&display=swap" rel="stylesheet">
 </head>
 
 <body class="bg-gray-100 font-roboto">
@@ -561,9 +558,9 @@ $total_cart_items = count($cart_items);
                 <!-- Product Image and Basic Info -->
                 <div class="flex items-start gap-4">
                   <?php if (!empty($item['type_image'])): ?>
-                    <img src="../../<?= ($item['type_image']) ?>" class="w-20 h-20 object-cover rounded-lg shadow-sm flex-shrink-0" alt="Product Image">
+                    <img src="../../<?= ($item['type_image']) ?>" class="w-20 h-20 object-cover rounded-lg shadow-sm shrink-0" alt="Product Image">
                   <?php else: ?>
-                    <div class="w-20 h-20 bg-gray-200 flex items-center justify-center text-gray-500 text-xs rounded-lg flex-shrink-0">No Image</div>
+                    <div class="w-20 h-20 bg-gray-200 flex items-center justify-center text-gray-500 text-xs rounded-lg shrink-0">No Image</div>
                   <?php endif; ?>
 
                   <div class="flex-1 min-w-0">
@@ -1125,7 +1122,7 @@ $total_cart_items = count($cart_items);
       getTotalItemsInCart,
       getAllCartItemIds
     };
-  </link>
+  </script>
 </body>
 
 </html>

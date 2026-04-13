@@ -134,11 +134,6 @@ $is_guest = !isset($_SESSION['user_id']);
     <link rel="icon" type="image/png" sizes="96x96" href="../img/favicon.ico">
     <title>Shop Products - Noble Home</title>
     <meta name="description" content="Explore our premium collection of furniture, materials, and home décor items.">
-    <link href="https://unpkg.com/aos@2.3.4/dist/aos.css" rel="stylesheet">
-    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" rel="stylesheet">
-    <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700;800&display=swap"
-        rel="stylesheet">
-    <script src="https://cdn.jsdelivr.net/gh/studio-freight/lenis@1.0.19/bundled/lenis.min.js"></script>
     <style>
         .line-clamp-2 {
             display: -webkit-box;
@@ -456,7 +451,7 @@ $is_guest = !isset($_SESSION['user_id']);
                     <div class="absolute inset-0 bg-cover bg-center"
                         style="background-image: url('../img/saleandexplore/a.png');">
                         <div
-                            class="absolute inset-0 bg-gradient-to-b from-black/40 via-black/50 to-black/70 group-hover:from-black/50 group-hover:via-black/60 group-hover:to-black/80 transition-all duration-300">
+                            class="absolute inset-0 bg-black/40 group-hover:from-black/50 group-hover:via-black/60 group-hover:to-black/80 transition-all duration-300">
                         </div>
                     </div>
 
@@ -485,7 +480,7 @@ $is_guest = !isset($_SESSION['user_id']);
                     <div class="absolute inset-0 bg-cover bg-center"
                         style="background-image: url('../img/saleandexplore/b.png');">
                         <div
-                            class="absolute inset-0 bg-gradient-to-b from-black/40 via-black/50 to-black/70 group-hover:from-black/50 group-hover:via-black/60 group-hover:to-black/80 transition-all duration-300">
+                            class="absolute inset-0 bg-black/40 group-hover:from-black/50 group-hover:via-black/60 group-hover:to-black/80 transition-all duration-300">
                         </div>
                     </div>
 

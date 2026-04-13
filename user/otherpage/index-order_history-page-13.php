@@ -239,7 +239,7 @@ function getStatusBadge($status)
                         <?php endif; ?>
 
                         <?php for ($i = max(1, $page - 2); $i <= min($total_pages, $page + 2); $i++): ?>
-                            <a href="?page=<?= $i ?>" class="px-3 py-2 text-sm font-medium <?= $i == $page ? 'text-orange-600 bg-orange-50 border-orange-500' : 'text-gray-500 bg-white border-gray-300 hover:bg-gray-50' ?> border rounded-md">
+                            <a href="?page=<?= $i ?>" class="px-3 py-2 text-sm font-medium <?= $i == $page ? 'text-orange-600 bg-orange-50 border-orange-500' : 'text-gray-500 border-gray-300 hover:bg-gray-50' ?> border rounded-md">
                                 <?= $i ?>
                             </a>
                         <?php endfor; ?>
@@ -256,7 +256,7 @@ function getStatusBadge($status)
     </div>
 
     <!-- Quick View Modal -->
-    <div id="quickViewModal" class="hidden fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+    <div id="quickViewModal" class="hidden fixed inset-0 bg-black bg-opacity-50 items-center justify-center z-50">
         <div class="bg-white rounded-lg max-w-2xl w-full mx-4 max-h-[80vh] overflow-y-auto">
             <div class="p-6">
                 <div class="flex justify-between items-center mb-4">

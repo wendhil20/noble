@@ -86,7 +86,7 @@ function calculateCubicMeters($width, $height, $length, $unit, $quantity = 1)
     if (empty($width) || empty($height) || empty($length)) {
         return 0;
     }
-    
+
     // Conversion factors to meters (matching database ENUM)
     $meters = [
         'mm' => 0.001,      // millimeters to meters
@@ -94,19 +94,19 @@ function calculateCubicMeters($width, $height, $length, $unit, $quantity = 1)
         'inches' => 0.0254, // inches to meters
         'm' => 1            // meters (no conversion)
     ];
-    
+
     // Get multiplier, default to 0 if unit not found (will result in 0 volume)
     $multiplier = $meters[strtolower($unit)] ?? 0;
-    
+
     // If multiplier is 0 (invalid unit), return 0
     if ($multiplier === 0) {
         return 0;
     }
-    
+
     $widthM = ($width * $multiplier);
     $heightM = ($height * $multiplier);
     $lengthM = ($length * $multiplier);
-    
+
     return ($widthM * $heightM * $lengthM) * $quantity;
 }
 
@@ -116,7 +116,7 @@ function convertToKilograms($weight, $unit, $quantity = 1)
     if (empty($weight)) {
         return 0;
     }
-    
+
     // Conversion factors to kilograms (matching database ENUM)
     $kgConversion = [
         'g' => 0.001,      // grams to kg
@@ -124,15 +124,15 @@ function convertToKilograms($weight, $unit, $quantity = 1)
         'lbs' => 0.453592, // pounds to kg
         'oz' => 0.0283495  // ounces to kg
     ];
-    
+
     // Get multiplier, default to 0 if unit not found
     $multiplier = $kgConversion[strtolower($unit)] ?? 0;
-    
+
     // If multiplier is 0 (invalid unit), return 0
     if ($multiplier === 0) {
         return 0;
     }
-    
+
     return ($weight * $multiplier) * $quantity;
 }
 
@@ -143,28 +143,28 @@ function assignTransportifyVehicle($cart_items, $transportify_vehicles)
     $itemVehicleData = [];
 
     foreach ($cart_items as $item) {
-    // Get dimensions - use 0 if not provided (no fallback sizes)
-    $width = floatval($item['width'] ?? 0);
-    $height = floatval($item['height'] ?? 0);
-    $length = floatval($item['length'] ?? 0);
-    
-    // Get units - use database defaults if not provided
-    $dimensionUnit = $item['dimension_unit'] ?? 'cm';
-    $weight = floatval($item['weight'] ?? 0);
-    $weightUnit = $item['weight_unit'] ?? 'kg';
-    $quantity = intval($item['quantity'] ?? 1);
+        // Get dimensions - use 0 if not provided (no fallback sizes)
+        $width = floatval($item['width'] ?? 0);
+        $height = floatval($item['height'] ?? 0);
+        $length = floatval($item['length'] ?? 0);
 
-    // Calculate cubic meters and weight (will be 0 if no data)
-    $itemCubicM = calculateCubicMeters($width, $height, $length, $dimensionUnit, $quantity);
-    $itemWeightKg = convertToKilograms($weight, $weightUnit, $quantity);
+        // Get units - use database defaults if not provided
+        $dimensionUnit = $item['dimension_unit'] ?? 'cm';
+        $weight = floatval($item['weight'] ?? 0);
+        $weightUnit = $item['weight_unit'] ?? 'kg';
+        $quantity = intval($item['quantity'] ?? 1);
 
-    $totalCubicMeters += $itemCubicM;
-    $totalWeightKg += $itemWeightKg;
-    
-    // Debug log for items with no dimensions
-    if ($itemCubicM === 0 && $itemWeightKg === 0) {
-        error_log("⚠️ Item has no dimensions/weight: " . ($item['variant_name'] ?? $item['product_name']));
-    }
+        // Calculate cubic meters and weight (will be 0 if no data)
+        $itemCubicM = calculateCubicMeters($width, $height, $length, $dimensionUnit, $quantity);
+        $itemWeightKg = convertToKilograms($weight, $weightUnit, $quantity);
+
+        $totalCubicMeters += $itemCubicM;
+        $totalWeightKg += $itemWeightKg;
+
+        // Debug log for items with no dimensions
+        if ($itemCubicM === 0 && $itemWeightKg === 0) {
+            error_log("⚠️ Item has no dimensions/weight: " . ($item['variant_name'] ?? $item['product_name']));
+        }
 
         $itemVehicleData[] = [
             'item_id' => $item['id'] ?? $item['variant_id'],
@@ -283,10 +283,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     <meta name="referrer" content="no-referrer-when-downgrade">
     <link rel="icon" type="image/png" sizes="96x96" href="../img/favicon.ico">
     <title>Step 3: Delivery Options - Noble Home</title>
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Montserrat:wght@300;400;600;700&display=swap">
-    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
-    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></link>
 </head>
 
 <body class="bg-gray-100 font-sans">
@@ -302,7 +298,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 <div class="flex items-center flex-1">
                     <div class="w-10 h-10 bg-green-500 text-white rounded-full flex items-center justify-center">
                         <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path>
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7">
+                            </path>
                         </svg>
                     </div>
                     <div class="ml-3">
@@ -317,7 +314,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 <div class="flex items-center flex-1">
                     <div class="w-10 h-10 bg-green-500 text-white rounded-full flex items-center justify-center">
                         <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path>
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7">
+                            </path>
                         </svg>
                     </div>
                     <div class="ml-3">
@@ -330,7 +328,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
                 <!-- Step 3 - Active -->
                 <div class="flex items-center flex-1">
-                    <div class="w-10 h-10 bg-orange-600 text-white rounded-full flex items-center justify-center font-bold">3</div>
+                    <div
+                        class="w-10 h-10 bg-orange-600 text-white rounded-full flex items-center justify-center font-bold">
+                        3</div>
                     <div class="ml-3">
                         <div class="font-medium text-orange-600">Delivery Options</div>
                         <div class="text-xs text-gray-500">Current step</div>
@@ -341,7 +341,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
                 <!-- Step 4 -->
                 <div class="flex items-center flex-1">
-                    <div class="w-10 h-10 bg-gray-300 text-gray-600 rounded-full flex items-center justify-center font-bold">4</div>
+                    <div
+                        class="w-10 h-10 bg-gray-300 text-gray-600 rounded-full flex items-center justify-center font-bold">
+                        4</div>
                     <div class="ml-3">
                         <div class="font-medium text-gray-400">Payment</div>
                         <div class="text-xs text-gray-400">Complete order</div>
@@ -354,7 +356,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             <div class="bg-green-50 p-4 rounded-lg mb-6">
                 <div class="flex items-center">
                     <svg class="w-8 h-8 text-green-600 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 8h14M5 8a2 2 0 110-4h14a2 2 0 110 4M5 8v10a2 2 0 002 2h10a2 2 0 002-2V8m-9 4h4"></path>
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                            d="M5 8h14M5 8a2 2 0 110-4h14a2 2 0 110 4M5 8v10a2 2 0 002 2h10a2 2 0 002-2V8m-9 4h4">
+                        </path>
                     </svg>
                     <div>
                         <h3 class="text-lg  text-green-800">Step 3: Delivery Options</h3>
@@ -369,12 +373,16 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
                 <div class="grid md:grid-cols-2 gap-4">
                     <!-- Delivery Option -->
-                    <label class="flex items-start p-4 cursor-pointer hover:bg-orange-50 hover:border-orange-300 transition delivery-type-option">
+                    <label
+                        class="flex items-start p-4 cursor-pointer hover:bg-orange-50 hover:border-orange-300 transition delivery-type-option">
                         <input type="radio" name="delivery_type" value="delivery" class="mt-2 mr-4" required />
                         <div class="flex-1">
                             <div class="flex items-center mb-2">
-                                <svg class="w-6 h-6 text-orange-600 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 8h14M5 8a2 2 0 110-4h14a2 2 0 110 4M5 8v10a2 2 0 002 2h10a2 2 0 002-2V8m-9 4h4"></path>
+                                <svg class="w-6 h-6 text-orange-600 mr-2" fill="none" stroke="currentColor"
+                                    viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                        d="M5 8h14M5 8a2 2 0 110-4h14a2 2 0 110 4M5 8v10a2 2 0 002 2h10a2 2 0 002-2V8m-9 4h4">
+                                    </path>
                                 </svg>
                                 <div class=" text-lg">Delivery</div>
                             </div>
@@ -388,12 +396,16 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                     </label>
 
                     <!-- Pickup Option -->
-                    <label class="flex items-start p-4  cursor-pointer hover:bg-green-50 hover:border-green-300 transition delivery-type-option">
+                    <label
+                        class="flex items-start p-4  cursor-pointer hover:bg-green-50 hover:border-green-300 transition delivery-type-option">
                         <input type="radio" name="delivery_type" value="pickup" class="mt-2 mr-4" required />
                         <div class="flex-1">
                             <div class="flex items-center mb-2">
-                                <svg class="w-6 h-6 text-green-600 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z"></path>
+                                <svg class="w-6 h-6 text-green-600 mr-2" fill="none" stroke="currentColor"
+                                    viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                        d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z">
+                                    </path>
                                 </svg>
                                 <div class=" text-lg">Pick-up</div>
                             </div>
@@ -414,13 +426,13 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 <!-- Courier Selection - HIDDEN (Auto-selected) -->
                 <div class="p-6 mb-6 hidden">
                     <label for="courierSelection" class="block text-sm font-semibold text-gray-700 mb-3">
-                        <span class="bg-orange-600 text-white rounded-full w-6 h-6 inline-flex items-center justify-center text-xs mr-2">1</span>
+                        <span
+                            class="bg-orange-600 text-white rounded-full w-6 h-6 inline-flex items-center justify-center text-xs mr-2">1</span>
                         Select Your Courier *
                     </label>
 
                     <select id="courierSelection" name="courier_selection"
-                        class="w-full px-4 py-3 border-2 border-gray-300 bg-white rounded"
-                        required>
+                        class="w-full px-4 py-3 border-2 border-gray-300 bg-white rounded" required>
                         <?php foreach ($unique_couriers as $index => $courier): ?>
                             <option value="<?= htmlspecialchars($courier) ?>" <?= $index === 0 ? 'selected' : '' ?>>
                                 <?= htmlspecialchars($courier) ?> • <?= count($couriers_list[$courier]) ?> vehicle(s)
@@ -441,7 +453,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 <div id="assignedVehicleDetails" class="hidden  p-4 mb-4">
                     <h5 class=" text-green-800 mb-3 flex items-center">
                         <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path>
                         </svg>
                         Assigned Delivery Vehicle
                     </h5>
@@ -450,10 +463,12 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
                 <!-- Distance Calculation Button - Hidden (Auto-triggered) -->
                 <button type="button" id="calculateDistance"
-                    class="hidden w-full bg-orange-600 text-white px-4 py-3 rounded-lg hover:bg-orange-700 transition font-medium disabled:bg-gray-400 flex items-center justify-center gap-2"
+                    class="hidden w-full bg-orange-600 text-white px-4 py-3 rounded-lg hover:bg-orange-700 transition font-medium disabled:bg-gray-400  items-center justify-center gap-2"
                     disabled>
                     <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 7h6m0 10v-3m-3 3h.01M9 17h.01M9 14h.01M12 14h.01M15 11h.01M12 11h.01M9 11h.01M7 21h10a2 2 0 002-2V5a2 2 0 00-2-2H7a2 2 0 00-2 2v14a2 2 0 002 2z"></path>
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                            d="M9 7h6m0 10v-3m-3 3h.01M9 17h.01M9 14h.01M12 14h.01M15 11h.01M12 11h.01M9 11h.01M7 21h10a2 2 0 002-2V5a2 2 0 00-2-2H7a2 2 0 00-2 2v14a2 2 0 002 2z">
+                        </path>
                     </svg>
                     Calculate Distance & Fee
                 </button>
@@ -476,8 +491,11 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             <div id="pickupInformationSection" class="hidden bg-green-50 border border-green-200 rounded-lg p-6">
                 <h4 class="font-bold text-green-800 mb-4 flex items-center">
                     <svg class="w-6 h-6 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"></path>
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"></path>
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                            d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z">
+                        </path>
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                            d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"></path>
                     </svg>
                     Store Pick-up Location
                 </h4>
@@ -504,7 +522,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                         <div class="border-b pb-3">
                             <div class="flex justify-between items-start">
                                 <div class="flex-1">
-                                    <h5 class="font-semibold text-gray-800"><?= htmlspecialchars($item['variant_name']) ?></h5>
+                                    <h5 class="font-semibold text-gray-800"><?= htmlspecialchars($item['variant_name']) ?>
+                                    </h5>
                                     <div class="text-xs text-gray-600 mt-1">
                                         <?php if (!empty($item['type_name'])): ?>
                                             <span class="mr-2">Type: <?= htmlspecialchars($item['type_name']) ?></span>
@@ -514,16 +533,17 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                                         <?php endif; ?>
                                     </div>
                                     <?php
-$leadTimeRange = calculateLeadTimeRange(
-    $item['lead_count'] ?? null,
-    $item['lead_interval'] ?? null,
-    $item['lead_gap'] ?? null
-);
-// Hidden to avoid confusion - customer can see expected delivery in next step
-?>
+                                    $leadTimeRange = calculateLeadTimeRange(
+                                        $item['lead_count'] ?? null,
+                                        $item['lead_interval'] ?? null,
+                                        $item['lead_gap'] ?? null
+                                    );
+                                    // Hidden to avoid confusion - customer can see expected delivery in next step
+                                    ?>
                                 </div>
                                 <div class="text-right ml-4">
-                                    <div class="font-bold text-green-600">₱<?= number_format($item['price'] * $item['quantity'], 2) ?></div>
+                                    <div class="font-bold text-green-600">
+                                        ₱<?= number_format($item['price'] * $item['quantity'], 2) ?></div>
                                     <div class="text-xs text-gray-500">Qty: <?= $item['quantity'] ?></div>
                                 </div>
                             </div>
@@ -542,7 +562,8 @@ $leadTimeRange = calculateLeadTimeRange(
             <div class="flex justify-between items-center pt-4">
                 <a href="index-checkout-page-12-2.php" class="text-gray-600 hover:text-gray-800 flex items-center">
                     <svg class="w-5 h-5 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"></path>
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7">
+                        </path>
                     </svg>
                     Back to Address
                 </a>
@@ -560,13 +581,14 @@ $leadTimeRange = calculateLeadTimeRange(
     </div>
 
     <!-- Map Modal -->
-    <div id="mapModal" class="hidden fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center">
+    <div id="mapModal" class="hidden fixed inset-0 bg-black bg-opacity-50 z-50  items-center justify-center">
         <div class="bg-white rounded-lg w-full max-w-4xl mx-4 max-h-[90vh] overflow-hidden">
             <div class="p-4 border-b flex justify-between items-center">
                 <h3 class="text-xl font-bold text-gray-800">Delivery Route Map</h3>
                 <button type="button" id="closeMapModal" class="text-gray-500 hover:text-gray-700">
                     <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12">
+                        </path>
                     </svg>
                 </button>
             </div>
@@ -588,7 +610,7 @@ $leadTimeRange = calculateLeadTimeRange(
             transportifyVehicles: <?= json_encode($transportify_vehicles) ?>,
             couriersGrouped: <?= json_encode($couriers_list) ?>,
             courierNames: <?= json_encode($unique_couriers) ?>,
-            totalPrice: <?= (float)$total_price ?>,
+            totalPrice: <?= (float) $total_price ?>,
             cartItems: <?= json_encode($cart_items) ?>,
             customerAddress: {
                 latitude: <?= floatval($_SESSION['checkout_step2']['latitude'] ?? 0) ?>,
@@ -619,7 +641,7 @@ $leadTimeRange = calculateLeadTimeRange(
         });
 
         // ✅ VALIDATE AND CLEAN ALERTS
-        (function() {
+        (function () {
             const addr = window.selectedAddress;
 
             // Validate coordinates
@@ -711,19 +733,23 @@ $leadTimeRange = calculateLeadTimeRange(
     </script>
 
     <!-- Core Scripts (Order Matters!) -->
-    <script src="js/index-checkout-main-page-12-3.obfuscated.obfuscated.js?v=<?= filemtime('js/index-checkout-main-page-12-3.obfuscated.js')?>"></script>
-    <script src="js/index-checkout-stepNavigation-page-12-3.obfuscated.js?v=<?= filemtime('js/index-stepNavigation-page-12-3.obfuscated.js')?>"></script>
-    <script src="js/index-checkout-distanceCalculation-page-12-3.obfuscated.js?v=<?= filemtime('js/index-checkout-distanceCalculation-page-12-3.obfuscated.js')?>"></script>
-    <script src="js/index-checkout-mapModal-page-12-3.obfuscated.js?v=<?= filemtime('js/index-checkout-mapModal-page-12-3.obfuscated.js')?>"></script>
+    <script
+        src="js/index-checkout-main-page-12-3.obfuscated.obfuscated.js?v=<?= filemtime('js/index-checkout-main-page-12-3.obfuscated.js') ?>"></script>
+    <script
+        src="js/index-checkout-stepNavigation-page-12-3.obfuscated.js?v=<?= filemtime('js/index-stepNavigation-page-12-3.obfuscated.js') ?>"></script>
+    <script
+        src="js/index-checkout-distanceCalculation-page-12-3.obfuscated.js?v=<?= filemtime('js/index-checkout-distanceCalculation-page-12-3.obfuscated.js') ?>"></script>
+    <script
+        src="js/index-checkout-mapModal-page-12-3.obfuscated.js?v=<?= filemtime('js/index-checkout-mapModal-page-12-3.obfuscated.js') ?>"></script>
 
     <!-- Initialize Step 3 -->
     <script>
-        document.addEventListener('DOMContentLoaded', function() {
+        document.addEventListener('DOMContentLoaded', function () {
             console.log('🚀 Initializing Step 3...');
 
             // ✅ OVERRIDE showNotification to block address alerts
             const originalShowNotification = window.showNotification;
-            window.showNotification = function(message, type, duration) {
+            window.showNotification = function (message, type, duration) {
                 const msg = String(message).toLowerCase();
 
                 // Block "select address" alerts if we have valid address

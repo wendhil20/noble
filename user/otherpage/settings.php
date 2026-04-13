@@ -342,7 +342,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Complete Your Profile</title>
-    <script src="https://www.google.com/recaptcha/api.js" async defer></script>
+   
 </head>
 
 <body style="font-family: 'Montserrat', sans-serif;">
@@ -376,7 +376,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                     <div class="space-y-6">
                         <!-- Gender -->
                         <div>
-                            <label class="block text-sm font-semibold text-gray-700 mb-2 flex items-center gap-2">
+                            <label class=" text-sm font-semibold text-gray-700 mb-2 flex items-center gap-2">
                                <i class="fa-solid fa-person"></i>
                                 Sex
                             </label>
@@ -390,7 +390,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
                         <!-- Birthplace -->
                         <div>
-                            <label class="block text-sm font-semibold text-gray-700 mb-2 flex items-center gap-2">
+                            <label class=" text-sm font-semibold text-gray-700 mb-2 flex items-center gap-2">
                               <i class="fa-solid fa-calendar-days"></i>
                                 Birthplace
                             </label>
@@ -399,7 +399,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
                         <!-- Date of Birth -->
                         <div>
-                            <label class="block text-sm font-semibold text-gray-700 mb-2 flex items-center gap-2">
+                            <label class=" text-sm font-semibold text-gray-700 mb-2 flex items-center gap-2">
                               <i class="fa-solid fa-calendar-days"></i>
                                 Date of Birth
                             </label>
@@ -408,7 +408,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
                         <!-- Occupation -->
                         <div>
-                            <label class="block text-sm font-semibold text-gray-700 mb-2 flex items-center gap-2">
+                            <label class=" text-sm font-semibold text-gray-700 mb-2 flex items-center gap-2">
                                 <i class="fa-solid fa-handshake"></i>
                                 Occupation
                             </label>
@@ -417,7 +417,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
                         <!-- Mobile Number -->
                         <div>
-                            <label class="block text-sm font-semibold text-gray-700 mb-2 flex items-center gap-2">
+                            <label class=" text-sm font-semibold text-gray-700 mb-2 flex items-center gap-2">
                            <i class="fa-solid fa-phone"></i>
                                 Mobile Number
                             </label>
@@ -427,7 +427,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
                         <!-- ID Type -->
                         <div>
-                            <label class="block text-sm font-semibold text-gray-700 mb-2 flex items-center gap-2">
+                            <label class=" text-sm font-semibold text-gray-700 mb-2 flex items-center gap-2">
                            <i class="fa-solid fa-address-card"></i>
                                 ID Type
                             </label>
@@ -445,7 +445,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
                         <!-- Government ID Upload -->
                         <div>
-                            <label class="block text-sm font-semibold text-gray-700 mb-2 flex items-center gap-2">
+                            <label class=" text-sm font-semibold text-gray-700 mb-2 flex items-center gap-2">
                                <i class="fa-solid fa-image"></i>
                                 Government ID Photo
                             </label>

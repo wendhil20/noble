@@ -296,7 +296,7 @@ $now = time();
             <div class="flex flex-col lg:flex-row gap-6">
 
                 <!-- Sidebar Filter -->
-                <div class="lg:w-64 flex-shrink-0">
+                <div class="lg:w-64 shrink-0">
                     <div class="bg-white border border-gray-200 rounded-lg p-6 sticky top-24">
                         <h3 class="text-lg font-bold text-black mb-4">
                             <i class="fas fa-filter mr-2 text-orange-500"></i>Filter
@@ -682,7 +682,7 @@ if (document.readyState !== 'loading') {
 
         // Initialize on page load
         document.addEventListener('DOMContentLoaded', initCountdowns);
-    </link>
+    </script>
 
 </body>
 

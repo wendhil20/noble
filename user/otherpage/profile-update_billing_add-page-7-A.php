@@ -103,11 +103,7 @@ if ($_POST && isset($_POST['add_address'])) {
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width,initial-scale=1.0" />
     <title>Add Billing Address</title>
-    <link href="https://api.mapbox.com/mapbox-gl-js/v3.3.0/mapbox-gl.css" rel="stylesheet" />
-    <script src="https://api.mapbox.com/mapbox-gl-js/v3.3.0/mapbox-gl.js"></script>
     <style>
-        @import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap');
-
         * {
             font-family: 'Plus Jakarta Sans', sans-serif;
         }
@@ -231,7 +227,7 @@ if ($_POST && isset($_POST['add_address'])) {
                 <div id="map" class="border border-gray-200"></div>
 
                 <div id="pinStatus"
-                    class="hidden mt-3 flex items-start gap-2 bg-green-50 border border-green-200 rounded-xl px-4 py-3">
+                    class="hidden mt-3 items-start gap-2 bg-green-50 border border-green-200 rounded-xl px-4 py-3">
                     <svg class="w-4 h-4 text-green-600 mt-0.5 shrink-0 pin-pulse" fill="currentColor"
                         viewBox="0 0 24 24">
                         <path
@@ -370,7 +366,7 @@ if ($_POST && isset($_POST['add_address'])) {
                 </div>
 
                 <div id="jsErrorBox"
-                    class="hidden mb-4 flex items-start gap-2 bg-red-50 border border-red-200 rounded-xl px-4 py-3">
+                    class="hidden mb-4  items-start gap-2 bg-red-50 border border-red-200 rounded-xl px-4 py-3">
                     <svg class="w-4 h-4 text-red-500 mt-0.5 shrink-0" fill="currentColor" viewBox="0 0 20 20">
                         <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm-1-5h2v2H9v-2zm0-8h2v6H9V5z"
                             clip-rule="evenodd" />

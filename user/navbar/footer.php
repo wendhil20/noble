@@ -196,7 +196,8 @@
 </footer>
 
 <!-- QR Modal -->
-<div id="socialModal" class="hidden fixed inset-0 bg-black/50 flex items-center justify-center z-50 px-4">
+<div id="socialModal" style="display:none;"
+    class="fixed inset-0 bg-black/50 flex items-center justify-center z-50 px-4">
     <div class="modal-animate bg-white rounded-2xl shadow-xl p-6 w-72 relative">
         <button id="closeModal"
             class="absolute top-3 right-4 text-gray-400 hover:text-gray-600 text-xl font-bold leading-none">&times;</button>
@@ -215,13 +216,14 @@
         const modal = document.getElementById('socialModal');
         const modalTitle = document.getElementById('modalTitle');
         const modalImage = document.getElementById('modalImage');
-
         function openModal(title, img) {
             modalTitle.textContent = title;
             modalImage.src = img;
-            modal.classList.remove('hidden');
+            modal.style.display = 'flex'; // ✅ flex, hindi classList.remove('hidden')
         }
-        function closeModal() { modal.classList.add('hidden'); }
+        function closeModal() {
+            modal.style.display = 'none'; // ✅
+        }
 
         document.getElementById('wechatBtn')?.addEventListener('click', () => openModal('Chat with us on WeChat', '../img/wechat.png'));
         document.getElementById('viberBtn')?.addEventListener('click', () => openModal('Chat with us on Viber', '../img/viber.png'));

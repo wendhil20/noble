@@ -233,11 +233,6 @@ $recent_count = $recent_products->num_rows;
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <link rel="icon" type="image/png" sizes="96x96" href="../img/favicon.ico">
     <title>Order History - Noble Admin</title>
-    <script src="https://cdn.tailwindcss.com"></script>
-    <link href="https://unpkg.com/aos@2.3.4/dist/aos.css" rel="stylesheet">
-    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" rel="stylesheet">
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=Playfair+Display:wght@400;500;600;700&display=swap" rel="stylesheet">
-
     <style>
         .card {
             background: white;
@@ -286,7 +281,7 @@ $recent_count = $recent_products->num_rows;
                                     <img src="<?= htmlspecialchars($user_picture); ?>" alt="Profile Picture" class="w-full h-full object-cover">
                                 </div>
                             <?php else: ?>
-                                <div class="w-20 h-20 sm:w-24 sm:h-24 lg:w-28 lg:h-28 bg-gradient-to-br from-blue-600 to-blue-800 rounded-xl flex items-center justify-center text-white text-xl sm:text-2xl lg:text-3xl font-bold shadow-md">
+                                <div class="w-20 h-20 sm:w-24 sm:h-24 lg:w-28 lg:h-28 bg-blue-500 rounded-xl flex items-center justify-center text-white text-xl sm:text-2xl lg:text-3xl font-bold shadow-md">
                                     <?= strtoupper(substr($user_name, 0, 1)); ?>
                                 </div>
                             <?php endif; ?>
@@ -315,7 +310,7 @@ $recent_count = $recent_products->num_rows;
 
                             <div class="space-y-2 text-gray-600 mb-4 sm:mb-6">
                                 <div class="flex items-center justify-center sm:justify-start gap-3">
-                                    <i class="fas fa-envelope text-gray-400 w-4 flex-shrink-0"></i>
+                                    <i class="fas fa-envelope text-gray-400 w-4 shrink-0"></i>
                                     <span class="font-medium text-sm sm:text-base break-all"><?= htmlspecialchars($user_email); ?></span>
                                 </div>
                             </div>
@@ -402,7 +397,7 @@ $recent_count = $recent_products->num_rows;
                     <div class="bg-white border border-gray-200 rounded-lg p-3 sm:p-4 shadow-sm mb-3 sm:mb-4">
                         <div class="flex items-center justify-between mb-3 sm:mb-4">
                             <div class="flex items-center gap-2 sm:gap-3">
-                                <div class="w-8 h-8 sm:w-10 sm:h-10 bg-green-100 rounded-lg flex items-center justify-center flex-shrink-0">
+                                <div class="w-8 h-8 sm:w-10 sm:h-10 bg-green-100 rounded-lg flex items-center justify-center shrink-0">
                                     <i class="fas fa-map-marker-alt text-green-600 text-sm sm:text-base"></i>
                                 </div>
                                 <div>
@@ -424,7 +419,7 @@ $recent_count = $recent_products->num_rows;
         </div>
 
         <!-- Professional Billing Addresses Modal -->
-        <div id="billingModal" class="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50 hidden">
+        <div id="billingModal" class="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50">
             <div class="bg-white rounded-xl p-8 max-w-4xl w-full mx-4 max-h-[90vh] overflow-y-auto animate-slide-up shadow-2xl">
                 <div class="flex justify-between items-center mb-6 pb-4 border-b border-gray-200">
                     <div class="flex items-center gap-3">
@@ -506,7 +501,7 @@ $recent_count = $recent_products->num_rows;
                                     <!-- Address -->
                                     <div class="bg-gray-50 rounded-lg p-4 border border-gray-100">
                                         <div class="flex items-start gap-3">
-                                            <i class="fas fa-map-marker-alt text-gray-500 mt-1 flex-shrink-0"></i>
+                                            <i class="fas fa-map-marker-alt text-gray-500 mt-1  shrink-0"></i>
                                             <div>
                                                 <p class="text-sm text-gray-700 font-medium mb-1"><?= htmlspecialchars($address['address']) ?></p>
                                                 <p class="text-xs text-gray-500">
@@ -658,7 +653,7 @@ function getRecentlyViewedByUser($conn, $user_id, $limit = 10)
                 </div>
 
                 <!-- Content -->
-                <div class="p-3 flex flex-col flex-grow">
+                <div class="p-3 flex flex-col grow">
                     <!-- Product Name -->
                     <h3 class="text-sm font-semibold text-black line-clamp-2 mb-2 group-hover:text-blue-600 transition-colors">
                         <?= htmlspecialchars($row['product_name']) ?>

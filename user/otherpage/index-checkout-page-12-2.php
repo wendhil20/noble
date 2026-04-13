@@ -221,7 +221,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     </div>
 
     <!-- Address Selection Modal -->
-    <div id="addressModal" class="hidden fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center p-4">
+    <div id="addressModal" class="hidden fixed inset-0 bg-black bg-opacity-50 z-50  items-center justify-center p-4">
         <div class="bg-white rounded-lg max-w-4xl w-full max-h-[90vh] overflow-hidden">
             <!-- Modal Header -->
             <div class="bg-orange-600 text-white p-4 flex justify-between items-center">
@@ -364,7 +364,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         </form>
     </div>
     <?php include '../navbar/footer.php'; ?>
-    <script src="js/index-checkout-addressZone-page-12-2.obfuscated.js?v=<?= filemtime('js/index-checkout-addressZone-page-12-2.obfuscated.js')?>"></link>
+    <script src="js/index-checkout-addressZone-page-12-2.obfuscated.js?v=<?= filemtime('js/index-checkout-addressZone-page-12-2.obfuscated.js')?>"></script>
 
     <script>
     console.log('🚀 Initializing Step 2 with Modal...');

@@ -147,19 +147,54 @@ $current_page = basename($_SERVER['PHP_SELF']);
 $hidden_pages = ['help.php', 'about.php'];
 ?>
 
-<!-- ✅ PRODUCTION: Use minified Tailwind (not CDN) -->
-<link href="../../output.css" rel="stylesheet">
-
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/swiper@11/swiper-bundle.min.css" />
-
-<!-- CORRECT - both need defer, Alpine core loaded LAST -->
-<script defer src="https://cdn.jsdelivr.net/npm/@alpinejs/collapse@3.x.x/dist/cdn.min.js"></script>
+<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap"rel="stylesheet" />
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+<link href="../../output.css" rel="stylesheet">
+<link href="https://api.mapbox.com/mapbox-gl-js/v3.3.0/mapbox-gl.css" rel="stylesheet" />
+<script src="https://cdn.jsdelivr.net/npm/dompurify@3.0.6/dist/purify.min.js"></script>
+<script src="https://www.google.com/recaptcha/api.js" async defer></script>
+<script src="https://api.mapbox.com/mapbox-gl-js/v3.3.0/mapbox-gl.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/swiper@11/swiper-bundle.min.js"></script>
 <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js"></script>
-<link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+<script src="https://unpkg.com/lucide@latest/dist/umd/lucide.min.js" defer></script>
+<script src="https://cdn.socket.io/4.7.2/socket.io.min.js"></script>
+<script>
+  // Load AOS only if elements need it
+  window.addEventListener('load', () => {
+    if (document.querySelectorAll('[data-aos]').length > 0) {
+      const aoScript = document.createElement('script');
+      aoScript.src = 'https://unpkg.com/aos@2.3.4/dist/aos.js';
+      aoScript.async = true;
+      aoScript.onload = () => {
+        if (window.AOS) AOS.init();
+      };
+      document.body.appendChild(aoScript);
+    }
 
+    // Load Lenis for smooth scroll
+    const lenisScript = document.createElement('script');
+    lenisScript.src = 'https://cdn.jsdelivr.net/gh/studio-freight/lenis@1.0.19/bundled/lenis.min.js';
+    lenisScript.async = true;
+    lenisScript.onload = () => {
+      if (window.Lenis) {
+        const lenis = new Lenis({
+          duration: 3,
+          easing: (t) => Math.min(1, 1.001 - Math.pow(2, -10 * t)),
+          direction: 'vertical',
+          smooth: true
+        });
+        function raf(time) {
+          lenis.raf(time);
+          requestAnimationFrame(raf);
+        }
+        requestAnimationFrame(raf);
+      }
+    };
+    document.body.appendChild(lenisScript);
+  });
+</script>
 <style>
-  @import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap');
-
   * {
     font-family: 'Plus Jakarta Sans', sans-serif;
   }
@@ -2019,19 +2054,13 @@ $hidden_pages = ['help.php', 'about.php'];
               </button>
             </div>
 
-<!-- Backdrop overlay - sa loob ng nav, bago ang Desktop Login Dropdown -->
-<div x-show="loginOpen" 
-     @click="loginOpen = false"
-     x-transition:enter="transition ease-out duration-200"
-     x-transition:enter-start="opacity-0"
-     x-transition:enter-end="opacity-100"
-     x-transition:leave="transition ease-in duration-150"
-     x-transition:leave-start="opacity-100"
-     x-transition:leave-end="opacity-0"
-     x-cloak
-     class="fixed inset-0 bg-black/40 bg-opacity-10 z-20"
-     style="top: 80px;">
-</div>
+            <!-- Backdrop overlay - sa loob ng nav, bago ang Desktop Login Dropdown -->
+            <div x-show="loginOpen" @click="loginOpen = false" x-transition:enter="transition ease-out duration-200"
+              x-transition:enter-start="opacity-0" x-transition:enter-end="opacity-100"
+              x-transition:leave="transition ease-in duration-150" x-transition:leave-start="opacity-100"
+              x-transition:leave-end="opacity-0" x-cloak class="fixed inset-0 bg-black/40 bg-opacity-10 z-20"
+              style="top: 80px;">
+            </div>
 
             <!-- Desktop Login Dropdown -->
             <div x-show="loginOpen" @click.away="loginOpen = false" x-transition x-cloak

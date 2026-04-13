@@ -149,9 +149,6 @@ try {
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Sale Items - Best Deals</title>
-    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/swiper@11/swiper-bundle.min.css" />
-    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" />
     <style>
         * {
             font-family: 'Poppins', sans-serif;
@@ -234,7 +231,7 @@ try {
     <!-- Hero Banner -->
     <?php if ($onsale_result && $onsale_result->num_rows > 0): ?>
         <div class="container mx-auto px-4 max-w-8xl mt-8 mb-16">
-            <div class="swiper banner-swiper relative rounded-2xl overflow-hidden bg-gradient-to-br from-gray-900 to-gray-800 h-96 md:h-[500px]">
+            <div class="swiper banner-swiper relative rounded-2xl overflow-hidden bg-gray-900 h-96 md:h-[500px]">
                 <div class="swiper-wrapper">
                     <?php while ($banner = $onsale_result->fetch_assoc()): ?>
                         <div class="swiper-slide">
@@ -246,8 +243,8 @@ try {
                     <?php endwhile; ?>
                 </div>
 
-                <div class="absolute inset-0 flex flex-col items-center justify-center text-center bg-gradient-to-br from-black/50 to-black/20 p-6 z-10">
-                    <div class="inline-block bg-gradient-to-r from-red-500 to-red-600 text-white text-xs font-black px-4 py-2 rounded-full mb-4 uppercase tracking-wide shadow-lg sale-badge" style="font-family: 'Montserrat', sans-serif;">
+                <div class="absolute inset-0 flex flex-col items-center justify-center text-center bg-black/50 p-6 z-10">
+                    <div class="inline-block bg-red-500 text-white text-xs font-black px-4 py-2 rounded-full mb-4 uppercase tracking-wide shadow-lg sale-badge" style="font-family: 'Montserrat', sans-serif;">
                         OFFER
                     </div>
                     <h1 class="text-white text-4xl md:text-5xl font-bold mb-2" style="font-family: 'Montserrat', sans-serif; ">

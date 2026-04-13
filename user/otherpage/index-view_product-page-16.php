@@ -72,7 +72,6 @@ $total_sold = (int)($product['total_sold'] ?? 0);
 <head>
   <meta charset="UTF-8" />
   <title>Product Details</title>
-  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
 </head>
 
 <body class="bg-gray-100 p-6">
@@ -87,7 +86,7 @@ $total_sold = (int)($product['total_sold'] ?? 0);
     <div class="flex flex-col lg:flex-row gap-8">
       
       <!-- Product Image -->
-      <div class="flex-shrink-0 w-full lg:w-80">
+      <div class="shrink-0 w-full lg:w-80">
         <?php if (!empty($product['main_image'])): ?>
           <img src="../../<?= ($product['main_image']) ?>" class="w-full h-auto object-cover rounded-lg border border-gray-200 shadow-md">
         <?php else: ?>

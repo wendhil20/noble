@@ -394,9 +394,6 @@ if ($order && !empty($order['reference_no'])) {
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <link rel="icon" type="image/png" sizes="96x96" href="../img/favicon.ico">
     <title>Payment <?= isset($show_waiting) ? 'Processing' : ($payment_success ? 'Successful' : 'Failed') ?> - Noble Home</title>
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@300;400;500;600;700&display=swap" rel="stylesheet">
     <style>
         body { font-family: 'Montserrat', sans-serif; }
         .success-animation { animation: successPulse 2s ease-in-out infinite; }
@@ -405,7 +402,7 @@ if ($order && !empty($order['reference_no'])) {
         @keyframes spin { from{transform:rotate(0deg)} to{transform:rotate(360deg)} }
     </style>
 </head>
-<body class="bg-gradient-to-br from-green-50 via-blue-50 to-purple-50 min-h-screen">
+<body class="bg-white min-h-screen">
 
 <?php include '../navbar/top.php'; ?>
 
@@ -584,7 +581,7 @@ if ($order && !empty($order['reference_no'])) {
 <?php else: ?>
     <!-- ── ERROR PAGE ── -->
     <div class="bg-white rounded-2xl shadow-2xl overflow-hidden">
-        <div class="bg-gradient-to-r from-red-500 to-pink-600 text-white p-8 text-center">
+        <div class="bg-red-500 text-white p-8 text-center">
             <div class="w-24 h-24 mx-auto mb-6 bg-white rounded-full flex items-center justify-center">
                 <svg class="w-12 h-12 text-red-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M6 18L18 6M6 6l12 12"/>

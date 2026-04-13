@@ -72,34 +72,6 @@ if (!$viewing_inspiration) {
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title><?php echo $viewing_inspiration ? htmlspecialchars($inspiration['name']) : 'Inspirations'; ?></title>
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@700;800&family=Outfit:wght@400;500;600;700&display=swap" rel="stylesheet">
-    <script>
-        tailwind.config = {
-            theme: {
-                extend: {
-                    fontFamily: {
-                        display: ['montserrat', 'serif'],
-                        body: ['Outfit', 'sans-serif'],
-                    },
-                    colors: {
-                        bronze: {
-                            50: '#faf8f5',
-                            100: '#f2eee8',
-                            200: '#e8ddd3',
-                            300: '#d4c4b3',
-                            400: '#b8956a',
-                            500: '#9e8860',
-                            600: '#8b7355',
-                            700: '#6b5545',
-                            800: '#5a453a',
-                            900: '#3d2f26',
-                        }
-                    }
-                }
-            }
-        }
-    </link>
     <style>
         .swiper-image {
             display: none;
@@ -199,7 +171,7 @@ if (!$viewing_inspiration) {
     </style>
 </head>
 
-<body class="bg-gradient-to-b from-stone-50 via-white to-stone-50 min-h-screen" style="color: #3d2f26">
+<body class="bg-white min-h-screen" style="color: #3d2f26">
     <?php include '../navbar/top.php' ?>
 
     <?php if ($viewing_inspiration && $inspiration): ?>
@@ -220,7 +192,7 @@ if (!$viewing_inspiration) {
                             <img src="../../uploads/<?php echo htmlspecialchars($inspiration['main_image']); ?>"
                                 alt="<?php echo htmlspecialchars($inspiration['name']); ?>"
                                 class="w-full h-full object-cover">
-                            <div class="absolute inset-0 bg-gradient-to-b from-black/30 via-black/20 to-black/40"></div>
+                            <div class="absolute inset-0 bg-black/40"></div>
                         </div>
 
                         <!-- Title Below Image - Large & Elegant -->
@@ -277,7 +249,7 @@ if (!$viewing_inspiration) {
                         <div class="grid grid-cols-1 lg:grid-cols-2 gap-12 items-center">
                             <div class="space-y-6">
                                 <h2 class="font-display text-4xl font-bold text-bronze-900">Explore</h2>
-                                <p class="text-lg text-stone-700 leading-relaxed whitespace-pre-wrap break-words font-light">
+                                <p class="text-lg text-stone-700 leading-relaxed whitespace-pre-wrap wrap-break-word font-light">
                                     <?php echo nl2br(htmlspecialchars($description_1)); ?>
                                 </p>
                             </div>
@@ -335,7 +307,7 @@ if (!$viewing_inspiration) {
 
                             <div class="order-1 lg:order-2 space-y-6">
                                 <h2 class="font-display text-4xl font-bold text-bronze-900">Details</h2>
-                                <p class="text-lg text-stone-700 leading-relaxed whitespace-pre-wrap break-words font-light">
+                                <p class="text-lg text-stone-700 leading-relaxed whitespace-pre-wrap wrap-break-word font-light">
                                     <?php echo nl2br(htmlspecialchars($description_2)); ?>
                                 </p>
                             </div>
@@ -349,7 +321,7 @@ if (!$viewing_inspiration) {
                         <div class="grid grid-cols-1 lg:grid-cols-2 gap-12 items-center">
                             <div class="space-y-6">
                                 <h2 class="font-display text-4xl font-bold text-bronze-900">Inspiration</h2>
-                                <p class="text-lg text-stone-700 leading-relaxed whitespace-pre-wrap break-words font-light">
+                                <p class="text-lg text-stone-700 leading-relaxed whitespace-pre-wrap wrap-break-word font-light">
                                     <?php echo nl2br(htmlspecialchars($description_3)); ?>
                                 </p>
                             </div>
@@ -393,7 +365,7 @@ if (!$viewing_inspiration) {
                     <p class="text-xl text-stone-600 font-light max-w-2xl">
                         Curated collection of design ideas and creative concepts to spark your imagination
                     </p>
-                    <div class="h-1 w-20 bg-gradient-to-r from-bronze-700 to-bronze-500 mt-6 rounded-full"></div>
+                    <div class="h-1 w-20 bg-black mt-6 rounded-full"></div>
                 </div>
 
                 <!-- FEATURED SECTION -->
@@ -401,7 +373,7 @@ if (!$viewing_inspiration) {
                     <div class="mb-24">
                         <div class="mb-8">
                             <h2 class="font-display text-5xl md:text-6xl font-bold text-bronze-900">FEATURED</h2>
-                            <div class="h-1 w-16 bg-gradient-to-r from-bronze-700 to-bronze-500 mt-4 rounded-full"></div>
+                            <div class="h-1 w-16 bg-black mt-4 rounded-full"></div>
                         </div>
 
                         <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
@@ -414,7 +386,7 @@ if (!$viewing_inspiration) {
                                                 <img src="../../uploads/<?php echo htmlspecialchars($featured['main_image']); ?>"
                                                     alt="<?php echo htmlspecialchars($featured['name']); ?>"
                                                     class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500">
-                                                <div class="absolute inset-0 bg-gradient-to-t from-black/60 via-black/20 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex items-end">
+                                                <div class="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex items-end">
                                                     <div class="p-8">
                                                         <span class="text-white font-semibold text-lg uppercase tracking-wider flex items-center gap-2">
                                                             Discover <i class="fas fa-arrow-right"></i>
@@ -422,7 +394,7 @@ if (!$viewing_inspiration) {
                                                     </div>
                                                 </div>
                                             <?php else: ?>
-                                                <div class="w-full h-full flex items-center justify-center bg-gradient-to-br from-bronze-100 to-bronze-50">
+                                                <div class="w-full h-full flex items-center justify-center bg-black">
                                                     <i class="fas fa-image text-bronze-300 text-6xl"></i>
                                                 </div>
                                             <?php endif; ?>
@@ -445,7 +417,7 @@ if (!$viewing_inspiration) {
                 <!-- ALL INSPIRATIONS SECTION -->
                 <div class="mb-12">
                     <h2 class="font-display text-5xl md:text-6xl font-bold text-bronze-900">ALL INSPIRATIONS</h2>
-                    <div class="h-1 w-16 bg-gradient-to-r from-bronze-700 to-bronze-500 mt-4 rounded-full"></div>
+                    <div class="h-1 w-16 bg-black mt-4 rounded-full"></div>
                 </div>
 
                 <?php if (empty($inspirations)): ?>
@@ -471,7 +443,7 @@ if (!$viewing_inspiration) {
                                                 </span>
                                             </div>
                                         <?php else: ?>
-                                            <div class="w-full h-full flex items-center justify-center bg-gradient-to-br from-bronze-100 to-bronze-50">
+                                            <div class="w-full h-full flex items-center justify-center bg-black">
                                                 <i class="fas fa-image text-bronze-300 text-5xl"></i>
                                             </div>
                                         <?php endif; ?>

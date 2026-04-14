@@ -407,12 +407,10 @@ while ($subsub = $sub_subcategory_result->fetch_assoc()) {
 <head>
   <meta charset="UTF-8">
   <title>Manage Product Variants - Multiple Subcategories</title>
-  <script src="https://cdn.tailwindcss.com"></script>
   <script>
     const subcategoriesData = <?= json_encode($subcategories_with_category) ?>;
     const subSubcategoriesData = <?= json_encode($sub_subcategories_with_parent) ?>;
 
-    // Drag-to-select variables
     let isSelecting = false;
     let startIndex = -1;
     let selectionStartState = false;
@@ -423,20 +421,35 @@ while ($subsub = $sub_subcategory_result->fetch_assoc()) {
         const row = document.getElementById('row-' + cb.value);
         updateRowVisualState(row, source.checked);
       });
+      ['select-all', 'select-all-table'].forEach(id => {
+        const el = document.getElementById(id);
+        if (el && el !== source) el.checked = source.checked;
+      });
+      updateSelectedCount();
+    }
+
+    function toggleCheckbox(id) {
+      const cb = document.getElementById('checkbox-' + id);
+      if (!cb) return;
+      cb.checked = !cb.checked;
+      const row = document.getElementById('row-' + id);
+      updateRowVisualState(row, cb.checked);
       updateSelectAllState();
+      updateSelectedCount();
     }
 
     function toggleRowSelection(event, checkboxId) {
       if (event.target.type === 'checkbox') return;
-
       const checkbox = document.getElementById(checkboxId);
       checkbox.checked = !checkbox.checked;
       const row = event.currentTarget;
       updateRowVisualState(row, checkbox.checked);
       updateSelectAllState();
+      updateSelectedCount();
     }
 
     function updateRowVisualState(rowElement, isChecked) {
+      if (!rowElement) return;
       if (isChecked) {
         rowElement.classList.add('bg-orange-100', 'ring-2', 'ring-orange-500');
       } else {
@@ -445,37 +458,43 @@ while ($subsub = $sub_subcategory_result->fetch_assoc()) {
     }
 
     function updateSelectAllState() {
-      const selectAllCheckbox = document.getElementById('select-all');
       const checkboxes = document.querySelectorAll('.variant-checkbox');
       const checkedBoxes = document.querySelectorAll('.variant-checkbox:checked');
+      ['select-all', 'select-all-table'].forEach(id => {
+        const el = document.getElementById(id);
+        if (!el) return;
+        if (checkedBoxes.length === 0) {
+          el.indeterminate = false;
+          el.checked = false;
+        } else if (checkedBoxes.length === checkboxes.length) {
+          el.indeterminate = false;
+          el.checked = true;
+        } else {
+          el.indeterminate = true;
+        }
+      });
+    }
 
-      if (checkedBoxes.length === 0) {
-        selectAllCheckbox.indeterminate = false;
-        selectAllCheckbox.checked = false;
-      } else if (checkedBoxes.length === checkboxes.length) {
-        selectAllCheckbox.indeterminate = false;
-        selectAllCheckbox.checked = true;
-      } else {
-        selectAllCheckbox.indeterminate = true;
-      }
+    function updateSelectedCount() {
+      const checked = document.querySelectorAll('.variant-checkbox:checked').length;
+      const el = document.getElementById('selected-count');
+      if (el) el.textContent = checked > 0 ? checked + ' item' + (checked > 1 ? 's' : '') + ' selected' : '';
     }
 
     function filterSubcategories(selectElement, targetId) {
       const categoryId = selectElement.value;
       const subcategorySelect = document.getElementById(targetId);
-
       subcategorySelect.innerHTML = '<option value="">Select Subcategories</option>';
-
       if (categoryId) {
-        const filtered = subcategoriesData.filter(sub => sub.category_id == categoryId);
-        filtered.forEach(sub => {
-          const option = document.createElement('option');
-          option.value = sub.id;
-          option.textContent = sub.subcategory_name;
-          subcategorySelect.appendChild(option);
-        });
+        subcategoriesData
+          .filter(sub => sub.category_id == categoryId)
+          .forEach(sub => {
+            const option = document.createElement('option');
+            option.value = sub.id;
+            option.textContent = sub.subcategory_name;
+            subcategorySelect.appendChild(option);
+          });
       }
-
       const subSubcategorySelect = document.getElementById(targetId.replace('subcategory', 'sub_subcategory'));
       if (subSubcategorySelect) {
         subSubcategorySelect.innerHTML = '<option value="">Select Sub-Subcategories</option>';
@@ -485,27 +504,24 @@ while ($subsub = $sub_subcategory_result->fetch_assoc()) {
     function filterSubSubcategories(selectElement, targetId) {
       const subcategoryId = selectElement.value;
       const subSubcategorySelect = document.getElementById(targetId);
-
       subSubcategorySelect.innerHTML = '<option value="">Select Sub-Subcategories</option>';
-
       if (subcategoryId) {
-        const filtered = subSubcategoriesData.filter(subsub => subsub.subcategory_id == subcategoryId);
-        filtered.forEach(subsub => {
-          const option = document.createElement('option');
-          option.value = subsub.id;
-          option.textContent = subsub.sub_subcategory_name;
-          subSubcategorySelect.appendChild(option);
-        });
+        subSubcategoriesData
+          .filter(subsub => subsub.subcategory_id == subcategoryId)
+          .forEach(subsub => {
+            const option = document.createElement('option');
+            option.value = subsub.id;
+            option.textContent = subsub.sub_subcategory_name;
+            subSubcategorySelect.appendChild(option);
+          });
       }
     }
 
-    document.addEventListener('DOMContentLoaded', function() {
+    document.addEventListener('DOMContentLoaded', function () {
       const checkboxes = document.querySelectorAll('.variant-checkbox');
-      const rows = document.querySelectorAll('tbody tr');
 
-      // DRAG-TO-SELECT FUNCTIONALITY
-      checkboxes.forEach(function(checkbox, index) {
-        checkbox.addEventListener('mousedown', function(e) {
+      checkboxes.forEach(function (checkbox, index) {
+        checkbox.addEventListener('mousedown', function (e) {
           e.preventDefault();
           isSelecting = true;
           startIndex = index;
@@ -514,48 +530,34 @@ while ($subsub = $sub_subcategory_result->fetch_assoc()) {
           updateRowVisualState(document.getElementById('row-' + checkbox.value), selectionStartState);
         });
 
-        checkbox.addEventListener('mouseenter', function(e) {
+        checkbox.addEventListener('mouseenter', function () {
           if (isSelecting && startIndex !== -1) {
             const currentIndex = Array.from(checkboxes).indexOf(this);
             const minIndex = Math.min(startIndex, currentIndex);
             const maxIndex = Math.max(startIndex, currentIndex);
-
-            checkboxes.forEach(function(cb, idx) {
+            checkboxes.forEach(function (cb, idx) {
               if (idx >= minIndex && idx <= maxIndex) {
                 cb.checked = selectionStartState;
-                const row = document.getElementById('row-' + cb.value);
-                updateRowVisualState(row, selectionStartState);
+                updateRowVisualState(document.getElementById('row-' + cb.value), selectionStartState);
               }
             });
           }
         });
+
+        checkbox.addEventListener('change', function () {
+          updateRowVisualState(document.getElementById('row-' + this.value), this.checked);
+          updateSelectAllState();
+          updateSelectedCount();
+        });
       });
 
-      document.addEventListener('mouseup', function() {
+      document.addEventListener('mouseup', function () {
         if (isSelecting) {
           isSelecting = false;
           startIndex = -1;
           updateSelectAllState();
+          updateSelectedCount();
         }
-      });
-
-      // Add click handlers to rows
-      rows.forEach(function(row) {
-        row.style.cursor = 'pointer';
-        row.addEventListener('click', function(e) {
-          if (e.target.type !== 'checkbox') {
-            toggleRowSelection(e, 'checkbox-' + this.id.replace('row-', ''));
-          }
-        });
-      });
-
-      // Add change handlers to checkboxes
-      checkboxes.forEach(function(checkbox) {
-        checkbox.addEventListener('change', function() {
-          const row = document.getElementById('row-' + this.value);
-          updateRowVisualState(row, this.checked);
-          updateSelectAllState();
-        });
       });
 
       updateSelectAllState();
@@ -569,449 +571,623 @@ while ($subsub = $sub_subcategory_result->fetch_assoc()) {
     <h1 class="text-3xl font-bold text-orange-700 mb-6">Manage Product Variants (Multiple Subcategories Support)</h1>
 
     <?php if ($sync_message): ?>
-      <div class="bg-green-100 border border-green-400 text-green-700 px-4 py-3 rounded mb-6" role="alert">
-        <strong class="font-bold">Success!</strong>
-        <span class="block sm:inline"><?= htmlspecialchars($sync_message) ?></span>
-      </div>
-    <?php endif; ?>
+  <div class="flex items-start gap-3 bg-green-50 border border-green-200 text-green-800 px-4 py-3 rounded-xl mb-6">
+    <span class="text-green-500 mt-0.5">✓</span>
+    <span class="text-sm"><?= htmlspecialchars($sync_message) ?></span>
+  </div>
+<?php endif; ?>
 
-    <div class="bg-blue-50 border border-blue-200 rounded-lg p-4 mb-6">
+<!-- Stats + Auto-sync row -->
+<div class="grid grid-cols-1 lg:grid-cols-3 gap-4 mb-6">
+
+  <!-- Category sync status -->
+  <div class="bg-white border border-gray-200 rounded-xl p-4">
+    <p class="text-xs font-medium text-gray-500 mb-3 uppercase tracking-wide">Category sync</p>
+    <div class="flex flex-col gap-2">
       <div class="flex items-center justify-between">
-        <div>
-          <h3 class="text-lg font-semibold text-blue-800 mb-1">Auto-Sync All Categories</h3>
-          <p class="text-blue-600 text-sm">Automatically set categories for all product variants based on their product codename.</p>
+        <span class="flex items-center gap-2 text-sm text-gray-700">
+          <span class="w-2 h-2 rounded-full bg-green-500"></span> Matched
+        </span>
+        <span class="text-sm font-semibold text-green-600"><?= $counts['matched_count'] ?></span>
+      </div>
+      <div class="flex items-center justify-between">
+        <span class="flex items-center gap-2 text-sm text-gray-700">
+          <span class="w-2 h-2 rounded-full bg-red-500"></span> Mismatched
+        </span>
+        <span class="text-sm font-semibold text-red-600"><?= $counts['mismatched_count'] ?></span>
+      </div>
+      <div class="flex items-center justify-between">
+        <span class="flex items-center gap-2 text-sm text-gray-700">
+          <span class="w-2 h-2 rounded-full bg-yellow-400"></span> No match
+        </span>
+        <span class="text-sm font-semibold text-yellow-600"><?= $counts['no_match_count'] ?></span>
+      </div>
+    </div>
+  </div>
+
+  <!-- Lead time status -->
+  <div class="bg-white border border-gray-200 rounded-xl p-4">
+    <p class="text-xs font-medium text-gray-500 mb-3 uppercase tracking-wide">Lead time</p>
+    <div class="flex flex-col gap-2">
+      <div class="flex items-center justify-between">
+        <span class="flex items-center gap-2 text-sm text-gray-700">
+          <span class="w-2 h-2 rounded-full bg-blue-500"></span> With lead time
+        </span>
+        <span class="text-sm font-semibold text-blue-600"><?= $leadtime_counts['with_leadtime_count'] ?></span>
+      </div>
+      <div class="flex items-center justify-between">
+        <span class="flex items-center gap-2 text-sm text-gray-700">
+          <span class="w-2 h-2 rounded-full bg-gray-400"></span> Without lead time
+        </span>
+        <span class="text-sm font-semibold text-gray-600"><?= $leadtime_counts['without_leadtime_count'] ?></span>
+      </div>
+    </div>
+  </div>
+
+  <!-- Auto-sync all -->
+  <div class="bg-white border border-gray-200 rounded-xl p-4 flex flex-col justify-between gap-4">
+    <div>
+      <p class="text-xs font-medium text-gray-500 mb-1 uppercase tracking-wide">Auto-sync all</p>
+      <p class="text-sm text-gray-600">Set categories for all variants based on product codename.</p>
+    </div>
+    <form method="POST">
+      <button type="submit" name="auto_sync_all"
+        onclick="return confirm('This will update ALL product variants to match their product codename categories. Continue?')"
+        class="w-full inline-flex items-center justify-center gap-2 bg-blue-600 hover:bg-blue-700 text-white text-sm font-medium px-4 py-2 rounded-lg transition">
+        ⟳ Sync all categories
+      </button>
+    </form>
+  </div>
+
+</div>
+
+<!-- Tip -->
+<div class="flex items-center gap-2 bg-amber-50 border border-amber-200 rounded-xl px-4 py-2.5 mb-6">
+  <span class="text-amber-500 text-sm">💡</span>
+  <p class="text-sm text-amber-800">Drag across checkboxes to select or deselect multiple rows quickly.</p>
+</div>
+
+    <form method="GET" id="filterForm">
+      <div class="bg-white border border-gray-200 rounded-xl p-5 mb-6">
+
+        <!-- Header -->
+        <div class="flex items-center justify-between mb-4">
+          <span class="text-sm font-medium text-gray-700">Filters</span>
+          <a href="?"
+            class="inline-flex items-center gap-1.5 text-xs text-gray-500 border border-gray-300 rounded-lg px-3 py-1.5 hover:bg-gray-50 transition">
+            ↺ Reset all
+          </a>
         </div>
-        <form method="POST" class="ml-4">
-          <button type="submit" name="auto_sync_all" class="bg-blue-600 hover:bg-blue-700 text-white px-6 py-2 rounded-md font-medium"
-            onclick="return confirm('This will update ALL product variants to match their product codename categories. Continue?')">
-            Auto-Sync All Categories
-          </button>
-        </form>
-      </div>
-    </div>
 
-    <div class="bg-white rounded-lg shadow-md p-4 mb-6">
-      <h3 class="text-lg font-semibold text-gray-800 mb-2">Category Synchronization Status</h3>
-      <div class="flex gap-4 text-sm mb-3">
-        <span class="text-green-600">✓ Matched: <?= $counts['matched_count'] ?></span>
-        <span class="text-red-600">✗ Mismatched: <?= $counts['mismatched_count'] ?></span>
-        <span class="text-yellow-600">⚠ No Match: <?= $counts['no_match_count'] ?></span>
-      </div>
-      <h3 class="text-lg font-semibold text-gray-800 mb-2">Lead Time Status</h3>
-      <div class="flex gap-4 text-sm">
-        <span class="text-blue-600">⏰ With Lead Time: <?= $leadtime_counts['with_leadtime_count'] ?></span>
-        <span class="text-gray-600">⚫ Without Lead Time: <?= $leadtime_counts['without_leadtime_count'] ?></span>
-      </div>
-    </div>
+        <!-- Filter Grid -->
+        <div class="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-8 gap-3">
 
-    <div class="bg-yellow-50 border border-yellow-300 rounded-lg p-3 mb-6">
-      <p class="text-yellow-800 text-sm"><strong>💡 Tip:</strong> Drag your mouse across the checkboxes to select/deselect multiple rows quickly!</p>
-    </div>
+          <div class="flex flex-col gap-1">
+            <label class="text-xs font-medium text-gray-500">Status</label>
+            <select name="status" onchange="this.form.submit()"
+              class="w-full text-sm border border-gray-300 rounded-lg px-2.5 py-1.5 bg-white text-gray-700 focus:outline-none focus:ring-2 focus:ring-orange-400 focus:border-transparent cursor-pointer">
+              <option value="">All</option>
+              <option value="new" <?= $status_filter === 'new' ? 'selected' : '' ?>>New</option>
+              <option value="old" <?= $status_filter === 'old' ? 'selected' : '' ?>>Old</option>
+            </select>
+          </div>
 
-    <form method="GET" class="flex flex-wrap gap-4 items-center mb-6">
-      <div>
-        <label class="text-sm font-medium text-gray-700">Status:</label>
-        <select name="status" onchange="this.form.submit()" class="border rounded px-3 py-1 text-sm">
-          <option value="">All</option>
-          <option value="new" <?= $status_filter === 'new' ? 'selected' : '' ?>>New</option>
-          <option value="old" <?= $status_filter === 'old' ? 'selected' : '' ?>>Old</option>
-        </select>
-      </div>
+          <div class="flex flex-col gap-1">
+            <label class="text-xs font-medium text-gray-500">Origin</label>
+            <select name="origin" onchange="this.form.submit()"
+              class="w-full text-sm border border-gray-300 rounded-lg px-2.5 py-1.5 bg-white text-gray-700 focus:outline-none focus:ring-2 focus:ring-orange-400 focus:border-transparent cursor-pointer">
+              <option value="">All</option>
+              <option value="local" <?= $origin_filter === 'local' ? 'selected' : '' ?>>Local</option>
+              <option value="international" <?= $origin_filter === 'international' ? 'selected' : '' ?>>International
+              </option>
+            </select>
+          </div>
 
-      <div>
-        <label class="text-sm font-medium text-gray-700">Origin:</label>
-        <select name="origin" onchange="this.form.submit()" class="border rounded px-3 py-1 text-sm">
-          <option value="">All</option>
-          <option value="local" <?= $origin_filter === 'local' ? 'selected' : '' ?>>Local</option>
-          <option value="international" <?= $origin_filter === 'international' ? 'selected' : '' ?>>International</option>
-        </select>
-      </div>
+          <div class="flex flex-col gap-1">
+            <label class="text-xs font-medium text-gray-500">Category</label>
+            <select name="category" id="filter_category"
+              onchange="filterSubcategories(this, 'filter_subcategory'); this.form.submit();"
+              class="w-full text-sm border border-gray-300 rounded-lg px-2.5 py-1.5 bg-white text-gray-700 focus:outline-none focus:ring-2 focus:ring-orange-400 focus:border-transparent cursor-pointer">
+              <option value="">All</option>
+              <?php $category_result->data_seek(0);
+              while ($cat = $category_result->fetch_assoc()): ?>
+                <option value="<?= $cat['id'] ?>" <?= $category_filter == $cat['id'] ? 'selected' : '' ?>>
+                  <?= htmlspecialchars($cat['name']) ?>
+                </option>
+              <?php endwhile; ?>
+            </select>
+          </div>
 
-      <div>
-        <label class="text-sm font-medium text-gray-700">Category:</label>
-        <select name="category" id="filter_category" onchange="filterSubcategories(this, 'filter_subcategory'); this.form.submit();" class="border rounded px-3 py-1 text-sm">
-          <option value="">All</option>
-          <?php
+          <div class="flex flex-col gap-1">
+            <label class="text-xs font-medium text-gray-500">Subcategory</label>
+            <select name="subcategory" id="filter_subcategory"
+              onchange="filterSubSubcategories(this, 'filter_sub_subcategory'); this.form.submit();"
+              class="w-full text-sm border border-gray-300 rounded-lg px-2.5 py-1.5 bg-white text-gray-700 focus:outline-none focus:ring-2 focus:ring-orange-400 focus:border-transparent cursor-pointer">
+              <option value="">All</option>
+              <?php foreach ($subcategories_with_category as $sub): ?>
+                <option value="<?= $sub['id'] ?>" data-category-id="<?= $sub['category_id'] ?>"
+                  <?= $subcategory_filter == $sub['id'] ? 'selected' : '' ?>>
+                  <?= htmlspecialchars($sub['subcategory_name']) ?>
+                  <?php if (!empty($sub['category_name'])): ?>(<?= htmlspecialchars($sub['category_name']) ?>)<?php endif; ?>
+                </option>
+              <?php endforeach; ?>
+            </select>
+          </div>
+
+          <div class="flex flex-col gap-1">
+            <label class="text-xs font-medium text-gray-500">Sub-subcategory</label>
+            <select name="sub_subcategory" id="filter_sub_subcategory" onchange="this.form.submit()"
+              class="w-full text-sm border border-gray-300 rounded-lg px-2.5 py-1.5 bg-white text-gray-700 focus:outline-none focus:ring-2 focus:ring-orange-400 focus:border-transparent cursor-pointer">
+              <option value="">All</option>
+              <?php foreach ($sub_subcategories_with_parent as $subsub): ?>
+                <option value="<?= $subsub['id'] ?>" data-subcategory-id="<?= $subsub['subcategory_id'] ?>"
+                  <?= $sub_subcategory_filter == $subsub['id'] ? 'selected' : '' ?>>
+                  <?= htmlspecialchars($subsub['sub_subcategory_name']) ?>
+                  <?php if (!empty($subsub['subcategory_name'])): ?>(<?= htmlspecialchars($subsub['subcategory_name']) ?>)<?php endif; ?>
+                </option>
+              <?php endforeach; ?>
+            </select>
+          </div>
+
+          <div class="flex flex-col gap-1">
+            <label class="text-xs font-medium text-gray-500">Delivery size</label>
+            <select name="delivery_size" onchange="this.form.submit()"
+              class="w-full text-sm border border-gray-300 rounded-lg px-2.5 py-1.5 bg-white text-gray-700 focus:outline-none focus:ring-2 focus:ring-orange-400 focus:border-transparent cursor-pointer">
+              <option value="">All</option>
+              <?php $delivery_size_result->data_seek(0);
+              while ($size = $delivery_size_result->fetch_assoc()): ?>
+                <option value="<?= $size['id'] ?>" <?= $delivery_size_filter == $size['id'] ? 'selected' : '' ?>>
+                  <?= htmlspecialchars($size['size_name']) ?> (<?= $size['percentage'] ?>%)
+                </option>
+              <?php endwhile; ?>
+            </select>
+          </div>
+
+          <div class="flex flex-col gap-1">
+            <label class="text-xs font-medium text-gray-500">Lead time</label>
+            <select name="leadtime" onchange="this.form.submit()"
+              class="w-full text-sm border border-gray-300 rounded-lg px-2.5 py-1.5 bg-white text-gray-700 focus:outline-none focus:ring-2 focus:ring-orange-400 focus:border-transparent cursor-pointer">
+              <option value="">All</option>
+              <option value="with_leadtime" <?= $leadtime_filter === 'with_leadtime' ? 'selected' : '' ?>>With lead time
+              </option>
+              <option value="without_leadtime" <?= $leadtime_filter === 'without_leadtime' ? 'selected' : '' ?>>Without
+                lead time</option>
+            </select>
+          </div>
+
+          <div class="flex flex-col gap-1">
+            <label class="text-xs font-medium text-gray-500">Category sync</label>
+            <select name="sync_status" onchange="this.form.submit()"
+              class="w-full text-sm border border-gray-300 rounded-lg px-2.5 py-1.5 bg-white text-gray-700 focus:outline-none focus:ring-2 focus:ring-orange-400 focus:border-transparent cursor-pointer">
+              <option value="">All</option>
+              <option value="matched" <?= $sync_filter === 'matched' ? 'selected' : '' ?>>Matched</option>
+              <option value="mismatched" <?= $sync_filter === 'mismatched' ? 'selected' : '' ?>>Mismatched</option>
+              <option value="no_match" <?= $sync_filter === 'no_match' ? 'selected' : '' ?>>No match</option>
+            </select>
+          </div>
+
+        </div>
+
+        <!-- Active filter badges -->
+        <?php
+        $active = [];
+        if ($status_filter)
+          $active[] = ['label' => 'Status', 'val' => ucfirst($status_filter), 'key' => 'status'];
+        if ($origin_filter)
+          $active[] = ['label' => 'Origin', 'val' => ucfirst($origin_filter), 'key' => 'origin'];
+        if ($category_filter) {
           $category_result->data_seek(0);
-          while ($cat = $category_result->fetch_assoc()): ?>
-            <option value="<?= $cat['id'] ?>" <?= $category_filter == $cat['id'] ? 'selected' : '' ?>>
-              <?= htmlspecialchars($cat['name']) ?>
-            </option>
-          <?php endwhile; ?>
-        </select>
-      </div>
-
-      <div>
-        <label class="text-sm font-medium text-gray-700">Subcategory:</label>
-        <select name="subcategory" id="filter_subcategory" onchange="filterSubSubcategories(this, 'filter_sub_subcategory'); this.form.submit();" class="border rounded px-3 py-1 text-sm">
-          <option value="">All</option>
-          <?php foreach ($subcategories_with_category as $sub): ?>
-            <option value="<?= $sub['id'] ?>"
-              data-category-id="<?= $sub['category_id'] ?>"
-              <?= $subcategory_filter == $sub['id'] ? 'selected' : '' ?>>
-              <?= htmlspecialchars($sub['subcategory_name']) ?>
-              <?php if (!empty($sub['category_name'])): ?>
-                (<?= htmlspecialchars($sub['category_name']) ?>)
-              <?php endif; ?>
-            </option>
-          <?php endforeach; ?>
-        </select>
-      </div>
-
-      <div>
-        <label class="text-sm font-medium text-gray-700">Sub-Subcategory:</label>
-        <select name="sub_subcategory" id="filter_sub_subcategory" onchange="this.form.submit()" class="border rounded px-3 py-1 text-sm">
-          <option value="">All</option>
-          <?php foreach ($sub_subcategories_with_parent as $subsub): ?>
-            <option value="<?= $subsub['id'] ?>"
-              data-subcategory-id="<?= $subsub['subcategory_id'] ?>"
-              <?= $sub_subcategory_filter == $subsub['id'] ? 'selected' : '' ?>>
-              <?= htmlspecialchars($subsub['sub_subcategory_name']) ?>
-              <?php if (!empty($subsub['subcategory_name'])): ?>
-                (<?= htmlspecialchars($subsub['subcategory_name']) ?>)
-              <?php endif; ?>
-            </option>
-          <?php endforeach; ?>
-        </select>
-      </div>
-
-      <div>
-        <label class="text-sm font-medium text-gray-700">Delivery Size:</label>
-        <select name="delivery_size" onchange="this.form.submit()" class="border rounded px-3 py-1 text-sm">
-          <option value="">All</option>
-          <?php
+          while ($c = $category_result->fetch_assoc()) {
+            if ($c['id'] == $category_filter) {
+              $active[] = ['label' => 'Category', 'val' => $c['name'], 'key' => 'category'];
+              break;
+            }
+          }
+        }
+        if ($subcategory_filter) {
+          foreach ($subcategories_with_category as $s) {
+            if ($s['id'] == $subcategory_filter) {
+              $active[] = ['label' => 'Subcategory', 'val' => $s['subcategory_name'], 'key' => 'subcategory'];
+              break;
+            }
+          }
+        }
+        if ($sub_subcategory_filter) {
+          foreach ($sub_subcategories_with_parent as $ss) {
+            if ($ss['id'] == $sub_subcategory_filter) {
+              $active[] = ['label' => 'Sub-subcategory', 'val' => $ss['sub_subcategory_name'], 'key' => 'sub_subcategory'];
+              break;
+            }
+          }
+        }
+        if ($delivery_size_filter) {
           $delivery_size_result->data_seek(0);
-          while ($size = $delivery_size_result->fetch_assoc()): ?>
-            <option value="<?= $size['id'] ?>" <?= $delivery_size_filter == $size['id'] ? 'selected' : '' ?>>
-              <?= htmlspecialchars($size['size_name']) ?> (<?= $size['percentage'] ?>%)
-            </option>
-          <?php endwhile; ?>
-        </select>
-      </div>
+          while ($ds = $delivery_size_result->fetch_assoc()) {
+            if ($ds['id'] == $delivery_size_filter) {
+              $active[] = ['label' => 'Delivery size', 'val' => $ds['size_name'], 'key' => 'delivery_size'];
+              break;
+            }
+          }
+        }
+        if ($leadtime_filter)
+          $active[] = ['label' => 'Lead time', 'val' => $leadtime_filter === 'with_leadtime' ? 'With lead time' : 'Without lead time', 'key' => 'leadtime'];
+        if ($sync_filter)
+          $active[] = ['label' => 'Category sync', 'val' => ucfirst(str_replace('_', ' ', $sync_filter)), 'key' => 'sync_status'];
+        ?>
 
-      <div>
-        <label class="text-sm font-medium text-gray-700">Lead Time:</label>
-        <select name="leadtime" onchange="this.form.submit()" class="border rounded px-3 py-1 text-sm">
-          <option value="">All</option>
-          <option value="with_leadtime" <?= $leadtime_filter === 'with_leadtime' ? 'selected' : '' ?>>⏰ With Lead Time</option>
-          <option value="without_leadtime" <?= $leadtime_filter === 'without_leadtime' ? 'selected' : '' ?>>⚫ Without Lead Time</option>
-        </select>
-      </div>
+        <?php if (!empty($active)): ?>
+          <div class="flex flex-wrap gap-2 mt-4 pt-4 border-t border-gray-100">
+            <?php foreach ($active as $f):
+              $params = $_GET;
+              unset($params[$f['key']]);
+              $clearUrl = '?' . http_build_query($params);
+              ?>
+              <span
+                class="inline-flex items-center gap-1.5 text-xs bg-orange-50 text-orange-700 border border-orange-200 rounded-full px-3 py-1 font-medium">
+                <?= htmlspecialchars($f['label']) ?>: <?= htmlspecialchars($f['val']) ?>
+                <a href="<?= $clearUrl ?>"
+                  class="text-orange-400 hover:text-orange-600 font-bold leading-none transition">&times;</a>
+              </span>
+            <?php endforeach; ?>
+          </div>
+        <?php endif; ?>
 
-      <div>
-        <label class="text-sm font-medium text-gray-700">Category Sync:</label>
-        <select name="sync_status" onchange="this.form.submit()" class="border rounded px-3 py-1 text-sm">
-          <option value="">All</option>
-          <option value="matched" <?= $sync_filter === 'matched' ? 'selected' : '' ?>>✓ Matched</option>
-          <option value="mismatched" <?= $sync_filter === 'mismatched' ? 'selected' : '' ?>>✗ Mismatched</option>
-          <option value="no_match" <?= $sync_filter === 'no_match' ? 'selected' : '' ?>>⚠ No Match</option>
-        </select>
       </div>
-
-      <a href="?" class="text-blue-600 text-sm underline hover:text-blue-800">Reset Filters</a>
     </form>
 
     <form method="POST">
-      <div class="mb-4 flex justify-between items-center">
-        <label class="flex items-center gap-2">
-          <input type="checkbox" id="select-all" class="w-4 h-4" onchange="toggleSelectAll(this)">
-          <span class="text-sm font-medium text-gray-700">Select All</span>
-        </label>
-        <div class="flex gap-2 flex-wrap">
-          <select name="bulk_status" class="border rounded px-2 py-1 text-sm">
-            <option value="">Change Status</option>
-            <option value="new">New</option>
-            <option value="old">Old</option>
-          </select>
 
-          <select name="bulk_origin" class="border rounded px-2 py-1 text-sm">
-            <option value="">Change Origin</option>
-            <option value="local">Local</option>
-            <option value="international">International</option>
-          </select>
+      <!-- Bulk Actions Bar -->
+      <div class="bg-white border border-gray-200 rounded-xl p-4 mb-4">
+        <div class="flex items-center gap-3 mb-3">
+          <label class="flex items-center gap-2 cursor-pointer">
+            <input type="checkbox" id="select-all" class="w-4 h-4 accent-orange-500" onchange="toggleSelectAll(this)">
+            <span class="text-sm font-medium text-gray-700">Select All</span>
+          </label>
+          <span class="text-xs text-gray-400" id="selected-count"></span>
+        </div>
 
-          <select name="bulk_category" id="bulk_category" onchange="filterSubcategories(this, 'bulk_subcategory')" class="border rounded px-2 py-1 text-sm">
-            <option value="">Change Category</option>
-            <?php
-            $category_result->data_seek(0);
-            while ($cat = $category_result->fetch_assoc()): ?>
-              <option value="<?= $cat['id'] ?>"><?= htmlspecialchars($cat['name']) ?></option>
-            <?php endwhile; ?>
-          </select>
+        <div class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-6 gap-3">
 
+          <!-- Status -->
           <div class="flex flex-col gap-1">
+            <label class="text-xs font-medium text-gray-500">Status</label>
+            <select name="bulk_status"
+              class="w-full text-sm border border-gray-300 rounded-lg px-2.5 py-1.5 bg-white text-gray-700 focus:outline-none focus:ring-2 focus:ring-orange-400 focus:border-transparent cursor-pointer">
+              <option value="">Change status</option>
+              <option value="new">New</option>
+              <option value="old">Old</option>
+            </select>
+          </div>
+
+          <!-- Origin -->
+          <div class="flex flex-col gap-1">
+            <label class="text-xs font-medium text-gray-500">Origin</label>
+            <select name="bulk_origin"
+              class="w-full text-sm border border-gray-300 rounded-lg px-2.5 py-1.5 bg-white text-gray-700 focus:outline-none focus:ring-2 focus:ring-orange-400 focus:border-transparent cursor-pointer">
+              <option value="">Change origin</option>
+              <option value="local">Local</option>
+              <option value="international">International</option>
+            </select>
+          </div>
+
+          <!-- Category -->
+          <div class="flex flex-col gap-1">
+            <label class="text-xs font-medium text-gray-500">Category</label>
+            <select name="bulk_category" id="bulk_category" onchange="filterSubcategories(this, 'bulk_subcategory')"
+              class="w-full text-sm border border-gray-300 rounded-lg px-2.5 py-1.5 bg-white text-gray-700 focus:outline-none focus:ring-2 focus:ring-orange-400 focus:border-transparent cursor-pointer">
+              <option value="">Change category</option>
+              <?php $category_result->data_seek(0);
+              while ($cat = $category_result->fetch_assoc()): ?>
+                <option value="<?= $cat['id'] ?>"><?= htmlspecialchars($cat['name']) ?></option>
+              <?php endwhile; ?>
+            </select>
+          </div>
+
+          <!-- Subcategory -->
+          <div class="flex flex-col gap-1">
+            <label class="text-xs font-medium text-gray-500">Subcategory</label>
             <select name="bulk_subcategory[]" id="bulk_subcategory" multiple size="1"
-              onchange="filterSubSubcategories(this, 'bulk_sub_subcategory')"
-              class="border rounded px-2 py-1 text-sm w-48"
-              title="Hold Ctrl/Cmd to select multiple">
-              <option value="">Change Subcategories</option>
+              onchange="filterSubSubcategories(this, 'bulk_sub_subcategory')" title="Hold Ctrl/Cmd to select multiple"
+              class="w-full text-sm border border-gray-300 rounded-lg px-2.5 py-1.5 bg-white text-gray-700 focus:outline-none focus:ring-2 focus:ring-orange-400 focus:border-transparent cursor-pointer">
+              <option value="">Change subcategory</option>
               <?php foreach ($subcategories_with_category as $sub): ?>
                 <option value="<?= $sub['id'] ?>" data-category-id="<?= $sub['category_id'] ?>">
                   <?= htmlspecialchars($sub['subcategory_name']) ?>
-                  <?php if (!empty($sub['category_name'])): ?>
-                    (<?= htmlspecialchars($sub['category_name']) ?>)
-                  <?php endif; ?>
+                  <?php if (!empty($sub['category_name'])): ?>(<?= htmlspecialchars($sub['category_name']) ?>)<?php endif; ?>
                 </option>
               <?php endforeach; ?>
             </select>
-            <label class="flex items-center gap-1 text-xs text-gray-700">
-              <input type="checkbox" name="append_subcategory" value="1" class="form-checkbox h-3 w-3">
-              <span>Add to existing (don't replace)</span>
+            <label class="flex items-center gap-1.5 cursor-pointer">
+              <input type="checkbox" name="append_subcategory" value="1" class="w-3 h-3 accent-orange-500">
+              <span class="text-xs text-gray-500">Add to existing</span>
             </label>
           </div>
 
+          <!-- Sub-subcategory -->
           <div class="flex flex-col gap-1">
+            <label class="text-xs font-medium text-gray-500">Sub-subcategory</label>
             <select name="bulk_sub_subcategory[]" id="bulk_sub_subcategory" multiple size="1"
-              class="border rounded px-2 py-1 text-sm w-48"
-              title="Hold Ctrl/Cmd to select multiple">
-              <option value="">Change Sub-Subcategories</option>
+              title="Hold Ctrl/Cmd to select multiple"
+              class="w-full text-sm border border-gray-300 rounded-lg px-2.5 py-1.5 bg-white text-gray-700 focus:outline-none focus:ring-2 focus:ring-orange-400 focus:border-transparent cursor-pointer">
+              <option value="">Change sub-subcategory</option>
               <?php foreach ($sub_subcategories_with_parent as $subsub): ?>
                 <option value="<?= $subsub['id'] ?>" data-subcategory-id="<?= $subsub['subcategory_id'] ?>">
                   <?= htmlspecialchars($subsub['sub_subcategory_name']) ?>
-                  <?php if (!empty($subsub['subcategory_name'])): ?>
-                    (<?= htmlspecialchars($subsub['subcategory_name']) ?>)
-                  <?php endif; ?>
+                  <?php if (!empty($subsub['subcategory_name'])): ?>(<?= htmlspecialchars($subsub['subcategory_name']) ?>)<?php endif; ?>
                 </option>
               <?php endforeach; ?>
             </select>
-            <label class="flex items-center gap-1 text-xs text-gray-700">
-              <input type="checkbox" name="append_sub_subcategory" value="1" class="form-checkbox h-3 w-3">
-              <span>Add to existing (don't replace)</span>
+            <label class="flex items-center gap-1.5 cursor-pointer">
+              <input type="checkbox" name="append_sub_subcategory" value="1" class="w-3 h-3 accent-orange-500">
+              <span class="text-xs text-gray-500">Add to existing</span>
             </label>
           </div>
 
-          <select name="bulk_delivery_size" class="border rounded px-2 py-1 text-sm">
-            <option value="">Change Delivery Size</option>
-            <?php
-            $delivery_size_result->data_seek(0);
-            while ($size = $delivery_size_result->fetch_assoc()): ?>
-              <option value="<?= $size['id'] ?>"><?= htmlspecialchars($size['size_name']) ?> (<?= $size['percentage'] ?>%)</option>
-            <?php endwhile; ?>
-          </select>
+          <!-- Delivery Size -->
+          <div class="flex flex-col gap-1">
+            <label class="text-xs font-medium text-gray-500">Delivery size</label>
+            <select name="bulk_delivery_size"
+              class="w-full text-sm border border-gray-300 rounded-lg px-2.5 py-1.5 bg-white text-gray-700 focus:outline-none focus:ring-2 focus:ring-orange-400 focus:border-transparent cursor-pointer">
+              <option value="">Change size</option>
+              <?php $delivery_size_result->data_seek(0);
+              while ($size = $delivery_size_result->fetch_assoc()): ?>
+                <option value="<?= $size['id'] ?>"><?= htmlspecialchars($size['size_name']) ?>
+                  (<?= $size['percentage'] ?>%)</option>
+              <?php endwhile; ?>
+            </select>
+          </div>
 
-          <input type="number" name="bulk_lead_count" placeholder="Lead Count" min="1" class="border rounded px-2 py-1 text-sm w-24">
-          <select name="bulk_lead_interval" class="border rounded px-2 py-1 text-sm">
-            <option value="">Lead Interval</option>
-            <option value="day">Day</option>
-            <option value="week">Week</option>
-            <option value="month">Month</option>
-            <option value="year">Year</option>
-          </select>
-          <input type="number" name="bulk_lead_gap" placeholder="Gap (Days)" min="0" class="border rounded px-2 py-1 text-sm w-20">
+          <!-- Lead Time -->
+          <div class="flex flex-col gap-1">
+            <label class="text-xs font-medium text-gray-500">Lead count</label>
+            <input type="number" name="bulk_lead_count" placeholder="e.g. 3" min="1"
+              class="w-full text-sm border border-gray-300 rounded-lg px-2.5 py-1.5 bg-white text-gray-700 focus:outline-none focus:ring-2 focus:ring-orange-400 focus:border-transparent" />
+          </div>
 
-          <button type="submit" name="auto_sync_categories" class="bg-green-600 hover:bg-green-700 text-white px-4 py-1 rounded text-sm" title="Auto-sync categories based on product codename">
-            Auto-Sync Categories
+          <div class="flex flex-col gap-1">
+            <label class="text-xs font-medium text-gray-500">Lead interval</label>
+            <select name="bulk_lead_interval"
+              class="w-full text-sm border border-gray-300 rounded-lg px-2.5 py-1.5 bg-white text-gray-700 focus:outline-none focus:ring-2 focus:ring-orange-400 focus:border-transparent cursor-pointer">
+              <option value="">Interval</option>
+              <option value="day">Day</option>
+              <option value="week">Week</option>
+              <option value="month">Month</option>
+              <option value="year">Year</option>
+            </select>
+          </div>
+
+          <div class="flex flex-col gap-1">
+            <label class="text-xs font-medium text-gray-500">Gap (days)</label>
+            <input type="number" name="bulk_lead_gap" placeholder="e.g. 0" min="0"
+              class="w-full text-sm border border-gray-300 rounded-lg px-2.5 py-1.5 bg-white text-gray-700 focus:outline-none focus:ring-2 focus:ring-orange-400 focus:border-transparent" />
+          </div>
+
+        </div>
+
+        <!-- Action Buttons -->
+        <div class="flex gap-2 mt-4 pt-4 border-t border-gray-100">
+          <button type="submit" name="auto_sync_categories" title="Auto-sync categories based on product codename"
+            class="inline-flex items-center gap-1.5 bg-green-600 hover:bg-green-700 text-white text-sm font-medium px-4 py-2 rounded-lg transition">
+            ⟳ Auto-sync categories
           </button>
-
-          <button type="submit" class="bg-orange-600 hover:bg-orange-700 text-white px-4 py-1 rounded text-sm">Apply</button>
+          <button type="submit"
+            class="inline-flex items-center gap-1.5 bg-orange-600 hover:bg-orange-700 text-white text-sm font-medium px-4 py-2 rounded-lg transition">
+            Apply to selected
+          </button>
         </div>
       </div>
 
-      <table class="w-full border-collapse bg-white">
-        <thead class="bg-gray-100 sticky top-0">
-          <tr class="border-b-2 border-gray-300">
-            <th class="p-3 text-left text-xs font-semibold text-gray-700 w-12">
-              <input type="checkbox" id="select-all" class="w-4 h-4" onchange="toggleSelectAll(this)">
-            </th>
-            <th class="p-3 text-left text-xs font-semibold text-gray-700">Image</th>
-            <th class="p-3 text-left text-xs font-semibold text-gray-700">Status</th>
-            <th class="p-3 text-left text-xs font-semibold text-gray-700">Product Name</th>
-            <th class="p-3 text-left text-xs font-semibold text-gray-700">Code</th>
-            <th class="p-3 text-left text-xs font-semibold text-gray-700">Variant</th>
-            <th class="p-3 text-left text-xs font-semibold text-gray-700">Category</th>
-            <th class="p-3 text-left text-xs font-semibold text-gray-700">Subcategories</th>
-            <th class="p-3 text-left text-xs font-semibold text-gray-700">Sub-Subcategories</th>
-            <th class="p-3 text-left text-xs font-semibold text-gray-700">Discount</th>
-            <th class="p-3 text-left text-xs font-semibold text-gray-700">Delivery Size</th>
-            <th class="p-3 text-left text-xs font-semibold text-gray-700">Lead Time</th>
-            <th class="p-3 text-left text-xs font-semibold text-gray-700">Origin</th>
-            <th class="p-3 text-left text-xs font-semibold text-gray-700">Item Status</th>
-          </tr>
-        </thead>
-        <tbody>
-          <?php while ($row = $result->fetch_assoc()): ?>
-            <tr id="row-<?= $row['id'] ?>" class="border-b border-gray-200 hover:bg-gray-50 transition cursor-pointer">
-              <td class="p-3 text-center">
-                <input type="checkbox"
-                  id="checkbox-<?= $row['id'] ?>"
-                  name="bulk_ids[]"
-                  value="<?= $row['id'] ?>"
-                  class="variant-checkbox w-4 h-4">
-              </td>
+      <!-- Table -->
+      <div class="bg-white border border-gray-200 rounded-xl overflow-hidden">
+        <div class="overflow-x-auto">
+          <table class="w-full text-sm">
+            <thead class="bg-gray-50 border-b-2 border-gray-200 sticky top-0">
+              <tr>
+                <th class="px-4 py-3 w-10">
+                  <input type="checkbox" id="select-all-table" class="w-4 h-4 accent-orange-500"
+                    onchange="toggleSelectAll(this)">
+                </th>
+                <th class="px-4 py-3 text-left text-xs font-semibold text-gray-600">Image</th>
+                <th class="px-4 py-3 text-left text-xs font-semibold text-gray-600">Sync</th>
+                <th class="px-4 py-3 text-left text-xs font-semibold text-gray-600">Product name</th>
+                <th class="px-4 py-3 text-left text-xs font-semibold text-gray-600">Code</th>
+                <th class="px-4 py-3 text-left text-xs font-semibold text-gray-600">Variant</th>
+                <th class="px-4 py-3 text-left text-xs font-semibold text-gray-600">Category</th>
+                <th class="px-4 py-3 text-left text-xs font-semibold text-gray-600">Subcategories</th>
+                <th class="px-4 py-3 text-left text-xs font-semibold text-gray-600">Sub-subcategories</th>
+                <th class="px-4 py-3 text-left text-xs font-semibold text-gray-600">Discount</th>
+                <th class="px-4 py-3 text-left text-xs font-semibold text-gray-600">Delivery</th>
+                <th class="px-4 py-3 text-left text-xs font-semibold text-gray-600">Lead time</th>
+                <th class="px-4 py-3 text-left text-xs font-semibold text-gray-600">Origin</th>
+                <th class="px-4 py-3 text-left text-xs font-semibold text-gray-600">Status</th>
+              </tr>
+            </thead>
+            <tbody class="divide-y divide-gray-100">
+              <?php while ($row = $result->fetch_assoc()): ?>
+                <tr id="row-<?= $row['id'] ?>" class="hover:bg-orange-50 transition cursor-pointer"
+                  onclick="toggleCheckbox(<?= $row['id'] ?>)">
 
-              <td class="p-3">
-                <?php if (!empty($row['main_image'])): ?>
-                  <img src="../../<?= htmlspecialchars($row['main_image']) ?>"
-                    alt="<?= htmlspecialchars($row['product_name']) ?>"
-                    class="h-12 w-12 object-contain rounded border bg-white">
-                <?php else: ?>
-                  <div class="h-12 w-12 bg-gray-200 rounded border flex items-center justify-center">
-                    <span class="text-gray-500 text-xs">—</span>
-                  </div>
-                <?php endif; ?>
-              </td>
+                  <!-- Checkbox -->
+                  <td class="px-4 py-3 text-center" onclick="event.stopPropagation()">
+                    <input type="checkbox" id="checkbox-<?= $row['id'] ?>" name="bulk_ids[]" value="<?= $row['id'] ?>"
+                      class="variant-checkbox w-4 h-4 accent-orange-500" onchange="updateSelectedCount()">
+                  </td>
 
-              <td class="p-3 text-center">
-                <?php if ($row['category_sync_status'] === 'matched'): ?>
-                  <span class="inline-block text-sm bg-green-100 text-green-700 px-2 py-1 rounded">✓</span>
-                <?php elseif ($row['category_sync_status'] === 'mismatched'): ?>
-                  <span class="inline-block text-sm bg-red-100 text-red-700 px-2 py-1 rounded">✗</span>
-                <?php else: ?>
-                  <span class="inline-block text-sm bg-yellow-100 text-yellow-700 px-2 py-1 rounded">⚠</span>
-                <?php endif; ?>
-              </td>
-
-              <td class="p-3 text-xs text-gray-800">
-                <span class="font-medium"><?= htmlspecialchars($row['product_name']) ?></span>
-              </td>
-
-              <td class="p-3 text-xs text-blue-600">
-                <?= htmlspecialchars($row['codename']) ?>
-              </td>
-
-              <td class="p-3 text-xs text-gray-700">
-                <div><?= htmlspecialchars($row['namevariant']) ?></div>
-                <?php if (!empty($row['color']) || !empty($row['size'])): ?>
-                  <div class="text-gray-500 mt-1">
-                    <?php if (!empty($row['color'])): ?>
-                      <span class="inline-block bg-gray-100 text-gray-700 px-1.5 py-0.5 rounded text-xs mr-1">
-                        🎨 <?= htmlspecialchars(substr($row['color'], 0, 12)) ?><?= strlen($row['color']) > 12 ? '...' : '' ?>
-                      </span>
+                  <!-- Image -->
+                  <td class="px-4 py-3">
+                    <?php if (!empty($row['main_image'])): ?>
+                      <img src="../../<?= htmlspecialchars($row['main_image']) ?>"
+                        alt="<?= htmlspecialchars($row['product_name']) ?>" class="h-10 w-10 object-contain rounded-lg">
+                    <?php else: ?>
+                      <div
+                        class="h-10 w-10 bg-gray-100 rounded-lg border flex items-center justify-center text-gray-400 text-xs">
+                        —</div>
                     <?php endif; ?>
-                    <?php if (!empty($row['size'])): ?>
-                      <span class="inline-block bg-gray-100 text-gray-700 px-1.5 py-0.5 rounded text-xs">
-                        📏 <?= htmlspecialchars($row['size']) ?>
-                      </span>
+                  </td>
+
+                  <!-- Sync status -->
+                  <td class="px-4 py-3 text-center">
+                    <?php if ($row['category_sync_status'] === 'matched'): ?>
+                      <span
+                        class="inline-flex items-center justify-center w-6 h-6 rounded-full bg-green-100 text-green-600 text-xs font-bold">✓</span>
+                    <?php elseif ($row['category_sync_status'] === 'mismatched'): ?>
+                      <span
+                        class="inline-flex items-center justify-center w-6 h-6 rounded-full bg-red-100 text-red-600 text-xs font-bold">✗</span>
+                    <?php else: ?>
+                      <span
+                        class="inline-flex items-center justify-center w-6 h-6 rounded-full bg-yellow-100 text-yellow-600 text-xs font-bold">!</span>
                     <?php endif; ?>
-                  </div>
-                <?php endif; ?>
-              </td>
+                  </td>
 
-              <td class="p-3 text-xs">
-                <div class="text-gray-700">
-                  <span class="font-medium <?= $row['category_sync_status'] === 'mismatched' ? 'text-red-600' : '' ?>">
-                    <?= htmlspecialchars($row['current_category_name'] ?: 'None') ?>
-                  </span>
-                </div>
-                <?php if ($row['category_sync_status'] === 'mismatched'): ?>
-                  <div class="text-green-600 mt-1">
-                    → <?= htmlspecialchars($row['expected_category_name']) ?>
-                  </div>
-                <?php endif; ?>
-              </td>
+                  <!-- Product name -->
+                  <td class="px-4 py-3">
+                    <span class="font-medium text-gray-800 text-xs"><?= htmlspecialchars($row['product_name']) ?></span>
+                  </td>
 
-              <td class="p-3 text-xs">
-                <?php
-                $subcatDisplay = '';
-                $subcatArray = [];
+                  <!-- Code -->
+                  <td class="px-4 py-3">
+                    <span
+                      class="font-mono text-xs bg-gray-100 text-blue-600 px-2 py-0.5 rounded"><?= htmlspecialchars($row['codename']) ?></span>
+                  </td>
 
-                if (!empty($row['subcategory_name'])) {
-                  $decoded = json_decode($row['subcategory_name'], true);
-                  if (is_array($decoded)) {
-                    $subcatArray = $decoded;
-                  } else {
-                    $subcatArray = [$row['subcategory_name']];
-                  }
-                }
+                  <!-- Variant -->
+                  <td class="px-4 py-3">
+                    <div class="text-xs text-gray-700 font-medium"><?= htmlspecialchars($row['namevariant']) ?></div>
+                    <div class="flex flex-wrap gap-1 mt-1">
+                      <?php if (!empty($row['color'])): ?>
+                        <span class="text-xs bg-gray-100 text-gray-600 px-1.5 py-0.5 rounded">
+                          <?= htmlspecialchars(substr($row['color'], 0, 12)) ?>     <?= strlen($row['color']) > 12 ? '…' : '' ?>
+                        </span>
+                      <?php endif; ?>
+                      <?php if (!empty($row['size'])): ?>
+                        <span
+                          class="text-xs bg-gray-100 text-gray-600 px-1.5 py-0.5 rounded"><?= htmlspecialchars($row['size']) ?></span>
+                      <?php endif; ?>
+                    </div>
+                  </td>
 
-                if (!empty($subcatArray)):
-                ?>
-                  <div class="space-y-1">
-                    <?php foreach (array_slice($subcatArray, 0, 2) as $subcatName): ?>
-                      <span class="inline-block bg-blue-100 text-blue-700 px-1.5 py-0.5 rounded">
-                        <?= htmlspecialchars(substr($subcatName, 0, 10)) ?><?= strlen($subcatName) > 10 ? '...' : '' ?>
-                      </span>
-                    <?php endforeach; ?>
-                    <?php if (count($subcatArray) > 2): ?>
-                      <div class="text-blue-600 font-semibold">+<?= count($subcatArray) - 2 ?> more</div>
+                  <!-- Category -->
+                  <td class="px-4 py-3">
+                    <span
+                      class="text-xs font-medium <?= $row['category_sync_status'] === 'mismatched' ? 'text-red-600' : 'text-gray-700' ?>">
+                      <?= htmlspecialchars($row['current_category_name'] ?: 'None') ?>
+                    </span>
+                    <?php if ($row['category_sync_status'] === 'mismatched'): ?>
+                      <div class="text-xs text-green-600 mt-0.5">→ <?= htmlspecialchars($row['expected_category_name']) ?>
+                      </div>
                     <?php endif; ?>
-                  </div>
-                <?php endif; ?>
-              </td>
+                  </td>
 
-              <td class="p-3 text-xs">
-                <?php
-                $hasMultipleSubSubs = false;
-                $subSubCount = 0;
-                $subSubDisplay = '';
-                $subSubArray = [];
-
-                if (!empty($row['sub_subcategory_ids'])) {
-                  $subSubIds = json_decode($row['sub_subcategory_ids'], true);
-                  if (is_array($subSubIds) && count($subSubIds) > 0) {
-                    $hasMultipleSubSubs = true;
-                    $subSubCount = count($subSubIds);
-                    if (!empty($row['all_sub_subcategory_names'])) {
-                      $subSubArray = explode(', ', $row['all_sub_subcategory_names']);
-                      $subSubDisplay = $row['all_sub_subcategory_names'];
-                    } else {
-                      $subSubDisplay = $subSubCount . ' selected';
+                  <!-- Subcategories -->
+                  <td class="px-4 py-3">
+                    <?php
+                    $subcatArray = [];
+                    if (!empty($row['subcategory_name'])) {
+                      $decoded = json_decode($row['subcategory_name'], true);
+                      $subcatArray = is_array($decoded) ? $decoded : [$row['subcategory_name']];
                     }
-                  }
-                }
-
-                if ($hasMultipleSubSubs):
-                ?>
-                  <div class="space-y-1">
-                    <?php if (count($subSubArray) > 0): ?>
-                      <?php foreach (array_slice($subSubArray, 0, 3) as $subSubName): ?>
-                        <span class="inline-block bg-purple-100 text-purple-700 px-1.5 py-0.5 rounded text-xs">
-                          <?= htmlspecialchars(substr($subSubName, 0, 10)) ?><?= strlen($subSubName) > 10 ? '...' : '' ?>
+                    ?>
+                    <div class="flex flex-wrap gap-1">
+                      <?php foreach (array_slice($subcatArray, 0, 2) as $subcatName): ?>
+                        <span class="text-xs bg-blue-100 text-blue-700 px-1.5 py-0.5 rounded">
+                          <?= htmlspecialchars(substr($subcatName, 0, 10)) ?>     <?= strlen($subcatName) > 10 ? '…' : '' ?>
                         </span>
                       <?php endforeach; ?>
-                      <?php if (count($subSubArray) > 3): ?>
-                        <div class="text-purple-600 font-semibold text-xs">+<?= count($subSubArray) - 3 ?> more</div>
+                      <?php if (count($subcatArray) > 2): ?>
+                        <span class="text-xs text-blue-500 font-medium">+<?= count($subcatArray) - 2 ?></span>
                       <?php endif; ?>
+                      <?php if (empty($subcatArray)): ?>
+                        <span class="text-gray-400 text-xs">—</span>
+                      <?php endif; ?>
+                    </div>
+                  </td>
+
+                  <!-- Sub-subcategories -->
+                  <td class="px-4 py-3">
+                    <?php
+                    $subSubArray = [];
+                    if (!empty($row['sub_subcategory_ids'])) {
+                      $subSubIds = json_decode($row['sub_subcategory_ids'], true);
+                      if (is_array($subSubIds) && count($subSubIds) > 0 && !empty($row['all_sub_subcategory_names'])) {
+                        $subSubArray = explode(', ', $row['all_sub_subcategory_names']);
+                      }
+                    }
+                    ?>
+                    <div class="flex flex-wrap gap-1">
+                      <?php foreach (array_slice($subSubArray, 0, 2) as $subSubName): ?>
+                        <span class="text-xs bg-purple-100 text-purple-700 px-1.5 py-0.5 rounded">
+                          <?= htmlspecialchars(substr($subSubName, 0, 10)) ?>     <?= strlen($subSubName) > 10 ? '…' : '' ?>
+                        </span>
+                      <?php endforeach; ?>
+                      <?php if (count($subSubArray) > 2): ?>
+                        <span class="text-xs text-purple-500 font-medium">+<?= count($subSubArray) - 2 ?></span>
+                      <?php endif; ?>
+                      <?php if (empty($subSubArray)): ?>
+                        <span class="text-gray-400 text-xs">—</span>
+                      <?php endif; ?>
+                    </div>
+                  </td>
+
+                  <!-- Discount -->
+                  <td class="px-4 py-3">
+                    <div class="flex gap-1">
+                      <span
+                        class="text-xs bg-orange-100 text-orange-700 px-1.5 py-0.5 rounded font-medium"><?= $row['percent'] ?>%</span>
+                      <span
+                        class="text-xs bg-red-100 text-red-600 px-1.5 py-0.5 rounded font-medium"><?= $row['discount'] ?>%</span>
+                    </div>
+                  </td>
+
+                  <!-- Delivery size -->
+                  <td class="px-4 py-3">
+                    <?php if ($row['delivery_size_name']): ?>
+                      <div class="text-xs font-medium text-indigo-600"><?= htmlspecialchars($row['delivery_size_name']) ?>
+                      </div>
+                      <div class="text-xs text-gray-400"><?= $row['delivery_size_percentage'] ?>%</div>
                     <?php else: ?>
-                      <span class="inline-block bg-purple-100 text-purple-700 px-1.5 py-0.5 rounded text-xs">
-                        <?= $subSubCount ?> item<?= $subSubCount > 1 ? 's' : '' ?>
-                      </span>
+                      <span class="text-gray-400 text-xs">—</span>
                     <?php endif; ?>
-                  </div>
-                <?php endif; ?>
-              </td>
+                  </td>
 
-              <td class="p-3 text-xs text-gray-700">
-                <div><span class="font-medium"><?= $row['percent'] ?>%</span> | <span class="font-medium"><?= $row['discount'] ?>%</span></div>
-              </td>
+                  <!-- Lead time -->
+                  <td class="px-4 py-3">
+                    <?php if ($row['lead_count'] && $row['lead_interval']): ?>
+                      <span class="text-xs font-medium text-teal-600">
+                        <?= $row['lead_count'] ?>
+                        <?= $row['lead_interval'] ?>     <?= $row['lead_gap'] ? ' +' . $row['lead_gap'] . 'd' : '' ?>
+                      </span>
+                    <?php else: ?>
+                      <span class="text-xs text-gray-400">—</span>
+                    <?php endif; ?>
+                  </td>
 
-              <td class="p-3 text-xs text-indigo-600">
-                <?php if ($row['delivery_size_name']): ?>
-                  <div><span class="font-medium"><?= htmlspecialchars($row['delivery_size_name']) ?></span></div>
-                  <div class="text-gray-500">(<?= $row['delivery_size_percentage'] ?>%)</div>
-                <?php else: ?>
-                  <span class="text-gray-400">—</span>
-                <?php endif; ?>
-              </td>
+                  <!-- Origin -->
+                  <td class="px-4 py-3">
+                    <span
+                      class="text-xs font-medium px-2 py-0.5 rounded-full
+                  <?= $row['origin'] === 'international' ? 'bg-blue-100 text-blue-700' : 'bg-yellow-100 text-yellow-700' ?>">
+                      <?= ucfirst($row['origin']) ?>
+                    </span>
+                  </td>
 
-              <td class="p-3 text-xs">
-                <?php if ($row['lead_count'] && $row['lead_interval']): ?>
-                  <span class="text-teal-600 font-medium">
-                    ⏰ <?= $row['lead_count'] ?><?= substr($row['lead_interval'], 0, 1) ?><?= $row['lead_gap'] ? '+' . $row['lead_gap'] . 'd' : '' ?>
-                  </span>
-                <?php else: ?>
-                  <span class="text-gray-400">No Lead Time</span>
-                <?php endif; ?>
-              </td>
+                  <!-- Item status -->
+                  <td class="px-4 py-3">
+                    <span class="text-xs font-medium px-2 py-0.5 rounded-full
+                  <?= $row['status'] === 'new' ? 'bg-green-100 text-green-700' : 'bg-gray-100 text-gray-600' ?>">
+                      <?= ucfirst($row['status']) ?>
+                    </span>
+                  </td>
 
-              <td class="p-3 text-xs text-center">
-                <span class="inline-block px-2 py-1 rounded font-medium
-            <?= $row['origin'] === 'international' ? 'bg-blue-100 text-blue-700' : 'bg-yellow-100 text-yellow-800' ?>">
-                  <?= ucfirst($row['origin']) ?>
-                </span>
-              </td>
+                </tr>
+              <?php endwhile; ?>
+            </tbody>
+          </table>
+        </div>
+      </div>
 
-              <td class="p-3 text-xs text-center">
-                <span class="inline-block px-3 py-1 rounded font-medium
-            <?= $row['status'] === 'new' ? 'bg-green-100 text-green-700' : 'bg-gray-100 text-gray-700' ?>">
-                  <?= ucfirst($row['status']) ?>
-                </span>
-              </td>
-            </tr>
-          <?php endwhile; ?>
-        </tbody>
-      </table>
     </form>
+
   </div>
 
   <style>

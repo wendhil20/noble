@@ -201,7 +201,7 @@ $statsStmt->close();
     </style>
 </head>
 
-<body class="bg-gradient-to-br from-gray-50 to-blue-50 min-h-screen">
+<body class="bg-blue-50 min-h-screen">
     <?php include '../navbar/top.php'; ?>
 
     <!-- Header -->
@@ -372,7 +372,7 @@ $statsStmt->close();
                             </h3>
                             <!-- Navigation button - only shows when a date is selected -->
                             <button type="button" id="navigateBtn" onclick="navigateToDetailedView()"
-                                class="hidden bg-gradient-to-r from-blue-500 to-blue-600 text-white px-4 py-2 rounded-lg hover:from-blue-600 hover:to-blue-700 transition-all shadow-md hover:shadow-lg transform hover:scale-105">
+                                class="hidden bg-blue-500 text-white px-4 py-2 rounded-lg hover:from-blue-600 hover:to-blue-700 transition-all shadow-md hover:shadow-lg transform hover:scale-105">
                                 <i class="fas fa-external-link-alt mr-2"></i>
                                 View Details
                             </button>

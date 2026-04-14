@@ -906,7 +906,7 @@ if ($subSubJsonRows) {
     searchInput.addEventListener("input", filterRows);
     quantityFilter.addEventListener("change", filterRows);
     codeFilter.addEventListener("change", filterRows);
-  </style>
+  </script>
 
 </body>
 

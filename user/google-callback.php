@@ -1,5 +1,5 @@
 <?php
-//google-callback.php - FIXED: Using .env for OAuth credentials
+//google-callback.php - FIXED: Absolute URL redirects to prevent .htaccess rewrite interference
 session_name("nobleuser");
 session_start();
 
@@ -14,18 +14,6 @@ use Google\Service\PeopleService;
 $clientId = getenv('GOOGLE_CLIENT_ID');
 $clientSecret = getenv('GOOGLE_CLIENT_SECRET');
 
-if (empty($clientId) || empty($clientSecret)) {
-    error_log('❌ Google OAuth credentials not configured in .env');
-    $_SESSION['login_needed'] = 'OAuth service not configured. Please try again later.';
-    
-    if (isset($isLocalhost) && $isLocalhost) {
-        header("Location: /noble/user/google-popup-close.php?error=1");
-    } else {
-        header("Location: ../google-popup-close.php?error=1");
-    }
-    exit;
-}
-
 // Build dynamic redirect URI
 $protocol = (!empty($_SERVER['HTTPS']) && $_SERVER['HTTPS'] !== 'off') ? 'https://' : 'http://';
 $host = $_SERVER['HTTP_HOST'];
@@ -33,10 +21,22 @@ $host = $_SERVER['HTTP_HOST'];
 // Detect if localhost or production
 $isLocalhost = (strpos($host, 'localhost') !== false || strpos($host, '127.0.0.1') !== false);
 
+// ✅ ABSOLUTE URLs - hindi nasasalo ng .htaccess rewrite
 if ($isLocalhost) {
-    $redirectUri = $protocol . $host . '/noble/user/google-callback.php';
+    $redirectUri   = $protocol . $host . '/noble/user/google-callback.php';
+    $closeUrl      = $protocol . $host . '/noble/user/google-popup-close.php';
+    $closeErrorUrl = $protocol . $host . '/noble/user/google-popup-close.php?error=1';
 } else {
-    $redirectUri = $protocol . $host . '/user/google-callback.php';
+    $redirectUri   = $protocol . $host . '/user/google-callback.php';
+    $closeUrl      = $protocol . $host . '/user/google-popup-close.php';
+    $closeErrorUrl = $protocol . $host . '/user/google-popup-close.php?error=1';
+}
+
+if (empty($clientId) || empty($clientSecret)) {
+    error_log('❌ Google OAuth credentials not configured in .env');
+    $_SESSION['login_needed'] = 'OAuth service not configured. Please try again later.';
+    header("Location: " . $closeErrorUrl);
+    exit;
 }
 
 $client = new Google_Client();
@@ -78,11 +78,11 @@ if (isset($_GET['code'])) {
         
         // Extract user information with proper null checks
         $emailAddresses = $profile->getEmailAddresses();
-        $names = $profile->getNames();
-        $photos = $profile->getPhotos();
+        $names          = $profile->getNames();
+        $photos         = $profile->getPhotos();
         
-        $email = ($emailAddresses && count($emailAddresses) > 0) ? $emailAddresses[0]->getValue() : '';
-        $name = ($names && count($names) > 0) ? $names[0]->getDisplayName() : '';
+        $email   = ($emailAddresses && count($emailAddresses) > 0) ? $emailAddresses[0]->getValue() : '';
+        $name    = ($names && count($names) > 0) ? $names[0]->getDisplayName() : '';
         $picture = ($photos && count($photos) > 0) ? $photos[0]->getUrl() : 'https://via.placeholder.com/150?text=' . urlencode(substr($email, 0, 1));
         
         error_log("People API - Email: $email, Name: $name, Picture: $picture");
@@ -97,7 +97,7 @@ if (isset($_GET['code'])) {
         
         // Generate remember token
         $remember_token = bin2hex(random_bytes(16));
-        $login_method = 'google';
+        $login_method   = 'google';
         
         // Check if user exists
         $stmt = $conn->prepare("SELECT id, login_method, profile_picture FROM users WHERE email = ?");
@@ -130,10 +130,9 @@ if (isset($_GET['code'])) {
             
         } else {
             // Existing user - always update profile picture and remember token
-            $row = $result->fetch_assoc();
+            $row     = $result->fetch_assoc();
             $user_id = $row['id'];
             
-            // Always update with latest Google picture
             $update = $conn->prepare("UPDATE users SET remember_token = ?, profile_picture = ?, login_method = ? WHERE id = ?");
             if (!$update) {
                 throw new Exception("Database prepare failed for update: " . $conn->error);
@@ -150,12 +149,12 @@ if (isset($_GET['code'])) {
         $_SESSION = array();
         
         // Set new session variables
-        $_SESSION['user_id'] = $user_id;
-        $_SESSION['user_name'] = $name;
-        $_SESSION['user_email'] = $email;
-        $_SESSION['user_picture'] = $picture;
+        $_SESSION['user_id']         = $user_id;
+        $_SESSION['user_name']       = $name;
+        $_SESSION['user_email']      = $email;
+        $_SESSION['user_picture']    = $picture;
         $_SESSION['google_logged_in'] = true;
-        $_SESSION['login_success'] = 'Welcome, ' . htmlspecialchars($name) . '!';
+        $_SESSION['login_success']   = 'Welcome, ' . htmlspecialchars($name) . '!';
         
         // Assign referral code if user came from a referral link
         require_once '../includes/referral_tracker.php';
@@ -169,36 +168,22 @@ if (isset($_GET['code'])) {
         
         $stmt->close();
         
-        // ✅ POPUP: Redirect to popup close page
-        if ($isLocalhost) {
-            header("Location: /noble/user/google-popup-close.php");
-        } else {
-            header("Location: ../google-popup-close.php");
-        }
+        // ✅ POPUP: Redirect to popup close page (absolute URL)
+        header("Location: " . $closeUrl);
         exit;
         
     } catch (Exception $e) {
         error_log("Google OAuth callback error: " . $e->getMessage());
         $_SESSION['login_needed'] = 'Login failed: ' . $e->getMessage();
         
-        // ✅ POPUP: Redirect to popup close page with error
-        if ($isLocalhost) {
-            header("Location: /noble/user/google-popup-close.php?error=1");
-        } else {
-            header("Location: ../google-popup-close.php?error=1");
-        }
+        // ✅ POPUP: Redirect to popup close page with error (absolute URL)
+        header("Location: " . $closeErrorUrl);
         exit;
     }
     
 } else {
     $_SESSION['login_needed'] = 'Please sign in first.';
-    
-    // ✅ POPUP: Redirect to popup close page with error
-    if ($isLocalhost) {
-        header("Location: /noble/user/google-popup-close.php?error=1");
-    } else {
-        header("Location: ../google-popup-close.php?error=1");
-    }
+    header("Location: " . $closeErrorUrl);
     exit;
 }
 ?>

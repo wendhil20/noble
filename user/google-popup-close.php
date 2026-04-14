@@ -1,17 +1,23 @@
 <?php
 session_name("nobleuser");
 session_start();
+$hasError = isset($_GET['error']);
 ?>
 <!DOCTYPE html>
 <html>
-<head><title>Login Success</title></head>
+<head><title>Login Complete</title></head>
 <body>
+<p>Login successful! Closing...</p>
 <script>
-  if (window.opener && !window.opener.closed) {
-    window.opener.location.reload();
-  }
-  window.close();
+  // Try postMessage first (works even with COOP)
+  try {
+    window.opener.postMessage('google-login-success', '*');
+  } catch(e) {}
+
+  // Also try direct close after short delay
+  setTimeout(function() {
+    window.close();
+  }, 500);
 </script>
-<p>Login successful! This window will close automatically...</p>
 </body>
 </html>

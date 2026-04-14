@@ -2206,39 +2206,47 @@ $hidden_pages = ['help.php', 'about.php'];
       </div>
     </div>
 
-    <script>
-      function openGooglePopup(url) {
-        const width = 500;
-        const height = 620;
-        const left = Math.round((screen.width - width) / 2);
-        const top = Math.round((screen.height - height) / 2);
+<script>
+function openGooglePopup(url) {
+  const width = 500;
+  const height = 620;
+  const left = Math.round((screen.width - width) / 2);
+  const top = Math.round((screen.height - height) / 2);
 
-        const popup = window.open(
-          url,
-          'googleLoginPopup',
-          `width=${width},height=${height},top=${top},left=${left},` +
-          `toolbar=no,menubar=no,scrollbars=yes,resizable=no,` +
-          `status=no,location=no`
-        );
+  const popup = window.open(
+    url,
+    'googleLoginPopup',
+    `width=${width},height=${height},top=${top},left=${left},` +
+    `toolbar=no,menubar=no,scrollbars=yes,resizable=no,status=no,location=no`
+  );
 
-        if (!popup || popup.closed || typeof popup.closed === 'undefined') {
-          // Popup was blocked - fall back to normal redirect
-          window.location.href = url;
-          return;
-        }
+  if (!popup || popup.closed || typeof popup.closed === 'undefined') {
+    // Popup blocked - fallback to redirect
+    window.location.href = url;
+    return;
+  }
 
-        popup.focus();
+  // ✅ Listen for postMessage from popup (works even with COOP)
+  function onMessage(event) {
+    if (event.data === 'google-login-success') {
+      window.removeEventListener('message', onMessage);
+      clearInterval(pollTimer);
+      popup.close();
+      window.location.reload();
+    }
+  }
+  window.addEventListener('message', onMessage);
 
-        // Poll until popup closes then reload parent
-        const timer = setInterval(() => {
-          if (popup.closed) {
-            clearInterval(timer);
-            window.location.reload();
-          }
-        }, 500);
-      }
-
-    </script>
+  // ✅ Fallback: poll if popup closed without postMessage
+  const pollTimer = setInterval(function() {
+    if (popup.closed) {
+      clearInterval(pollTimer);
+      window.removeEventListener('message', onMessage);
+      window.location.reload();
+    }
+  }, 500);
+}
+</script>
 
     <!-- Mobile Sidebar -->
     <div x-show="mobileOpen" x-cloak @click.self="mobileOpen = false"

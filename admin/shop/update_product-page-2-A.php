@@ -18,8 +18,8 @@ $_SESSION['last_activity'] = time();
 $product_id = $_GET['id'] ?? null;
 
 // ── Current user info ─────────────────────────────────────────────────────────
-$current_user  = $_SESSION['noble_user'];
-$current_role  = $_SESSION['noble_role'] ?? '';
+$current_user = $_SESSION['noble_user'];
+$current_role = $_SESSION['noble_role'] ?? '';
 $is_superadmin = ($current_role === 'superadmin');
 
 // ── Ensure added_by column exists ─────────────────────────────────────────────
@@ -157,9 +157,9 @@ $variant_count = (int) $variant_count_row['cnt'];
 
       <!-- Product Name -->
       <div class="mb-4">
-        <label class="block font-semibold mb-1">Product Name</label>
+        <label class="block font-semibold mb-1">Product Name:</label>
         <input type="text" name="product_name" value="<?php echo htmlspecialchars($product['product_name']); ?>"
-          required class="w-full border p-2 rounded" />
+          required class="w-full border border-gray-400 p-2 rounded" />
       </div>
 
       <!-- Main Image -->
@@ -168,28 +168,28 @@ $variant_count = (int) $variant_count_row['cnt'];
         <?php if (!empty($product['main_image'])): ?>
           <div class="mb-2">
             <img src="../../<?= htmlspecialchars($product['main_image']) ?>"
-              class="h-20 w-20 object-contain rounded border" alt="Current Main Image">
+              class="h-20 w-20 object-contain rounded border border-gray-400" alt="Current Main Image">
             <p class="text-sm text-gray-600 mt-1">Current main image</p>
           </div>
         <?php endif; ?>
-        <input type="file" name="main_image" accept="image/*" class="w-full border p-2 rounded" />
+        <input type="file" name="main_image" accept="image/*" class="w-full border border-gray-400 p-2 rounded" />
         <p class="text-xs text-gray-500 mt-1">Leave blank to keep current image</p>
       </div>
 
       <!-- Sub Images -->
       <div class="mb-6">
-        <label class="block font-semibold mb-2">Sub Images</label>
-        <div class="bg-gray-50 p-4 rounded border">
+        <label class="block font-semibold mb-2">Sub Images:</label>
+        <div class="bg-gray-100 p-4 rounded">
           <?php if (!empty($existing_sub_images)): ?>
             <div class="mb-4">
               <h4 class="font-medium text-gray-700 mb-2">Current Sub Images:</h4>
               <div class="flex flex-wrap gap-3" id="existing-sub-images">
                 <?php foreach ($existing_sub_images as $index => $sub_image): ?>
                   <div class="sub-image-item" data-image-index="<?= $index ?>">
-                    <img src="../../sub_images/<?= htmlspecialchars($sub_image) ?>" class="image-preview border"
-                      alt="Sub Image <?= $index + 1 ?>">
+                    <img src="../../sub_images/<?= htmlspecialchars($sub_image) ?>"
+                      class="image-preview border border-gray-400" alt="Sub Image <?= $index + 1 ?>">
                     <button type="button" class="remove-sub-image" onclick="removeExistingSubImage(this, <?= $index ?>)"
-                      title="Remove">×</button>
+                      title="Remove"><i class="fa-regular fa-circle-xmark"></i></button>
                     <button type="button" class="restore-sub-image" onclick="restoreExistingSubImage(this, <?= $index ?>)"
                       title="Restore">↻</button>
                     <input type="hidden" name="keep_sub_image[<?= $index ?>]" value="1">
@@ -201,14 +201,14 @@ $variant_count = (int) $variant_count_row['cnt'];
           <div class="mb-4">
             <h4 class="font-medium text-gray-700 mb-2">Add New Sub Images:</h4>
             <div id="new-sub-images-section">
-              <div class="new-sub-image-item flex gap-2 mb-3 items-start p-3 bg-white rounded border">
+              <div class="new-sub-image-item flex gap-2 items-start  bg-white rounded  border-gray-400">
                 <div class="flex-1">
-                  <input type="file" name="new_sub_images[]" accept="image/*" class="w-full border p-2 rounded"
-                    onchange="previewNewSubImage(this)" />
+                  <input type="file" name="new_sub_images[]" accept="image/*"
+                    class="w-full border border-gray-400 p-2 rounded" onchange="previewNewSubImage(this)" />
                   <div class="new-sub-image-preview mt-2"></div>
                 </div>
                 <button type="button" onclick="addNewSubImage()"
-                  class="bg-green-500 text-white px-3 py-2 rounded hover:bg-green-600 whitespace-nowrap">+ Add
+                  class="bg-black text-white px-3 py-2 rounded hover:bg-green-600 whitespace-nowrap font-semibold">Add
                   More</button>
               </div>
             </div>
@@ -216,29 +216,32 @@ $variant_count = (int) $variant_count_row['cnt'];
         </div>
       </div>
 
-<!-- PANATILIHIN ITO — may selected logic -->
-<select name="category" required class="w-full border p-2 rounded bg-white">
-    <option value="">Select a Category</option>
-    <?php $categories->data_seek(0);
-    while ($category = $categories->fetch_assoc()): ?>
-        <option value="<?= htmlspecialchars($category['name']) ?>"
-            <?= (strtolower(trim($product['codename'])) === strtolower(trim($category['name']))) ? 'selected' : '' ?>>
-            <?= htmlspecialchars($category['name']) ?>
-        </option>
-    <?php endwhile; ?>
-</select>
+      <div class="mb-4 p-2">
+        <label class="block font-semibold mb-1">Category:</label>
+        <select name="category" required class="w-full  p-2 rounded bg-gray-100">
+          <option value="">Select a Category</option>
+          <?php $categories->data_seek(0);
+          while ($category = $categories->fetch_assoc()): ?>
+            <option value="<?= htmlspecialchars($category['name']) ?>"
+              <?= (strtolower(trim($product['codename'])) === strtolower(trim($category['name']))) ? 'selected' : '' ?>>
+              <?= htmlspecialchars($category['name']) ?>
+            </option>
+          <?php endwhile; ?>
+        </select>
+      </div>
+
 
       <!-- Quantity -->
-      <div class="mb-4">
-        <label class="block font-semibold mb-1">Quantity</label>
+      <div class="mb-4 p-2">
+        <label class="block font-semibold mb-1">prevention duplicate always input 1:</label>
         <input type="number" name="quantity" value="<?php echo htmlspecialchars($product['quantity']); ?>" required
-          class="w-full border p-2 rounded" />
+          class="w-full bg-gray-100 p-2 rounded" />
       </div>
 
       <!-- Description -->
       <div class="mb-4">
         <label class="block font-semibold mb-1">Description</label>
-        <textarea name="description" rows="4" class="w-full border p-2 rounded"
+        <textarea name="description" rows="4" class="w-full bg-gray-100 p-2 rounded"
           required><?php echo htmlspecialchars($product['description'] ?? ''); ?></textarea>
       </div>
 
@@ -288,51 +291,79 @@ $variant_count = (int) $variant_count_row['cnt'];
               class="font-semibold text-cyan-500">0</span></p>
         </div>
       </div>
-
       <!-- Product Colors -->
-      <div class="mb-6 border p-4 rounded bg-green-50">
-        <h3 class="font-semibold text-lg text-gray-700 mb-3">Product Colors</h3>
-        <div id="colors-section">
-          <?php $colorIndex = 0;
-          while ($color = $colors->fetch_assoc()) { ?>
-            <div class="flex gap-2 mb-3 items-center bg-white p-3 rounded border">
-              <input type="hidden" name="color_id[]" value="<?php echo $color['id']; ?>" />
-              <div class="flex items-center">
-                <input type="checkbox" name="delete_color[]" value="<?php echo $color['id']; ?>" />
-                <label class="text-sm text-gray-600 ml-1">Delete</label>
-              </div>
-              <input type="text" name="color_name[]" value="<?php echo htmlspecialchars($color['color_name']); ?>"
-                placeholder="Color Name" class="border p-2 w-1/6 rounded" required />
-              <input type="text" name="color_code[]" value="<?php echo htmlspecialchars($color['color_code']); ?>"
-                placeholder="Color Code (#hex)" class="border p-2 w-1/6 rounded" />
-              <div class="w-1/6">
-                <?php if (!empty($color['image'])): ?>
-                  <img src="../../<?= htmlspecialchars($color['image']) ?>" alt="Color Image"
-                    class="w-12 h-12 object-contain rounded mb-1 border" />
-                <?php endif; ?>
-                <input type="file" name="color_image[]" accept="image/*" class="w-full text-xs" />
-                <p class="text-xs text-gray-500 mt-1">Main Image</p>
-              </div>
-              <div class="w-1/6">
-                <?php if (!empty($color['image2'])): ?>
-                  <img src="../../<?= htmlspecialchars($color['image2']) ?>" alt="Color Image 2"
-                    class="w-12 h-12 object-contain rounded mb-1 border" />
-                <?php endif; ?>
-                <input type="file" name="color_image2[]" accept="image/*" class="w-full text-xs" />
-                <p class="text-xs text-gray-500 mt-1">Secondary Image</p>
-              </div>
-              <input type="number" step="0.01" name="color_price[]"
-                value="<?php echo htmlspecialchars($color['price']); ?>" placeholder="Color Price"
-                class="border p-2 w-1/6 rounded" required />
-              <input type="number" name="color_stock[]" value="<?php echo htmlspecialchars($color['stock'] ?? 0); ?>"
-                placeholder="Stock" class="border p-2 w-1/6 rounded" required />
-              <button type="button" onclick="removeColor(this)" class="text-red-500 text-sm">✕</button>
-            </div>
-            <?php $colorIndex++;
-          } ?>
+      <div class="mb-6 bg-white border border-gray-200 rounded-xl overflow-hidden">
+
+        <div class="flex items-center justify-between px-5 py-3 border-b border-gray-100 bg-gray-50">
+          <h3 class="text-sm font-semibold text-gray-700">Product Colors</h3>
+          <button type="button" onclick="addColor()"
+            class="inline-flex items-center gap-1.5 bg-green-600 hover:bg-green-700 text-white text-xs font-medium px-3 py-1.5 rounded-lg transition">
+            + Add color
+          </button>
         </div>
-        <button type="button" onclick="addColor()" class="bg-green-500 text-white px-2 py-1 rounded text-sm mt-2">+ Add
-          Color</button>
+
+        <div id="colors-section" class="divide-y divide-gray-100">
+          <?php $colorIndex = 0;
+          while ($color = $colors->fetch_assoc()): ?>
+
+            <div class="flex flex-wrap items-start gap-4 px-5 py-4 hover:bg-gray-50 transition">
+
+              <input type="hidden" name="color_id[]" value="<?= $color['id'] ?>" />
+
+              <!-- Color swatch + name + hex -->
+              <div class="flex items-center gap-3 flex-1 min-w-48">
+                <div class="flex flex-col gap-1.5 flex-1">
+                  <input type="text" name="color_name[]" value="<?= htmlspecialchars($color['color_name']) ?>"
+                    placeholder="Color name"
+                    class="w-full text-sm border border-gray-300 rounded-lg px-2.5 py-1.5 focus:outline-none focus:ring-2 focus:ring-orange-400 focus:border-transparent"
+                    required />
+                  <input type="text" name="color_code[]" value="<?= htmlspecialchars($color['color_code']) ?>"
+                    placeholder="#hex code"
+                    class="w-full text-sm border border-gray-300 rounded-lg px-2.5 py-1.5 font-mono focus:outline-none focus:ring-2 focus:ring-orange-400 focus:border-transparent"
+                    oninput="this.previousElementSibling.previousElementSibling.style.backgroundColor = this.value || '#e5e7eb'" />
+                </div>
+              </div>
+
+              <!-- Main image -->
+              <div class="flex flex-col gap-1 w-32">
+                <p class="text-xs font-medium text-gray-500">Main image</p>
+                <?php if (!empty($color['image'])): ?>
+                  <img src="../../<?= htmlspecialchars($color['image']) ?>"
+                    class="w-12 h-12 object-contain rounded-lg border border-gray-200 bg-gray-50 mb-1" alt="Main" />
+                <?php endif; ?>
+                <input type="file" name="color_image[]" accept="image/*"
+                  class="text-xs text-gray-500 file:mr-2 file:py-1 file:px-2 file:rounded file:border-0 file:text-xs file:bg-gray-100 file:text-gray-600 hover:file:bg-gray-200" />
+              </div>
+
+              <!-- Secondary image -->
+              <div class="flex flex-col gap-1 w-32">
+                <p class="text-xs font-medium text-gray-500">Secondary image</p>
+                <?php if (!empty($color['image2'])): ?>
+                  <img src="../../<?= htmlspecialchars($color['image2']) ?>"
+                    class="w-12 h-12 object-contain rounded-lg border border-gray-200 bg-gray-50 mb-1" alt="Secondary" />
+                <?php endif; ?>
+                <input type="file" name="color_image2[]" accept="image/*"
+                  class="text-xs text-gray-500 file:mr-2 file:py-1 file:px-2 file:rounded file:border-0 file:text-xs file:bg-gray-100 file:text-gray-600 hover:file:bg-gray-200" />
+              </div>
+
+              <!-- Delete -->
+              <div class="flex flex-col items-center gap-1.5 pt-1">
+                <button type="button" onclick="removeColor(this)"
+                  class="text-gray-400 hover:text-red-500 transition p-1 rounded-lg hover:bg-red-50" title="Remove color">
+                  <i class="fa-regular fa-circle-xmark text-lg"></i>
+                </button>
+                <label class="flex items-center gap-1 cursor-pointer">
+                  <input type="checkbox" name="delete_color[]" value="<?= $color['id'] ?>"
+                    class="w-3 h-3 accent-red-500" />
+                  <span class="text-xs text-gray-400">Delete</span>
+                </label>
+              </div>
+
+            </div>
+
+            <?php $colorIndex++; endwhile; ?>
+        </div>
+
       </div>
 
       <!-- Product Types -->
@@ -344,7 +375,7 @@ $variant_count = (int) $variant_count_row['cnt'];
           $type_id = $type['id'];
           $variants = $conn->query("SELECT * FROM product_variants WHERE type_id = $type_id");
           ?>
-          <div class="mb-6 border p-4 rounded bg-gray-50 relative" data-type-index="<?php echo $typeIndex; ?>">
+          <div class="mb-6 p-4 rounded bg-gray-100 relative" data-type-index="<?php echo $typeIndex; ?>">
             <div class="flex justify-between items-center mb-2">
               <h3 class="font-semibold text-lg text-gray-700">Product Type <?php echo $typeIndex + 1; ?></h3>
               <button type="button" onclick="removeType(this)" class="text-red-600 text-sm hover:underline">Remove
@@ -357,7 +388,7 @@ $variant_count = (int) $variant_count_row['cnt'];
             </div>
             <div class="mb-3 flex gap-2 items-center">
               <input type="text" name="type_name[]" value="<?php echo htmlspecialchars($type['type_name']); ?>"
-                placeholder="Type Name" class="border p-2 w-1/2 rounded" required />
+                placeholder="Type Name" class="border border-gray-400 p-2 w-1/2 rounded" required />
               <div class="w-1/2">
                 <?php if (!empty($type['type_image'])): ?>
                   <img src="../../<?php echo htmlspecialchars($type['type_image']); ?>" alt="Type Image"
@@ -377,7 +408,7 @@ $variant_count = (int) $variant_count_row['cnt'];
                                      WHERE pvc.variant_id = $variant_id";
                 $variantColors = $conn->query($variantColorQuery);
                 ?>
-                <div class="bg-blue-50 p-4 rounded border mb-3">
+                <div class="bg-gray-100 p-4 rounded border border-gray-400 mb-3">
                   <input type="hidden" name="variant_id[<?php echo $typeIndex; ?>][]"
                     value="<?php echo $variant['id']; ?>" />
                   <div class="grid grid-cols-2 md:grid-cols-4 gap-2 mb-2">
@@ -390,19 +421,19 @@ $variant_count = (int) $variant_count_row['cnt'];
                       <label class="text-xs font-medium text-gray-600">Size Name</label>
                       <input type="text" name="variant_size[<?php echo $typeIndex; ?>][]"
                         value="<?php echo htmlspecialchars($variant['size']); ?>" placeholder="Size"
-                        class="border p-2 w-full rounded text-sm" />
+                        class="border border-gray-400 p-2 w-full rounded text-sm" />
                     </div>
                     <div>
                       <label class="text-xs font-medium text-gray-600">Variant Name</label>
                       <input type="text" name="variant_namevariant[<?php echo $typeIndex; ?>][]"
                         value="<?php echo htmlspecialchars($variant['namevariant'] ?? ''); ?>" placeholder="Name Variant"
-                        class="border p-2 w-full rounded text-sm" />
+                        class="border border-gray-400 p-2 w-full rounded text-sm" />
                     </div>
                     <div>
                       <label class="text-xs font-medium text-gray-600">Original Price</label>
                       <input type="number" step="0.01" name="variant_original_price[<?php echo $typeIndex; ?>][]"
                         value="<?php echo htmlspecialchars($variant['original_price'] ?? ''); ?>"
-                        placeholder="Original Price" class="border p-2 w-full rounded text-sm original-price-input"
+                        placeholder="Original Price" class="border border-gray-400 p-2 w-full rounded text-sm original-price-input"
                         data-variant-index="<?php echo $typeIndex; ?>" />
                     </div>
                   </div>
@@ -411,24 +442,24 @@ $variant_count = (int) $variant_count_row['cnt'];
                       <label class="text-xs font-medium text-gray-600">Markup %</label>
                       <input type="number" step="0.01" name="variant_percent[<?php echo $typeIndex; ?>][]"
                         value="<?php echo htmlspecialchars($variant['percent'] ?? ''); ?>" placeholder="Markup %"
-                        class="border p-2 w-full rounded percent-input text-sm"
+                        class="border border-gray-400 p-2 w-full rounded percent-input text-sm"
                         data-variant-index="<?php echo $typeIndex; ?>" />
                     </div>
                     <div>
                       <label class="text-xs font-medium text-gray-600">After Markup</label>
-                      <div class="markup-preview text-sm text-green-600 font-semibold border p-2 rounded bg-white">₱0.00
+                      <div class="markup-preview text-sm text-green-600 font-semibold border border-gray-400 p-2 rounded bg-white">₱0.00
                       </div>
                     </div>
                     <div>
                       <label class="text-xs font-medium text-gray-600">Discount %</label>
                       <input type="number" step="0.01" name="variant_discount[<?php echo $typeIndex; ?>][]"
                         value="<?php echo htmlspecialchars($variant['discount'] ?? ''); ?>" placeholder="Discount %"
-                        class="border p-2 w-full rounded discount-input text-sm"
+                        class="border border-gray-400 p-2 w-full rounded discount-input text-sm"
                         data-variant-index="<?php echo $typeIndex; ?>" />
                     </div>
                     <div>
                       <label class="text-xs font-medium text-gray-600">Final Price</label>
-                      <div class="final-preview text-sm text-red-600 font-semibold border p-2 rounded bg-white">₱0.00</div>
+                      <div class="final-preview text-sm text-red-60 0 font-semibold border border-gray-400 p-2 rounded bg-white">₱0.00</div>
                     </div>
                   </div>
                   <input type="hidden" name="variant_price[<?php echo $typeIndex; ?>][]"
@@ -442,7 +473,7 @@ $variant_count = (int) $variant_count_row['cnt'];
                         <label class="text-xs font-medium text-gray-600">Timer Discount %</label>
                         <input type="number" step="0.01" name="variant_timer_discount[<?php echo $typeIndex; ?>][]"
                           value="<?php echo htmlspecialchars($variant['timer_discount_percent'] ?? '0'); ?>"
-                          placeholder="e.g., 20" class="border p-2 w-full rounded text-sm timer-discount-input"
+                          placeholder="e.g., 20" class="border border-gray-400 p-2 w-full rounded text-sm timer-discount-input"
                           data-variant-index="<?php echo $typeIndex; ?>" min="0" max="100" />
                       </div>
                       <div class="flex items-center">
@@ -455,40 +486,40 @@ $variant_count = (int) $variant_count_row['cnt'];
                         <label class="text-xs font-medium text-gray-600">Start Date & Time</label>
                         <input type="datetime-local" name="variant_timer_start[<?php echo $typeIndex; ?>][]"
                           value="<?php echo !empty($variant['timer_discount_start']) ? date('Y-m-d\TH:i', strtotime($variant['timer_discount_start'])) : ''; ?>"
-                          class="border p-2 w-full rounded text-sm timer-start-input"
+                          class="border border-gray-400 p-2 w-full rounded text-sm timer-start-input"
                           data-variant-index="<?php echo $typeIndex; ?>" onchange="calculateDuration(this)" />
                       </div>
                       <div>
                         <label class="text-xs font-medium text-gray-600">End Date & Time</label>
                         <input type="datetime-local" name="variant_timer_end[<?php echo $typeIndex; ?>][]"
                           value="<?php echo !empty($variant['timer_discount_end']) ? date('Y-m-d\TH:i', strtotime($variant['timer_discount_end'])) : ''; ?>"
-                          class="border p-2 w-full rounded text-sm timer-end-input"
+                          class="border border-gray-400 p-2 w-full rounded text-sm timer-end-input"
                           data-variant-index="<?php echo $typeIndex; ?>" onchange="calculateDuration(this)" />
                       </div>
                     </div>
                     <div class="mt-3 p-3 bg-white rounded border-2 border-orange-300">
                       <div class="text-xs font-semibold text-gray-700 mb-2">📊 Sale Duration:</div>
                       <div class="grid grid-cols-4 gap-2 mb-3">
-                        <div class="bg-gradient-to-br from-blue-50 to-blue-100 p-2 rounded border border-blue-300">
+                        <div class="bg-blue-100 p-2 rounded border border-blue-300">
                           <div class="text-xl font-bold text-blue-600 duration-days">0</div>
                           <div class="text-xs text-gray-600 font-semibold">Days</div>
                         </div>
-                        <div class="bg-gradient-to-br from-green-50 to-green-100 p-2 rounded border border-green-300">
+                        <div class="bg-green-100 p-2 rounded border border-green-300">
                           <div class="text-xl font-bold text-green-600 duration-hours">0</div>
                           <div class="text-xs text-gray-600 font-semibold">Hours</div>
                         </div>
-                        <div class="bg-gradient-to-br from-purple-50 to-purple-100 p-2 rounded border border-purple-300">
+                        <div class="bg-purple-100 p-2 rounded border border-purple-300">
                           <div class="text-xl font-bold text-purple-600 duration-minutes">0</div>
                           <div class="text-xs text-gray-600 font-semibold">Minutes</div>
                         </div>
-                        <div class="bg-gradient-to-br from-pink-50 to-pink-100 p-2 rounded border border-pink-300">
+                        <div class="bg-pink-100 p-2 rounded border border-pink-300">
                           <div class="text-xl font-bold text-pink-600 duration-seconds">0</div>
                           <div class="text-xs text-gray-600 font-semibold">Seconds</div>
                         </div>
                       </div>
-                      <div class="p-2 bg-gradient-to-r from-orange-50 to-yellow-50 rounded border border-orange-300">
+                      <div class="p-2 bg-orange-100 rounded border border-orange-300">
                         <div class="text-xs font-semibold text-gray-700">📅 Total Duration:</div>
-                        <div class="text-sm font-bold text-orange-600 mt-1 duration-total">Set start and end dates</div>
+                        <div class="text-sm font-semibold text-orange-600 mt-1 duration-total">Set start and end dates</div>
                         <div class="text-xs text-red-500 mt-1 duration-warning" style="display:none;"></div>
                       </div>
                     </div>
@@ -507,18 +538,18 @@ $variant_count = (int) $variant_count_row['cnt'];
                       <div><label class="text-xs font-medium text-gray-600">Width</label><input type="number" step="0.01"
                           name="variant_width[<?php echo $typeIndex; ?>][]"
                           value="<?php echo htmlspecialchars($variant['width'] ?? ''); ?>" placeholder="Width"
-                          class="border p-2 w-full rounded text-sm" /></div>
+                          class="border border-gray-400 p-2 w-full rounded text-sm" /></div>
                       <div><label class="text-xs font-medium text-gray-600">Height</label><input type="number" step="0.01"
                           name="variant_height[<?php echo $typeIndex; ?>][]"
                           value="<?php echo htmlspecialchars($variant['height'] ?? ''); ?>" placeholder="Height"
-                          class="border p-2 w-full rounded text-sm" /></div>
+                          class="border border-gray-400 p-2 w-full rounded text-sm" /></div>
                       <div><label class="text-xs font-medium text-gray-600">Length</label><input type="number" step="0.01"
                           name="variant_length[<?php echo $typeIndex; ?>][]"
                           value="<?php echo htmlspecialchars($variant['length'] ?? ''); ?>" placeholder="Length"
-                          class="border p-2 w-full rounded text-sm" /></div>
+                          class="border border-gray-400 p-2 w-full rounded text-sm" /></div>
                       <div><label class="text-xs font-medium text-gray-600">Unit</label>
                         <select name="variant_dimension_unit[<?php echo $typeIndex; ?>][]"
-                          class="border p-2 w-full rounded text-sm">
+                          class="border border-gray-400 p-2 w-full rounded text-sm">
                           <option value="mm" <?php echo ($variant['dimension_unit'] ?? 'cm') == 'mm' ? 'selected' : ''; ?>>mm
                           </option>
                           <option value="cm" <?php echo ($variant['dimension_unit'] ?? 'cm') == 'cm' ? 'selected' : ''; ?>>cm
@@ -538,10 +569,10 @@ $variant_count = (int) $variant_count_row['cnt'];
                       <div><label class="text-xs font-medium text-gray-600">Weight</label><input type="number" step="0.01"
                           name="variant_weight[<?php echo $typeIndex; ?>][]"
                           value="<?php echo htmlspecialchars($variant['weight'] ?? ''); ?>" placeholder="Weight"
-                          class="border p-2 w-full rounded text-sm" /></div>
+                          class="border border-gray-400 p-2 w-full rounded text-sm" /></div>
                       <div><label class="text-xs font-medium text-gray-600">Unit</label>
                         <select name="variant_weight_unit[<?php echo $typeIndex; ?>][]"
-                          class="border p-2 w-full rounded text-sm">
+                          class="border border-gray-400 p-2 w-full rounded text-sm">
                           <option value="g" <?php echo ($variant['weight_unit'] ?? 'kg') == 'g' ? 'selected' : ''; ?>>g
                             (Grams)</option>
                           <option value="kg" <?php echo ($variant['weight_unit'] ?? 'kg') == 'kg' ? 'selected' : ''; ?>>kg
@@ -718,7 +749,7 @@ $variant_count = (int) $variant_count_row['cnt'];
     function addNewSubImage() {
       const section = document.getElementById('new-sub-images-section');
       const div = document.createElement('div');
-      div.classList.add('new-sub-image-item', 'flex', 'gap-2', 'mb-3', 'items-start', 'p-3', 'bg-white', 'rounded', 'border');
+      div.classList.add('new-sub-image-item', 'flex', 'gap-2', 'mb-1', 'items-start', 'p-1', 'bg-white', 'rounded', 'border');
       div.innerHTML = `<div class="flex-1"><input type="file" name="new_sub_images[]" accept="image/*" class="w-full border p-2 rounded" onchange="previewNewSubImage(this)" /><div class="new-sub-image-preview mt-2"></div></div><button type="button" onclick="removeNewSubImage(this)" class="bg-red-500 text-white px-3 py-2 rounded hover:bg-red-600 whitespace-nowrap">Remove</button>`;
       section.appendChild(div);
     }

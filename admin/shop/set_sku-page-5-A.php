@@ -68,7 +68,6 @@ $variants = $variants_query->get_result();
 <head>
     <meta charset="UTF-8">
     <title>Manage SKU - <?= htmlspecialchars($product['product_name']) ?></title>
-    <script src="https://cdn.tailwindcss.com"></script>
 </head>
 
 <body class="bg-gray-100 min-h-screen font-sans">

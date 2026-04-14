@@ -336,8 +336,6 @@ if ($subSubJsonRows) {
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Manage Products</title>
-  <script src="https://cdn.tailwindcss.com"></script>
-  <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
   <style>
     .table-row-hover {
       transition: all 0.2s ease;
@@ -908,7 +906,7 @@ if ($subSubJsonRows) {
     searchInput.addEventListener("input", filterRows);
     quantityFilter.addEventListener("change", filterRows);
     codeFilter.addEventListener("change", filterRows);
-  </script>
+  </style>
 
 </body>
 

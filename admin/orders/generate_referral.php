@@ -393,34 +393,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['remake_code'])) {
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>My Referral Code - Noble Admin</title>
-    <script src="https://cdn.tailwindcss.com"></script>
-    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
-    <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700;800&display=swap"
-        rel="stylesheet">
-    <!-- QR Code Library -->
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
-    <script>
-        tailwind.config = {
-            theme: {
-                extend: {
-                    colors: {
-                        primary: {
-                            50: '#fff7ed',
-                            100: '#ffedd5',
-                            200: '#fed7aa',
-                            300: '#fdba74',
-                            400: '#fb923c',
-                            500: '#f97316',
-                            600: '#ea580c',
-                            700: '#c2410c',
-                            800: '#9a3412',
-                            900: '#7c2d12',
-                        }
-                    }
-                }
-            }
-        }
-    </script>
+
+    
 </head>
 
 <body class="bg-gray-200 min-h-screen" style="font-family: 'Montserrat', sans-serif; color: #2f1200">
@@ -669,7 +643,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['remake_code'])) {
                                     <?php if (!$has_pending_claim && ($referral_data['total_commission'] ?? 0) > 0): ?>
                                         <form method="POST" class="mt-3">
                                             <button type="submit" name="claim_commission"
-                                                class="bg-gradient-to-r from-green-500 to-green-600 hover:from-green-600 hover:to-green-700 text-white px-4 py-2 rounded-lg transition-all duration-200 text-sm font-medium w-full flex items-center justify-center space-x-2">
+                                                class="bg-green-500 hover:from-green-600 hover:to-green-700 text-white px-4 py-2 rounded-lg transition-all duration-200 text-sm font-medium w-full flex items-center justify-center space-x-2">
                                                 <i class="fas fa-hand-holding-usd"></i>
                                                 <span>Claim Commission</span>
                                             </button>

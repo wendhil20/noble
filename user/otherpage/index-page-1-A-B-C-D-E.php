@@ -654,109 +654,6 @@ $bestsellerData = $bestsellerItems->fetch_all(MYSQLI_ASSOC);
         <?php endif; ?>
     </section>
 
-    <!-- POPUP MODAL -->
-    <div id="promoPopup" class="fixed inset-0 bg-black bg-opacity-60 z-50" style="display:none;">
-        <div class="relative max-w-4xl w-full mx-4">
-            <!-- Close Button -->
-            <button onclick="hidePromoModal()"
-                class="absolute -top-4 -right-4 text-white hover:text-red-500 bg-black/70 rounded-full w-10 h-10 flex items-center justify-center text-2xl z-10 transition-colors duration-300">✕</button>
-
-            <!-- Single Image Display -->
-            <div class="relative overflow-hidden">
-                <a href="index-allproduct-page-3.php?discount=20"
-                    class="relative group flex items-center justify-center">
-                    <img src="../img/sale/c.png" alt="Special Sale" class="max-w-full max-h-[80vh] object-contain">
-                    <div
-                        class="absolute inset-0 bg-linear-to-t from-black/60 via-transparent to-transparent opacity-0 group-hover:opacity-50 transition-opacity duration-300 flex items-end justify-center pb-8">
-                        <span class="text-white text-4xl font-extrabold tracking-wide">Shop Now!</span>
-                    </div>
-                </a>
-            </div>
-        </div>
-    </div>
-
-    <script>
-        const POPUP_DISPLAY_DURATION = 10000; // 10 seconds
-        const POPUP_INTERVAL = 2 * 60 * 60 * 1000; // 2 hours in milliseconds
-        let autoCloseTimer = null;
-
-        function displayPromoModal() {
-            const popup = document.getElementById('promoPopup');
-            popup.style.display = 'flex';
-            popup.style.alignItems = 'center';
-            popup.style.justifyContent = 'center';
-
-            const timestamp = Date.now();
-            try {
-                localStorage.setItem('promoModalLastShown', timestamp.toString());
-            } catch (e) {
-                console.error('Failed to save timestamp:', e);
-            }
-
-            autoCloseTimer = setTimeout(() => {
-                hidePromoModal();
-            }, POPUP_DISPLAY_DURATION);
-        }
-
-        function hidePromoModal() {
-            document.getElementById('promoPopup').style.display = 'none';
-            if (autoCloseTimer) {
-                clearTimeout(autoCloseTimer);
-                autoCloseTimer = null;
-            }
-        }
-        function getLastShownTime() {
-            try {
-                const stored = localStorage.getItem('promoModalLastShown');
-                return stored ? parseInt(stored) : null;
-            } catch (e) {
-                console.error('Failed to retrieve timestamp:', e);
-                return null;
-            }
-        }
-
-        function setupModalSchedule() {
-            const currentTimestamp = Date.now();
-            const lastShownTime = getLastShownTime();
-
-            console.log('Current time:', new Date(currentTimestamp).toLocaleString());
-
-            if (!lastShownTime) {
-                // First visit - show popup immediately
-                console.log('First visit - showing popup now');
-                displayPromoModal();
-            } else {
-                const elapsedMilliseconds = currentTimestamp - lastShownTime;
-                const elapsedMinutes = Math.floor(elapsedMilliseconds / 60000);
-                const elapsedHours = Math.floor(elapsedMinutes / 60);
-
-                console.log(`Last shown: ${new Date(lastShownTime).toLocaleString()}`);
-                console.log(`Time elapsed: ${elapsedHours} hours and ${elapsedMinutes % 60} minutes`);
-
-                if (elapsedMilliseconds >= POPUP_INTERVAL) {
-                    // 2+ hours passed - show popup now
-                    console.log('2+ hours passed - showing popup now');
-                    displayPromoModal();
-                } else {
-                    // Calculate remaining time
-                    const remainingMilliseconds = POPUP_INTERVAL - elapsedMilliseconds;
-                    const remainingMinutes = Math.floor(remainingMilliseconds / 60000);
-                    const remainingHours = Math.floor(remainingMinutes / 60);
-
-                    console.log(`Popup will show in ${remainingHours} hours and ${remainingMinutes % 60} minutes`);
-
-                    // Schedule popup for later
-                    setTimeout(() => {
-                        displayPromoModal();
-                    }, remainingMilliseconds);
-                }
-            }
-        }
-
-        // Initialize popup logic when page loads
-        setupModalSchedule();
-    </script>
-
     <?php include_banner(1); ?>
 
     <section class="py-6 bg-white" id="bestseller-section">
@@ -1137,21 +1034,39 @@ $bestsellerData = $bestsellerItems->fetch_all(MYSQLI_ASSOC);
     <?php include_banner(2); ?>
 
     <?php if (!$cookieAccepted): ?>
-        <section id="cookie-banner"
-            class="fixed bottom-4 left-4 right-4 bg-white border shadow-lg rounded-lg p-4 flex items-center justify-between z-50">
-            <p class="text-sm text-gray-700">
-                This website uses cookies to personalize content, improve your browsing experience,
-                remember your preferences, and analyze site traffic. By clicking "Accept",
-                you consent to the use of cookies in accordance with our Privacy Policy.
-            </p>
+        <div id="cookie-banner" class="fixed bottom-0 left-0 right-0 z-50">
+            <div class="bg-white border-t border-gray-200 shadow-2xl px-6 py-4">
+                <div class="max-w-7xl mx-auto flex flex-col sm:flex-row items-center justify-between gap-4">
 
-            <form method="post">
-                <button type="submit" name="acceptCookies"
-                    class="ml-4 bg-orange-500 text-white px-4 py-2 rounded-lg hover:bg-orange-600 transition">
-                    Accept
-                </button>
-            </form>
-        </section>
+                    <!-- Icon + Text -->
+                    <div class="flex items-start sm:items-center gap-3">
+
+                        <div>
+                            <p class="text-sm font-semibold text-gray-800 mb-0.5">We use cookies</p>
+                            <p class="text-xs text-gray-500 leading-relaxed max-w-2xl">
+                                This website uses cookies to personalize content, improve your browsing experience,
+                                remember your preferences, and analyze site traffic. By clicking <strong>"Accept"</strong>,
+                                you consent to the use of cookies in accordance with our
+                                <a href="#" class="text-orange-500 hover:underline font-medium">Privacy Policy</a>.
+                            </p>
+                        </div>
+                    </div>
+
+                    <!-- Buttons -->
+                    <form method="post" class="flex items-center gap-2 shrink-0">
+                        <button type="button" onclick="document.getElementById('cookie-banner').style.display='none'"
+                            class="px-4 py-2 text-sm text-gray-500 hover:text-gray-700 border border-gray-300 rounded-lg hover:bg-gray-50 transition">
+                            Decline
+                        </button>
+                        <button type="submit" name="acceptCookies"
+                            class="px-5 py-2 text-sm font-semibold bg-orange-500 hover:bg-orange-600 text-white rounded-lg transition shadow-sm">
+                            Accept
+                        </button>
+                    </form>
+
+                </div>
+            </div>
+        </div>
     <?php endif; ?>
 
     <section class="py-8 px-4">

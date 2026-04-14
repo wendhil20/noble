@@ -202,7 +202,6 @@ $categories_result = $conn->query("SELECT id, name FROM categories ORDER BY name
 <head>
   <meta charset="UTF-8" />
   <title>Discount Manager</title>
-  <script src="https://cdn.tailwindcss.com"></script>
 </head>
 <body class="bg-gray-50 min-h-screen">
 

@@ -2,32 +2,32 @@
 session_name("nobleuser");
 session_start();
 
-// Unset all session variables
-session_unset();
+require_once '../connection/connect.php';
 
-// Destroy the session
-session_destroy();
-
-// Remove the remember me cookie (if any)
-setcookie("remember_token", "", time() - 3600, "/");
-
-// Build dynamic redirect URL back to main website
-$protocol = (!empty($_SERVER['HTTPS']) && $_SERVER['HTTPS'] !== 'off') ? 'https://' : 'http://';
-$host = $_SERVER['HTTP_HOST'];
-
-// Detect if localhost or production
-$isLocalhost = (strpos($host, 'localhost') !== false || strpos($host, '127.0.0.1') !== false);
-
-if ($isLocalhost) {
-    // Localhost path with 'noble' folder
-    $redirectUrl = $protocol . $host . '/noble/index.php';
-} else {
-    // Production domain - starts from 'user'
-    $redirectUrl = $protocol . $host . '/index.php';
+// ✅ DAGDAG - Clear remember_token sa DB
+if (isset($_SESSION['user_id'])) {
+    $stmt = $conn->prepare("UPDATE users SET remember_token = NULL WHERE id = ?");
+    $stmt->bind_param("i", $_SESSION['user_id']);
+    $stmt->execute();
+    $stmt->close();
 }
 
-// Redirect back to your site (logs out of your app)
-// Note: User remains logged into Google in their browser
+// ✅ Clear cookie - dapat may httponly flag din
+setcookie("remember_token", "", time() - 3600, "/", "", false, true);
+
+// Clear session
+session_unset();
+session_destroy();
+
+// Build dynamic redirect
+$protocol = (!empty($_SERVER['HTTPS']) && $_SERVER['HTTPS'] !== 'off') ? 'https://' : 'http://';
+$host = $_SERVER['HTTP_HOST'];
+$isLocalhost = (strpos($host, 'localhost') !== false || strpos($host, '127.0.0.1') !== false);
+
+$redirectUrl = $isLocalhost
+    ? $protocol . $host . '/noble/index.php'
+    : $protocol . $host . '/index.php';
+
 header("Location: $redirectUrl");
 exit;
 ?>

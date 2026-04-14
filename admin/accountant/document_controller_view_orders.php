@@ -140,22 +140,9 @@ $totalOrders = array_sum($status_counts);
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Purchase Orders Review - Document Controller</title>
-    <script src="https://cdn.tailwindcss.com"></script>
-    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
-    <script>
-        tailwind.config = {
-            theme: {
-                extend: {
-                    colors: {
-                        'noble-orange': '#f97316',
-                    }
-                }
-            }
-        }
-    </script>
 </head>
 
-<body class="bg-gradient-to-br from-gray-50 to-gray-100 min-h-screen">
+<body class="bg-gray-50 min-h-screen">
     <?php include '../navbar/top.php'; ?>
 
     <!-- Header -->
@@ -163,7 +150,7 @@ $totalOrders = array_sum($status_counts);
         <div class="max-w-7xl mx-auto px-4 lg:px-8 py-4">
             <div class="flex justify-between items-center">
                 <div class="flex items-center space-x-4">
-                    <div class="bg-gradient-to-r from-purple-500 to-purple-600 p-3 rounded-lg">
+                    <div class="bg-purple-500 p-3 rounded-lg">
                         <i class="fas fa-file-contract text-white text-2xl"></i>
                     </div>
                     <div>
@@ -247,7 +234,7 @@ $totalOrders = array_sum($status_counts);
 
         <!-- Purchase Orders Table -->
         <div class="bg-white rounded-xl shadow-lg border border-gray-200 overflow-hidden">
-            <div class="bg-gradient-to-r from-purple-600 to-purple-700 px-6 py-3">
+            <div class="bg-purple-600 px-6 py-3">
                 <h2 class="text-xl font-bold text-white">Purchase Orders (<?php echo count($purchase_orders); ?>)</h2>
             </div>
             

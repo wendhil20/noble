@@ -169,35 +169,6 @@ $completed_orders = $conn->query($completed_orders_query);
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Logistics Dashboard - Order Completion</title>
-
-    <!-- Tailwind CDN (for quick prototyping) -->
-    <script src="https://cdn.tailwindcss.com"></script>
-    <script>
-        tailwind.config = {
-            theme: {
-                extend: {
-                    colors: {
-                        brand: {
-                            50: '#fff8f3',
-                            100: '#fff0e6',
-                            200: '#ffd8b8',
-                            300: '#ffbf88',
-                            400: '#ffa64f',
-                            500: '#ff8a1a', /* primary orange */
-                            600: '#f97316',
-                            700: '#dd5f12',
-                            800: '#b84a0d',
-                            900: '#7a2f06'
-                        }
-                    }
-                }
-            }
-        }
-    </script>
-
-    <!-- Font Awesome for icons -->
-    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
-
     <!-- Keep bootstrap JS for modal & tooltip behavior (we won't use Bootstrap CSS) -->
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.bundle.min.js"></script>
 

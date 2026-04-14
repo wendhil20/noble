@@ -282,8 +282,6 @@ $updateReplacement->bind_param("ii", $schedule_id, $order_id);
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Book Replacement <?php echo ucfirst($replacement['order_delivery_type']); ?> - Noble Home</title>
-    <script src="https://cdn.tailwindcss.com"></script>
-    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
     <style>
         @keyframes slideIn {
             from { opacity: 0; transform: translateY(-20px); }

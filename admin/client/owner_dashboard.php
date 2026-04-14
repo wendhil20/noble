@@ -260,31 +260,8 @@ if (count($orders) > 0) {
 <head>
     <meta charset="UTF-8">
     <title>Owner Dashboard - P.O System</title>
-    <script src="https://cdn.tailwindcss.com"></script>
-    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-    <script>
-        tailwind.config = {
-            theme: {
-                extend: {
-                    colors: {
-                        primary: {
-                            50: '#fef3c7',
-                            100: '#fde68a',
-                            200: '#fcd34d',
-                            300: '#fbbf24',
-                            400: '#f59e0b',
-                            500: '#d97706',
-                            600: '#b45309',
-                            700: '#92400e',
-                            800: '#78350f',
-                            900: '#451a03',
-                        }
-                    }
-                }
-            }
-        }
-    </script>
+
     <style>
         .metric-card {
             background: linear-gradient(135deg, rgba(255, 255, 255, 0.95) 0%, rgba(255, 255, 255, 0.85) 100%);

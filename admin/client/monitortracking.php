@@ -28,20 +28,6 @@ $order_id = isset($_GET['id']) ? (int)$_GET['id'] : 0;
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Order Tracking - Noble Admin</title>
-    <script src="https://cdn.tailwindcss.com"></script>
-    <script>
-        tailwind.config = {
-            theme: {
-                extend: {
-                    colors: {
-                        'brand-orange': '#f97316',
-                        'brand-blue': '#3b82f6',
-                        'brand-green': '#10b981',
-                    }
-                }
-            }
-        }
-    </script>
     <style>
           @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
         body { font-family: 'Inter', sans-serif; }

@@ -17,7 +17,12 @@ $clientSecret = getenv('GOOGLE_CLIENT_SECRET');
 if (empty($clientId) || empty($clientSecret)) {
     error_log('❌ Google OAuth credentials not configured in .env');
     $_SESSION['login_needed'] = 'OAuth service not configured. Please try again later.';
-    header("Location: otherpage/index-page-1-A-B-C-D-E.php");
+    
+    if (isset($isLocalhost) && $isLocalhost) {
+        header("Location: /noble/user/google-popup-close.php?error=1");
+    } else {
+        header("Location: ../google-popup-close.php?error=1");
+    }
     exit;
 }
 
@@ -164,11 +169,11 @@ if (isset($_GET['code'])) {
         
         $stmt->close();
         
-        // Dynamic redirect based on environment
+        // ✅ POPUP: Redirect to popup close page
         if ($isLocalhost) {
-            header("Location: otherpage/index-page-1-A-B-C-D-E.php");
+            header("Location: /noble/user/google-popup-close.php");
         } else {
-            header("Location: ../otherpage/index-page-1-A-B-C-D-E.php");
+            header("Location: ../google-popup-close.php");
         }
         exit;
         
@@ -176,11 +181,11 @@ if (isset($_GET['code'])) {
         error_log("Google OAuth callback error: " . $e->getMessage());
         $_SESSION['login_needed'] = 'Login failed: ' . $e->getMessage();
         
-        // Dynamic redirect based on environment
+        // ✅ POPUP: Redirect to popup close page with error
         if ($isLocalhost) {
-            header("Location: otherpage/index-page-1-A-B-C-D-E.php");
+            header("Location: /noble/user/google-popup-close.php?error=1");
         } else {
-            header("Location: ../otherpage/index-page-1-A-B-C-D-E.php");
+            header("Location: ../google-popup-close.php?error=1");
         }
         exit;
     }
@@ -188,11 +193,11 @@ if (isset($_GET['code'])) {
 } else {
     $_SESSION['login_needed'] = 'Please sign in first.';
     
-    // Dynamic redirect based on environment
+    // ✅ POPUP: Redirect to popup close page with error
     if ($isLocalhost) {
-        header("Location: otherpage/index-page-1-A-B-C-D-E.php");
+        header("Location: /noble/user/google-popup-close.php?error=1");
     } else {
-        header("Location: ../otherpage/index-page-1-A-B-C-D-E.php");
+        header("Location: ../google-popup-close.php?error=1");
     }
     exit;
 }

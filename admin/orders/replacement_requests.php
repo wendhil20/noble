@@ -64,30 +64,6 @@ $stmt->close();
 <head>
   <meta charset="UTF-8" />
   <title>Replacement Requests - Order #<?php echo $order_id; ?></title>
-  <script src="https://cdn.tailwindcss.com"></script>
-  <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
-  <script>
-    tailwind.config = {
-      theme: {
-        extend: {
-          colors: {
-            primary: {
-              50: '#fff7ed',
-              100: '#ffedd5',
-              200: '#fed7aa',
-              300: '#fdba74',
-              400: '#fb923c',
-              500: '#f97316',
-              600: '#ea580c',
-              700: '#c2410c',
-              800: '#9a3412',
-              900: '#7c2d12',
-            }
-          }
-        }
-      }
-    }
-  </script>
   <style>
     .modal {
       display: none;

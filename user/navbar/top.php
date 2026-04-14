@@ -148,7 +148,8 @@ $hidden_pages = ['help.php', 'about.php'];
 ?>
 
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/swiper@11/swiper-bundle.min.css" />
-<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap"rel="stylesheet" />
+<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap"
+  rel="stylesheet" />
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
 <link href="../../output.css" rel="stylesheet">
 <link href="https://api.mapbox.com/mapbox-gl-js/v3.3.0/mapbox-gl.css" rel="stylesheet" />
@@ -2183,7 +2184,7 @@ $hidden_pages = ['help.php', 'about.php'];
 
                 <!-- Google Login -->
                 <div class="text-center">
-                  <a href="../google-login.php"
+                  <a href="javascript:void(0)" onclick="openGooglePopup('../google-login.php')"
                     class="inline-flex items-center justify-center w-full gap-3 bg-red-500 hover:bg-red-600 text-white font-semibold py-2 px-4 rounded-lg">
                     <svg class="w-5 h-5 bg-white rounded-full p-[2px]" viewBox="0 0 48 48">
                       <path fill="#EA4335"
@@ -2204,6 +2205,40 @@ $hidden_pages = ['help.php', 'about.php'];
         <?php endif; ?>
       </div>
     </div>
+
+    <script>
+      function openGooglePopup(url) {
+        const width = 500;
+        const height = 620;
+        const left = Math.round((screen.width - width) / 2);
+        const top = Math.round((screen.height - height) / 2);
+
+        const popup = window.open(
+          url,
+          'googleLoginPopup',
+          `width=${width},height=${height},top=${top},left=${left},` +
+          `toolbar=no,menubar=no,scrollbars=yes,resizable=no,` +
+          `status=no,location=no`
+        );
+
+        if (!popup || popup.closed || typeof popup.closed === 'undefined') {
+          // Popup was blocked - fall back to normal redirect
+          window.location.href = url;
+          return;
+        }
+
+        popup.focus();
+
+        // Poll until popup closes then reload parent
+        const timer = setInterval(() => {
+          if (popup.closed) {
+            clearInterval(timer);
+            window.location.reload();
+          }
+        }, 500);
+      }
+
+    </script>
 
     <!-- Mobile Sidebar -->
     <div x-show="mobileOpen" x-cloak @click.self="mobileOpen = false"
@@ -2865,7 +2900,7 @@ $hidden_pages = ['help.php', 'about.php'];
             </div>
 
             <div class="pt-4 border-t border-gray-200">
-              <a href="../google-login.php"
+              <a href="javascript:void(0)" onclick="openGooglePopup('../google-login.php')"
                 class="inline-flex items-center justify-center w-full gap-3 bg-red-500 hover:bg-red-600 text-white font-semibold py-3 px-4 rounded-lg transition">
                 <svg class="w-5 h-5 bg-white rounded-full p-[2px]" viewBox="0 0 48 48">
                   <path fill="#EA4335"

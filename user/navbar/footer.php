@@ -143,7 +143,6 @@
             <!-- Copyright -->
             <div class="text-center lg:text-left">
                 <p class="text-sm text-gray-600">© <?= date('Y') ?> Noble Home Construction. All rights reserved.</p>
-                <p class="text-xs text-gray-400 mt-1">Licensed &amp; Insured | PCAB License No. 12345</p>
             </div>
 
             <!-- Socials -->

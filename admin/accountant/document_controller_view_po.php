@@ -124,11 +124,9 @@ $total = $subtotal + $vat + $general_req;
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Review PO #<?php echo htmlspecialchars($po_data['po_number']); ?> - Document Controller</title>
-    <script src="https://cdn.tailwindcss.com"></script>
-    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
 </head>
 
-<body class="bg-gradient-to-br from-gray-50 to-gray-100 min-h-screen">
+<body class="bg-gray-50 min-h-screen">
     <?php include '../navbar/top.php'; ?>
 
     <!-- Header -->

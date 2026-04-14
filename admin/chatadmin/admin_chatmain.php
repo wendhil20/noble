@@ -20,17 +20,6 @@ $admin_lvl = $_SESSION['noble_lvl'] ?? 'Sales';
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Admin — Chat Support</title>
   <script src="https://cdn.socket.io/4.7.2/socket.io.min.js"></script>
-  <script src="https://cdn.tailwindcss.com"></script>
-  <link href="https://fonts.googleapis.com/css2?family=Sora:wght@300;400;500;600;700&display=swap" rel="stylesheet">
-  <script>
-    tailwind.config = {
-      theme: {
-        extend: {
-          fontFamily: { sora: ['Sora', 'sans-serif'] },
-        }
-      }
-    }
-  </script>
   <style>
     * {
       font-family: 'Sora', sans-serif;

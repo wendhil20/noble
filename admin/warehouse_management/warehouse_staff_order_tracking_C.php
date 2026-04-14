@@ -332,30 +332,6 @@ $selectableReplacementStatuses = ['approved', 'processing']; // Only these can b
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Order Tracking - Order #<?php echo $order_id; ?></title>
-    <script src="https://cdn.tailwindcss.com"></script>
-    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
-    <script>
-        tailwind.config = {
-            theme: {
-                extend: {
-                    colors: {
-                        primary: {
-                            50: '#f0f9ff',
-                            100: '#e0f2fe',
-                            200: '#bae6fd',
-                            300: '#7dd3fc',
-                            400: '#38bdf8',
-                            500: '#0ea5e9',
-                            600: '#0284c7',
-                            700: '#0369a1',
-                            800: '#075985',
-                            900: '#0c4a6e'
-                        }
-                    }
-                }
-            }
-        }
-    </script>
     <style>
         .status-card {
             transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);

@@ -65,8 +65,7 @@ if (isset($_GET['delete_image_index'])) {
 <head>
   <meta charset="UTF-8">
   <title>Edit Product - <?= htmlspecialchars($product['product_name']) ?></title>
-  <script src="https://cdn.tailwindcss.com"></script>
-  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+ 
 </head>
 <body class="bg-gradient-to-br from-gray-50 to-gray-100 min-h-screen">
 <?php include '../navbar/top.php'; ?>

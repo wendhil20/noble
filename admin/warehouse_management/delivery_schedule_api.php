@@ -238,23 +238,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['schedule_delivery']))
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Delivery Scheduling - <?php echo $is_replacement ? 'Replacement' : 'Item'; ?> #<?php echo $item['item_id']; ?></title>
-    <script src="https://cdn.tailwindcss.com"></script>
-    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
-    <script>
-        tailwind.config = {
-            theme: {
-                extend: {
-                    colors: {
-                        primary: {
-                            50: '#fff7ed', 100: '#ffedd5', 200: '#fed7aa', 300: '#fdba74',
-                            400: '#fb923c', 500: '#f97316', 600: '#ea580c', 700: '#c2410c',
-                            800: '#9a3412', 900: '#7c2d12',
-                        }
-                    }
-                }
-            }
-        }
-    </script>
     <style>
         .replacement-gradient {
             background: linear-gradient(135deg, #fef2f2 0%, #ffffff 100%);

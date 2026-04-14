@@ -210,8 +210,7 @@ $business_types = ['Manufacturer', 'Wholesaler', 'Distributor', 'Retailer', 'Ser
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Edit Supplier - <?php echo htmlspecialchars($supplier_data['business_name']); ?></title>
-    <script src="https://cdn.tailwindcss.com"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/js/all.min.js"></script>
+   
 </head>
 <body class="bg-gray-50">
 

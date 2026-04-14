@@ -45,20 +45,6 @@ $categoryResult = mysqli_query($conn, $categoryQuery);
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Admin Shop - Noble Home</title>
-    <script src="https://cdn.tailwindcss.com"></script>
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    <script>
-        tailwind.config = {
-            theme: {
-                extend: {
-                    colors: {
-                        'noble-orange': '#f97316',
-                        'noble-orange-dark': '#ea580c',
-                    }
-                }
-            }
-        }
-    </script>
     <style>
         .image-preview {
             max-width: 100px;

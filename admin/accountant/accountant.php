@@ -258,21 +258,6 @@ function tabClass($current, $target)
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Accountant Dashboard - Noble Home</title>
-    <script src="https://cdn.tailwindcss.com"></script>
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" integrity="sha512-iecdLmaskl7CVkqkXNQ/ZH/XLlvWZOJyj7Yy7tcenmpD1ypASozpmT/E0iPtmFIB46ZmdtAc9eNBvH0H/ZpiBw==" crossorigin="anonymous" referrerpolicy="no-referrer" />
-    <script>
-        tailwind.config = {
-            theme: {
-                extend: {
-                    colors: {
-                        'noble-orange': '#f97316',
-                        'noble-orange-light': '#fb923c',
-                        'noble-orange-dark': '#ea580c'
-                    }
-                }
-            }
-        }
-    </script>
     <style>
         html, body { overflow-x: hidden; max-width: 100%; }
         .order-row-clickable { cursor: pointer; transition: all 0.2s ease; }

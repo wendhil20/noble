@@ -10,9 +10,9 @@ session_start();
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Session Checker - Noble Home</title>
-    <script src="https://cdn.tailwindcss.com"></script>
 </head>
 <body class="bg-gray-100 p-8">
+    <?php include '../navbar/top.php'; ?>
     <div class="max-w-4xl mx-auto">
         <div class="bg-white rounded-lg shadow-lg p-6">
             <h1 class="text-2xl font-bold mb-4 text-gray-900">Session Debug Information</h1>

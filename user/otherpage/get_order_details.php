@@ -435,7 +435,7 @@ $system_steps = ['Pending', 'Ongoing', 'Arrival', 'Customs'];
                     $is_system_step = in_array($step['place'] ?? '', $system_steps);
                 ?>
                     <div class="flex items-start space-x-4">
-                        <div class="flex-shrink-0 mt-1">
+                        <div class="shrink-0 mt-1">
                             <?php if (($step['current_status'] ?? '') === 'complete'): ?>
                                 <div class="w-8 h-8 bg-emerald-500 rounded-full flex items-center justify-center">
                                     <svg class="w-4 h-4 text-white" fill="currentColor" viewBox="0 0 20 20">

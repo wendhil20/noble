@@ -113,18 +113,16 @@ foreach ($purchase_orders as $po) {
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Accounting Approval - Noble Admin</title>
-    <script src="https://cdn.tailwindcss.com"></script>
-    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
 </head>
 
-<body class="bg-gradient-to-br from-gray-50 to-gray-100 min-h-screen">
+<body class="bg-gray-50 min-h-screen">
     <?php include '../navbar/top.php'; ?>
 
     <div class="bg-white shadow-sm">
         <div class="max-w-7xl mx-auto px-4 lg:px-8 py-4">
             <div class="flex justify-between items-center">
                 <div class="flex items-center space-x-4">
-                    <div class="bg-gradient-to-r from-blue-500 to-blue-600 p-3 rounded-lg">
+                    <div class="bg-blue-500 p-3 rounded-lg">
                         <i class="fas fa-calculator text-white text-2xl"></i>
                     </div>
                     <div>

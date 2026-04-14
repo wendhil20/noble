@@ -311,7 +311,7 @@ $orderStats = getOrderStats();
                     </div>
                     <div class="flex items-end">
                         <button type="submit" name="set_ongoing"
-                            class="bg-gradient-to-r from-green-500 to-green-600 hover:from-green-600 hover:to-green-700 text-white px-6 py-3 rounded-lg w-full font-medium transition-all duration-200 transform hover:scale-105">
+                            class="bg-green-500 hover:bg-green-600 text-white px-6 py-3 rounded-lg w-full font-medium transition-all duration-200 transform hover:scale-105">
                             Set arrival time
                         </button>
                     </div>

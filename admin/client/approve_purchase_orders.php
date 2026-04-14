@@ -158,33 +158,9 @@ foreach ($purchase_orders as $po) {
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Approve Purchase Orders - Noble Admin</title>
-    <script src="https://cdn.tailwindcss.com"></script>
-    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
-    <script>
-        tailwind.config = {
-            theme: {
-                extend: {
-                    colors: {
-                        primary: {
-                            50: '#fff7ed',
-                            100: '#ffedd5',
-                            200: '#fed7aa',
-                            300: '#fdba74',
-                            400: '#fb923c',
-                            500: '#f97316',
-                            600: '#ea580c',
-                            700: '#c2410c',
-                            800: '#9a3412',
-                            900: '#7c2d12',
-                        }
-                    }
-                }
-            }
-        }
-    </script>
 </head>
 
-<body class="bg-gradient-to-br from-gray-50 to-gray-100 min-h-screen">
+<body class="bg-gray-50 min-h-screen">
     <?php include '../navbar/top.php'; ?>
 
     <!-- Header -->
@@ -193,7 +169,7 @@ foreach ($purchase_orders as $po) {
             <div class="py-3 sm:py-4">
                 <div class="flex justify-between items-center">
                     <div class="flex items-center space-x-4">
-                        <div class="bg-gradient-to-r from-purple-500 to-purple-600 p-3 rounded-lg">
+                        <div class="bg-purple-500 p-3 rounded-lg">
                             <i class="fas fa-clipboard-check text-white text-2xl"></i>
                         </div>
                         <div>
@@ -213,7 +189,7 @@ foreach ($purchase_orders as $po) {
                                 Operational Manager
                             </div>
                         </div>
-                        <div class="w-10 h-10 sm:w-12 sm:h-12 bg-gradient-to-r from-primary-500 to-primary-600 rounded-full flex items-center justify-center shadow-lg ring-2 ring-white">
+                        <div class="w-10 h-10 sm:w-12 sm:h-12 bg-purple-500 rounded-full flex items-center justify-center shadow-lg ring-2 ring-white">
                             <span class="text-white font-bold text-sm sm:text-lg">
                                 <?php echo strtoupper(substr($fullname, 0, 1)); ?>
                             </span>
@@ -285,7 +261,7 @@ foreach ($purchase_orders as $po) {
 
         <!-- Purchase Orders List -->
         <div class="bg-white rounded-xl shadow-lg border border-gray-200 overflow-hidden">
-            <div class="bg-gradient-to-r from-purple-600 to-purple-700 px-4 sm:px-6 py-3 sm:py-4">
+            <div class="bg-purple-600 px-4 sm:px-6 py-3 sm:py-4">
                 <h2 class="text-lg sm:text-2xl font-bold text-white flex items-center">
                     <i class="fas fa-list-alt mr-2 sm:mr-3"></i>
                     All Purchase Orders (<?php echo count($purchase_orders); ?>)
@@ -423,7 +399,7 @@ foreach ($purchase_orders as $po) {
     <!-- Approve Modal -->
     <div id="approveModal" class="hidden fixed inset-0 bg-black bg-opacity-40 backdrop-blur-sm z-50 flex items-center justify-center p-4">
         <div class="bg-white max-w-md w-full rounded-xl shadow-2xl">
-            <div class="bg-gradient-to-r from-green-600 to-green-700 px-6 py-4 rounded-t-xl">
+            <div class="bg-green-600 px-6 py-4 rounded-t-xl">
                 <div class="flex items-center justify-between">
                     <h3 class="text-xl font-bold text-white flex items-center">
                         <i class="fas fa-check-circle mr-2"></i>
@@ -455,7 +431,7 @@ foreach ($purchase_orders as $po) {
                         Cancel
                     </button>
                     <button type="submit"
-                        class="flex-1 bg-gradient-to-r from-green-600 to-green-700 hover:from-green-700 hover:to-green-800 text-white font-bold py-3 px-4 rounded-lg transition shadow-lg">
+                        class="flex-1 bg-green-600 hover:bg-green-700 text-white font-bold py-3 px-4 rounded-lg transition shadow-lg">
                         <i class="fas fa-check mr-2"></i>Approve PO
                     </button>
                 </div>
@@ -466,7 +442,7 @@ foreach ($purchase_orders as $po) {
     <!-- Reject Modal -->
     <div id="rejectModal" class="hidden fixed inset-0 bg-black bg-opacity-40 backdrop-blur-sm z-50 flex items-center justify-center p-4">
         <div class="bg-white max-w-md w-full rounded-xl shadow-2xl">
-            <div class="bg-gradient-to-r from-red-600 to-red-700 px-6 py-4 rounded-t-xl">
+            <div class="bg-red-600 px-6 py-4 rounded-t-xl">
                 <div class="flex items-center justify-between">
                     <h3 class="text-xl font-bold text-white flex items-center">
                         <i class="fas fa-times-circle mr-2"></i>
@@ -505,7 +481,7 @@ foreach ($purchase_orders as $po) {
                         Cancel
                     </button>
                     <button type="submit"
-                        class="flex-1 bg-gradient-to-r from-red-600 to-red-700 hover:from-red-700 hover:to-red-800 text-white font-bold py-3 px-4 rounded-lg transition shadow-lg">
+                        class="flex-1 bg-red-600 hover:bg-red-700 text-white font-bold py-3 px-4 rounded-lg transition shadow-lg">
                         <i class="fas fa-times mr-2"></i>Reject PO
                     </button>
                 </div>

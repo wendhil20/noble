@@ -27,25 +27,8 @@ $fullname = is_array($sessionUser) ?
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>QR Code Scanner - P.O System</title>
-    <script src="https://cdn.tailwindcss.com"></script>
-    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
-    <!-- QR Code Scanner Library -->
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/html5-qrcode/2.3.8/html5-qrcode.min.js"></script>
-    <script>
-        tailwind.config = {
-            theme: {
-                extend: {
-                    colors: {
-                        primary: {
-                            50: '#fff7ed', 100: '#ffedd5', 200: '#fed7aa', 300: '#fdba74',
-                            400: '#fb923c', 500: '#f97316', 600: '#ea580c', 700: '#c2410c',
-                            800: '#9a3412', 900: '#7c2d12',
-                        }
-                    }
-                }
-            }
-        }
-    </script>
+
+
     <style>
         * {
             -webkit-tap-highlight-color: transparent;

@@ -40,8 +40,7 @@ $result = $conn->query($sql);
 <head>
   <meta charset="UTF-8" />
   <title>Unassigned Orders</title>
-  <script src="https://cdn.tailwindcss.com"></script>
-   <link href="https://fonts.googleapis.com/css2?family=Roboto&display=swap" rel="stylesheet">
+ 
 </head>
 
 <body class="bg-gray-100 p-6 font-roboto">

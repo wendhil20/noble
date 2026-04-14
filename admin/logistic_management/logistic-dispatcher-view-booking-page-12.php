@@ -319,8 +319,6 @@ if ($booking['item_type'] === 'replacement') {
         <meta charset="UTF-8">
         <meta name="viewport" content="width=device-width, initial-scale=1.0">
         <title>Manage Delivery - Noble Home</title>
-        <script src="https://cdn.tailwindcss.com"></script>
-        <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
         <style>
             .item-card {
                 transition: all 0.3s ease;

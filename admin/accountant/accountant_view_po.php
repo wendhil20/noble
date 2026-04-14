@@ -156,23 +156,6 @@ if (isset($_POST['reject_file'])) {
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>View P.O. Files - Order #<?php echo $order_id; ?></title>
-    <script src="https://cdn.tailwindcss.com"></script>
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" 
-          integrity="sha512-iecdLmaskl7CVkqkXNQ/ZH/XLlvWZOJyj7Yy7tcenmpD1ypASozpmT/E0iPtmFIB46ZmdtAc9eNBvH0H/ZpiBw==" 
-          crossorigin="anonymous" referrerpolicy="no-referrer" />
-    <script>
-        tailwind.config = {
-            theme: {
-                extend: {
-                    colors: {
-                        'noble-orange': '#f97316',
-                        'noble-orange-light': '#fb923c',
-                        'noble-orange-dark': '#ea580c',
-                    }
-                }
-            }
-        }
-    </script>
 </head>
 
 <body class="bg-gray-50">
@@ -187,7 +170,7 @@ if (isset($_POST['reject_file'])) {
                        class="w-10 h-10 bg-gray-100 hover:bg-gray-200 rounded-lg flex items-center justify-center transition-colors">
                         <i class="fas fa-arrow-left text-gray-600"></i>
                     </a>
-                    <div class="w-10 h-10 bg-gradient-to-r from-blue-500 to-blue-600 rounded-lg flex items-center justify-center shadow-lg">
+                    <div class="w-10 h-10 bg-blue-500 rounded-lg flex items-center justify-center shadow-lg">
                         <i class="fas fa-file-excel text-white text-lg"></i>
                     </div>
                     <div>
@@ -308,7 +291,7 @@ if (isset($_POST['reject_file'])) {
             <div class="space-y-6">
                 <?php foreach ($attachmentsBySupplier as $supplier => $supplierFiles): ?>
                     <div class="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
-                        <div class="bg-gradient-to-r from-blue-50 to-blue-100 px-6 py-4 border-b border-gray-200">
+                        <div class="bg-blue-50 px-6 py-4 border-b border-gray-200">
                             <div class="flex items-center justify-between">
                                 <h3 class="text-lg font-bold text-gray-900 flex items-center">
                                     <i class="fas fa-building mr-2 text-blue-600"></i>
@@ -518,7 +501,7 @@ if (isset($_POST['reject_file'])) {
                     <!-- File Information Card -->
                     <div class="bg-gray-50 rounded-lg p-4 mb-4 border border-gray-200">
                         <div class="flex items-start space-x-3">
-                            <div class="bg-red-100 p-2 rounded-lg flex-shrink-0">
+                            <div class="bg-red-100 p-2 rounded-lg shrink-0">
                                 <i class="fas fa-file-pdf text-red-600 text-2xl"></i>
                             </div>
                             <div class="flex-1 min-w-0">

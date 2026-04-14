@@ -373,23 +373,7 @@ $linked_count_stmt->close();
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Link Products - <?= htmlspecialchars($supplier['business_name']) ?></title>
-    <script src="https://cdn.tailwindcss.com"></script>
-    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
-    <script>
-        tailwind.config = {
-            theme: {
-                extend: {
-                    colors: {
-                        'noble': {
-                            'primary': '#1e40af',
-                            'secondary': '#3b82f6',
-                            'accent': '#60a5fa'
-                        }
-                    }
-                }
-            }
-        }
-    </script>
+   
 </head>
 <body class="bg-gray-50 min-h-screen">
     <?php include '../navbar/top.php'; ?>

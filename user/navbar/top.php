@@ -2082,7 +2082,7 @@ $hidden_pages = ['help.php', 'about.php'];
                 <!-- Password field (shown for mobile or after OTP verified for email) -->
                 <div x-show="(isMobile) || (isEmail && otpVerified)" x-transition class="mb-4">
                   <label for="password" class="block text-sm font-medium text-gray-600 mb-2">Password</label>
-                  <input type="password" id="password" name="password" x-model="password"
+                  <input type="password" id="password" name="password" x-model="password" autocomplete="current-password"
                     class="w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-orange-500">
                 </div>
 

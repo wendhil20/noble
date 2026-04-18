@@ -65,6 +65,42 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action'])) {
     exit();
   }
 
+  if ($action === 'bulk_restore') {
+    $bulkIds = $_POST['bulk_ids'] ?? [];
+    if (empty($bulkIds)) {
+      header("Location: " . $_SERVER['PHP_SELF']);
+      exit();
+    }
+
+    $sanitizedIds = array_map('intval', $bulkIds);
+    $sanitizedIds = array_filter($sanitizedIds, fn($id) => $id > 0);
+
+    if (!$is_superadmin) {
+      $placeholders = implode(',', array_fill(0, count($sanitizedIds), '?'));
+      $types = str_repeat('i', count($sanitizedIds)) . 's';
+      $params = array_merge(array_values($sanitizedIds), [$current_user]);
+      $chk = $conn->prepare("SELECT id FROM products WHERE id IN ($placeholders) AND added_by = ?");
+      $chk->bind_param($types, ...$params);
+      $chk->execute();
+      $result = $chk->get_result();
+      $sanitizedIds = [];
+      while ($row = $result->fetch_assoc()) {
+        $sanitizedIds[] = $row['id'];
+      }
+      $chk->close();
+    }
+
+    if (!empty($sanitizedIds)) {
+      $placeholders = implode(',', $sanitizedIds);
+      $conn->begin_transaction();
+      $conn->query("UPDATE products SET is_archived = 0 WHERE id IN ($placeholders)");
+      $conn->commit();
+    }
+
+    header("Location: " . $_SERVER['PHP_SELF'] . "?show=archived");
+    exit();
+  }
+
   // ── Single product actions ──────────────────────────────────────────────────
   $productId = (int) ($_POST['product_id'] ?? 0);
 
@@ -384,7 +420,7 @@ if ($subSubJsonRows) {
        JS will inject hidden inputs before submit
   ══════════════════════════════════════════════════════════════════════ -->
   <form method="POST" id="bulkForm">
-    <input type="hidden" name="action" value="bulk_archive">
+    <input type="hidden" name="action" value="<?= $showArchived ? 'bulk_restore' : 'bulk_archive' ?>">
     <!-- bulk_ids[] inputs are injected here by submitBulk() -->
   </form>
 
@@ -533,8 +569,9 @@ if ($subSubJsonRows) {
           <span id="selected-count">0</span> selected
         </span>
         <button type="button" onclick="submitBulk()"
-          class="bg-yellow-600 hover:bg-yellow-700 text-white px-4 py-1.5 rounded text-sm font-medium transition flex items-center gap-1">
-          <i class="fas fa-archive"></i> Archive Selected
+          class="<?= $showArchived ? 'bg-green-600 hover:bg-green-700' : 'bg-yellow-600 hover:bg-yellow-700' ?> text-white px-4 py-1.5 rounded text-sm font-medium transition flex items-center gap-1">
+          <i class="fas fa-<?= $showArchived ? 'redo' : 'archive' ?>"></i>
+          <?= $showArchived ? 'Restore Selected' : 'Archive Selected' ?>
         </button>
         <button type="button" onclick="clearSelection()" class="text-sm text-gray-500 hover:text-gray-700 underline">
           Clear
@@ -581,10 +618,10 @@ if ($subSubJsonRows) {
 
                   <!-- Checkbox — plain input, no wrapping form needed -->
                   <td class="px-4 py-4 text-center">
-                    <?php if (!$product['is_archived']): ?>
+                    
                       <input type="checkbox" value="<?= $product['id'] ?>" class="bulk-checkbox w-4 h-4 cursor-pointer"
                         onchange="updateBulkBar()">
-                    <?php endif; ?>
+                    
                   </td>
 
                   <!-- Image -->
@@ -884,7 +921,8 @@ if ($subSubJsonRows) {
     function submitBulk() {
       const checked = document.querySelectorAll('.bulk-checkbox:checked');
       if (checked.length === 0) return;
-      if (!confirm('Archive ' + checked.length + ' selected product(s)?')) return;
+      const action = <?= json_encode($showArchived ? 'Restore' : 'Archive') ?>;
+      if (!confirm(action + ' ' + checked.length + ' selected product(s)?')) return;
 
       const form = document.getElementById('bulkForm');
 

@@ -419,7 +419,7 @@ $recent_count = $recent_products->num_rows;
         </div>
 
         <!-- Professional Billing Addresses Modal -->
-        <div id="billingModal" class="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50">
+      <div id="billingModal" class="hidden fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50">
             <div class="bg-white rounded-xl p-8 max-w-4xl w-full mx-4 max-h-[90vh] overflow-y-auto animate-slide-up shadow-2xl">
                 <div class="flex justify-between items-center mb-6 pb-4 border-b border-gray-200">
                     <div class="flex items-center gap-3">

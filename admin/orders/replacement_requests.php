@@ -111,7 +111,8 @@ $stmt->close();
   </style>
 </head>
 
-<body class="bg-gradient-to-br from-gray-50 to-gray-100 min-h-screen">
+<body class="bg-gray-100 min-h-screen">
+  <?php include '../navbar/top.php' ?>
   <!-- Header Section -->
   <div class="bg-white shadow-lg border-b border-gray-200">
     <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
@@ -120,7 +121,7 @@ $stmt->close();
           <a href="ordering.php" class="bg-gray-100 hover:bg-gray-200 p-2 rounded-lg transition-colors duration-200">
             <i class="fas fa-arrow-left text-gray-600"></i>
           </a>
-          <div class="bg-gradient-to-r from-orange-500 to-orange-600 p-3 rounded-xl shadow-lg">
+          <div class="bg-orange-600 p-3 rounded-xl shadow-lg">
             <i class="fas fa-exchange-alt text-white text-2xl"></i>
           </div>
           <div>

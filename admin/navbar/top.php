@@ -69,6 +69,7 @@ if (!isset($_SESSION['noble_name']) || !isset($_SESSION['noble_lvl']) || !isset(
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html5-qrcode/2.3.8/html5-qrcode.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js" defer></script>
+
     <style>
         [x-cloak] {
             display: none !important;
@@ -733,7 +734,6 @@ if (!isset($_SESSION['noble_name']) || !isset($_SESSION['noble_lvl']) || !isset(
                                 </div>
 
                             <?php endif; ?>
-
                             <?php if (hasAnyRole(['accountant'])): ?>
                                 <div class="px-3 py-2">
 
@@ -744,20 +744,18 @@ if (!isset($_SESSION['noble_name']) || !isset($_SESSION['noble_lvl']) || !isset(
                                         <span>Accountant</span>
                                     </div>
 
-                                    <!-- Revenue Accountant -->
                                     <?php if (hasAnyRole(['']) || !hasSubrole(['document_controller'])): ?>
                                         <a href="../accountant/accountant"
                                             class="quick-action-item flex items-center space-x-3 px-3 py-2.5 text-sm text-gray-700 hover:bg-orange-50 hover:text-orange-600 rounded-lg transition-all duration-150">
-                                            <i class="ri-archive-line text-lg"></i>
+                                            <i class="ri-dashboard-3-line text-lg"></i>
                                             <span>Dashboard</span>
                                         </a>
                                     <?php endif; ?>
 
-                                    <!-- Revenue Accountant -->
                                     <?php if (hasAnyRole(['']) || !hasSubrole([''])): ?>
                                         <a href="../accountant/accountant_view_orders"
                                             class="quick-action-item flex items-center space-x-3 px-3 py-2.5 text-sm text-gray-700 hover:bg-orange-50 hover:text-orange-600 rounded-lg transition-all duration-150">
-                                            <i class="ri-archive-line text-lg"></i>
+                                            <i class="ri-folder-shield-2-line text-lg"></i>
                                             <span>Dashboard Document Controller</span>
                                         </a>
                                     <?php endif; ?>
@@ -765,7 +763,7 @@ if (!isset($_SESSION['noble_name']) || !isset($_SESSION['noble_lvl']) || !isset(
                                     <?php if (hasAnyRole(['']) || !hasSubrole(['document_controller'])): ?>
                                         <a href="../accountant/approve_purchase_orders_accountant"
                                             class="quick-action-item flex items-center space-x-3 px-3 py-2.5 text-sm text-gray-700 hover:bg-orange-50 hover:text-orange-600 rounded-lg transition-all duration-150">
-                                            <i class="ri-archive-line text-lg"></i>
+                                            <i class="ri-checkbox-circle-line text-lg"></i>
                                             <span>Project Approval</span>
                                         </a>
                                     <?php endif; ?>
@@ -773,48 +771,44 @@ if (!isset($_SESSION['noble_name']) || !isset($_SESSION['noble_lvl']) || !isset(
                                     <?php if (hasAnyRole(['']) || !hasSubrole(['document_controller'])): ?>
                                         <a href="../accountant/accounting_sales_commission.php"
                                             class="quick-action-item flex items-center space-x-3 px-3 py-2.5 text-sm text-gray-700 hover:bg-orange-50 hover:text-orange-600 rounded-lg transition-all duration-150">
-                                            <i class="ri-archive-line text-lg"></i>
-                                            <span>Comminsion management</span>
+                                            <i class="ri-hand-coin-line text-lg"></i>
+                                            <span>Commission Management</span>
                                         </a>
                                     <?php endif; ?>
 
-                                    <!-- HIDDEN: Only show for superadmin -->
                                     <?php if (hasAnyRole([''])): ?>
-                                        <a href="../accountant/accountant_view_orders" class="quick-action-item flex items-center space-x-3 px-3 py-2.5 text-sm text-gray-700 
-              hover:bg-orange-50 hover:text-orange-600 rounded-lg transition-all duration-150">
+                                        <a href="../accountant/accountant_view_orders"
+                                            class="quick-action-item flex items-center space-x-3 px-3 py-2.5 text-sm text-gray-700 hover:bg-orange-50 hover:text-orange-600 rounded-lg transition-all duration-150">
                                             <i class="ri-money-dollar-circle-line text-lg"></i>
                                             <span>Dashboard</span>
                                         </a>
                                     <?php endif; ?>
 
-                                    <a href="../accountant/document_controller_view_orders" class="quick-action-item flex items-center space-x-3 px-3 py-2.5 text-sm text-gray-700 
-           hover:bg-orange-50 hover:text-orange-600 rounded-lg transition-all duration-150">
+                                    <a href="../accountant/document_controller_view_orders"
+                                        class="quick-action-item flex items-center space-x-3 px-3 py-2.5 text-sm text-gray-700 hover:bg-orange-50 hover:text-orange-600 rounded-lg transition-all duration-150">
                                         <i class="ri-file-text-line text-lg"></i>
                                         <span>Project Document</span>
                                     </a>
 
-
                                     <?php if (hasAnyRole(['']) || !hasSubrole(['document_controller'])): ?>
-                                        <a href="../accountant/accountantdashboard.php" class="quick-action-item flex items-center space-x-3 px-3 py-2.5 text-sm text-gray-700 
-                  hover:bg-orange-50 hover:text-orange-600 rounded-lg transition-all duration-150">
-                                            <i class="ri-money-dollar-circle-line text-lg"></i>
+                                        <a href="../accountant/accountantdashboard.php"
+                                            class="quick-action-item flex items-center space-x-3 px-3 py-2.5 text-sm text-gray-700 hover:bg-orange-50 hover:text-orange-600 rounded-lg transition-all duration-150">
+                                            <i class="ri-bar-chart-2-line text-lg"></i>
                                             <span>Revenue Accountant</span>
                                         </a>
                                     <?php endif; ?>
 
                                     <?php if (hasAnyRole(['']) || !hasSubrole(['document_controller'])): ?>
-                                        <!-- Add QR Code -->
-                                        <a href="../accountant/manage_qr_codes.php" class="quick-action-item flex items-center space-x-3 px-3 py-2.5 text-sm text-gray-700 
-                  hover:bg-orange-50 hover:text-orange-600 rounded-lg transition-all duration-150">
+                                        <a href="../accountant/manage_qr_codes.php"
+                                            class="quick-action-item flex items-center space-x-3 px-3 py-2.5 text-sm text-gray-700 hover:bg-orange-50 hover:text-orange-600 rounded-lg transition-all duration-150">
                                             <i class="ri-qr-code-line text-lg"></i>
                                             <span>Add QR Code</span>
                                         </a>
                                     <?php endif; ?>
 
                                     <?php if (hasAnyRole(['']) || !hasSubrole(['document_controller'])): ?>
-                                        <!-- Project Excel -->
-                                        <a href="../accountant/accountantexcel.php" class="quick-action-item flex items-center space-x-3 px-3 py-2.5 text-sm text-gray-700 
-                  hover:bg-orange-50 hover:text-orange-600 rounded-lg transition-all duration-150">
+                                        <a href="../accountant/accountantexcel.php"
+                                            class="quick-action-item flex items-center space-x-3 px-3 py-2.5 text-sm text-gray-700 hover:bg-orange-50 hover:text-orange-600 rounded-lg transition-all duration-150">
                                             <i class="ri-file-excel-2-line text-lg"></i>
                                             <span>Project Excel</span>
                                         </a>
@@ -855,9 +849,10 @@ if (!isset($_SESSION['noble_name']) || !isset($_SESSION['noble_lvl']) || !isset(
                         <!-- Header -->
                         <div class="flex items-center justify-between px-4 py-3.5 border-b border-orange-50">
                             <div class="flex items-center gap-2">
-                            <div class="w-[30px] h-[30px] bg-orange-500 rounded-lg flex items-center justify-center text-white text-sm shrink-0">
-    <i class="ri-notification-3-line"></i>
-</div>
+                                <div
+                                    class="w-[30px] h-[30px] bg-orange-500 rounded-lg flex items-center justify-center text-white text-sm shrink-0">
+                                    <i class="ri-notification-3-line"></i>
+                                </div>
                                 <span class="font-semibold text-sm text-gray-900"
                                     style="font-family: 'Syne', sans-serif;">Notifications</span>
                                 <span x-show="unreadCount > 0"
@@ -966,7 +961,7 @@ if (!isset($_SESSION['noble_name']) || !isset($_SESSION['noble_lvl']) || !isset(
                         </div>
                         <div
                             class="w-8 h-8 bg-linear-to-br from-orange-500 to-red-600 rounded-full flex items-center justify-center shadow-md shrink-0">
-                         <i class="fa-solid fa-user-tie"></i>
+                            <i class="fa-solid fa-user-tie"></i>
                         </div>
                     </button>
                     <!-- (ilagay dito ang Profile dropdown content mula sa first response) -->
@@ -1263,7 +1258,6 @@ if (!isset($_SESSION['noble_name']) || !isset($_SESSION['noble_lvl']) || !isset(
             Notification.requestPermission();
         }
     </script>
-
 
 </body>
 

@@ -299,7 +299,8 @@ while ($row = $countResult->fetch_assoc()) {
     </main>
 
 <!-- Approve Modal -->
-<div id="approveModal" class="fixed inset-0 z-50 hidden bg-black bg-opacity-50 flex items-center justify-center p-4">
+<div id="approveModal" 
+     style="display:none; position:fixed; inset:0; z-index:50; background:rgba(0,0,0,0.5); align-items:center; justify-content:center; padding:1rem;">
     <div class="bg-white rounded-lg shadow-xl max-w-md w-full">
         <form method="POST">
             <div class="p-6">
@@ -329,7 +330,9 @@ while ($row = $countResult->fetch_assoc()) {
 </div>
 
     <!-- Reject Modal -->
-    <div id="rejectModal" class="fixed inset-0 z-50 hidden bg-black bg-opacity-50 flex items-center justify-center p-4">
+   <!-- Reject Modal -->
+<div id="rejectModal" 
+     style="display:none; position:fixed; inset:0; z-index:50; background:rgba(0,0,0,0.5); align-items:center; justify-content:center; padding:1rem;">
         <div class="bg-white rounded-lg shadow-xl max-w-md w-full">
             <form method="POST">
                 <div class="p-6">
@@ -360,21 +363,21 @@ while ($row = $countResult->fetch_assoc()) {
     </div>
 
     <script>
-        function approveFile(id, name) {
-            document.getElementById('approveFileId').value = id;
-            document.getElementById('approveFileName').textContent = name;
-            document.getElementById('approveModal').classList.remove('hidden');
-        }
+  function approveFile(id, name) {
+    document.getElementById('approveFileId').value = id;
+    document.getElementById('approveFileName').textContent = name;
+    document.getElementById('approveModal').style.display = 'flex'; // ← flex hindi block
+}
 
-        function rejectFile(id, name) {
-            document.getElementById('rejectFileId').value = id;
-            document.getElementById('rejectFileName').textContent = name;
-            document.getElementById('rejectModal').classList.remove('hidden');
-        }
+function rejectFile(id, name) {
+    document.getElementById('rejectFileId').value = id;
+    document.getElementById('rejectFileName').textContent = name;
+    document.getElementById('rejectModal').style.display = 'flex';
+}
 
-        function closeModal(modalId) {
-            document.getElementById(modalId).classList.add('hidden');
-        }
+function closeModal(modalId) {
+    document.getElementById(modalId).style.display = 'none';
+}
 
         document.querySelectorAll('[id$="Modal"]').forEach(modal => {
             modal.addEventListener('click', (e) => {

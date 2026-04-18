@@ -227,172 +227,177 @@ for ($i = 0; $i < count($allItems); $i++) {
     </style>
 </head>
 
-<body class="bg-gradient-to-br from-gray-50 to-gray-100 min-h-screen">
+<body class="bg-gray-50 min-h-screen">
     <?php include '../navbar/top.php'; ?>
-    <!-- Header -->
-    <div class="bg-transparent">
-        <div class="max-w-[95%] mx-auto px-4 sm:px-6 lg:px-8">
-            <div class="flex justify-between items-center py-4">
-                <div class="flex items-center space-x-4">
-                    <a href="warehouse_staff_management_main.php" class="text-primary-600 hover:text-primary-700">
-                        <i class="fas fa-arrow-left text-xl"></i>
-                    </a>
-                    <div class="bg-primary-500 p-3 rounded-lg">
-                        <i class="fas fa-clipboard-list text-white text-2xl"></i>
-                    </div>
-                    <div>
-                        <h1 class="text-3xl font-bold text-gray-900">P.O Management</h1>
-                        <p class="text-gray-600 mt-1">
-                            Order #<?php echo $order['id']; ?> - <?php echo htmlspecialchars($customer_name); ?>
-                            <span class="text-sm text-gray-500">(<?php echo htmlspecialchars($customer_email); ?>)</span>
-                        </p>
-                    </div>
+  <!-- Header -->
+<div class="border-b border-gray-200">
+    <div class="max-w-[95%] mx-auto px-4 sm:px-6 lg:px-8">
+        <div class="flex justify-between items-center py-4 gap-4 flex-wrap">
+
+            <!-- Left: Back + Icon + Title -->
+            <div class="flex items-center gap-3.5">
+
+                <!-- Back button -->
+                <a href="warehouse_staff_management_main.php"
+                   class="flex items-center justify-center w-9 h-9 rounded-lg border border-gray-300 text-gray-500 hover:bg-gray-100 hover:text-gray-700 transition-colors duration-150">
+                    <i class="fas fa-chevron-left text-sm"></i>
+                </a>
+
+                <!-- Icon box -->
+                <div class="w-11 h-11 rounded-lg bg-blue-600 flex items-center justify-center shrink-0">
+                    <i class="fas fa-clipboard-list text-white text-lg"></i>
                 </div>
-                <div class="bg-primary-50 px-4 py-2 rounded-lg">
-                    <span class="text-primary-700 font-medium"><?php echo count($allItems); ?> Items</span>
+
+                <!-- Title + subtitle -->
+                <div class="flex flex-col gap-0.5">
+                    <h1 class="text-xl font-medium text-gray-900 leading-tight">P.O Management</h1>
+                    <p class="text-sm text-gray-500 flex items-center gap-1.5 flex-wrap">
+                        Order #<?php echo $order['id']; ?> &mdash;
+                        <?php echo htmlspecialchars($customer_name); ?>
+                        <span class="text-xs text-gray-400">
+                            (<?php echo htmlspecialchars($customer_email); ?>)
+                        </span>
+                    </p>
                 </div>
+
             </div>
+
+            <!-- Right: Items badge -->
+            <div class="text-sm font-medium text-blue-700 bg-blue-50 border border-blue-200 rounded-lg px-3 py-1.5 whitespace-nowrap">
+                <?php echo count($allItems); ?> Items
+            </div>
+
         </div>
     </div>
+</div>
 
     <!-- Main Content -->
     <div class="max-w-[95%] mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        <div id="alertContainer" class="mb-6"></div>
 
-        <!-- Auto-Assignment Notification -->
-        <?php if ($autoAssignedCount > 0): ?>
-            <div class="mb-6 bg-green-50 border-l-4 border-green-400 p-4 rounded-lg shadow-sm">
-                <div class="flex items-center mb-2">
-                    <div class="flex-shrink-0">
-                        <i class="fas fa-check-circle text-green-600 text-xl"></i>
-                    </div>
-                    <div class="ml-3">
-                        <h3 class="text-lg font-semibold text-green-900">
-                            Auto-Assignment Complete!
-                        </h3>
-                        <p class="text-green-700 text-sm mt-1">
-                            Successfully assigned <?php echo $autoAssignedCount; ?> item<?php echo $autoAssignedCount > 1 ? 's' : ''; ?> to their primary suppliers.
-                        </p>
-                    </div>
-                </div>
+    <!-- Alert Container -->
+<div id="alertContainer" class="mb-6"></div>
 
-                <!-- Details of auto-assigned items -->
-                <div class="ml-9 mt-3 space-y-2">
+<!-- Auto-Assignment Notification -->
+<?php if ($autoAssignedCount > 0): ?>
+    <div class="mb-6 border-l-4 border-green-500 bg-green-50 rounded-lg p-4">
+        <div class="flex items-start gap-3">
+            <i class="fas fa-check-circle text-green-600 text-lg mt-0.5 shrink-0"></i>
+            <div class="flex-1">
+                <h3 class="font-medium text-green-900">Auto-assignment complete</h3>
+                <p class="text-sm text-green-700 mt-0.5">
+                    Successfully assigned <?php echo $autoAssignedCount; ?>
+                    item<?php echo $autoAssignedCount > 1 ? 's' : ''; ?> to their primary suppliers.
+                </p>
+                <div class="mt-3 space-y-1.5">
                     <?php foreach ($autoAssignedItems as $assignedItem): ?>
-                        <div class="text-sm text-green-800 bg-green-100 px-3 py-2 rounded">
-                            <i class="fas fa-arrow-right mr-2"></i>
-                            <strong><?php echo htmlspecialchars($assignedItem['product_name']); ?></strong>
-                            → <?php echo htmlspecialchars($assignedItem['supplier_name']); ?>
+                        <div class="text-sm text-green-800 bg-green-100 px-3 py-1.5 rounded-md flex items-center gap-2">
+                            <i class="fas fa-arrow-right text-green-500 text-xs"></i>
+                            <span><strong><?php echo htmlspecialchars($assignedItem['product_name']); ?></strong> →
+                                <?php echo htmlspecialchars($assignedItem['supplier_name']); ?></span>
                         </div>
                     <?php endforeach; ?>
                 </div>
             </div>
-        <?php endif; ?>
+        </div>
+    </div>
+<?php endif; ?>
 
-        <!-- Bulk Assignment Section -->
-        <?php if ($unassignedCount > 0 && $primaryAvailableCount > 0): ?>
-            <div class="mb-6 bg-blue-50 border border-blue-200 rounded-xl p-4">
-                <div class="flex items-center justify-between">
-                    <div class="flex items-center space-x-3">
-                        <div class="bg-blue-100 p-2 rounded-lg">
-                            <i class="fas fa-magic text-blue-600"></i>
-                        </div>
-                        <div>
-                            <h3 class="text-lg font-semibold text-blue-900">Bulk Assignment Available</h3>
-                            <p class="text-blue-700 text-sm">
-                                <?php echo $primaryAvailableCount; ?> unassigned items can be automatically assigned to their primary suppliers
-                            </p>
-                        </div>
-                    </div>
-                    <button onclick="assignAllToPrimarySuppliers()"
-                        id="bulkAssignBtn"
-                        class="bg-gradient-to-r from-blue-500 to-blue-600 hover:from-blue-600 hover:to-blue-700 text-white px-6 py-3 rounded-lg shadow-lg transition-all duration-200 transform hover:scale-105 flex items-center space-x-2">
-                        <i class="fas fa-wand-magic-sparkles"></i>
-                        <span class="font-medium">Assign All to Primary Suppliers</span>
-                    </button>
-                </div>
+<!-- Bulk Assignment Banner -->
+<?php if ($unassignedCount > 0 && $primaryAvailableCount > 0): ?>
+    <div class="mb-6 bg-blue-50 border border-blue-200 rounded-xl p-4 flex items-center justify-between gap-4 flex-wrap">
+        <div class="flex items-center gap-3">
+            <div class="w-9 h-9 bg-blue-100 rounded-lg flex items-center justify-center shrink-0">
+                <i class="fas fa-magic text-blue-600 text-sm"></i>
             </div>
-        <?php endif; ?>
-
-        <!-- Assignment Status Summary -->
-        <div class="mb-6 grid grid-cols-1 md:grid-cols-3 gap-4">
-            <div class="bg-white rounded-lg shadow-sm border border-gray-200 p-4">
-                <div class="flex items-center">
-                    <div class="bg-green-100 p-2 rounded-lg mr-3">
-                        <i class="fas fa-check-circle text-green-600"></i>
-                    </div>
-                    <div>
-                        <p class="text-sm text-gray-600">Assigned Items</p>
-                        <p class="text-2xl font-bold text-green-600"><?php echo count($allItems) - $unassignedCount; ?></p>
-                    </div>
-                </div>
-            </div>
-            <div class="bg-white rounded-lg shadow-sm border border-gray-200 p-4">
-                <div class="flex items-center">
-                    <div class="bg-yellow-100 p-2 rounded-lg mr-3">
-                        <i class="fas fa-clock text-yellow-600"></i>
-                    </div>
-                    <div>
-                        <p class="text-sm text-gray-600">Unassigned Items</p>
-                        <p class="text-2xl font-bold text-yellow-600"><?php echo $unassignedCount; ?></p>
-                    </div>
-                </div>
-            </div>
-            <div class="bg-white rounded-lg shadow-sm border border-gray-200 p-4">
-                <div class="flex items-center">
-                    <div class="bg-blue-100 p-2 rounded-lg mr-3">
-                        <i class="fas fa-star text-blue-600"></i>
-                    </div>
-                    <div>
-                        <p class="text-sm text-gray-600">Primary Suppliers Available</p>
-                        <p class="text-2xl font-bold text-blue-600"><?php echo $primaryAvailableCount; ?></p>
-                    </div>
-                </div>
+            <div>
+                <h3 class="font-medium text-blue-900">Bulk assignment available</h3>
+                <p class="text-sm text-blue-700">
+                    <?php echo $primaryAvailableCount; ?> unassigned items can be auto-assigned to their primary suppliers
+                </p>
             </div>
         </div>
+        <button onclick="assignAllToPrimarySuppliers()" id="bulkAssignBtn"
+            class="flex items-center gap-2 bg-blue-600 hover:bg-blue-700 text-white text-sm font-medium px-4 py-2 rounded-lg transition-colors duration-150 whitespace-nowrap">
+            <i class="fas fa-wand-magic-sparkles text-xs"></i>
+            Assign all to primary suppliers
+        </button>
+    </div>
+<?php endif; ?>
 
-        <!-- Single Order Display -->
-        <div class="mb-8">
-            <!-- Order Header -->
-            <div class="bg-white rounded-t-xl shadow-sm border border-gray-200 p-4">
-                <div class="flex justify-between items-center">
-                    <div class="flex items-center space-x-4">
-                        <div class="bg-gradient-to-r from-primary-500 to-primary-600 p-2 rounded-lg">
-                            <i class="fas fa-receipt text-white"></i>
-                        </div>
-                        <div>
-                            <h2 class="text-xl font-bold text-gray-900">Order #<?php echo $order['id']; ?></h2>
-                            <p class="text-sm text-gray-600">
-                                <?php echo date('M j, Y g:i A', strtotime($order['created_at'])); ?> •
-                                Status: <span class="font-medium text-<?php echo $order['status'] === 'pending' ? 'yellow' : 'green'; ?>-600">
-                                    <?php echo ucfirst($order['status'] ?? 'pending'); ?>
-                                </span>
-                            </p>
-                        </div>
-                    </div>
+<!-- Summary Cards -->
+<div class="mb-6 grid grid-cols-1 md:grid-cols-3 gap-4">
+    <div class="bg-white rounded-lg border border-gray-200 p-4 flex items-center gap-3">
+        <div class="w-9 h-9 bg-green-100 rounded-lg flex items-center justify-center shrink-0">
+            <i class="fas fa-check-circle text-green-600 text-sm"></i>
+        </div>
+        <div>
+            <p class="text-xs text-gray-500">Assigned items</p>
+            <p class="text-2xl font-medium text-green-600"><?php echo count($allItems) - $unassignedCount; ?></p>
+        </div>
+    </div>
+    <div class="bg-white rounded-lg border border-gray-200 p-4 flex items-center gap-3">
+        <div class="w-9 h-9 bg-yellow-100 rounded-lg flex items-center justify-center shrink-0">
+            <i class="fas fa-clock text-yellow-600 text-sm"></i>
+        </div>
+        <div>
+            <p class="text-xs text-gray-500">Unassigned items</p>
+            <p class="text-2xl font-medium text-yellow-600"><?php echo $unassignedCount; ?></p>
+        </div>
+    </div>
+    <div class="bg-white rounded-lg border border-gray-200 p-4 flex items-center gap-3">
+        <div class="w-9 h-9 bg-blue-100 rounded-lg flex items-center justify-center shrink-0">
+            <i class="fas fa-star text-blue-600 text-sm"></i>
+        </div>
+        <div>
+            <p class="text-xs text-gray-500">Primary suppliers available</p>
+            <p class="text-2xl font-medium text-blue-600"><?php echo $primaryAvailableCount; ?></p>
+        </div>
+    </div>
+</div>
 
-                    <div class="flex items-center space-x-4">
-                        <div class="text-right">
-                            <?php if ($newOrderTotal != $order['total']): ?>
-                                <div class="text-lg font-bold text-amber-600 price-updated">
-                                    Updated: ₱<?php echo number_format($newOrderTotal, 2); ?>
-                                </div>
-                            <?php else: ?>
-                                <div class="text-lg font-bold text-primary-700">₱<?php echo number_format($order['total'], 2); ?></div>
-                            <?php endif; ?>
-                        </div>
-                        <!-- GENERATE P.O. BUTTON -->
-                        <a href="warehouse_staff_generate_po_A-B.php?order_id=<?php echo $order['id']; ?>"
-                            class="bg-gradient-to-r from-green-500 to-green-600 hover:from-green-600 hover:to-green-700 text-white px-6 py-2 rounded-lg shadow-lg transition-all duration-200 transform hover:scale-105 flex items-center space-x-2">
-                            <i class="fas fa-file-invoice text-white"></i>
-                            <span class="font-medium">Generate P.O.</span>
-                        </a>
-                    </div>
+<!-- Order Card -->
+<div class="mb-8">
+    <div class="bg-white rounded-t-xl border border-gray-200 p-4">
+        <div class="flex justify-between items-center gap-4 flex-wrap">
+
+            <!-- Order info -->
+            <div class="flex items-center gap-3">
+                <div class="w-9 h-9 bg-primary-600 rounded-lg flex items-center justify-center shrink-0">
+                    <i class="fa-solid fa-dolly"></i>
+                </div>
+                <div>
+                    <h2 class="font-medium text-gray-900">Order #<?php echo $order['id']; ?></h2>
+                    <p class="text-xs text-gray-500 mt-0.5">
+                        <?php echo date('M j, Y g:i A', strtotime($order['created_at'])); ?> &bull;
+                        <span
+                            class="<?php echo $order['status'] === 'pending' ? 'text-yellow-600' : 'text-green-600'; ?> font-medium">
+                            <?php echo ucfirst($order['status'] ?? 'pending'); ?>
+                        </span>
+                    </p>
                 </div>
             </div>
 
-       
+            <!-- Total + action -->
+            <div class="flex items-center gap-3">
+                <?php if ($newOrderTotal != $order['total']): ?>
+                    <div class="text-right">
+                        <p class="text-xs text-gray-400 line-through">₱<?php echo number_format($order['total'], 2); ?></p>
+                        <p class="text-base font-medium text-amber-600">₱<?php echo number_format($newOrderTotal, 2); ?></p>
+                    </div>
+                <?php else: ?>
+                    <p class="text-base font-medium text-gray-900">₱<?php echo number_format($order['total'], 2); ?></p>
+                <?php endif; ?>
 
+                <a href="warehouse_staff_generate_po_A-B.php?order_id=<?php echo $order['id']; ?>"
+                    class="flex items-center gap-2 bg-green-600 hover:bg-green-700 text-white text-sm font-medium px-4 py-2 rounded-lg transition-colors duration-150 whitespace-nowrap">
+                    <i class="fas fa-file-invoice text-xs"></i>
+                    Generate P.O.
+                </a>
+            </div>
+
+        </div>
+    </div>
+</div>
             <!-- Order Items -->
             <?php if (!empty($allItems)): ?>
                 <div class="space-y-4 bg-gray-50 rounded-b-xl border-x border-b border-gray-200 p-4">
@@ -581,8 +586,6 @@ for ($i = 0; $i < count($allItems); $i++) {
                                         <?php endif; ?>
                                     </div>
                                 </div>
-
-
                             </div>
                         </div>
                     <?php endforeach; ?>
@@ -658,9 +661,7 @@ for ($i = 0; $i < count($allItems); $i++) {
             const orderId = <?php echo $order['id']; ?>;
             window.location.href = `mailto:${email}?subject=Purchase Order Inquiry - Order #${orderId}&body=Hello,%0D%0A%0D%0AI would like to inquire about products for Order #${orderId}.%0D%0A%0D%0AThank you.`;
         }
-
-
-
+                
         function unassignSupplier(itemId) {
             if (!confirm('Are you sure you want to remove the assigned supplier from this item?')) {
                 return;

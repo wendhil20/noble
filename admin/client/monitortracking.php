@@ -412,7 +412,7 @@ $order_id = isset($_GET['id']) ? (int)$_GET['id'] : 0;
                                 ?>
                                     <div class="tracking-step flex items-start space-x-4 pb-6">
                                         <!-- Step Icon -->
-                                        <div class="flex-shrink-0">
+                                        <div class="shrink-0">
                                             <div class="step-icon <?= $is_complete ? 'bg-brand-green text-white' : ($reached ? 'bg-brand-orange text-white' : 'bg-gray-200 text-gray-500') ?>">
                                                 <?php if ($is_complete): ?>
                                                     ✓

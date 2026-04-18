@@ -40,7 +40,7 @@ require_role(['accountant', 'superadmin']);
         }
     </script>
 </head>
-<body class="bg-gradient-to-br from-slate-100 to-slate-200 min-h-screen">
+<body class="bg-slate-100 min-h-screen">
     <?php include '../navbar/top.php'; ?>
     <div class="container mx-auto px-4 py-8">
         <!-- Header Section -->
@@ -108,19 +108,19 @@ require_role(['accountant', 'superadmin']);
 
             <!-- Stats Summary -->
             <div class="grid grid-cols-1 md:grid-cols-4 gap-4 p-6 bg-white">
-                <div class="text-center p-4 rounded-xl bg-gradient-to-br from-green-50 to-emerald-50 border border-green-200">
+                <div class="text-center p-4 rounded-xl bg-emerald-50 border border-green-200">
                     <div class="text-2xl font-bold text-green-700" id="totalRevenue">₱0</div>
                     <div class="text-sm text-green-600">Total Revenue</div>
                 </div>
-                <div class="text-center p-4 rounded-xl bg-gradient-to-br from-blue-50 to-cyan-50 border border-blue-200">
+                <div class="text-center p-4 rounded-xl bg-cyan-50 border border-blue-200">
                     <div class="text-2xl font-bold text-blue-700" id="avgRevenue">₱0</div>
                     <div class="text-sm text-blue-600">Daily Average</div>
                 </div>
-                <div class="text-center p-4 rounded-xl bg-gradient-to-br from-purple-50 to-violet-50 border border-purple-200">
+                <div class="text-center p-4 rounded-xl bg-violet-50 border border-purple-200">
                     <div class="text-2xl font-bold text-purple-700" id="highestDay">₱0</div>
                     <div class="text-sm text-purple-600">Highest Day</div>
                 </div>
-                <div class="text-center p-4 rounded-xl bg-gradient-to-br from-orange-50 to-amber-50 border border-orange-200">
+                <div class="text-center p-4 rounded-xl bg-amber-50 border border-orange-200">
                     <div class="text-2xl font-bold text-orange-700" id="totalDays">0</div>
                     <div class="text-sm text-orange-600">Days</div>
                 </div>
@@ -131,7 +131,7 @@ require_role(['accountant', 'superadmin']);
                 <div class="relative bg-white rounded-lg">
                     <!-- Google Chart Container -->
                     <div id="revenueChart" style="width: 100%; height: 400px;"></div>
-                    <div id="loadingIndicator" class="absolute inset-0 flex items-center justify-center bg-white bg-opacity-90 rounded-lg hidden">
+                    <div id="loadingIndicator" class="absolute inset-0 items-center justify-center bg-white bg-opacity-90 rounded-lg hidden">
                         <div class="flex items-center gap-3">
                             <div class="w-6 h-6 border-3 border-blue-600 border-t-transparent rounded-full animate-spin"></div>
                             <span class="text-slate-600 font-medium">Loading data...</span>
@@ -167,7 +167,7 @@ require_role(['accountant', 'superadmin']);
             <!-- Enhanced Table -->
             <div class="overflow-x-auto rounded-lg border border-gray-200">
                 <table class="w-full text-sm text-left bg-white">
-                    <thead class="bg-gradient-to-r from-gray-50 to-gray-100 text-gray-700">
+                    <thead class="bg-gray-50 text-gray-700">
                         <tr>
                             <th class="px-6 py-4 font-semibold border-b border-gray-200">Date</th>
                             <th class="px-6 py-4 font-semibold border-b border-gray-200">Revenue</th>

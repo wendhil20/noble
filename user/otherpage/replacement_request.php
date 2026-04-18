@@ -564,7 +564,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && !$existing_request && $is_eligible)
                 <h4 class="font-semibold text-blue-800 mb-2">Replacement Policy</h4>
                 <ul class="text-sm text-blue-700 space-y-1">
                     <li>• Items can be replaced within 7 days of delivery</li>
-                    <li>• Replacement processing time: 1-2 business days with proper documentation</li>
+                    <li>• Replacement processing time: 1-2 days with proper documentation</li>
                     <li>• Original items must be returned in sellable condition</li>
                     <li>• Free return shipping for defective items</li>
                     <li>• 3 clear photos are required to verify the defect/issue</li>
@@ -591,6 +591,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && !$existing_request && $is_eligible)
         <?php endif; ?>
     </div>
 
+    <?php include '../navbar/footer.php'?>
     <script>
         let uploadedImages = 0;
         let imageFiles = [null, null, null];

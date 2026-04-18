@@ -1224,7 +1224,7 @@ function markStickerOpened() {
 
             <!-- Start Transit Button -->
             <?php if ($allLoaded && !$isInTransit && !$isCompleted): ?>
-                <div class="bg-gradient-to-r from-green-500 to-green-600 rounded-xl shadow-lg p-4 text-white">
+                <div class="bg-gradient-to-r from-green-500 to-green-600 rounded-xl shadow-lg p-4 text-white mt-2">
                     <h3 class="text-lg font-bold mb-2 flex items-center">
                         <i class="fas fa-<?php echo $booking['booking_type'] === 'pickup' ? 'box' : 'truck-moving'; ?> mr-2"></i>
                         Ready to Start <?php echo $booking['booking_type'] === 'pickup' ? 'Pickup' : 'Delivery'; ?>
@@ -1245,7 +1245,7 @@ function markStickerOpened() {
             <?php endif; ?>
 
             <?php if ($isInTransit): ?>
-                <div class="bg-gradient-to-r from-blue-500 to-blue-600 rounded-xl shadow-lg p-4 text-white">
+                <div class="bg-gradient-to-r from-blue-500 to-blue-600 rounded-xl shadow-lg p-4 text-white mt-2">
                     <h3 class="text-lg font-bold mb-2 flex items-center">
                         <i class="fas fa-shipping-fast mr-2"></i>
                         <?php echo $booking['booking_type'] === 'pickup' ? 'Pickup' : 'Delivery'; ?> In Progress
@@ -1255,8 +1255,6 @@ function markStickerOpened() {
                     </p>
                 </div>
             <?php endif; ?>
-        </div>
-        </div>
         </div>
     </body>
 

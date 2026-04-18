@@ -451,11 +451,10 @@ $show_map = $delivery_settings &&
         }
 
         /* Map styles */
-        #deliveryMap {
-            height: 400px;
-            border-radius: 12px;
-            z-index: 1;
-        }
+      #deliveryMap {
+    height: 400px;
+    border-radius: 12px;
+}
 
         /* Hide leaflet routing machine instructions by default */
         .leaflet-routing-container {
@@ -524,7 +523,7 @@ $show_map = $delivery_settings &&
     </style>
 </head>
 
-<body class=" min-h-screen font-roboto">
+<body class=" min-h-screen">
     <?php include '../navbar/top.php'; ?>
 
     <div class="container mx-auto px-3 sm:px-4 py-4 sm:py-8 max-w-6xl">
@@ -588,7 +587,8 @@ $show_map = $delivery_settings &&
                         <div>
                             <p class="text-sm font-semibold text-blue-800">To: Your Address</p>
                             <p class="text-xs text-blue-600"><?= htmlspecialchars($order['delivery_address']) ?>,
-                                <?= htmlspecialchars($order['delivery_city']) ?></p>
+                                <?= htmlspecialchars($order['delivery_city']) ?>
+                            </p>
                         </div>
                     </div>
                 </div>
@@ -609,7 +609,8 @@ $show_map = $delivery_settings &&
                     <div class="flex-1">
                         <h2 class="text-xl sm:text-2xl font-bold text-gray-900">Order #<?= $order['id'] ?></h2>
                         <p class="text-sm sm:text-base text-gray-600">
-                            <?= date('M j, Y g:i A', strtotime($order['created_at'])) ?></p>
+                            <?= date('M j, Y g:i A', strtotime($order['created_at'])) ?>
+                        </p>
                         <p class="text-xs sm:text-sm text-gray-500"><?= count($order_items) ?> item(s)</p>
                     </div>
                 </div>
@@ -682,7 +683,7 @@ $show_map = $delivery_settings &&
         ?>
 
         <?php if ($show_delivery_info): ?>
-            <div class=" p-4 sm:p-6 mb-6 sm:mb-8 ">
+            <div class=" p-4 sm:p-6 mb-6 sm:mb-8 shadow-lg rounded-xl">
                 <div class="flex items-center gap-3 mb-4">
                     <div class="w-10 h-10 sm:w-12 sm:h-12 bg-blue-500 rounded-xl flex items-center justify-center">
                         <svg class="w-5 h-5 sm:w-6 sm:h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -906,7 +907,8 @@ $show_map = $delivery_settings &&
                                 <div>
                                     <p class="text-red-600 text-xs mb-1 font-bold">Courier Service</p>
                                     <p class="font-semibold text-black">
-                                        <?php echo htmlspecialchars($booking_info['courier_name']); ?></p>
+                                        <?php echo htmlspecialchars($booking_info['courier_name']); ?>
+                                    </p>
                                 </div>
                             <?php endif; ?>
 
@@ -914,7 +916,8 @@ $show_map = $delivery_settings &&
                                 <div>
                                     <p class="text-red-600 text-xs mb-1 font-bold">Booking Reference</p>
                                     <p class="font-semibold text-black">
-                                        <?php echo htmlspecialchars($booking_info['booking_reference']); ?></p>
+                                        <?php echo htmlspecialchars($booking_info['booking_reference']); ?>
+                                    </p>
                                 </div>
                             <?php endif; ?>
 
@@ -922,7 +925,8 @@ $show_map = $delivery_settings &&
                                 <div>
                                     <p class="text-red-600 text-xs mb-1 font-bold">Driver</p>
                                     <p class="font-semibold text-black">
-                                        <?php echo htmlspecialchars($booking_info['driver_name']); ?></p>
+                                        <?php echo htmlspecialchars($booking_info['driver_name']); ?>
+                                    </p>
                                 </div>
                             <?php endif; ?>
 
@@ -930,7 +934,8 @@ $show_map = $delivery_settings &&
                                 <div>
                                     <p class="text-red-600 text-xs mb-1 font-bold">Vehicle</p>
                                     <p class="font-semibold text-black">
-                                        <?php echo htmlspecialchars($booking_info['vehicle_plate_number']); ?></p>
+                                        <?php echo htmlspecialchars($booking_info['vehicle_plate_number']); ?>
+                                    </p>
                                 </div>
                             <?php endif; ?>
 
@@ -1018,7 +1023,7 @@ $show_map = $delivery_settings &&
                     <div class="flex flex-col items-center flex-1 px-2">
                         <!-- Connecting Line Before Circle -->
                         <?php if ($step_count > 0): ?>
-                            <div class="absolute top-6 h-0.5 <?= $is_completed ? 'bg-success' : 'bg-gray-200' ?>"
+                            <div class="absolute top-6 h-0.5 <?= $is_completed ? 'bg-green-500' : 'bg-gray-200' ?>"
                                 style="left: 0; right: 50%; z-index: 0; transform: translateX(50%);"></div>
                         <?php endif; ?>
 
@@ -1026,11 +1031,11 @@ $show_map = $delivery_settings &&
                         <div class="w-12 h-12 rounded-full flex items-center justify-center mb-3 z-10 relative
                     <?php
                     if ($is_completed) {
-                        echo 'bg-success text-white';
+                        echo 'bg-green-500 text-white';
                     } elseif ($is_current) {
-                        echo 'bg-primary text-white animate-pulse-slow shadow-lg';
+                        echo 'bg-gray-500 text-white animate-pulse-slow shadow-lg';
                     } else {
-                        echo 'bg-gray-200 text-gray-400';
+                        echo 'bg-gray-200 text-gray-900';
                     }
                     ?>">
                             <?php if ($is_completed): ?>
@@ -1101,9 +1106,9 @@ $show_map = $delivery_settings &&
                         <div class="w-10 h-10 rounded-full flex items-center justify-center shrink-0
                     <?php
                     if ($is_completed) {
-                        echo 'bg-success text-white';
+                        echo 'bg-green-500 text-white';
                     } elseif ($is_current) {
-                        echo 'bg-primary text-white animate-pulse-slow';
+                        echo 'bg-green-500 text-white animate-pulse-slow';
                     } else {
                         echo 'bg-gray-200 text-gray-400';
                     }
@@ -1140,7 +1145,7 @@ $show_map = $delivery_settings &&
 
                     <!-- Vertical Connecting Line -->
                     <?php if (!$is_last): ?>
-                        <div class="mobile-step-line <?= $is_completed ? 'bg-success' : 'bg-gray-200' ?>"></div>
+                        <div class="mobile-step-line <?= $is_completed ? 'bg-green-500' : 'bg-gray-200' ?>"></div>
                     <?php endif; ?>
 
                     <?php
@@ -1188,7 +1193,8 @@ $show_map = $delivery_settings &&
                             </div>
                             <div class="flex-1">
                                 <h4 class="font-semibold text-green-900 mb-1">All items have been
-                                    <?= $delivery_type === 'pickup' ? 'picked up' : 'delivered' ?>!</h4>
+                                    <?= $delivery_type === 'pickup' ? 'picked up' : 'delivered' ?>!
+                                </h4>
                                 <p class="text-sm text-green-700">Help us improve by sharing your experience with this
                                     order.</p>
                             </div>
@@ -1311,9 +1317,11 @@ $show_map = $delivery_settings &&
                         </div>
                         <div class="flex-1 min-w-0">
                             <h4 class="font-semibold text-gray-900 text-sm sm:text-base truncate">
-                                <?= htmlspecialchars($item['product_name']) ?></h4>
+                                <?= htmlspecialchars($item['product_name']) ?>
+                            </h4>
                             <p class="text-xs sm:text-sm text-gray-600 truncate">
-                                <?= htmlspecialchars($item['variant_color']) ?> - <?= htmlspecialchars($item['size']) ?></p>
+                                <?= htmlspecialchars($item['variant_color']) ?> - <?= htmlspecialchars($item['size']) ?>
+                            </p>
                             <p class="text-xs text-gray-500">Qty: <?= $item['quantity'] ?></p>
 
                             <?php if ($item['lt_from'] && $item['lt_to']): ?>
@@ -1374,10 +1382,12 @@ $show_map = $delivery_settings &&
                                 </div>
                                 <div class="flex-1 min-w-0">
                                     <h4 class="font-semibold text-gray-900 text-sm sm:text-base truncate">
-                                        <?= htmlspecialchars($item['product_name']) ?></h4>
+                                        <?= htmlspecialchars($item['product_name']) ?>
+                                    </h4>
                                     <p class="text-xs sm:text-sm text-gray-600 truncate">
                                         <?= htmlspecialchars($item['variant_color']) ?> -
-                                        <?= htmlspecialchars($item['size']) ?></p>
+                                        <?= htmlspecialchars($item['size']) ?>
+                                    </p>
                                     <p class="text-xs text-gray-500">Qty: <?= $item['quantity'] ?></p>
                                 </div>
                             </div>
@@ -1439,8 +1449,8 @@ $show_map = $delivery_settings &&
                                             $status_color = 'bg-red-100 text-red-800';
                                             $status_text = '❌ Rejected';
                                         } elseif ($replacement_status === 'pending') {
-                                            $status_color = 'bg-orange-100 text-orange-800';
-                                            $status_text = '🔄 Pending Review';
+                                            $status_color = 'bg-orange-500 text-white';
+                                            $status_text = 'Pending Review';
                                         } else {
                                             $status_color = 'bg-gray-100 text-gray-800';
                                             $status_text = '📋 ' . ucfirst(str_replace('_', ' ', $replacement_status));
@@ -1672,9 +1682,9 @@ $show_map = $delivery_settings &&
                                                 <?php
                                                 if ($is_completed) {
                                                     if (strtolower($step_key) === 'delivered') {
-                                                        echo 'bg-success text-white';
+                                                        echo 'bg-green-500 text-white';
                                                     } else {
-                                                        echo $is_current ? 'bg-primary text-white animate-pulse-slow' : 'bg-success text-white';
+                                                        echo $is_current ? 'bg-green-500 text-white' : 'bg-green-500 text-white';
                                                     }
                                                 } else {
                                                     echo 'bg-gray-200 text-gray-400';
@@ -1707,7 +1717,7 @@ $show_map = $delivery_settings &&
                                     <!-- Mini Connecting Line -->
                                     <?php if (!$is_last): ?>
                                         <div
-                                            class="flex-1 h-0.5 mx-2 <?= $is_completed && $step_count < $current_step_index ? 'bg-success' : 'bg-gray-200' ?>">
+                                            class="flex-1 h-0.5 mx-2 <?= $is_completed && $step_count < $current_step_index ? 'bg-green-500' : 'bg-gray-200' ?>">
                                         </div>
                                     <?php endif; ?>
 
@@ -1736,9 +1746,9 @@ $show_map = $delivery_settings &&
                                                     <?php
                                                     if ($is_completed) {
                                                         if (strtolower($step_key) === 'delivered') {
-                                                            echo 'bg-success text-white';
+                                                            echo 'bg-green-500 text-white';
                                                         } else {
-                                                            echo $is_current ? 'bg-primary text-white animate-pulse-slow' : 'bg-success text-white';
+                                                            echo $is_current ? 'bg-green-500 text-white animate-pulse-slow' : 'bg-green-500 text-white';
                                                         }
                                                     } else {
                                                         echo 'bg-gray-200 text-gray-400';
@@ -1802,8 +1812,10 @@ $show_map = $delivery_settings &&
                         </svg>
                         <div class="flex-1 min-w-0">
                             <p class="font-medium text-gray-900 text-sm sm:text-base">
-                                <?= htmlspecialchars($order['customer_name']) ?></p>
-                            <p class="text-sm text-gray-600 wrap-break-word"><?= htmlspecialchars($order['address']) ?></p>
+                                <?= htmlspecialchars($order['customer_name']) ?>
+                            </p>
+                            <p class="text-sm text-gray-600 wrap-break-word"><?= htmlspecialchars($order['address']) ?>
+                            </p>
                             <p class="text-sm text-gray-500"><?= htmlspecialchars($order['mobile']) ?></p>
                         </div>
                     </div>
@@ -1851,150 +1863,91 @@ $show_map = $delivery_settings &&
 
     <script>
         // Map initialization
-        <?php if ($show_map): ?>
-            document.addEventListener('DOMContentLoaded', function () {
-                // Initialize map
-                const map = L.map('deliveryMap').setView([<?= $order['delivery_lat'] ?>, <?= $order['delivery_lng'] ?>], 13);
+       <?php if ($show_map): ?>
+    document.addEventListener('DOMContentLoaded', function () {
+        const MAPBOX_TOKEN = 'pk.eyJ1Ijoid2VuZGhpbCIsImEiOiJjbWx1NmIzMDgwM25kM2RyMnVuOTNuMzhrIn0.45jN2HjKO_iRMlF-8gWcwQ';
+        mapboxgl.accessToken = MAPBOX_TOKEN;
 
-                // Add tile layer
-                L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-                    attribution: '© <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
-                }).addTo(map);
+        const warehouseLng = <?= $delivery_settings['longitude'] ?>;
+        const warehouseLat = <?= $delivery_settings['latitude'] ?>;
+        const deliveryLng  = <?= $order['delivery_lng'] ?>;
+        const deliveryLat  = <?= $order['delivery_lat'] ?>;
 
-                // Define coordinates
-                const warehouseCoords = [<?= $delivery_settings['latitude'] ?>, <?= $delivery_settings['longitude'] ?>];
-                const deliveryCoords = [<?= $order['delivery_lat'] ?>, <?= $order['delivery_lng'] ?>];
+        const map = new mapboxgl.Map({
+            container: 'deliveryMap',
+            style: 'mapbox://styles/mapbox/streets-v12',
+            center: [deliveryLng, deliveryLat],
+            zoom: 12
+        });
 
-                // Create custom icons
-                const warehouseIcon = L.divIcon({
-                    html: `
-                        <div style="
-                            background-color: #10B981; 
-                            width: 30px; 
-                            height: 30px; 
-                            border-radius: 50%; 
-                            display: flex; 
-                            align-items: center; 
-                            justify-content: center;
-                            border: 3px solid white;
-                            box-shadow: 0 2px 10px rgba(0,0,0,0.3);
-                        ">
-                            <svg width="16" height="16" fill="white" viewBox="0 0 24 24">
-                                <path d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4"/>
-                            </svg>
-                        </div>
-                    `,
-                    className: 'custom-warehouse-icon',
-                    iconSize: [30, 30],
-                    iconAnchor: [15, 15]
+        map.addControl(new mapboxgl.NavigationControl(), 'top-right');
+
+        // Warehouse marker (green)
+        const warehouseEl = document.createElement('div');
+        warehouseEl.innerHTML = `
+            <div style="background:#10B981;width:34px;height:34px;border-radius:50%;display:flex;align-items:center;justify-content:center;border:3px solid white;box-shadow:0 2px 10px rgba(0,0,0,0.3);">
+                <i class="fa-solid fa-location-arrow text-xl text-white"></i>
+            </div>`;
+
+        new mapboxgl.Marker({ element: warehouseEl })
+            .setLngLat([warehouseLng, warehouseLat])
+            .setPopup(new mapboxgl.Popup({ offset: 25 }).setHTML(`
+                <div style="min-width:180px;">
+                    <p style="font-weight:700;color:#10B981;margin:0 0 4px;">Warehouse</p>
+                    <p style="font-size:12px;color:#666;margin:0;"><?= htmlspecialchars($delivery_settings['location_name']) ?></p>
+                </div>`))
+            .addTo(map);
+
+        // Delivery marker (blue)
+        const deliveryEl = document.createElement('div');
+        deliveryEl.innerHTML = `
+            <div style="background:#3B82F6;width:34px;height:34px;border-radius:50%;display:flex;align-items:center;justify-content:center;border:3px solid white;box-shadow:0 2px 10px rgba(0,0,0,0.3);">
+                <i class="fa-solid fa-location-crosshairs text-xl text-white"></i>
+            </div>`;
+
+        new mapboxgl.Marker({ element: deliveryEl })
+            .setLngLat([deliveryLng, deliveryLat])
+            .setPopup(new mapboxgl.Popup({ offset: 25 }).setHTML(`
+                <div style="min-width:180px;">
+                    <p style="font-weight:700;color:#3B82F6;margin:0 0 4px;">Delivery Address</p>
+                    <p style="font-weight:600;font-size:13px;margin:0 0 2px;"><?= htmlspecialchars($order['customer_name']) ?></p>
+                    <p style="font-size:12px;color:#666;margin:0;"><?= htmlspecialchars($order['delivery_address']) ?>, <?= htmlspecialchars($order['delivery_city']) ?></p>
+                </div>`))
+            .addTo(map);
+
+        // Draw route line via Directions API
+        map.on('load', async () => {
+            try {
+                const res = await fetch(
+                    `https://api.mapbox.com/directions/v5/mapbox/driving/${warehouseLng},${warehouseLat};${deliveryLng},${deliveryLat}?geometries=geojson&access_token=${MAPBOX_TOKEN}`
+                );
+                const data = await res.json();
+                const route = data.routes[0].geometry;
+
+                map.addSource('route', { type: 'geojson', data: { type: 'Feature', geometry: route } });
+                map.addLayer({
+                    id: 'route',
+                    type: 'line',
+                    source: 'route',
+                    layout: { 'line-join': 'round', 'line-cap': 'round' },
+                    paint: { 'line-color': '#FF6B35', 'line-width': 5, 'line-opacity': 0.8 }
                 });
 
-                const deliveryIcon = L.divIcon({
-                    html: `
-                        <div style="
-                            background-color: #3B82F6; 
-                            width: 30px; 
-                            height: 30px; 
-                            border-radius: 50%; 
-                            display: flex; 
-                            align-items: center; 
-                            justify-content: center;
-                            border: 3px solid white;
-                            box-shadow: 0 2px 10px rgba(0,0,0,0.3);
-                        ">
-                            <svg width="16" height="16" fill="white" viewBox="0 0 24 24">
-                                <path d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6"/>
-                            </svg>
-                        </div>
-                    `,
-                    className: 'custom-delivery-icon',
-                    iconSize: [30, 30],
-                    iconAnchor: [15, 15]
-                });
-
-                // Add markers
-                L.marker(warehouseCoords, {
-                    icon: warehouseIcon
-                })
-                    .addTo(map)
-                    .bindPopup(`
-                        <div style="min-width: 200px;">
-                            <h3 style="margin: 0 0 8px 0; color: #10B981; font-weight: bold;">Warehouse</h3>
-                            <p style="margin: 0; font-size: 12px; color: #666;">
-                                <?= htmlspecialchars($delivery_settings['location_name']) ?>
-                            </p>
-                        </div>
-                    `);
-
-                L.marker(deliveryCoords, {
-                    icon: deliveryIcon
-                })
-                    .addTo(map)
-                    .bindPopup(`
-                        <div style="min-width: 200px;">
-                            <h3 style="margin: 0 0 8px 0; color: #3B82F6; font-weight: bold;">Delivery Address</h3>
-                            <p style="margin: 0 0 4px 0; font-weight: bold;"><?= htmlspecialchars($order['customer_name']) ?></p>
-                            <p style="margin: 0; font-size: 12px; color: #666;">
-                                <?= htmlspecialchars($order['delivery_address']) ?>, <?= htmlspecialchars($order['delivery_city']) ?>
-                            </p>
-                        </div>
-                    `);
-
-                // Add routing
-                const routingControl = L.Routing.control({
-                    waypoints: [
-                        L.latLng(warehouseCoords[0], warehouseCoords[1]),
-                        L.latLng(deliveryCoords[0], deliveryCoords[1])
-                    ],
-                    routeWhileDragging: false,
-                    addWaypoints: false,
-                    createMarker: function () {
-                        return null;
-                    }, // Don't create default markers
-                    lineOptions: {
-                        styles: [{
-                            color: '#FF6B35',
-                            weight: 6,
-                            opacity: 0.7
-                        },
-                        {
-                            color: '#ffffff',
-                            weight: 2,
-                            opacity: 1
-                        }
-                        ]
-                    },
-                    router: L.Routing.osrmv1({
-                        serviceUrl: 'https://router.project-osrm.org/route/v1'
-                    }),
-                    formatter: new L.Routing.Formatter({
-                        language: 'en',
-                        units: 'metric'
-                    }),
-                    show: false, // Hide the instruction panel initially
-                    collapsible: true
-                }).addTo(map);
-
-                // Fit bounds to show both markers and route
-                setTimeout(() => {
-                    const group = new L.featureGroup([
-                        L.marker(warehouseCoords),
-                        L.marker(deliveryCoords)
-                    ]);
-                    map.fitBounds(group.getBounds().pad(0.1));
-                }, 1000);
-
-                // Handle route found event
-                routingControl.on('routesfound', function (e) {
-                    const routes = e.routes;
-                    const summary = routes[0].summary;
-
-                    // Update distance display if needed
-                    console.log('Route distance:', (summary.totalDistance / 1000).toFixed(2) + ' km');
-                    console.log('Route time:', Math.round(summary.totalTime / 60) + ' minutes');
-                });
-            });
-        <?php endif; ?>
+                // Fit map to show both markers + route
+                const bounds = new mapboxgl.LngLatBounds();
+                route.coordinates.forEach(c => bounds.extend(c));
+                map.fitBounds(bounds, { padding: 60 });
+            } catch (e) {
+                console.error('Route error:', e);
+                // Fallback: just fit markers
+                const bounds = new mapboxgl.LngLatBounds()
+                    .extend([warehouseLng, warehouseLat])
+                    .extend([deliveryLng, deliveryLat]);
+                map.fitBounds(bounds, { padding: 60 });
+            }
+        });
+    });
+<?php endif; ?>
 
         // Add smooth scroll animation for page load
         document.addEventListener('DOMContentLoaded', function () {
@@ -2060,8 +2013,7 @@ $show_map = $delivery_settings &&
     </script>
 
     <!-- Feedback Modal -->
-    <div id="feedbackModal"
-        class="hidden fixed inset-0 bg-black bg-opacity-50 z-50  items-center justify-center p-4">
+    <div id="feedbackModal" class="hidden fixed inset-0 bg-black/50 z-50 items-center justify-center p-4">
         <div class="bg-white rounded-2xl shadow-2xl max-w-2xl w-full max-h-[90vh] overflow-y-auto">
             <div class="p-6">
                 <div class="flex items-center justify-between mb-6">
@@ -2197,15 +2149,17 @@ $show_map = $delivery_settings &&
         }
 
         function openFeedbackModal() {
-            document.getElementById('feedbackModal').classList.remove('hidden');
+            const modal = document.getElementById('feedbackModal');
+            modal.classList.remove('hidden');
+            modal.classList.add('flex');
             document.body.style.overflow = 'hidden';
         }
-
         function closeFeedbackModal() {
-            document.getElementById('feedbackModal').classList.add('hidden');
+            const modal = document.getElementById('feedbackModal');
+            modal.classList.add('hidden');
+            modal.classList.remove('flex');
             document.body.style.overflow = 'auto';
         }
-
         // Handle form submission
         document.getElementById('feedbackForm').addEventListener('submit', async function (e) {
             e.preventDefault();

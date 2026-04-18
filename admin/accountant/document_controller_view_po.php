@@ -166,7 +166,7 @@ $total = $subtotal + $vat + $general_req;
         
         <!-- PO Details Card -->
         <div class="bg-white rounded-xl shadow-lg border border-gray-200 overflow-hidden mb-6">
-            <div class="bg-gradient-to-r from-purple-600 to-purple-700 px-6 py-4">
+            <div class="bg-purple-600 px-6 py-4">
                 <h2 class="text-xl font-bold text-white flex items-center">
                     <i class="fas fa-file-invoice mr-2"></i>
                     Purchase Order Details
@@ -254,7 +254,7 @@ $total = $subtotal + $vat + $general_req;
 
         <!-- PO Items Card -->
         <div class="bg-white rounded-xl shadow-lg border border-gray-200 overflow-hidden mb-6">
-            <div class="bg-gradient-to-r from-blue-600 to-blue-700 px-6 py-4">
+            <div class="bg-blue-600 px-6 py-4">
                 <h2 class="text-xl font-bold text-white flex items-center">
                     <i class="fas fa-boxes mr-2"></i>
                     Order Items (<?php echo count($po_items); ?>)
@@ -327,7 +327,7 @@ $total = $subtotal + $vat + $general_req;
                                 <span class="text-sm font-medium text-gray-700">General Requirements (10%):</span>
                                 <span class="text-sm font-bold text-gray-900">₱<?php echo number_format($general_req, 2); ?></span>
                             </div>
-                            <div class="flex justify-between py-3 px-4 bg-gradient-to-r from-blue-600 to-blue-700 rounded-lg">
+                            <div class="flex justify-between py-3 px-4 bg-blue-600 rounded-lg">
                                 <span class="text-base font-bold text-white">Total Amount:</span>
                                 <span class="text-base font-bold text-white">₱<?php echo number_format($total, 2); ?></span>
                             </div>
@@ -345,7 +345,7 @@ $total = $subtotal + $vat + $general_req;
         <!-- Action Buttons -->
         <?php if ($po_data['document_controller_status'] === 'pending'): ?>
             <div class="bg-white rounded-xl shadow-lg border border-gray-200 overflow-hidden">
-                <div class="bg-gradient-to-r from-gray-700 to-gray-800 px-6 py-4">
+                <div class="bg-gray-700 px-6 py-4">
                     <h2 class="text-xl font-bold text-white flex items-center">
                         <i class="fas fa-clipboard-check mr-2"></i>
                         Review Actions
@@ -355,13 +355,13 @@ $total = $subtotal + $vat + $general_req;
                 <div class="p-6">
                     <div class="flex gap-4">
                         <button onclick="openModal('approve')" 
-                                class="flex-1 bg-gradient-to-r from-green-500 to-green-600 hover:from-green-600 hover:to-green-700 text-white px-6 py-3 rounded-lg transition-all duration-200 transform hover:scale-105 shadow-lg flex items-center justify-center space-x-2 font-bold">
+                                class="flex-1 bg-green-500 hover:bg-green-600 text-white px-6 py-3 rounded-lg transition-all duration-200 transform hover:scale-105 shadow-lg flex items-center justify-center space-x-2 font-bold">
                             <i class="fas fa-check-circle text-lg"></i>
                             <span>Approve Purchase Order</span>
                         </button>
                         
                         <button onclick="openModal('reject')" 
-                                class="flex-1 bg-gradient-to-r from-red-500 to-red-600 hover:from-red-600 hover:to-red-700 text-white px-6 py-3 rounded-lg transition-all duration-200 transform hover:scale-105 shadow-lg flex items-center justify-center space-x-2 font-bold">
+                                class="flex-1 bg-red-500 hover:bg-red-600 text-white px-6 py-3 rounded-lg transition-all duration-200 transform hover:scale-105 shadow-lg flex items-center justify-center space-x-2 font-bold">
                             <i class="fas fa-times-circle text-lg"></i>
                             <span>Reject Purchase Order</span>
                         </button>

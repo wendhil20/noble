@@ -212,7 +212,7 @@ $tracking_status_colors = [
                     <?php if ($earliest_delivery_date && $latest_delivery_date): ?>
                         <div>
                             <label class="text-sm font-medium text-gray-500">Expected Delivery Range</label>
-                            <div class="mt-1 bg-gradient-to-r from-blue-50 to-indigo-50 border-l-4 border-blue-500 rounded-lg p-3">
+                            <div class="mt-1 bg-blue-50 border-l-4 border-blue-500 rounded-lg p-3">
                                 <p class="text-gray-900 font-semibold">
                                     <?php echo date('M d, Y', strtotime($earliest_delivery_date)); ?>
                                     <span class="text-gray-500 mx-2">to</span>
@@ -233,7 +233,7 @@ $tracking_status_colors = [
 
         <!-- Sales Referral Information (if applicable) -->
         <?php if ($order['sales_referral_code']): ?>
-            <div class="bg-gradient-to-r from-purple-50 to-blue-50 border-l-4 border-purple-500 rounded-xl shadow-sm p-4 mb-6">
+            <div class="bg-purple-50 border-l-4 border-purple-500 rounded-xl shadow-sm p-4 mb-6">
                 <h2 class="text-lg font-semibold text-gray-900 mb-4 flex items-center">
                     <i class="fas fa-user-tie text-purple-600 mr-2"></i>Sales Representative
                 </h2>
@@ -302,7 +302,7 @@ $tracking_status_colors = [
                     <?php if (!empty($order['paymongo_payment_id'])): ?>
                         <div>
                             <label class="text-sm font-medium text-gray-500">Payment ID</label>
-                            <p class="text-gray-900 text-xs break-all mt-1 bg-green-50 p-2 rounded-lg border border-green-200 font-mono text-green-800">
+                            <p class="text-gray-900 text-xs break-all mt-1 bg-green-50 p-2 rounded-lg border border-green-200 font-mono">
                                 <?php echo htmlspecialchars($order['paymongo_payment_id']); ?>
                             </p>
                         </div>
@@ -414,7 +414,7 @@ $tracking_status_colors = [
         $profit_margin  = $total_selling_price > 0 ? (($gross_profit / $total_selling_price) * 100) : 0;
         ?>
 
-        <div class="bg-gradient-to-r from-green-50 to-blue-50 rounded-xl shadow-sm p-4 mb-6 border-l-4 border-green-500">
+        <div class="bg-green-50 rounded-xl shadow-sm p-4 mb-6 border-l-4 border-green-500">
             <h2 class="text-lg font-semibold text-gray-900 mb-4 flex items-center">
                 <i class="fas fa-chart-line text-green-600 mr-2"></i>Profit & Discount Analysis
             </h2>

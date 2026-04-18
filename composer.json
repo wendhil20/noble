@@ -9,6 +9,7 @@
         "react/socket": "^0.4.6",
         "react/stream": "^0.4.6",
         "react/http": "^0.4.0",
-        "ratchet/pawl": "^0.1.2"
+        "ratchet/pawl": "^0.1.2",
+        "mpdf/mpdf": "^8.3"
     }
 }

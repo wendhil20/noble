@@ -187,7 +187,7 @@ foreach ($purchase_orders as $po) {
         </div>
 
         <div class="bg-white rounded-lg shadow-lg border border-gray-200 overflow-hidden">
-            <div class="bg-gradient-to-r from-blue-600 to-blue-700 px-6 py-3">
+            <div class="bg-blue-600 px-6 py-3">
                 <h2 class="text-xl font-bold text-white">Approved Purchase Orders (<?php echo count($purchase_orders); ?>)</h2>
             </div>
             
@@ -279,7 +279,7 @@ foreach ($purchase_orders as $po) {
     <!-- Modal -->
     <div id="modal" class="hidden fixed inset-0 bg-black bg-opacity-40 backdrop-blur-sm z-50 flex items-center justify-center p-4">
         <div class="bg-white max-w-md w-full rounded-lg shadow-2xl">
-            <div id="modalHeader" class="bg-gradient-to-r from-blue-600 to-blue-700 px-6 py-3 rounded-t-lg">
+            <div id="modalHeader" class="bg-blue-600 px-6 py-3 rounded-t-lg">
                 <div class="flex justify-between items-center">
                     <h3 id="modalTitle" class="text-lg font-bold text-white"></h3>
                     <button onclick="closeModal()" class="text-white hover:bg-white hover:bg-opacity-20 rounded w-6 h-6 flex items-center justify-center">

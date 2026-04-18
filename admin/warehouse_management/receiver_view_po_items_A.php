@@ -151,8 +151,6 @@ if (!empty($po_number)) {
 <head>
     <meta charset="UTF-8">
     <title>View P.O. Items - P.O System</title>
-
-
     <style>
         @media print {
             .no-print {
@@ -184,7 +182,7 @@ if (!empty($po_number)) {
     </style>
 </head>
 
-<body class="bg-gradient-to-br from-gray-50 to-gray-100 min-h-screen">
+<body class="bg-gray-100 min-h-screen">
     <?php include '../navbar/top.php'; ?>
 
     <!-- Header -->
@@ -210,22 +208,6 @@ if (!empty($po_number)) {
         <!-- Alert Container -->
         <div id="alertContainer" class="mb-6"></div>
 
-      <!-- P.O. Number Display -->
-        <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-6 mb-6 no-print">
-            <div class="space-y-4">
-                <div class="flex gap-4">
-                    <div class="flex-1">
-                        <label class="block text-sm font-medium text-gray-700 mb-2">
-                            <i class="fas fa-file-alt mr-1"></i>P.O. Number
-                        </label>
-                        <div class="w-full px-4 py-3 border border-gray-300 rounded-lg bg-gray-50 text-lg font-medium text-gray-800">
-                            <?php echo htmlspecialchars($po_number); ?>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </div>
-
         <?php if (!empty($po_number)): ?>
             <?php if (empty($orderItems)): ?>
                 <!-- No Results -->
@@ -239,7 +221,7 @@ if (!empty($po_number)) {
                 </div>
             <?php else: ?>
                 <!-- P.O. Information -->
-                <div class="bg-gradient-to-r from-blue-50 to-indigo-50 rounded-xl shadow-sm border border-blue-200 p-6 mb-6">
+                <div class="bg-gray-100 rounded-xl shadow-sm border border-gray-200 p-6 mb-6">
                     <div class="flex items-center justify-between mb-4">
                         <h2 class="text-2xl font-bold text-gray-900">
                             <i class="fas fa-file-invoice text-blue-600 mr-2"></i>
@@ -248,75 +230,75 @@ if (!empty($po_number)) {
                     </div>
 
                     <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-                        <!-- Order Information -->
-                        <div class="bg-white rounded-lg p-4 shadow-sm">
-                            <h3 class="font-semibold text-gray-900 mb-3 flex items-center">
-                                <i class="fas fa-shopping-cart text-primary-600 mr-2"></i>
-                                Order Information
-                            </h3>
-                            <div class="space-y-2 text-sm">
-                                <div class="flex justify-between">
-                                    <span class="text-gray-600">Order ID:</span>
-                                    <span class="font-medium text-gray-900">#<?php echo $orderInfo['order_id']; ?></span>
-                                </div>
-                                <div class="flex justify-between">
-                                    <span class="text-gray-600">Customer:</span>
-                                    <span class="font-medium text-gray-900"><?php echo htmlspecialchars($orderInfo['customer_name']); ?></span>
-                                </div>
-                                <div class="flex justify-between">
-                                    <span class="text-gray-600">Email:</span>
-                                    <span class="font-medium text-gray-900"><?php echo htmlspecialchars($orderInfo['customer_email']); ?></span>
-                                </div>
-                                <div class="flex justify-between">
-                                    <span class="text-gray-600">Date:</span>
-                                    <span class="font-medium text-gray-900"><?php echo date('M j, Y g:i A', strtotime($orderInfo['order_date'])); ?></span>
-                                </div>
-                                <div class="flex justify-between">
-                                    <span class="text-gray-600">Status:</span>
-                                    <span class="px-2 py-1 rounded-full text-xs font-medium <?php echo ($orderInfo['order_status'] === 'pending') ? 'bg-yellow-100 text-yellow-800' : (($orderInfo['order_status'] === 'processing') ? 'bg-blue-100 text-blue-800' : 'bg-green-100 text-green-800'); ?>">
-                                        <?php echo htmlspecialchars(ucfirst($orderInfo['order_status'])); ?>
-                                    </span>
-                                </div>
-                            </div>
-                        </div>
+    <!-- Order Information -->
+    <div class="bg-white rounded-lg p-4 shadow-sm">
+        <h3 class="font-semibold text-gray-900 mb-3 flex items-center">
+            <i class="fas fa-cart-shopping text-primary-600 mr-2"></i>
+            Order Information
+        </h3>
+        <div class="space-y-2 text-sm">
+            <div class="flex justify-between">
+                <span class="text-gray-600"><i class="fas fa-hashtag mr-1"></i>Order ID:</span>
+                <span class="font-medium text-gray-900">#<?php echo $orderInfo['order_id']; ?></span>
+            </div>
+            <div class="flex justify-between">
+                <span class="text-gray-600"><i class="fas fa-user mr-1"></i>Customer:</span>
+                <span class="font-medium text-gray-900"><?php echo htmlspecialchars($orderInfo['customer_name']); ?></span>
+            </div>
+            <div class="flex justify-between">
+                <span class="text-gray-600"><i class="fas fa-envelope mr-1"></i>Email:</span>
+                <span class="font-medium text-gray-900"><?php echo htmlspecialchars($orderInfo['customer_email']); ?></span>
+            </div>
+            <div class="flex justify-between">
+                <span class="text-gray-600"><i class="fas fa-calendar-days mr-1"></i>Date:</span>
+                <span class="font-medium text-gray-900"><?php echo date('M j, Y g:i A', strtotime($orderInfo['order_date'])); ?></span>
+            </div>
+            <div class="flex justify-between">
+                <span class="text-gray-600"><i class="fas fa-circle-dot mr-1"></i>Status:</span>
+                <span class="px-2 py-1 rounded-full text-xs font-medium <?php echo ($orderInfo['order_status'] === 'pending') ? 'bg-yellow-100 text-yellow-800' : (($orderInfo['order_status'] === 'processing') ? 'bg-blue-100 text-blue-800' : 'bg-green-100 text-green-800'); ?>">
+                    <?php echo htmlspecialchars(ucfirst($orderInfo['order_status'])); ?>
+                </span>
+            </div>
+        </div>
+    </div>
 
-                        <!-- Supplier Information -->
-                        <div class="bg-white rounded-lg p-4 shadow-sm">
-                            <h3 class="font-semibold text-gray-900 mb-3 flex items-center">
-                                <i class="fas fa-building text-green-600 mr-2"></i>
-                                Supplier Information
-                            </h3>
-                            <div class="space-y-2 text-sm">
-                                <div class="flex justify-between items-start">
-                                    <span class="text-gray-600">Supplier:</span>
-                                    <div class="text-right">
-                                        <span class="font-medium text-gray-900"><?php echo htmlspecialchars($supplierInfo['name']); ?></span>
-                                        <span class="ml-2 px-2 py-1 rounded-full text-xs font-medium <?php echo $supplierInfo['is_manual'] ? 'bg-blue-100 text-blue-800' : 'bg-green-100 text-green-800'; ?>">
-                                            <?php echo $supplierInfo['is_manual'] ? 'Manual' : 'Linked'; ?>
-                                        </span>
-                                    </div>
-                                </div>
-                                <?php if (!$supplierInfo['is_manual']): ?>
-                                    <div class="flex justify-between">
-                                        <span class="text-gray-600">Contact:</span>
-                                        <span class="font-medium text-gray-900"><?php echo htmlspecialchars($supplierInfo['contact']); ?></span>
-                                    </div>
-                                    <div class="flex justify-between">
-                                        <span class="text-gray-600">Email:</span>
-                                        <span class="font-medium text-gray-900"><?php echo htmlspecialchars($supplierInfo['email']); ?></span>
-                                    </div>
-                                    <div class="flex justify-between">
-                                        <span class="text-gray-600">Phone:</span>
-                                        <span class="font-medium text-gray-900"><?php echo htmlspecialchars($supplierInfo['phone']); ?></span>
-                                    </div>
-                                <?php endif; ?>
-                                <div class="flex justify-between">
-                                    <span class="text-gray-600">Total Items:</span>
-                                    <span class="font-medium text-primary-600"><?php echo count($orderItems); ?> item(s)</span>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
+    <!-- Supplier Information -->
+    <div class="bg-white rounded-lg p-4 shadow-sm">
+        <h3 class="font-semibold text-gray-900 mb-3 flex items-center">
+            <i class="fas fa-building text-green-600 mr-2"></i>
+            Supplier Information
+        </h3>
+        <div class="space-y-2 text-sm">
+            <div class="flex justify-between items-start">
+                <span class="text-gray-600"><i class="fas fa-truck mr-1"></i>Supplier:</span>
+                <div class="text-right">
+                    <span class="font-medium text-gray-900"><?php echo htmlspecialchars($supplierInfo['name']); ?></span>
+                    <span class="ml-2 px-2 py-1 rounded-full text-xs font-medium <?php echo $supplierInfo['is_manual'] ? 'bg-blue-100 text-blue-800' : 'bg-green-100 text-green-800'; ?>">
+                        <?php echo $supplierInfo['is_manual'] ? 'Manual' : 'Linked'; ?>
+                    </span>
+                </div>
+            </div>
+            <?php if (!$supplierInfo['is_manual']): ?>
+                <div class="flex justify-between">
+                    <span class="text-gray-600"><i class="fas fa-address-card mr-1"></i>Contact:</span>
+                    <span class="font-medium text-gray-900"><?php echo htmlspecialchars($supplierInfo['contact']); ?></span>
+                </div>
+                <div class="flex justify-between">
+                    <span class="text-gray-600"><i class="fas fa-envelope mr-1"></i>Email:</span>
+                    <span class="font-medium text-gray-900"><?php echo htmlspecialchars($supplierInfo['email']); ?></span>
+                </div>
+                <div class="flex justify-between">
+                    <span class="text-gray-600"><i class="fas fa-phone mr-1"></i>Phone:</span>
+                    <span class="font-medium text-gray-900"><?php echo htmlspecialchars($supplierInfo['phone']); ?></span>
+                </div>
+            <?php endif; ?>
+            <div class="flex justify-between">
+                <span class="text-gray-600"><i class="fas fa-boxes-stacked mr-1"></i>Total Items:</span>
+                <span class="font-medium text-primary-600"><?php echo count($orderItems); ?> item(s)</span>
+            </div>
+        </div>
+    </div>
+</div>
 
                     <!-- Viewed By Info -->
                     <div class="mt-4 pt-4 border-t border-blue-200">
@@ -419,7 +401,7 @@ if (!empty($po_number)) {
                     <div class="bg-gradient-to-r from-<?php echo $alreadyMarkedComplete ? 'green' : ($allItemsReceived ? 'green' : 'blue'); ?>-50 to-<?php echo $alreadyMarkedComplete ? 'emerald' : ($allItemsReceived ? 'emerald' : 'indigo'); ?>-50 border-2 border-<?php echo $alreadyMarkedComplete ? 'green' : ($allItemsReceived ? 'green' : 'blue'); ?>-300 rounded-xl shadow-lg p-6 mb-6">
                         <div class="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
                             <div class="flex items-start space-x-4">
-                                <div class="bg-<?php echo $alreadyMarkedComplete ? 'green' : ($allItemsReceived ? 'green' : 'blue'); ?>-500 p-3 rounded-lg flex-shrink-0">
+                                <div class="bg-<?php echo $alreadyMarkedComplete ? 'green' : ($allItemsReceived ? 'green' : 'blue'); ?>-500 p-3 rounded-lg shrink-0">
                                     <i class="fas fa-<?php echo $alreadyMarkedComplete ? 'check-double' : ($allItemsReceived ? 'check-circle' : 'tasks'); ?> text-white text-2xl"></i>
                                 </div>
                                 <div>
@@ -500,11 +482,11 @@ if (!empty($po_number)) {
                 <?php endif; ?>
 
                 <!-- Items Grid -->
-                <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 p-1" >
                     <?php foreach ($orderItems as $index => $item): ?>
                         <div class="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden hover:shadow-lg transition-shadow duration-200">
                             <!-- Item Header -->
-                            <div class="bg-gradient-to-r from-primary-500 to-primary-600 p-4 text-white">
+                            <div class="bg-red-600 p-4 text-white">
                                 <div class="flex items-center justify-between">
                                     <h3 class="font-bold text-lg">Item #<?php echo $index + 1; ?></h3>
                                     <?php if (!empty($item['qr_code'])): ?>
@@ -579,7 +561,7 @@ if (!empty($po_number)) {
                                 <div class="space-y-2">
                                     <?php if (empty($item['qr_code'])): ?>
                                         <button onclick="openQRModal(<?php echo $item['item_id']; ?>, '<?php echo htmlspecialchars($item['product_name'], ENT_QUOTES); ?>', '<?php echo $item['item_type']; ?>')"
-                                            class="w-full bg-gradient-to-r from-green-500 to-green-600 hover:from-green-600 hover:to-green-700 text-white px-4 py-2 rounded-lg transition-all duration-200 flex items-center justify-center space-x-2">
+                                            class="w-full bg-green-600 hover:from-green-600 hover:to-green-700 text-white px-4 py-2 rounded-lg transition-all duration-200 flex items-center justify-center space-x-2">
                                             <i class="fas fa-qrcode"></i>
                                             <span>Generate QR Code</span>
                                         </button>
@@ -614,7 +596,7 @@ if (!empty($po_number)) {
     <!-- QR Generation Modal -->
     <div id="qrModal" class="modal">
         <div class="bg-white rounded-xl shadow-2xl max-w-md w-full mx-4">
-            <div class="bg-gradient-to-r from-green-500 to-green-600 px-6 py-4 rounded-t-xl">
+            <div class="bg-green-600 px-6 py-4 rounded-t-xl">
                 <div class="flex justify-between items-center">
                     <h3 class="text-xl font-bold text-white">
                         <i class="fas fa-qrcode mr-2"></i>Generate QR Code
@@ -633,7 +615,7 @@ if (!empty($po_number)) {
                     <div class="inline-block p-4 bg-white border-2 border-gray-300 rounded-lg">
                         <div id="qrcode" class="qr-code-container"></div>
                     </div>
-                    <div id="qrCodeValue" class="mt-3 text-sm font-mono text-gray-600"></div>
+                    <div id="qrCodeValue" class="mt-3 text-sm font-mono text-gray-600 break-all" ></div>
                 </div>
 
                 <!-- Info Message -->
@@ -665,7 +647,7 @@ if (!empty($po_number)) {
     <!-- Edit Location Modal -->
     <div id="editLocationModal" class="modal">
         <div class="bg-white rounded-xl shadow-2xl max-w-md w-full mx-4">
-            <div class="bg-gradient-to-r from-amber-500 to-amber-600 px-6 py-4 rounded-t-xl">
+            <div class="bg-amber-600 px-6 py-4 rounded-t-xl">
                 <div class="flex justify-between items-center">
                     <h3 class="text-xl font-bold text-white">
                         <i class="fas fa-map-marker-alt mr-2"></i>Edit Location
@@ -678,7 +660,6 @@ if (!empty($po_number)) {
 
             <div class="p-6">
                 <div id="editModalItemName" class="text-lg font-semibold text-gray-900 mb-4"></div>
-
                 <!-- Warehouse Location Input -->
                 <div class="mb-6">
                     <label class="block text-sm font-medium text-gray-700 mb-2">

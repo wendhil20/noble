@@ -244,7 +244,7 @@ if ($pendingApprovalsResult) {
         <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-6 mb-8">
             <form method="GET" class="space-y-4">
                 <div class="flex flex-wrap gap-2 mb-4">
-                    <a href="?" class="px-4 py-2 rounded-lg text-sm font-medium transition-colors duration-200 relative <?php echo $status_filter === '' && !isset($_GET['approval_pending']) ? 'bg-noble-orange text-white' : 'bg-gray-100 text-gray-700 hover:bg-gray-200'; ?>">
+                    <a href="?" class="px-4 py-2 rounded-lg text-sm font-medium transition-colors duration-200 relative <?php echo $status_filter === '' && !isset($_GET['approval_pending']) ? 'bg-noble-orange text-black' : 'bg-gray-100 text-gray-700 hover:bg-gray-200'; ?>">
                         <i class="fas fa-list mr-1"></i>
                         All Orders
                         <?php if ($pendingApprovalsCount > 0): ?>
@@ -256,7 +256,7 @@ if ($pendingApprovalsResult) {
 
                     <!-- NEW: Requesting Approval Filter -->
                     <a href="?approval_pending=1<?php echo !empty($search_query) ? '&search=' . urlencode($search_query) : ''; ?><?php echo !empty($date_from) ? '&date_from=' . urlencode($date_from) : ''; ?><?php echo !empty($date_to) ? '&date_to=' . urlencode($date_to) : ''; ?>"
-                        class="px-4 py-2 rounded-lg text-sm font-medium transition-colors duration-200 flex items-center space-x-1 relative <?php echo isset($_GET['approval_pending']) ? 'bg-orange-600 text-white shadow-md' : 'bg-orange-100 text-orange-700 hover:bg-orange-200'; ?>">
+                        class="px-4 py-2 rounded-lg text-sm font-medium transition-colors duration-200 flex items-center space-x-1 relative <?php echo isset($_GET['approval_pending']) ? 'bg-orange-600 shadow-md' : 'bg-orange-100 text-orange-700 hover:bg-orange-200'; ?>">
                         <i class="fas fa-bell"></i>
                         <span>Requesting Approval</span>
                         <?php if ($pendingApprovalsCount > 0): ?>

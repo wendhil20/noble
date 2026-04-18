@@ -226,7 +226,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action'])) {
                     <a href="manage_qr_codes.php" class="w-10 h-10 bg-gray-100 rounded-lg flex items-center justify-center hover:bg-gray-200 transition-colors">
                         <i class="fas fa-arrow-left text-gray-600"></i>
                     </a>
-                    <div class="w-10 h-10 bg-gradient-to-br from-noble-orange to-noble-orange-dark rounded-lg flex items-center justify-center shadow-md">
+                    <div class="w-10 h-10 bg-noble-orange rounded-lg flex items-center justify-center shadow-md">
                         <i class="fas fa-edit text-white text-lg"></i>
                     </div>
                     <div>

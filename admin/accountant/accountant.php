@@ -345,23 +345,7 @@ function tabClass($current, $target)
                 <?php endif; ?>
             </div>
 
-            <!-- QR sub-filter -->
-            <?php if ($payment_method_filter === 'qr'):
-                $qres = $conn->query("SELECT DISTINCT REPLACE(o.bank_type,'QR_','') as qr_id, pqc.payment_method, COUNT(*) as c FROM orders o LEFT JOIN payment_qr_codes pqc ON REPLACE(o.bank_type,'QR_','')=pqc.id WHERE o.payment_status='paid' AND o.mode_payment='QR Payment' AND o.bank_type IS NOT NULL AND o.bank_type LIKE 'QR_%' GROUP BY o.bank_type, pqc.payment_method");
-            ?>
-                <div class="bg-white rounded-xl shadow-sm mb-6 p-4">
-                    <h3 class="text-sm font-semibold text-gray-700 mb-3"><i class="fas fa-filter mr-2 text-indigo-600"></i>Filter by QR Payment Method:</h3>
-                    <div class="flex flex-wrap gap-2">
-                        <a href="?filter=pending&method=qr" class="<?php echo !$qr_type_filter ? 'bg-indigo-500 text-white' : 'bg-gray-100 text-gray-700 hover:bg-gray-200'; ?> px-4 py-2 rounded-lg text-sm font-medium">All QR Methods</a>
-                        <?php if ($qres) while ($row = $qres->fetch_assoc()): ?>
-                            <a href="?filter=pending&method=qr&qr_type=QR_<?php echo urlencode($row['qr_id']); ?>"
-                                class="<?php echo $qr_type_filter === 'QR_' . $row['qr_id'] ? 'bg-indigo-500 text-white' : 'bg-gray-100 text-gray-700 hover:bg-gray-200'; ?> px-4 py-2 rounded-lg text-sm font-medium">
-                                <?php echo htmlspecialchars($row['payment_method'] ?: 'QR Payment'); ?> <span class="text-xs opacity-75">(<?php echo $row['c']; ?>)</span>
-                            </a>
-                        <?php endwhile; ?>
-                    </div>
-                </div>
-            <?php endif; ?>
+          
         <?php endif; ?>
 
         <!-- ===== VERIFIED TAB METHOD FILTERS ===== -->
@@ -648,18 +632,30 @@ function tabClass($current, $target)
                 </div>
             </div>
         <?php endif; ?>
-
     </main>
 
-    <!-- Loading Overlay -->
-    <div id="loadingOverlay" class="fixed inset-0 bg-gray-600 bg-opacity-50 flex items-center justify-center z-50 hidden">
-        <div class="bg-white rounded-lg p-6 shadow-xl flex items-center space-x-3">
-            <div class="animate-spin rounded-full h-6 w-6 border-b-2 border-noble-orange"></div>
-            <span class="text-gray-700">Processing...</span>
-        </div>
+    
+<!-- Loading Overlay -->
+<div id="loadingOverlay" class="fixed bottom-6 right-6 z-50 hidden">
+    <div class="bg-white rounded-lg px-5 py-3 shadow-xl flex items-center space-x-3 border border-gray-200">
+        <div class="animate-spin rounded-full h-5 w-5 border-b-2 border-noble-orange"></div>
+        <span class="text-gray-700 text-sm font-medium">Processing...</span>
     </div>
+</div>
 
     <script>
+        function showLoading() {
+    const el = document.getElementById('loadingOverlay');
+    el.classList.remove('hidden');
+    el.classList.add('flex');
+}
+function hideLoading() {
+    const el = document.getElementById('loadingOverlay');
+    el.classList.add('hidden');
+    el.classList.remove('flex');
+}
+
+
         function viewOrderDetails(id) {
             const w = 1200, h = 800, l = (screen.width - w) / 2, t = (screen.height - h) / 2;
             window.open('order_details.php?id=' + id, 'OrderDetails', `width=${w},height=${h},left=${l},top=${t},scrollbars=yes,resizable=yes`);

@@ -165,7 +165,7 @@ $admin_lvl = $_SESSION['noble_lvl'] ?? 'Sales';
   <div id="chat-wrapper">
 
     <!-- ══ SIDEBAR ══ -->
-    <div class="w-[300px] flex-shrink-0 flex flex-col border-r"
+    <div class="w-[300px] shrink-0 flex flex-col border-r"
       style="background:#16161f;border-color:rgba(255,255,255,0.07);">
 
       <!-- Header -->
@@ -183,7 +183,7 @@ $admin_lvl = $_SESSION['noble_lvl'] ?? 'Sales';
               <?= htmlspecialchars($admin_lvl) ?>
             </span>
           </div>
-          <div class="flex items-center gap-1.5 flex-shrink-0">
+          <div class="flex items-center gap-1.5 shrink-0">
             <div id="connDot" class="w-2 h-2 rounded-full bg-yellow-400"></div>
             <span id="connLabel" class="text-[10px] text-white/30">Connecting</span>
           </div>

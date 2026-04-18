@@ -277,42 +277,52 @@ foreach ($allItems as $item) {
 <body class="bg-gradient-to-br from-gray-50 to-gray-100 min-h-screen">
     <!-- Header -->
     <?php include '../navbar/top.php'; ?>
-  <!-- Header Navbar -->
-<nav class="bg-white shadow-md border-b border-gray-200">
-    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div class="flex items-center justify-between h-20">
-            
-            <!-- Left Section: Navigation & Title -->
-            <div class="flex items-center gap-3">
-                
+<!-- Header Navbar -->
+<nav class="bg-white border-b border-gray-200">
+    <div class="max-w-[95%] mx-auto px-4 sm:px-6 lg:px-8">
+        <div class="flex items-center justify-between h-16">
+
+            <!-- Left: Back + Icons + Divider + Title -->
+            <div class="flex items-center gap-2.5">
+
                 <!-- Back Button -->
-                <a href="warehouse_staff_po_management_A.php?order_id=<?php echo $order['id']; ?>" 
-                   class="p-2.5 text-primary-600 hover:text-primary-700 hover:bg-gray-100 rounded-lg transition-colors duration-200"
+                <a href="warehouse_staff_po_management_A.php?order_id=<?php echo $order['id']; ?>"
+                   class="flex items-center justify-center w-8 h-8 rounded-lg border border-gray-300 text-gray-500 hover:bg-gray-100 hover:text-gray-700 transition-colors duration-150"
                    title="Back">
-                    <i class="fas fa-arrow-left text-xl"></i>
+                    <i class="fas fa-chevron-left text-xs"></i>
                 </a>
-                
+
                 <!-- View P.O. Files Button -->
                 <a href="warehouse_head_staff_view_po_files_B.php?order_id=<?php echo $order['id']; ?>"
-                   class="p-2.5 bg-blue-500 hover:bg-blue-600 rounded-lg transition-colors duration-200"
+                   class="flex items-center justify-center w-8 h-8 rounded-lg bg-blue-500 hover:bg-blue-600 transition-colors duration-150"
                    title="View All P.O. Files">
-                    <i class="fas fa-file-excel text-white text-lg"></i>
+                    <i class="fas fa-file-excel text-white text-sm"></i>
                 </a>
-                
+
                 <!-- Generate P.O. Icon -->
-                <div class="p-2.5 bg-green-500 rounded-lg">
-                    <i class="fas fa-file-invoice text-white text-lg"></i>
+                <div class="flex items-center justify-center w-8 h-8 rounded-lg bg-green-500">
+                    <i class="fas fa-file-invoice text-white text-sm"></i>
                 </div>
-                
+
                 <!-- Divider -->
-                <div class="h-8 w-px bg-gray-300"></div>
-                
+                <div class="h-7 w-px bg-gray-200 mx-1"></div>
+
                 <!-- Title & Order Info -->
                 <div>
-                    <h1 class="text-lg font-bold text-gray-900">Generate Purchase Order</h1>
-                    <p class="text-xs text-gray-500">Order #<?php echo $order['id']; ?> - <?php echo htmlspecialchars($order['customer_name']); ?></p>
+                    <h1 class="text-sm font-medium text-gray-900 leading-tight">Generate Purchase Order</h1>
+                    <p class="text-xs text-gray-500 leading-tight">
+                        Order #<?php echo $order['id']; ?> &mdash;
+                        <?php echo htmlspecialchars($order['customer_name']); ?>
+                    </p>
                 </div>
-            </div>           
+
+            </div>
+
+            <!-- Right: Order ID badge -->
+            <div class="text-xs font-medium text-green-700 bg-green-50 border border-green-200 rounded-lg px-3 py-1.5 whitespace-nowrap">
+                P.O. Generator
+            </div>
+
         </div>
     </div>
 </nav>

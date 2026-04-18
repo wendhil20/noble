@@ -328,16 +328,16 @@ $updateReplacement->bind_param("ii", $schedule_id, $order_id);
                     <!-- Quick Info -->
                     <div class="flex gap-3">
     <div class="bg-white bg-opacity-20 backdrop-blur rounded-lg px-5 py-3 text-center border border-white border-opacity-30">
-        <div class="text-2xl font-bold text-white"><?php echo count($replacements); ?></div>
-        <div class="text-xs text-orange-100 font-medium">Items</div>
+        <div class="text-2xl font-bold text-black"><?php echo count($replacements); ?></div>
+        <div class="text-xs text-black font-medium">Items</div>
     </div>
     <div class="bg-white bg-opacity-20 backdrop-blur rounded-lg px-5 py-3 text-center border border-white border-opacity-30">
-        <div class="text-2xl font-bold text-white"><?php echo $totalQuantity; ?></div>
-        <div class="text-xs text-orange-100 font-medium">Total Qty</div>
+        <div class="text-2xl font-bold text-black"><?php echo $totalQuantity; ?></div>
+        <div class="text-xs text-black font-medium">Total Qty</div>
     </div>
     <div class="bg-white bg-opacity-20 backdrop-blur rounded-lg px-5 py-3 text-center border border-white border-opacity-30">
-        <div class="text-2xl font-bold text-white">₱<?php echo number_format($totalValue, 2); ?></div>
-        <div class="text-xs text-orange-100 font-medium">Total Value</div>
+        <div class="text-2xl font-bold text-black">₱<?php echo number_format($totalValue, 2); ?></div>
+        <div class="text-xs text-black font-medium">Total Value</div>
     </div>
 </div>
                 </div>

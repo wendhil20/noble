@@ -112,7 +112,7 @@ while ($row = $result->fetch_assoc()) {
     // APPLY SEARCH FILTER IN PHP
     if (
         $searchQuery === '' ||
-        strpos((string)$row['order_id'], $searchQuery) !== false ||
+        strpos((string) $row['order_id'], $searchQuery) !== false ||
         stripos($row['customer_name'], $searchQuery) !== false ||
         stripos($row['tracking_number'] ?? '', $searchQuery) !== false
     ) {
@@ -158,11 +158,6 @@ $overdueOrders = count(array_filter($orders, fn($o) => $o['delivery_status'] ===
             animation: slide-in 0.3s ease-out;
         }
 
-        .order-row:hover {
-            background-color: rgba(59, 130, 246, 0.05);
-            transform: translateX(4px);
-            transition: all 0.2s ease;
-        }
 
         .filter-btn {
             transition: all 0.3s ease;
@@ -182,7 +177,8 @@ $overdueOrders = count(array_filter($orders, fn($o) => $o['delivery_status'] ===
 
         <!-- Header -->
         <div class="mb-6">
-            <a href="logistic-main-dashboard-page-1.php" class="inline-flex items-center text-blue-600 hover:text-blue-800 mb-3 text-sm font-medium">
+            <a href="logistic-main-dashboard-page-1.php"
+                class="inline-flex items-center text-blue-600 hover:text-blue-800 mb-3 text-sm font-medium">
                 <i class="fas fa-arrow-left mr-2"></i>
                 Back to Dashboard
             </a>
@@ -192,59 +188,80 @@ $overdueOrders = count(array_filter($orders, fn($o) => $o['delivery_status'] ===
             </h1>
         </div>
 
-        <!-- Search Bar -->
-        <div class="mb-6">
-            <form method="GET" action="" class="relative">
-                <input type="hidden" name="date" value="<?php echo htmlspecialchars($selectedDate); ?>">
-                <div class="relative">
-                    <input type="text"
-                        name="search"
-                        value="<?php echo htmlspecialchars($searchQuery); ?>"
-                        placeholder="Search by Order ID, Customer Name, or Tracking Number..."
-                        class="w-full px-12 py-4 border-2 border-gray-300 rounded-xl focus:border-blue-500 focus:ring-2 focus:ring-blue-200 text-lg">
-                    <i class="fas fa-search absolute left-4 top-1/2 transform -translate-y-1/2 text-gray-400 text-xl"></i>
-                    <?php if ($searchQuery): ?>
-                        <a href="?date=<?php echo $selectedDate; ?>"
-                            class="absolute right-4 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-gray-600">
-                            <i class="fas fa-times text-xl"></i>
-                        </a>
-                    <?php endif; ?>
-                </div>
+<!-- Search Bar -->
+<div class="mb-6">
+    <form method="GET" action="" class="relative">
+        <input type="hidden" name="date" value="<?php echo htmlspecialchars($selectedDate); ?>">
+        <div class="relative flex items-center">
+            <!-- Search Icon -->
+            <i class="fas fa-search absolute left-4 text-gray-400 text-base pointer-events-none z-10"></i>
+
+            <!-- Input -->
+            <input type="text" name="search" value="<?php echo htmlspecialchars($searchQuery); ?>"
+                placeholder="Search by Order ID, Customer Name, or Tracking Number..."
+                class="w-full pl-11 pr-32 py-3.5 bg-white border-2 border-gray-200 rounded-xl text-sm text-gray-800 placeholder-gray-400
+                       focus:outline-none focus:border-blue-500 focus:ring-4 focus:ring-blue-100 transition-all duration-200 shadow-sm">
+
+            <!-- Right side actions -->
+            <div class="absolute right-2 flex items-center gap-1">
                 <?php if ($searchQuery): ?>
-                    <p class="text-sm text-gray-600 mt-2">
-                        <i class="fas fa-info-circle mr-1"></i>
-                        Showing results for: <strong><?php echo htmlspecialchars($searchQuery); ?></strong>
-                    </p>
+                    <a href="?date=<?php echo $selectedDate; ?>"
+                        class="text-gray-400 hover:text-gray-600 transition-colors p-1.5 hover:bg-gray-100 rounded-lg">
+                        <i class="fas fa-times text-sm"></i>
+                    </a>
                 <?php endif; ?>
-            </form>
+
+                <button type="submit"
+                    class="bg-blue-600 hover:bg-blue-700 active:bg-blue-800 text-white text-sm font-semibold
+                           px-4 py-2 rounded-lg transition-colors duration-150 flex items-center gap-2 shadow-sm">
+                    <i class="fas fa-search text-xs"></i>
+                    Search
+                </button>
+            </div>
         </div>
+
+        <!-- Result Count Badge -->
+        <?php if ($searchQuery): ?>
+            <div class="flex items-center gap-2 mt-2.5 ml-1">
+                <span class="inline-flex items-center gap-1.5 bg-blue-50 border border-blue-200 text-blue-700 text-xs font-medium px-3 py-1 rounded-full">
+                    <i class="fas fa-filter text-blue-400"></i>
+                    Results for: <strong><?php echo htmlspecialchars($searchQuery); ?></strong>
+                </span>
+                <span class="text-xs text-gray-400"><?php echo $totalOrders; ?> order(s) found</span>
+            </div>
+        <?php endif; ?>
+    </form>
+</div>
+
 
         <!-- Filter Buttons -->
-        <div class="mb-6 flex flex-wrap gap-3">
-            <button onclick="filterOrders('all')"
-                class="filter-btn active px-6 py-3 bg-blue-600 text-white rounded-lg font-semibold hover:bg-blue-700 flex items-center gap-2"
-                id="filter-all">
-                <i class="fas fa-list"></i>
-                All Orders
-                <span class="bg-white text-blue-600 px-2 py-0.5 rounded-full text-xs font-bold"><?php echo $totalOrders; ?></span>
-            </button>
+<div class="mb-6">
+    <div class="flex border-b border-gray-200">
+        <button onclick="filterOrders('all')"
+            class="filter-btn active relative px-6 py-3 text-sm font-semibold text-blue-600 border-b-2 border-blue-600 flex items-center gap-2 transition-all duration-200"
+            id="filter-all">
+            <i class="fas fa-list text-black"></i>
+            All Orders
+            <span class="bg-blue-100 text-blue-700 px-2 py-0.5 rounded-full text-xs font-bold"><?php echo $totalOrders; ?></span>
+        </button>
 
-            <button onclick="filterOrders('delivery')"
-                class="filter-btn px-6 py-3 bg-white text-gray-700 border-2 border-gray-300 rounded-lg font-semibold hover:bg-gray-50 flex items-center gap-2"
-                id="filter-delivery">
-                <i class="fas fa-truck"></i>
-                Delivery
-                <span class="bg-gray-200 text-gray-700 px-2 py-0.5 rounded-full text-xs font-bold"><?php echo $deliveryOrders; ?></span>
-            </button>
+        <button onclick="filterOrders('delivery')"
+            class="filter-btn relative px-6 py-3 text-sm font-semibold text-gray-500 border-b-2 border-transparent hover:text-gray-700 hover:border-gray-300 flex items-center gap-2 transition-all duration-200"
+            id="filter-delivery">
+            <i class="fas fa-truck text-black"></i>
+            Delivery
+            <span class="bg-gray-100 text-gray-600 px-2 py-0.5 rounded-full text-xs font-bold"><?php echo $deliveryOrders; ?></span>
+        </button>
 
-            <button onclick="filterOrders('pickup')"
-                class="filter-btn px-6 py-3 bg-white text-gray-700 border-2 border-gray-300 rounded-lg font-semibold hover:bg-gray-50 flex items-center gap-2"
-                id="filter-pickup">
-                <i class="fas fa-hand-holding"></i>
-                Pickup
-                <span class="bg-gray-200 text-gray-700 px-2 py-0.5 rounded-full text-xs font-bold"><?php echo $pickupOrders; ?></span>
-            </button>
-        </div>
+        <button onclick="filterOrders('pickup')"
+            class="filter-btn relative px-6 py-3 text-sm font-semibold text-gray-500 border-b-2 border-transparent hover:text-gray-700 hover:border-gray-300 flex items-center gap-2 transition-all duration-200"
+            id="filter-pickup">
+            <i class="fas fa-hand-holding text-black"></i>
+            Pickup
+            <span class="bg-green-500 text-white px-2 py-0.5 rounded-full text-xs font-bold"><?php echo $pickupOrders; ?></span>
+        </button>
+    </div>
+</div>
 
         <!-- Statistics Cards -->
         <div class="grid grid-cols-2 md:grid-cols-5 gap-4 mb-6">
@@ -289,206 +306,253 @@ $overdueOrders = count(array_filter($orders, fn($o) => $o['delivery_status'] ===
             </div>
         </div>
 
-        <!-- Orders Table -->
-        <?php if (empty($orders)): ?>
-            <div class="bg-white rounded-lg border border-gray-200 p-12 text-center">
-                <i class="fas fa-calendar-times text-gray-300 text-6xl mb-4"></i>
-                <h3 class="text-xl font-semibold text-gray-700 mb-2">No Deliveries Scheduled</h3>
-                <p class="text-gray-500">There are no deliveries scheduled for this date.</p>
-            </div>
-        <?php else: ?>
-            <div class="bg-white rounded-lg border border-gray-200 overflow-hidden">
-                <div class="overflow-x-auto">
-                    <table class="w-full">
-                        <thead class="bg-gray-50 border-b border-gray-200">
-                            <tr>
-                                <th class="px-6 py-4 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">Order</th>
-                                <th class="px-6 py-4 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">Tracking</th>
-                                <th class="px-6 py-4 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">Customer</th>
-                                <th class="px-6 py-4 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">Type</th>
-                                <th class="px-6 py-4 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">Time</th>
-                                <th class="px-6 py-4 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">Expected Delivery</th>
-                                <th class="px-6 py-4 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">Items</th>
-                                <th class="px-6 py-4 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">Weight/Volume</th>
-                                <th class="px-6 py-4 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">Total</th>
-                                <th class="px-6 py-4 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">Status</th>
-                                <th class="px-6 py-4 text-right text-xs font-semibold text-gray-600 uppercase tracking-wider">Actions</th>
-                            </tr>
-                        </thead>
-                        <tbody class="divide-y divide-gray-200">
-                            <?php foreach ($orders as $order): ?>
-                                <?php
-                                $hasBooking = $order['booking_id'] !== null;
-                                $isCompleted = in_array($order['booking_status'], ['delivered', 'picked_up']);
-                                $canBook = !$hasBooking && in_array($order['computed_status'], ['ready_for_booking', 'scheduled']);
+       <!-- Orders Table -->
+<?php if (empty($orders)): ?>
 
-                                if ($isCompleted) {
-                                    $statusBadge = '<span class="bg-green-100 text-green-800 px-3 py-1 rounded-full text-xs font-semibold"><i class="fas fa-check-circle mr-1"></i>Delivered</span>';
-                                } elseif ($order['delivery_status'] === 'overdue') {
-                                    $statusBadge = '<span class="bg-red-100 text-red-800 px-3 py-1 rounded-full text-xs font-semibold"><i class="fas fa-exclamation-triangle mr-1"></i>Overdue</span>';
-                                } elseif ($hasBooking) {
-                                    $statusBadge = '<span class="bg-purple-100 text-purple-800 px-3 py-1 rounded-full text-xs font-semibold"><i class="fas fa-shipping-fast mr-1"></i>Booked</span>';
-                                } else {
-                                    $statusBadge = '<span class="bg-yellow-100 text-yellow-800 px-3 py-1 rounded-full text-xs font-semibold"><i class="fas fa-clock mr-1"></i>Scheduled</span>';
-                                }
-
-                                $deliveryTypeBadge = $order['delivery_type'] === 'pickup'
-                                    ? '<span class="bg-indigo-100 text-indigo-800 px-2 py-1 rounded text-xs font-semibold"><i class="fas fa-hand-holding mr-1"></i>Pickup</span>'
-                                    : '<span class="bg-blue-100 text-blue-800 px-2 py-1 rounded text-xs font-semibold"><i class="fas fa-truck mr-1"></i>Delivery</span>';
-                                ?>
-
-                                <tr class="order-row cursor-pointer"
-                                    data-delivery-type="<?php echo $order['delivery_type']; ?>"
-                                    onclick="openDetailsModal(<?php echo htmlspecialchars(json_encode($order)); ?>)">
-                                    <td class="px-6 py-4 whitespace-nowrap">
-                                        <div class="flex items-center">
-                                            <div class="flex-shrink-0 h-10 w-10 bg-blue-100 rounded-lg flex items-center justify-center">
-                                                <i class="fas fa-shopping-cart text-blue-600"></i>
-                                            </div>
-                                            <div class="ml-4">
-                                                <div class="text-sm font-bold text-gray-900">#<?php echo $order['order_id']; ?></div>
-                                                <?php if ($order['item_type'] === 'replacement'): ?>
-                                                    <span class="text-xs bg-orange-100 text-orange-800 px-2 py-0.5 rounded">Replacement</span>
-                                                <?php endif; ?>
-                                            </div>
-                                        </div>
-                                    </td>
-                                    <td class="px-6 py-4 whitespace-nowrap">
-                                        <?php if ($order['tracking_number']): ?>
-                                            <div class="font-mono text-xs bg-purple-50 text-purple-800 px-3 py-2 rounded-lg border border-purple-200">
-                                                <i class="fas fa-barcode mr-1"></i>
-                                                <?php echo htmlspecialchars($order['tracking_number']); ?>
-                                            </div>
-                                        <?php else: ?>
-                                            <span class="text-xs text-gray-400 italic">Not booked</span>
-                                        <?php endif; ?>
-                                    </td>
-                                    <td class="px-6 py-4">
-                                        <div class="text-sm font-medium text-gray-900"><?php echo htmlspecialchars($order['customer_name']); ?></div>
-                                        <div class="text-xs text-gray-500"><?php echo htmlspecialchars($order['mobile']); ?></div>
-                                    </td>
-                                    <td class="px-6 py-4 whitespace-nowrap">
-                                        <?php echo $deliveryTypeBadge; ?>
-                                    </td>
-                                    <td class="px-6 py-4 whitespace-nowrap">
-                                        <div class="text-sm font-semibold text-gray-900"><?php echo date('g:i A', strtotime($order['delivery_time'])); ?></div>
-                                    </td>
-                                    <td class="px-4 py-4 whitespace-nowrap">
-                                        <?php if ($order['earliest_delivery'] && $order['latest_delivery']): ?>
-                                            <div class="bg-gradient-to-r from-blue-50 to-indigo-50 border-l-4 border-blue-500 rounded px-3 py-2">
-                                                <div class="text-xs">
-                                                    <span class="text-gray-700 font-medium"><?php echo date('M d, Y', strtotime($order['earliest_delivery'])); ?></span>
-                                                    <span class="text-gray-500 mx-1">to</span>
-                                                    <span class="text-blue-700 font-bold"><?php echo date('M d, Y', strtotime($order['latest_delivery'])); ?></span>
-                                                </div>
-                                            </div>
-                                        <?php else: ?>
-                                            <span class="text-xs text-gray-400 italic">Not set</span>
-                                        <?php endif; ?>
-                                    </td>
-                                    <td class="px-6 py-4 whitespace-nowrap">
-                                        <div class="text-sm text-gray-900">
-                                            <span class="font-semibold"><?php echo $order['total_items']; ?></span> items
-                                        </div>
-                                        <div class="text-xs text-gray-500"><?php echo $order['total_quantity']; ?> pcs total</div>
-                                    </td>
-                                    <td class="px-6 py-4 whitespace-nowrap">
-                                        <div class="text-xs text-gray-900">
-                                            <div><i class="fas fa-weight text-orange-500 mr-1"></i><?php echo number_format($order['total_weight_kg'] ?? 0, 2); ?> kg</div>
-                                            <div class="mt-1"><i class="fas fa-cube text-orange-500 mr-1"></i><?php echo number_format($order['total_cubic_meters'] ?? 0, 3); ?> m³</div>
-                                            <?php if ($order['item_type'] === 'replacement'): ?>
-                                                <div class="mt-1 text-xs text-orange-600 italic">(Replacement)</div>
-                                            <?php endif; ?>
-                                        </div>
-                                    </td>
-                                    <td class="px-6 py-4 whitespace-nowrap">
-                                        <div class="text-sm font-bold text-green-600">₱<?php echo number_format($order['final_total'], 2); ?></div>
-                                    </td>
-                                    <td class="px-6 py-4 whitespace-nowrap">
-                                        <?php echo $statusBadge; ?>
-                                    </td>
-                                    <td class="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
-                                        <div class="flex justify-end gap-2">
-                                            <?php if ($canBook): ?>
-                                                <?php
-                                                $bookingUrl = $order['item_type'] === 'replacement'
-                                                    ? "logistic-replacement-booking-page-4.php?schedule_id=" . $order['delivery_id'] . "&order_id=" . $order['order_id']
-                                                    : "logistic-delivery-booking-page-3.php?schedule_id=" . $order['delivery_id'] . "&order_id=" . $order['order_id'];
-                                                ?>
-                                                <a href="<?php echo $bookingUrl; ?>"
-                                                    onclick="event.stopPropagation()"
-                                                    class="text-blue-600 hover:text-blue-800" title="Book <?php echo $order['item_type'] === 'replacement' ? 'Replacement' : 'Delivery'; ?>">
-                                                    <i class="fas fa-calendar-check text-lg"></i>
-                                                </a>
-                                            <?php elseif ($hasBooking && !$isCompleted): ?>
-                                                <a href="logistic-delivery-tracking-page-5.php?booking_id=<?php echo $order['booking_id']; ?>"
-                                                    onclick="event.stopPropagation()"
-                                                    class="text-purple-600 hover:text-purple-800" title="Manage Delivery">
-                                                    <i class="fas fa-tasks text-lg"></i>
-                                                </a>
-                                            <?php endif; ?>
-
-                                            <?php if ($order['item_type'] === 'replacement'): ?>
-                                                <a href="logistic-replacement-items-view-page-6.php?schedule_id=<?php echo $order['delivery_id']; ?>&order_id=<?php echo $order['order_id']; ?>"
-                                                    onclick="event.stopPropagation()"
-                                                    class="text-orange-600 hover:text-orange-800" title="View Replacement Items">
-                                                    <i class="fas fa-sync-alt text-lg"></i>
-                                                </a>
-                                            <?php else: ?>
-                                                <a href="logistic-order-items-view-page-7.php?order_id=<?php echo $order['order_id']; ?>"
-                                                    onclick="event.stopPropagation()"
-                                                    class="text-green-600 hover:text-green-800" title="View Items">
-                                                    <i class="fas fa-list text-lg"></i>
-                                                </a>
-                                            <?php endif; ?>
-
-                                            <?php if (!$isCompleted): ?>
-                                                <button onclick="event.stopPropagation(); openRescheduleModal(<?php echo $order['delivery_id']; ?>, <?php echo $order['order_id']; ?>, '<?php echo htmlspecialchars($order['customer_name'], ENT_QUOTES); ?>', '<?php echo $order['delivery_date']; ?>', '<?php echo date('H:i', strtotime($order['delivery_time'])); ?>');"
-                                                    class="text-orange-600 hover:text-orange-800" title="Reschedule">
-                                                    <i class="fas fa-calendar-alt text-lg"></i>
-                                                </button>
-                                            <?php endif; ?>
-                                        </div>
-                                    </td>
-                                </tr>
-                            <?php endforeach; ?>
-                        </tbody>
-                    </table>
-                </div>
-            </div>
-
-            <!-- No Results Message (hidden by default) -->
-            <div id="noResultsMessage" class="hidden bg-white rounded-lg border border-gray-200 p-12 text-center">
-                <i class="fas fa-search text-gray-300 text-6xl mb-4"></i>
-                <h3 class="text-xl font-semibold text-gray-700 mb-2">No Orders Found</h3>
-                <p class="text-gray-500">No orders match the selected filter.</p>
-            </div>
-        <?php endif; ?>
+    <div class="flex flex-col items-center justify-center bg-white rounded-xl border border-gray-200 py-20 px-8 text-center">
+        <div class="w-16 h-16 bg-gray-100 rounded-full flex items-center justify-center mb-4">
+            <i class="fas fa-calendar-times text-gray-400 text-2xl"></i>
+        </div>
+        <h3 class="text-lg font-semibold text-gray-700 mb-1">No Deliveries Scheduled</h3>
+        <p class="text-sm text-gray-400">There are no deliveries scheduled for this date.</p>
     </div>
 
-    <!-- Order Details Modal -->
-    <div id="detailsModal" class="hidden fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center p-4">
-        <div class="bg-white rounded-xl shadow-2xl max-w-4xl w-full max-h-[90vh] overflow-y-auto">
-            <div class="sticky top-0 bg-gradient-to-r from-blue-500 to-blue-600 p-6 rounded-t-xl z-10">
-                <div class="flex items-center justify-between text-white">
-                    <h3 class="text-2xl font-bold flex items-center">
-                        <i class="fas fa-info-circle mr-3"></i>
-                        Order Details
-                    </h3>
-                    <button onclick="closeDetailsModal()" class="text-white hover:text-gray-200 transition-colors">
-                        <i class="fas fa-times text-2xl"></i>
-                    </button>
-                </div>
-            </div>
+<?php else: ?>
 
-            <div class="p-6" id="modalContent">
-                <!-- Content will be populated by JavaScript -->
-            </div>
+    <div class="bg-white rounded-xl border border-gray-200 overflow-hidden shadow-sm">
+        <div class="overflow-x-auto">
+            <table class="w-full text-sm">
+                <thead>
+                    <tr class="bg-gray-50 border-b border-gray-200">
+                        <th class="px-5 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">Order</th>
+                        <th class="px-5 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">Tracking</th>
+                        <th class="px-5 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">Customer</th>
+                        <th class="px-5 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">Type</th>
+                        <th class="px-5 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">Time</th>
+                        <th class="px-5 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">Expected Delivery</th>
+                        <th class="px-5 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">Items</th>
+                        <th class="px-5 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">Weight / Vol</th>
+                        <th class="px-5 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">Total</th>
+                        <th class="px-5 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">Status</th>
+                        <th class="px-5 py-3 text-right text-xs font-semibold text-gray-500 uppercase tracking-wider">Actions</th>
+                    </tr>
+                </thead>
+                <tbody class="divide-y divide-gray-100">
+                    <?php foreach ($orders as $order): ?>
+                        <?php
+                        $hasBooking    = $order['booking_id'] !== null;
+                        $isCompleted   = in_array($order['booking_status'], ['delivered', 'picked_up']);
+                        $canBook       = !$hasBooking && in_array($order['computed_status'], ['ready_for_booking', 'scheduled']);
+                        $isReplacement = $order['item_type'] === 'replacement';
+
+                        // Status badge
+                        if ($isCompleted) {
+                            $statusBadge = '<span class="inline-flex items-center gap-1 bg-green-50 text-green-700 border border-green-200 px-2.5 py-1 rounded-full text-xs font-semibold"><i class="fas fa-check-circle"></i>Delivered</span>';
+                        } elseif ($order['delivery_status'] === 'overdue') {
+                            $statusBadge = '<span class="inline-flex items-center gap-1 bg-red-50 text-red-700 border border-red-200 px-2.5 py-1 rounded-full text-xs font-semibold"><i class="fas fa-exclamation-triangle"></i>Overdue</span>';
+                        } elseif ($hasBooking) {
+                            $statusBadge = '<span class="inline-flex items-center gap-1 bg-purple-50 text-purple-700 border border-purple-200 px-2.5 py-1 rounded-full text-xs font-semibold"><i class="fas fa-shipping-fast"></i>Booked</span>';
+                        } else {
+                            $statusBadge = '<span class="inline-flex items-center gap-1 bg-amber-50 text-amber-700 border border-amber-200 px-2.5 py-1 rounded-full text-xs font-semibold"><i class="fas fa-clock"></i>Scheduled</span>';
+                        }
+
+                        // Type badge
+                        $typeBadge = $order['delivery_type'] === 'pickup'
+                            ? '<span class="inline-flex items-center gap-1 bg-indigo-50 text-indigo-700 border border-indigo-200 px-2.5 py-1 rounded-full text-xs font-semibold"><i class="fas fa-hand-holding"></i>Pickup</span>'
+                            : '<span class="inline-flex items-center gap-1 bg-blue-50 text-blue-700 border border-blue-200 px-2.5 py-1 rounded-full text-xs font-semibold"><i class="fas fa-truck"></i>Delivery</span>';
+
+                        // Booking URL
+                        $bookingUrl = $isReplacement
+                            ? "logistic-replacement-booking-page-4.php?schedule_id={$order['delivery_id']}&order_id={$order['order_id']}"
+                            : "logistic-delivery-booking-page-3.php?schedule_id={$order['delivery_id']}&order_id={$order['order_id']}";
+                        ?>
+
+                        <tr class="order-row hover:bg-gray-50 transition-colors duration-100 cursor-pointer"
+                            data-delivery-type="<?php echo $order['delivery_type']; ?>"
+                            onclick="openDetailsModal(<?php echo htmlspecialchars(json_encode($order)); ?>)">
+
+                            <!-- Order -->
+                            <td class="px-5 py-3.5 whitespace-nowrap">
+                                <div class="flex items-center gap-3">
+                                    <div class="flex-shrink-0 w-9 h-9 bg-blue-50 border border-blue-100 rounded-lg flex items-center justify-center">
+                                        <i class="fas fa-shopping-cart text-blue-500 text-xs"></i>
+                                    </div>
+                                    <div>
+                                        <div class="font-bold text-gray-900">#<?php echo $order['order_id']; ?></div>
+                                        <?php if ($isReplacement): ?>
+                                            <span class="inline-block mt-0.5 text-xs bg-orange-50 text-orange-700 border border-orange-200 px-1.5 py-0.5 rounded font-medium">Replacement</span>
+                                        <?php endif; ?>
+                                    </div>
+                                </div>
+                            </td>
+
+                            <!-- Tracking -->
+                            <td class="px-5 py-3.5 whitespace-nowrap">
+                                <?php if ($order['tracking_number']): ?>
+                                    <div class="inline-flex items-center gap-1.5 font-mono text-xs bg-purple-50 text-purple-800 border border-purple-200 px-2.5 py-1.5 rounded-lg">
+                                        <i class="fas fa-barcode text-purple-400"></i>
+                                        <?php echo htmlspecialchars($order['tracking_number']); ?>
+                                    </div>
+                                <?php else: ?>
+                                    <span class="text-xs text-gray-400 italic">Not booked</span>
+                                <?php endif; ?>
+                            </td>
+
+                            <!-- Customer -->
+                            <td class="px-5 py-3.5">
+                                <div class="font-semibold text-gray-900"><?php echo htmlspecialchars($order['customer_name']); ?></div>
+                                <div class="text-xs text-gray-400 mt-0.5"><?php echo htmlspecialchars($order['mobile']); ?></div>
+                            </td>
+
+                            <!-- Type -->
+                            <td class="px-5 py-3.5 whitespace-nowrap">
+                                <?php echo $typeBadge; ?>
+                            </td>
+
+                            <!-- Time -->
+                            <td class="px-5 py-3.5 whitespace-nowrap">
+                                <span class="font-semibold text-gray-800"><?php echo date('g:i A', strtotime($order['delivery_time'])); ?></span>
+                            </td>
+
+                            <!-- Expected Delivery -->
+                            <td class="px-5 py-3.5 whitespace-nowrap">
+                                <?php if ($order['earliest_delivery'] && $order['latest_delivery']): ?>
+                                    <div class="border-l-4 border-blue-400 bg-blue-50 rounded-r-lg px-3 py-1.5 text-xs">
+                                        <span class="text-gray-600 font-medium"><?php echo date('M d', strtotime($order['earliest_delivery'])); ?></span>
+                                        <span class="text-gray-400 mx-1">–</span>
+                                        <span class="text-blue-700 font-bold"><?php echo date('M d, Y', strtotime($order['latest_delivery'])); ?></span>
+                                    </div>
+                                <?php else: ?>
+                                    <span class="text-xs text-gray-400 italic">Not set</span>
+                                <?php endif; ?>
+                            </td>
+
+                            <!-- Items -->
+                            <td class="px-5 py-3.5 whitespace-nowrap">
+                                <div class="font-semibold text-gray-900"><?php echo $order['total_items']; ?> <span class="font-normal text-gray-500">items</span></div>
+                                <div class="text-xs text-gray-400 mt-0.5"><?php echo $order['total_quantity']; ?> pcs total</div>
+                            </td>
+
+                            <!-- Weight / Volume -->
+                            <td class="px-5 py-3.5 whitespace-nowrap">
+                                <div class="space-y-1 text-xs text-gray-700">
+                                    <div class="flex items-center gap-1.5">
+                                        <i class="fas fa-weight text-orange-400 w-3 text-center"></i>
+                                        <?php echo number_format($order['total_weight_kg'] ?? 0, 2); ?> kg
+                                    </div>
+                                    <div class="flex items-center gap-1.5">
+                                        <i class="fas fa-cube text-orange-400 w-3 text-center"></i>
+                                        <?php echo number_format($order['total_cubic_meters'] ?? 0, 3); ?> m³
+                                    </div>
+                                    <?php if ($isReplacement): ?>
+                                        <div class="text-orange-500 italic">(Replacement)</div>
+                                    <?php endif; ?>
+                                </div>
+                            </td>
+
+                            <!-- Total -->
+                            <td class="px-5 py-3.5 whitespace-nowrap">
+                                <span class="font-bold text-green-600">₱<?php echo number_format($order['final_total'], 2); ?></span>
+                            </td>
+
+                            <!-- Status -->
+                            <td class="px-5 py-3.5 whitespace-nowrap">
+                                <?php echo $statusBadge; ?>
+                            </td>
+
+                            <!-- Actions -->
+                            <td class="px-5 py-3.5 whitespace-nowrap">
+                                <div class="flex items-center justify-end gap-1.5">
+
+                                    <?php if ($canBook): ?>
+                                        <a href="<?php echo $bookingUrl; ?>"
+                                           onclick="event.stopPropagation()"
+                                           title="Book <?php echo $isReplacement ? 'Replacement' : 'Delivery'; ?>"
+                                           class="w-8 h-8 flex items-center justify-center rounded-lg border border-gray-200 text-blue-600 hover:bg-blue-50 hover:border-blue-300 transition-colors duration-150">
+                                            <i class="fas fa-calendar-check text-sm"></i>
+                                        </a>
+                                    <?php elseif ($hasBooking && !$isCompleted): ?>
+                                        <a href="logistic-delivery-tracking-page-5.php?booking_id=<?php echo $order['booking_id']; ?>"
+                                           onclick="event.stopPropagation()"
+                                           title="Manage Delivery"
+                                           class="w-8 h-8 flex items-center justify-center rounded-lg border border-gray-200 text-purple-600 hover:bg-purple-50 hover:border-purple-300 transition-colors duration-150">
+                                            <i class="fas fa-tasks text-sm"></i>
+                                        </a>
+                                    <?php endif; ?>
+
+                                    <?php if ($isReplacement): ?>
+                                        <a href="logistic-replacement-items-view-page-6.php?schedule_id=<?php echo $order['delivery_id']; ?>&order_id=<?php echo $order['order_id']; ?>"
+                                           onclick="event.stopPropagation()"
+                                           title="View Replacement Items"
+                                           class="w-8 h-8 flex items-center justify-center rounded-lg border border-gray-200 text-orange-600 hover:bg-orange-50 hover:border-orange-300 transition-colors duration-150">
+                                            <i class="fas fa-sync-alt text-sm"></i>
+                                        </a>
+                                    <?php else: ?>
+                                        <a href="logistic-order-items-view-page-7.php?order_id=<?php echo $order['order_id']; ?>"
+                                           onclick="event.stopPropagation()"
+                                           title="View Items"
+                                           class="w-8 h-8 flex items-center justify-center rounded-lg border border-gray-200 text-green-600 hover:bg-green-50 hover:border-green-300 transition-colors duration-150">
+                                            <i class="fas fa-list text-sm"></i>
+                                        </a>
+                                    <?php endif; ?>
+
+                                    <?php if (!$isCompleted): ?>
+                                        <button
+                                            onclick="event.stopPropagation(); openRescheduleModal(<?php echo $order['delivery_id']; ?>, <?php echo $order['order_id']; ?>, '<?php echo htmlspecialchars($order['customer_name'], ENT_QUOTES); ?>', '<?php echo $order['delivery_date']; ?>', '<?php echo date('H:i', strtotime($order['delivery_time'])); ?>');"
+                                            title="Reschedule"
+                                            class="w-8 h-8 flex items-center justify-center rounded-lg border border-gray-200 text-orange-600 hover:bg-orange-50 hover:border-orange-300 transition-colors duration-150">
+                                            <i class="fas fa-calendar-alt text-sm"></i>
+                                        </button>
+                                    <?php endif; ?>
+
+                                </div>
+                            </td>
+
+                        </tr>
+                    <?php endforeach; ?>
+                </tbody>
+            </table>
         </div>
     </div>
 
+    <!-- No Results Message (hidden by default, shown via JS filter) -->
+    <div id="noResultsMessage" class="hidden flex flex-col items-center justify-center bg-white rounded-xl border border-gray-200 py-20 px-8 text-center mt-4">
+        <div class="w-16 h-16 bg-gray-100 rounded-full flex items-center justify-center mb-4">
+            <i class="fas fa-search text-gray-400 text-2xl"></i>
+        </div>
+        <h3 class="text-lg font-semibold text-gray-700 mb-1">No Orders Found</h3>
+        <p class="text-sm text-gray-400">No orders match the selected filter.</p>
+    </div>
+
+<?php endif; ?>
+    </div>
+
+ <!-- Order Details Modal -->
+<div id="detailsModal"
+    class="hidden fixed inset-0 z-50 flex items-center justify-center p-4"
+    style="background-color: rgba(0, 0, 0, 0.6);">
+    <div class="bg-white rounded-xl shadow-2xl max-w-4xl w-full max-h-[90vh] overflow-y-auto relative">
+        <div class="sticky top-0 bg-gradient-to-r from-blue-500 to-blue-600 p-6 rounded-t-xl z-10">
+            <div class="flex items-center justify-between text-white">
+                <h3 class="text-2xl font-bold flex items-center">
+                    <i class="fas fa-info-circle mr-3"></i>
+                    Order Details
+                </h3>
+                <button onclick="closeDetailsModal()" class="text-white hover:text-gray-200 transition-colors">
+                    <i class="fas fa-times text-2xl"></i>
+                </button>
+            </div>
+        </div>
+
+        <div class="p-6" id="modalContent">
+            <!-- Content will be populated by JavaScript -->
+        </div>
+    </div>
+</div>
+
     <!-- Reschedule Modal -->
-    <div id="rescheduleModal" class="hidden fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center p-4">
+    <div id="rescheduleModal"
+        class="hidden fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center p-4">
         <div class="bg-white rounded-xl shadow-2xl max-w-md w-full">
             <div class="bg-gradient-to-r from-orange-500 to-orange-600 p-6 rounded-t-xl">
                 <div class="flex items-center justify-between text-white">
@@ -750,16 +814,16 @@ ${order.item_type === 'replacement' && order.replacement_reason ? `
         }
 
         // Close modals when clicking outside
-        document.getElementById('detailsModal').addEventListener('click', function(e) {
+        document.getElementById('detailsModal').addEventListener('click', function (e) {
             if (e.target === this) closeDetailsModal();
         });
 
-        document.getElementById('rescheduleModal').addEventListener('click', function(e) {
+        document.getElementById('rescheduleModal').addEventListener('click', function (e) {
             if (e.target === this) closeRescheduleModal();
         });
 
         // Handle reschedule form submission
-        document.getElementById('rescheduleForm').addEventListener('submit', function(e) {
+        document.getElementById('rescheduleForm').addEventListener('submit', function (e) {
             e.preventDefault();
 
             const formData = new FormData(this);
@@ -771,9 +835,9 @@ ${order.item_type === 'replacement' && order.replacement_reason ? `
             document.getElementById('rescheduleError').classList.add('hidden');
 
             fetch('logistic-process-reschedule-page-8.php', {
-                    method: 'POST',
-                    body: formData
-                })
+                method: 'POST',
+                body: formData
+            })
                 .then(response => response.json())
                 .then(data => {
                     if (data.success) {

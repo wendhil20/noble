@@ -97,7 +97,7 @@ while ($r = mysqli_fetch_assoc($res)) {
   </div>
 
   <!-- Edit Commission Modal -->
-  <div id="editModal" class="fixed inset-0 z-50 hidden bg-black/40 flex items-center justify-center p-4">
+  <div id="editModal" class="fixed inset-0 z-50 hidden bg-black/40 items-center justify-center p-4">
     <div class="bg-white rounded-lg shadow-lg w-full max-w-md mx-auto p-6">
       <h2 class="text-xl font-semibold text-gray-900 mb-2">Edit Commission Rate</h2>
       <p id="memberName" class="text-sm text-gray-600 mb-4">Member: <strong></strong></p>

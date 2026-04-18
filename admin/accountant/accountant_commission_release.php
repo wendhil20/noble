@@ -280,7 +280,7 @@ $released_result = $released_stmt->get_result();
     </div>
 
     <!-- Release Modal -->
-    <div id="releaseModal" class="hidden fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center p-4">
+    <div id="releaseModal" class="hidden fixed inset-0 bg-black bg-opacity-50 z-50 items-center justify-center p-4">
         <div class="bg-white rounded-xl max-w-md w-full p-6">
             <h3 class="text-xl font-bold text-gray-900 mb-4">Release Commission Payment</h3>
             <div class="bg-blue-50 rounded-lg p-4 mb-4">

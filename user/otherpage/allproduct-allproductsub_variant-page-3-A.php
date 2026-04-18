@@ -190,7 +190,10 @@ try {
     error_log("WHERE clause building error: " . $e->getMessage());
 }
 
-$where_clause = !empty($where_conditions) ? "WHERE " . implode(" AND ", $where_conditions) : "";
+// Always add is_archived = 0 filter
+$where_conditions[] = "p.is_archived = 0";
+
+$where_clause = !empty($where_conditions) ? "WHERE " . implode(" AND ", $where_conditions) : "WHERE p.is_archived = 0";
 
 // ✅ FIXED: Main query with comprehensive error handling
 $query = "

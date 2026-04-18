@@ -148,8 +148,7 @@ $hidden_pages = ['help.php', 'about.php'];
 ?>
 
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/swiper@11/swiper-bundle.min.css" />
-<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap"
-  rel="stylesheet" />
+<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap" rel="stylesheet" />
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
 <link href="../../output.css" rel="stylesheet">
 <link href="https://api.mapbox.com/mapbox-gl-js/v3.3.0/mapbox-gl.css" rel="stylesheet" />
@@ -160,6 +159,7 @@ $hidden_pages = ['help.php', 'about.php'];
 <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js"></script>
 <script src="https://unpkg.com/lucide@latest/dist/umd/lucide.min.js" defer></script>
 <script src="https://cdn.socket.io/4.7.2/socket.io.min.js"></script>
+<script src="https://unpkg.com/lucide@latest"></script>
 <script>
   // Load AOS only if elements need it
   window.addEventListener('load', () => {
@@ -195,6 +195,7 @@ $hidden_pages = ['help.php', 'about.php'];
     document.body.appendChild(lenisScript);
   });
 </script>
+
 <style>
   * {
     font-family: 'Plus Jakarta Sans', sans-serif;
@@ -1932,11 +1933,11 @@ $hidden_pages = ['help.php', 'about.php'];
               x-transition:enter-start="opacity-0 translate-y-1" x-transition:enter-end="opacity-100 translate-y-0"
               x-transition:leave="transition ease-in duration-150" x-transition:leave-start="opacity-100 translate-y-0"
               x-transition:leave-end="opacity-0 translate-y-1" @click.outside="notifOpen = false"
-              class="absolute right-0 mt-2 w-72 bg-white rounded-lg shadow-lg border z-50">
-              <div class="flex justify-between items-center p-3 border-b "
+              class="absolute right-0 mt-2 w-72 bg-white rounded-lg border border-gray-400 shadow-lg z-50">
+              <div class="flex justify-between items-center p-3 border-b"
                 style="font-family: 'Montserrat', sans-serif; color: #2f1200;">
                 <span>Notifications</span>
-                <button class="text-xs text-red-500 hover:text-red-700" @click.prevent="clearNotifications()"
+                <button class="text-sm text-red-500 hover:text-red-700" @click.prevent="clearNotifications()"
                   aria-label="Clear all notifications">
                   Clear All
                 </button>
@@ -3231,7 +3232,7 @@ function openGooglePopup(url) {
 </nav>
 
 
-<script src="https://unpkg.com/lucide@latest"></script>
+
 <script src="../navbar/js/top-obf.js?v=<?= file_exists($top_js) ? md5_file($top_js) : '1' ?>"></script>
 <script src="../navbar/js/topcart.obfuscated.js?v=<?= file_exists($cart_js) ? md5_file($cart_js) : '1' ?>"></script>
 <script src="../navbar/js/noble-fcm.js?v=<?= filemtime('../navbar/js/noble-fcm.js') ?>"></script>

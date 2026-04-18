@@ -345,17 +345,17 @@ if ($empStatsResult) {
     </style>
 </head>
 
-<body class="bg-gradient-to-br from-gray-50 to-gray-100 min-h-screen">
+<body class="bg-gray-50 min-h-screen">
     <?php include '../navbar/top.php'; ?>
 
     <!-- Header with Crown Badge -->
-    <div class="bg-gradient-to-r from-red-600 to-red-700 text-white shadow-lg">
+    <div class="bg-gray-100 text-white shadow-lg">
         <div class="max-w-[95%] mx-auto px-4 sm:px-6 lg:px-8">
             <div class="flex justify-between items-center py-6">
                 <div class="flex items-center space-x-4">
                   
                     <div>
-                        <p class="text-red-100 mt-1">
+                        <p class="text-black mt-1">
                             Viewing: <strong>ALL WAREHOUSE ORDERS</strong>
                             <?php if ($employee_filter > 0): ?>
                                 - Filtered by employee
@@ -363,18 +363,15 @@ if ($empStatsResult) {
                                 - Unassigned only
                             <?php endif; ?>
                         </p>
-                        <p class="text-red-100 mt-1">Complete overview of all warehouse orders and assignments</p>
+                        <p class="text-black mt-1">Complete overview of all warehouse orders and assignments</p>
                     </div>
                 </div>
                 <div class="text-right">
                     <a href="warehouse_head_assignment_A.php"
-                        class="bg-white text-red-600 hover:bg-red-50 px-6 py-3 rounded-xl transition-all duration-200 inline-flex items-center space-x-3 shadow-lg hover:shadow-xl hover:scale-105 font-semibold border-2 border-red-100">
+                        class="bg-white text-black hover:bg-red-50 px-6 py-3 rounded-xl transition-all duration-200 inline-flex items-center space-x-3 shadow-lg hover:shadow-xl hover:scale-105 font-semibold border border-red-300">
                         <i class="fas fa-users-cog text-lg"></i>
                         <span>Manage Assignments</span>
                     </a>
-                    <p class="text-red-100 text-sm mt-3">Logged in as:
-                        <strong><?php echo htmlspecialchars($fullname); ?></strong>
-                    </p>
                 </div>
             </div>
         </div>
@@ -382,84 +379,79 @@ if ($empStatsResult) {
 
     <div class="max-w-[95%] mx-auto px-4 sm:px-6 lg:px-8 py-8">
         <!-- Statistics Cards -->
-        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-6 mb-8">
-            <!-- Total Orders -->
-            <div class="stat-card bg-gradient-to-br from-blue-500 to-blue-600 rounded-xl shadow-lg p-6 text-white">
-                <div class="flex items-center justify-between">
-                    <div>
-                        <p class="text-blue-100 text-sm font-medium">Total Orders</p>
-                        <p class="text-3xl font-bold mt-1"><?php echo $totalOrders; ?></p>
-                    </div>
-                    <div class="bg-white/20 p-3 rounded-lg">
-                        <i class="fas fa-shopping-cart text-2xl"></i>
-                    </div>
-                </div>
-            </div>
+<div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4 mb-8">
 
-            <!-- Unassigned Orders -->
-            <div class="stat-card bg-gradient-to-br from-red-500 to-red-600 rounded-xl shadow-lg p-6 text-white">
-                <div class="flex items-center justify-between">
-                    <div>
-                        <p class="text-red-100 text-sm font-medium">Unassigned</p>
-                        <p class="text-3xl font-bold mt-1"><?php echo $unassignedCount; ?></p>
-                    </div>
-                    <div class="bg-white/20 p-3 rounded-lg">
-                        <i class="fas fa-exclamation-triangle text-2xl"></i>
-                    </div>
-                </div>
-                <?php if ($unassignedCount > 0): ?>
-                    <a href="warehouse_head_assignment_A.php"
-                        class="mt-3 text-xs bg-white/20 hover:bg-white/30 px-3 py-1 rounded-full inline-block">
-                        Assign Now →
-                    </a>
-                <?php endif; ?>
-            </div>
+  <!-- Total Orders -->
+  <div class="bg-white border border-gray-100 rounded-xl p-5 flex flex-col gap-3 shadow-sm">
+    <div class="flex items-center justify-between">
+      <span class="text-xs font-medium text-gray-700 uppercase tracking-wide">Total Orders</span>
+      <span class="w-8 h-8 rounded-lg bg-blue-50 flex items-center justify-center">
+        <svg class="w-4 h-4 text-blue-600" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="9" cy="21" r="1"/><circle cx="20" cy="21" r="1"/><path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6H6"/></svg>
+      </span>
+    </div>
+    <div class="text-3xl font-semibold text-gray-800"><?php echo $totalOrders; ?></div>
+    <div class="text-xs text-gray-400">All time</div>
+  </div>
 
-            <!-- Replacement Requests -->
-            <?php if ($replacementOrdersCount > 0): ?>
-                <div
-                    class="stat-card bg-gradient-to-br from-orange-500 to-orange-600 rounded-xl shadow-lg p-6 text-white pulse-notification">
-                    <div class="flex items-center justify-between">
-                        <div>
-                            <p class="text-orange-100 text-sm font-medium">Replacements</p>
-                            <p class="text-3xl font-bold mt-1"><?php echo $replacementOrdersCount; ?></p>
-                        </div>
-                        <div class="bg-white/20 p-3 rounded-lg">
-                            <i class="fas fa-sync-alt text-2xl"></i>
-                        </div>
-                    </div>
-                </div>
-            <?php endif; ?>
+  <!-- Unassigned Orders -->
+  <div class="bg-white border border-gray-100 rounded-xl p-5 flex flex-col gap-3 shadow-sm">
+    <div class="flex items-center justify-between">
+      <span class="text-xs font-medium text-gray-700 uppercase tracking-wide">Unassigned</span>
+      <span class="w-8 h-8 rounded-lg bg-red-50 flex items-center justify-center">
+        <svg class="w-4 h-4 text-red-600" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
+      </span>
+    </div>
+    <div class="text-3xl font-semibold text-red-600"><?php echo $unassignedCount; ?></div>
+    <?php if ($unassignedCount > 0): ?>
+      <a href="warehouse_head_assignment_A.php" class="text-xs font-medium text-red-600 bg-red-50 hover:bg-red-100 px-3 py-1 rounded-full w-fit transition-colors">Assign now →</a>
+    <?php else: ?>
+      <div class="text-xs text-gray-400">All assigned</div>
+    <?php endif; ?>
+  </div>
 
-            <!-- Ready for Schedule -->
-            <?php if ($readyForScheduleCount > 0): ?>
-                <div
-                    class="stat-card bg-gradient-to-br from-green-500 to-green-600 rounded-xl shadow-lg p-6 text-white pulse-notification">
-                    <div class="flex items-center justify-between">
-                        <div>
-                            <p class="text-green-100 text-sm font-medium">Ready to Schedule</p>
-                            <p class="text-3xl font-bold mt-1"><?php echo $readyForScheduleCount; ?></p>
-                        </div>
-                        <div class="bg-white/20 p-3 rounded-lg">
-                            <i class="fas fa-calendar-check text-2xl"></i>
-                        </div>
-                    </div>
-                </div>
-            <?php endif; ?>
+  <!-- Replacement Requests -->
+  <?php if ($replacementOrdersCount > 0): ?>
+  <div class="bg-white border border-gray-100 rounded-xl p-5 flex flex-col gap-3 shadow-sm relative overflow-hidden">
+    <span class="absolute top-3 right-3 w-2 h-2 rounded-full bg-amber-500 animate-ping"></span>
+    <div class="flex items-center justify-between">
+      <span class="text-xs font-medium text-gray-700 uppercase tracking-wide">Replacements</span>
+      <span class="w-8 h-8 rounded-lg bg-amber-50 flex items-center justify-center">
+        <svg class="w-4 h-4 text-amber-600" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="23 4 23 10 17 10"/><path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"/></svg>
+      </span>
+    </div>
+    <div class="text-3xl font-semibold text-amber-600"><?php echo $replacementOrdersCount; ?></div>
+    <span class="text-xs text-gray-400">Needs attention</span>
+  </div>
+  <?php endif; ?>
 
-            <!-- Warehouse Team -->
-            <div class="stat-card bg-gradient-to-br from-purple-500 to-purple-600 rounded-xl shadow-lg p-6 text-white">
-                <div class="flex items-center justify-between">
-                    <div>
-                        <p class="text-purple-100 text-sm font-medium">Team Members</p>
-                        <p class="text-3xl font-bold mt-1"><?php echo count($warehouseEmployees); ?></p>
-                    </div>
-                    <div class="bg-white/20 p-3 rounded-lg">
-                        <i class="fas fa-users text-2xl"></i>
-                    </div>
-                </div>
-            </div>
-        </div>
+  <!-- Ready for Schedule -->
+  <?php if ($readyForScheduleCount > 0): ?>
+  <div class="bg-white border border-gray-100 rounded-xl p-5 flex flex-col gap-3 shadow-sm relative overflow-hidden">
+    <span class="absolute top-3 right-3 w-2 h-2 rounded-full bg-green-500 animate-ping"></span>
+    <div class="flex items-center justify-between">
+      <span class="text-xs font-medium text-gray-700 uppercase tracking-wide">Ready to Schedule</span>
+      <span class="w-8 h-8 rounded-lg bg-green-50 flex items-center justify-center">
+        <svg class="w-4 h-4 text-green-600" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/><polyline points="9 16 11 18 15 14"/></svg>
+      </span>
+    </div>
+    <div class="text-3xl font-semibold text-green-600"><?php echo $readyForScheduleCount; ?></div>
+    <span class="text-xs text-gray-400">Queue ready</span>
+  </div>
+  <?php endif; ?>
+
+  <!-- Warehouse Team -->
+  <div class="bg-white border border-gray-100 rounded-xl p-5 flex flex-col gap-3 shadow-sm">
+    <div class="flex items-center justify-between">
+      <span class="text-xs font-medium text-gray-700 uppercase tracking-wide">Team Members</span>
+      <span class="w-8 h-8 rounded-lg bg-purple-50 flex items-center justify-center">
+        <svg class="w-4 h-4 text-purple-600" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
+      </span>
+    </div>
+    <div class="text-3xl font-semibold text-gray-800"><?php echo count($warehouseEmployees); ?></div>
+    <span class="text-xs text-gray-400">Active staff</span>
+  </div>
+
+</div>
 
         <!-- Employee Workload Overview -->
         <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-6 mb-8">
@@ -496,7 +488,7 @@ if ($empStatsResult) {
                 <!-- Filter Tabs -->
                 <div class="flex flex-wrap gap-2 mb-4">
                     <a href="?"
-                        class="px-4 py-2 rounded-lg text-sm font-medium transition-colors duration-200 <?php echo ($status_filter === '' && !$show_replacements && !$show_unassigned && !$show_ready_for_schedule) ? 'bg-primary-600 text-white' : 'bg-gray-100 text-gray-700 hover:bg-gray-200'; ?>">
+                        class="px-4 py-2 rounded-lg text-sm font-medium transition-colors duration-200 <?php echo ($status_filter === '' && !$show_replacements && !$show_unassigned && !$show_ready_for_schedule) ? 'bg-gray-200 text-black' : 'bg-gray-100 text-gray-700 hover:bg-gray-200'; ?>">
                         All Orders (<?php echo $totalOrders; ?>)
                     </a>
 
@@ -545,7 +537,7 @@ if ($empStatsResult) {
 
                     <?php if ($unassignedCount > 0): ?>
                         <a href="?unassigned=1"
-                            class="px-4 py-2 rounded-lg text-sm font-medium transition-colors duration-200 relative <?php echo $show_unassigned ? 'bg-red-600 text-white' : 'bg-red-100 text-red-700 hover:bg-red-200 pulse-notification'; ?>">
+                            class="px-4 py-2 rounded-lg text-sm font-medium transition-colors duration-200 relative <?php echo $show_unassigned ? 'bg-red-600 text-white' : 'bg-red-100 text-red-700 hover:bg-red-200 '; ?>">
                             <i class="fas fa-exclamation-triangle mr-1"></i>
                             Unassigned (<?php echo $unassignedCount; ?>)
                             <?php if (!$show_unassigned): ?>

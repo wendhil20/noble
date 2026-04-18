@@ -280,7 +280,7 @@ if (isset($_POST['delete_file'])) {
     <title>View P.O. Files - Order #<?php echo $order_id; ?></title>
  
 </head>
-<body class="bg-gradient-to-br from-gray-50 to-gray-100 min-h-screen">
+<body class="bg-gray-100 min-h-screen">
     <?php include '../navbar/top.php'; ?>
     
   <!-- Header Navbar -->
@@ -310,7 +310,7 @@ if (isset($_POST['delete_file'])) {
                 
                 <!-- Icon & Brand -->
                 <div class="flex items-center gap-3">
-                    <div class="bg-gradient-to-r from-blue-500 to-blue-600 p-2.5 rounded-lg shadow-md">
+                    <div class="bg-blue-500 p-2.5 rounded-lg shadow-md">
                         <i class="fas fa-file-excel text-white text-xl"></i>
                     </div>
                     <div>
@@ -356,7 +356,7 @@ if (isset($_POST['delete_file'])) {
     </div>
 </nav>
 
-    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+    <div class="max-w-8xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         
         <!-- Messages -->
         <?php if (isset($success_message)): ?>
@@ -720,7 +720,7 @@ if (isset($_POST['delete_file'])) {
     </div>
 
     <!-- Delete Confirmation Modal -->
-    <div id="deleteModal" class="fixed inset-0 z-50 hidden overflow-auto bg-black bg-opacity-50">
+  <div id="deleteModal" class="fixed inset-0 z-50 hidden overflow-y-auto bg-black/50">
         <div class="flex items-center justify-center min-h-screen p-4">
             <div class="bg-white rounded-lg shadow-xl max-w-md w-full">
                 <div class="p-6">
@@ -748,7 +748,7 @@ if (isset($_POST['delete_file'])) {
     </div>
 
     <!-- Mark as Ordered Modal (Single File) -->
-    <div id="markOrderedModal" class="fixed inset-0 z-50 hidden overflow-auto bg-black bg-opacity-50">
+<div id="markOrderedModal" class="fixed inset-0 z-50 hidden overflow-y-auto bg-black/50">
         <div class="flex items-center justify-center min-h-screen p-4">
             <div class="bg-white rounded-lg shadow-xl max-w-md w-full">
                 <form method="POST">
@@ -759,7 +759,7 @@ if (isset($_POST['delete_file'])) {
                             </div>
                             <h3 class="text-lg font-semibold text-gray-900">Mark as Ordered</h3>
                         </div>
-                        <p class="text-gray-600 mb-6">
+                        <p class="text-gray-600 mb-6 break-all">
                             Are you sure you want to mark <strong id="orderedFileName"></strong> as ordered? 
                             This means you have already sent this P.O. to the supplier.
                         </p>
@@ -781,7 +781,7 @@ if (isset($_POST['delete_file'])) {
     </div>
 
     <!-- Mark All as Ordered Modal -->
-    <div id="markAllOrderedModal" class="fixed inset-0 z-50 hidden overflow-auto bg-black bg-opacity-50">
+<div id="markAllOrderedModal" class="fixed inset-0 z-50 hidden overflow-y-auto bg-black/50">
         <div class="flex items-center justify-center min-h-screen p-4">
             <div class="bg-white rounded-lg shadow-xl max-w-md w-full">
                 <form method="POST">
@@ -819,7 +819,7 @@ if (isset($_POST['delete_file'])) {
     </div>
 
     <!-- P.O. Status Update Modal -->
-<div id="updateStatusModal" class="fixed inset-0 z-50 hidden overflow-auto bg-black bg-opacity-50">
+<div id="updateStatusModal" class="fixed inset-0 z-50 hidden overflow-y-auto bg-black/50">
     <div class="flex items-center justify-center min-h-screen p-4">
         <div class="bg-white rounded-lg shadow-xl max-w-md w-full">
             <form method="POST">
@@ -830,7 +830,7 @@ if (isset($_POST['delete_file'])) {
                         </div>
                         <h3 class="text-lg font-semibold text-gray-900">Update P.O. Status</h3>
                     </div>
-                    <p class="text-gray-600 mb-4">
+                    <p class="text-gray-600 mb-4 break-all">
                         Update status for: <strong id="statusFileName"></strong>
                     </p>
                     
@@ -917,7 +917,7 @@ if (isset($_POST['delete_file'])) {
                         </button>
                         <button type="submit" name="update_po_status" 
                                 class="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors duration-200">
-                            <i class="fas fa-check mr-2"></i>
+                          <i class="fa-solid fa-circle-check"></i>
                             <span id="updateStatusButtonText">Update Status</span>
                         </button>
                     </div>

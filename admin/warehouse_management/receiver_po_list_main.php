@@ -101,7 +101,7 @@ foreach ($replacementAssignments as $ra) {
     <title>My P.O. Assignments</title>
     
 </head>
-<body class="bg-gradient-to-br from-gray-50 to-gray-100 min-h-screen">
+<body class="bg-gray-100 min-h-screen">
     <?php include '../navbar/top.php'; ?>
     
     <!-- Header -->
@@ -109,7 +109,7 @@ foreach ($replacementAssignments as $ra) {
         <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
             <div class="flex justify-between items-center py-6">
                 <div class="flex items-center space-x-4">
-                    <div class="bg-gradient-to-r from-purple-500 to-purple-600 p-3 rounded-xl shadow-lg">
+                    <div class="bg-red-400 p-3 rounded-xl shadow-lg">
                         <i class="fas fa-clipboard-list text-white text-2xl"></i>
                     </div>
                     <div>
@@ -199,7 +199,7 @@ foreach ($replacementAssignments as $ra) {
                          data-status="<?php echo $isActive ? 'active' : 'completed'; ?>">
 
                         <!-- Header -->
-                        <div class="<?php echo $isActive ? 'bg-gradient-to-r from-purple-500 to-purple-600' : 'bg-gradient-to-r from-green-500 to-green-600'; ?> p-4">
+                        <div class="<?php echo $isActive ? 'bg-gradient-to-r from-red-500 to-red-600' : 'bg-gradient-to-r from-green-500 to-green-600'; ?> p-4">
                             <div class="flex items-center justify-between text-white">
                                 <div class="flex items-center space-x-2">
                                     <i class="fas fa-file-invoice"></i>
@@ -251,7 +251,7 @@ foreach ($replacementAssignments as $ra) {
                             </div>
 
                             <a href="receiver_view_po_items_A.php?po_number=<?php echo urlencode($assignment['po_number']); ?>&assignment_id=<?php echo $assignment['id']; ?>"
-                               class="block w-full bg-primary-600 hover:bg-primary-700 text-white px-4 py-2 rounded-lg transition-colors duration-200 text-center font-medium">
+                               class="block w-full bg-red-600 hover:bg-red-500 text-white px-4 py-2 rounded-lg transition-colors duration-200 text-center font-medium">
                                 <i class="fas fa-eye mr-2"></i>View Items & Receive
                             </a>
                         </div>

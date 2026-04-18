@@ -2075,7 +2075,7 @@ $hidden_pages = ['help.php', 'about.php'];
                 <div class="mb-4">
                   <label for="login_input" class="block text-sm font-medium text-gray-600 mb-2">Email or Mobile</label>
                   <input type="text" id="login_input" name="login" x-model="loginInput" @input="checkLoginType"
-                    placeholder="you@example.com or 09123456789" required
+                    autocomplete="username" placeholder="you@example.com or 09123456789" required
                     class="w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-orange-500">
                 </div>
 

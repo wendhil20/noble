@@ -102,7 +102,7 @@ $routes = [
     'logins' => 'user/login.php',
     'register' => 'user/register.php',
     'forgotpass' => 'user/forgot_password.php',
-    'resetpass' => 'user/rest_password.php',
+    'resetpass' => 'user/reset_password.php',
 ];
 
 $file = $routes[$request] ?? null;

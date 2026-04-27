@@ -1,7 +1,7 @@
 <?php
 session_name("nobleuser");
 session_start();
-include '../../connection/connect.php';
+include ROOT_PATH . '/connection/connect.php';
 
 if (!isset($_SESSION['user_id'])) {
     header('Location: ../google-callback.php');
@@ -27,6 +27,151 @@ if ($stmt_phone) {
             $digits = substr($digits, 2);
         if (strlen($digits) === 10)
             $prefill_phone = substr($digits, 0, 4) . ' ' . substr($digits, 4, 3) . ' ' . substr($digits, 7, 3);
+    }
+}
+
+// ── HANDLE DELETE REQUEST ──
+if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+    $input = json_decode(file_get_contents('php://input'), true);
+    
+    if (isset($input['address_id'])) {
+        header('Content-Type: application/json');
+        
+        $delete_id = (int)$input['address_id'];
+        
+        // Verify ownership
+        $verify = $conn->prepare("SELECT id FROM billing_addresses WHERE id = ? AND user_id = ?");
+        $verify->bind_param("ii", $delete_id, $user_id);
+        $verify->execute();
+        $verify->store_result();
+        
+        if ($verify->num_rows === 0) {
+            echo json_encode(['success' => false, 'message' => 'Unauthorized.']);
+            exit;
+        }
+        $verify->close();
+        
+        $stmt = $conn->prepare("DELETE FROM billing_addresses WHERE id = ? AND user_id = ?");
+        $stmt->bind_param("ii", $delete_id, $user_id);
+        
+        if ($stmt->execute()) {
+            echo json_encode(['success' => true]);
+        } else {
+            echo json_encode(['success' => false, 'message' => 'Delete failed.']);
+        }
+        $stmt->close();
+        exit;
+    }
+}
+
+// ── EDIT MODE: Load existing address ──
+$edit_id = isset($_GET['edit']) ? (int) $_GET['edit'] : 0;
+$edit_data = null;
+$is_edit_mode = false;
+
+if ($edit_id > 0) {
+    $stmt_edit = $conn->prepare("SELECT * FROM billing_addresses WHERE id = ? AND user_id = ? LIMIT 1");
+    $stmt_edit->bind_param("ii", $edit_id, $user_id);
+    $stmt_edit->execute();
+    $result_edit = $stmt_edit->get_result();
+    if ($result_edit->num_rows > 0) {
+        $edit_data = $result_edit->fetch_assoc();
+        $is_edit_mode = true;
+    }
+    $stmt_edit->close();
+}
+
+// ── HANDLE EDIT SUBMIT ──
+if ($_POST && isset($_POST['edit_address'])) {
+    $edit_target_id = (int) ($_POST['edit_id'] ?? 0);
+
+    // Verify ownership
+    $verify = $conn->prepare("SELECT id FROM billing_addresses WHERE id = ? AND user_id = ?");
+    $verify->bind_param("ii", $edit_target_id, $user_id);
+    $verify->execute();
+    $verify->store_result();
+    $owns = $verify->num_rows > 0;
+    $verify->close();
+
+    if (!$owns) {
+        $error_message = "Unauthorized action.";
+    } else {
+        $full_name = trim($_POST['full_name'] ?? '');
+        $phone_raw = trim($_POST['phone'] ?? '');
+        $phone_valid = true;
+        $phone = '';
+
+        if (!empty($phone_raw)) {
+            $phone_digits = preg_replace('/\D/', '', $phone_raw);
+            $mobile_digits = substr($phone_digits, 0, 2) === '63' ? substr($phone_digits, 2) : $phone_digits;
+            $dc = strlen($mobile_digits);
+            if ($dc !== 10) {
+                $error_message = $dc === 0 ? "Phone number is required."
+                    : ($dc < 10 ? "Phone incomplete. Need " . (10 - $dc) . " more digit(s). ({$dc}/10)"
+                        : "Phone too long. Use exactly 10 digits after +63. ({$dc}/10)");
+                $phone_valid = false;
+            } elseif ($mobile_digits[0] !== '9') {
+                $error_message = "PH mobile numbers must start with 9.";
+                $phone_valid = false;
+            } else {
+                $phone = '+63 ' . substr($mobile_digits, 0, 4) . ' ' . substr($mobile_digits, 4, 3) . ' ' . substr($mobile_digits, 7, 3);
+            }
+        }
+
+        if ($phone_valid && !isset($error_message)) {
+            foreach (['full_name' => 'Full Name', 'address' => 'Complete Address', 'city' => 'City', 'state' => 'State/Province', 'postal_code' => 'Postal Code'] as $f => $l) {
+                if (empty(trim($_POST[$f] ?? ''))) {
+                    $error_message = "{$l} is required.";
+                    break;
+                }
+            }
+
+            $latitude = $_POST['latitude'] ?? null;
+            $longitude = $_POST['longitude'] ?? null;
+            if (empty($latitude) || empty($longitude))
+                $error_message = "Please pin your location on the map first.";
+        }
+
+        if (!isset($error_message)) {
+            $address = trim($_POST['address'] ?? '');
+            $city = trim($_POST['city'] ?? '');
+            $state = trim($_POST['state'] ?? '');
+            $postal_code = trim($_POST['postal_code'] ?? '');
+            $country = $_POST['country'] ?? 'Philippines';
+            $notes = trim($_POST['notes'] ?? '');
+
+            $sql_upd = "UPDATE billing_addresses 
+                        SET full_name=?, phone=?, address=?, city=?, state=?, 
+                            postal_code=?, country=?, latitude=?, longitude=?, notes=?
+                        WHERE id=? AND user_id=?";
+            $stmt_upd = $conn->prepare($sql_upd);
+            if ($stmt_upd) {
+                $stmt_upd->bind_param(
+                    "sssssssddsii",
+                    $full_name,
+                    $phone,
+                    $address,
+                    $city,
+                    $state,
+                    $postal_code,
+                    $country,
+                    $latitude,
+                    $longitude,
+                    $notes,
+                    $edit_target_id,
+                    $user_id
+                );
+                if ($stmt_upd->execute()) {
+                    $success_message = "Address updated successfully!";
+                    $redirect_script = '<script>setTimeout(()=>{window.location.href=document.referrer||"index-profilepersonal-page-7.php";},2000);</script>';
+                } else {
+                    $error_message = "Database error: " . $stmt_upd->error;
+                }
+                $stmt_upd->close();
+            } else {
+                $error_message = "Prepare error: " . $conn->error;
+            }
+        }
     }
 }
 
@@ -102,7 +247,7 @@ if ($_POST && isset($_POST['add_address'])) {
 <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width,initial-scale=1.0" />
-    <title>Add Billing Address</title>
+    <title><?= $is_edit_mode ? 'Edit Billing Address' : 'Add Billing Address' ?></title>
     <style>
         * {
             font-family: 'Plus Jakarta Sans', sans-serif;
@@ -152,13 +297,21 @@ if ($_POST && isset($_POST['add_address'])) {
 </head>
 
 <body class="bg-gray-50 min-h-screen">
-    <?php include '../navbar/top.php'; ?>
+    <?php include ROOT_PATH . '/user/navbar/top.php'; ?>
     <?php if (isset($redirect_script))
         echo $redirect_script; ?>
 
     <div class="max-w-2xl mx-auto p-3">
 
-        <div class="mb-8 mt-5">
+      <div class="mb-8 mt-5">
+    <!-- Back Button -->
+    <button onclick="history.back()" 
+        class="flex items-center gap-2 text-sm text-gray-500 hover:text-gray-800 mb-4 transition-colors group">
+        <svg class="w-4 h-4 transition-transform group-hover:-translate-x-1" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M15 19l-7-7 7-7" />
+        </svg>
+        Back
+    </button>
             <div class="flex items-center gap-3 mb-1">
                 <div class="w-9 h-9 rounded-xl bg-green-600 flex items-center justify-center">
                     <svg class="w-5 h-5 text-white" fill="none" stroke="currentColor" stroke-width="2"
@@ -168,9 +321,13 @@ if ($_POST && isset($_POST['add_address'])) {
                         <path stroke-linecap="round" stroke-linejoin="round" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
                     </svg>
                 </div>
-                <h1 class="text-xl font-bold text-gray-900">Add Billing Address</h1>
+                <h1 class="text-xl font-bold text-gray-900">
+                    <?= $is_edit_mode ? 'Edit Billing Address' : 'Add Billing Address' ?>
+                </h1>
             </div>
-            <p class="text-sm text-gray-500 ml-12">Search your location on the map, then confirm the details below.</p>
+            <p class="text-sm text-gray-500 ml-12">
+                <?= $is_edit_mode ? 'Update your pinned location and address details below.' : 'Search your location on the map, then confirm the details below.' ?>
+            </p>
         </div>
 
         <?php if (isset($success_message)): ?>
@@ -194,7 +351,9 @@ if ($_POST && isset($_POST['add_address'])) {
             </div>
         <?php endif; ?>
         <form method="POST" id="addressForm">
-            <input type="hidden" name="add_address" value="1" />
+            <input type="hidden" name="add_address" value="<?= $is_edit_mode ? '' : '1' ?>" />
+            <input type="hidden" name="edit_address" value="<?= $is_edit_mode ? '1' : '' ?>" />
+            <input type="hidden" name="edit_id" value="<?= $edit_id ?>" />
             <input type="hidden" name="latitude" id="latitude" />
             <input type="hidden" name="longitude" id="longitude" />
             <input type="hidden" name="country" value="Philippines" />
@@ -270,7 +429,8 @@ if ($_POST && isset($_POST['add_address'])) {
                         <div>
                             <label class="block text-xs font-medium text-gray-600 mb-1.5">Full Name <span
                                     class="text-red-500">*</span></label>
-                            <input name="full_name" type="text" required value="<?= htmlspecialchars($user_name) ?>"
+                            <input name="full_name" type="text" required
+                                value="<?= htmlspecialchars($is_edit_mode ? ($edit_data['full_name'] ?? '') : $user_name) ?>"
                                 placeholder="Juan Dela Cruz"
                                 class="w-full border border-gray-300 rounded-xl px-4 py-2.5 text-sm text-gray-800 placeholder-gray-400 transition-all" />
                             <?php if ($user_name): ?>
@@ -290,8 +450,12 @@ if ($_POST && isset($_POST['add_address'])) {
                             <div class="flex">
                                 <span
                                     class="flex items-center px-3 bg-gray-100 border border-r-0 border-gray-300 rounded-l-xl text-sm text-gray-500 font-medium">+63</span>
-                                <input name="phone" id="phoneInput" type="tel" maxlength="13"
-                                    value="<?= htmlspecialchars($prefill_phone) ?>" placeholder="9XX XXX XXXX"
+                                <input name="phone" id="phoneInput" type="tel" maxlength="13" value="<?= htmlspecialchars($is_edit_mode ? (function () use ($edit_data) {
+                                    $digits = preg_replace('/\D/', '', $edit_data['phone'] ?? '');
+                                    if (substr($digits, 0, 2) === '63')
+                                        $digits = substr($digits, 2);
+                                    return strlen($digits) === 10 ? substr($digits, 0, 4) . ' ' . substr($digits, 4, 3) . ' ' . substr($digits, 7, 3) : '';
+                                })() : $prefill_phone) ?>" placeholder="9XX XXX XXXX"
                                     class="flex-1 border border-gray-300 rounded-r-xl px-4 py-2.5 text-sm text-gray-800 placeholder-gray-400 transition-all" />
                             </div>
                             <?php if ($prefill_phone): ?>
@@ -379,16 +543,17 @@ if ($_POST && isset($_POST['add_address'])) {
                     <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7" />
                     </svg>
-                    Confirm &amp; Save Address
+                    <?= $is_edit_mode ? 'Update Address' : 'Confirm &amp; Save Address' ?>
                 </button>
                 <!-- Isara ito pagkatapos ng NOTES card at bago ang submit button -->
             </div>
         </form>
-
     </div>
 
-    <?php include '../navbar/footer.php'; ?>
+
+    <?php include ROOT_PATH . '/user/navbar/footer.php'; ?>
     <script>
+
         const MAPBOX_TOKEN = 'pk.eyJ1Ijoid2VuZGhpbCIsImEiOiJjbWx1NmIzMDgwM25kM2RyMnVuOTNuMzhrIn0.45jN2HjKO_iRMlF-8gWcwQ';
 
         mapboxgl.accessToken = MAPBOX_TOKEN;
@@ -625,6 +790,33 @@ if ($_POST && isset($_POST['add_address'])) {
             btn.disabled = true;
             btn.innerHTML = '<svg class="animate-spin w-4 h-4" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"/><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8H4z"/></svg> Saving...';
         });
+
+        // ── AUTO-FILL MAP & FORM IN EDIT MODE ──
+        <?php if ($is_edit_mode && $edit_data): ?>
+            const editLat = <?= floatval($edit_data['latitude']) ?>;
+            const editLng = <?= floatval($edit_data['longitude']) ?>;
+
+            map.on('load', () => {
+                map.flyTo({ center: [editLng, editLat], zoom: 16, speed: 1.2 });
+                placeMarker(editLng, editLat, true); // true = skip reverse geocode
+
+                // Pre-fill address fields from DB
+                document.getElementById('fieldAddress').value = <?= json_encode($edit_data['address'] ?? '') ?>;
+                document.getElementById('fieldCity').value = <?= json_encode($edit_data['city'] ?? '') ?>;
+                document.getElementById('fieldState').value = <?= json_encode($edit_data['state'] ?? '') ?>;
+                document.getElementById('fieldPostal').value = <?= json_encode($edit_data['postal_code'] ?? '') ?>;
+
+                // Pre-fill notes
+                document.querySelector('textarea[name="notes"]').value = <?= json_encode($edit_data['notes'] ?? '') ?>;
+
+                // Show pin status with saved address label
+                document.getElementById('pinAddress').textContent = <?= json_encode(
+                    $edit_data['address'] . ', ' . $edit_data['city'] . ', ' . $edit_data['state']
+                ) ?>;
+                document.getElementById('pinStatus').classList.remove('hidden');
+            });
+        <?php endif; ?>
+
     </script>
 </body>
 

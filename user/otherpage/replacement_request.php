@@ -1,11 +1,11 @@
 <?php
 session_name("nobleuser");
 session_start();
-include '../../connection/connect.php';
+include ROOT_PATH . '/connection/connect.php';
 
 // Check if user is logged in
 if (!isset($_SESSION['user_id'])) {
-    header('Location: ../google-callback.php');
+    header('Location: ' . BASE_URL . '/googlecallback');
     exit;
 }
 
@@ -14,7 +14,7 @@ $order_id = isset($_GET['order_id']) ? intval($_GET['order_id']) : 0;
 $item_id = isset($_GET['item_id']) ? intval($_GET['item_id']) : 0;
 
 if (!$order_id || !$item_id) {
-    header('Location: profile.php');
+    header('Location: ' . BASE_URL . '/profile');
     exit;
 }
 
@@ -34,7 +34,7 @@ $stmt->execute();
 $result = $stmt->get_result();
 
 if ($result->num_rows === 0) {
-    header('Location: profile.php');
+    header('Location: ' . BASE_URL . '/profile');
     exit;
 }
 
@@ -314,7 +314,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && !$existing_request && $is_eligible)
 </head>
 
 <body class="bg-gray-50 min-h-screen font-poppins">
-    <?php include '../navbar/top.php'; ?>
+    <?php include ROOT_PATH . '/user/navbar/top.php'; ?>
 
     <div class="container mx-auto px-3 sm:px-4 py-4 sm:py-8 max-w-4xl">
         <!-- Header -->
@@ -591,7 +591,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && !$existing_request && $is_eligible)
         <?php endif; ?>
     </div>
 
-    <?php include '../navbar/footer.php'?>
+    <?php include ROOT_PATH . '/user/navbar/footer.php'?>
     <script>
         let uploadedImages = 0;
         let imageFiles = [null, null, null];

@@ -1,13 +1,13 @@
 <?php
 session_name("nobleuser");
 session_start();
-include '../connection/connect.php';
+include ROOT_PATH . '/connection/connect.php';
 
 $token = $_GET['token'] ?? '';
 
 if (empty($token)) {
     $_SESSION['register_error'] = "Invalid verification link.";
-    header("Location: ../user/otherpage/index-page-1-A-B-C-D-E.php");
+    header("Location: " . ROOT_PATH . "/");
     exit();
 }
 
@@ -28,6 +28,6 @@ if ($result->num_rows > 0) {
     $_SESSION['register_error'] = "Invalid or already used verification link.";
 }
 
-header("Location: ../user/otherpage/index-page-1-A-B-C-D-E.php");
+header("Location: " . ROOT_PATH . "/");
 exit();
 ?>

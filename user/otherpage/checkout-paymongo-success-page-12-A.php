@@ -3,7 +3,7 @@
 // Handles both PayMongo (session-based order creation) and QRPh (webhook creates order)
 session_name("nobleuser");
 session_start();
-include '../../connection/connect.php';
+include ROOT_PATH . '/connection/connect.php';
 
 // ✅ Restore session from remember_token
 if (!isset($_SESSION['user_id']) && isset($_COOKIE['remember_token'])) {
@@ -26,7 +26,7 @@ if (!isset($_SESSION['user_id']) && isset($_COOKIE['remember_token'])) {
 }
 
 if (!isset($_SESSION['user_id'])) {
-    header('Location: ../google-callback.php');
+    header('Location: "'. BASE_URL . '/google-callback.php');
     exit;
 }
 
@@ -105,7 +105,7 @@ try {
 
         } else {
             // ── Verify payment with PayMongo API ──
-            require_once '../../.env.php';
+            require_once ROOT_PATH . '/.env.php';
             $secretKey = $_ENV['PAYMONGO_SECRET_KEY'] ?? getenv('PAYMONGO_SECRET_KEY');
 
             $ch = curl_init("https://api.paymongo.com/v1/checkout_sessions/" . urlencode($session_id));
@@ -142,7 +142,7 @@ try {
             if (!$is_paid) {
                 error_log("Payment not confirmed for session $session_id | ref $reference_no");
                 unset($_SESSION['pending_paymongo_order']);
-                header("Location: index-checkout-page-12.php?payment_pending=1&ref=" . urlencode($reference_no));
+                header("Location: " . BASE_URL . "/checkout?payment_pending=1&ref=" . urlencode($reference_no));
                 exit;
             }
 
@@ -404,7 +404,7 @@ if ($order && !empty($order['reference_no'])) {
 </head>
 <body class="bg-white min-h-screen">
 
-<?php include '../navbar/top.php'; ?>
+<?php include ROOT_PATH . '/user/navbar/top.php'; ?>
 
 <div class="max-w-4xl mx-auto py-12 px-4">
 
@@ -566,11 +566,11 @@ if ($order && !empty($order['reference_no'])) {
             </div>
 
             <div class="flex flex-col sm:flex-row gap-4 justify-center">
-                <a href="../index.php"
+                <a href="<?= BASE_URL ?>/shop"
                     class="bg-gray-600 text-white px-8 py-3 rounded-lg hover:bg-gray-700 transition font-medium text-center">
                     Continue Shopping
                 </a>
-                <a href="index-profile-page-6.php"
+                <a href="<?= BASE_URL ?>/order"
                     class="bg-orange-600 text-white px-8 py-3 rounded-lg hover:bg-orange-700 transition font-medium text-center">
                     View Orders
                 </a>
@@ -609,6 +609,6 @@ if ($order && !empty($order['reference_no'])) {
 
 </div>
 
-<?php include '../navbar/footer.php'; ?>
+<?php include ROOT_PATH . '/user/navbar/footer.php'; ?>
 </body>
 </html>

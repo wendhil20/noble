@@ -1,7 +1,7 @@
 <?php
 session_name("nobleuser");
 session_start();
-include '../../connection/connect.php';
+include ROOT_PATH.'/connection/connect.php';
 
 if (!isset($_SESSION['user_id']) && isset($_COOKIE['remember_token'])) {
     $token = $_COOKIE['remember_token'];
@@ -428,7 +428,7 @@ $user_picture = $_SESSION['user_picture'] ?? null;
   </style>
 </head>
 <body class="font-roboto"> 
-<?php include '../navbar/top.php' ?>
+<?php include ROOT_PATH.'/user/navbar/top.php' ?>
 
 <div class="app">
 

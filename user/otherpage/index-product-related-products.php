@@ -45,13 +45,13 @@
                 $view_count = (int) ($row['view_count'] ?? 0);
                 ?>
                 <!-- Buong card ay clickable na -->
-                <a href="index-product_view-page-4-AA.php?id=<?= $row['id'] ?>"
+                <a href="<?= BASE_URL ?>/productview?id=<?= $row['id'] ?>"
                     class="group block bg-white hover:shadow-lg transition-all duration-300 transform hover:-translate-y-1 overflow-hidden hover:border-orange-300 cursor-pointer rounded-lg">
 
                     <!-- Product Image -->
                     <div class="relative overflow-hidden bg-gray-50" style="height: 140px;">
                         <?php if ($row['main_image']): ?>
-                            <img src="../../<?= $row['main_image'] ?>" loading="lazy"
+                            <img src="<?= BASE_URL ?>/<?= $row['main_image'] ?>" loading="lazy"
                                 class="w-full h-full object-contain p-2 group-hover:scale-105 transition-transform duration-300"
                                 alt="<?= htmlspecialchars($row['product_name']) ?>">
                         <?php else: ?>
@@ -153,13 +153,13 @@
                             ?>
                             <div class="swiper-slide">
                                 <!-- Buong card ay clickable na -->
-                                <a href="index-product_view-page-4-AA.php?id=<?= $row['id'] ?>"
+                                <a href="<?= BASE_URL ?>/productview?id=<?= $row['id'] ?>"
                                     class="group block bg-white rounded-lg overflow-hidden hover:shadow-xl transition-all duration-300 h-full flex-col cursor-pointer">
 
                                     <!-- Product Image -->
                                     <div class="relative overflow-hidden bg-gray-100" style="height: 200px;">
                                         <?php if ($row['main_image']): ?>
-                                            <img src="../../<?= $row['main_image'] ?>" loading="lazy"
+                                            <img src="<?= BASE_URL ?>/<?= $row['main_image'] ?>" loading="lazy"
                                                 class="w-full h-full object-contain p-4 group-hover:scale-110 transition-transform duration-300"
                                                 alt="<?= htmlspecialchars($row['product_name']) ?>">
                                         <?php else: ?>

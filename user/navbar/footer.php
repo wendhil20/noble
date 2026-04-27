@@ -1,8 +1,3 @@
-<link rel="preconnect" href="https://fonts.googleapis.com" />
-<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap"
-    rel="stylesheet" />
-<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" />
 
 <style>
     footer * {
@@ -80,7 +75,7 @@
                 <div class="flex items-center gap-3 mb-5">
                     <div
                         class="w-12 h-12 bg-white rounded-xl border border-gray-100 shadow-sm flex items-center justify-center overflow-hidden">
-                        <img src="../img/logo.png" alt="Noble Home" class="w-8 h-8 object-contain" />
+                        <img src="<?= BASE_URL ?>/user/img/logo.png" alt="Noble Home" class="w-8 h-8 object-contain" />
                     </div>
                     <span class="text-lg font-700 text-[#2f1200]" style="font-weight:700;">Noble Home</span>
                 </div>
@@ -116,10 +111,11 @@
             <div>
                 <h3 class="text-sm font-semibold uppercase tracking-wide text-[#2f1200] mb-5">Company Info</h3>
                 <div class="flex flex-col gap-3 text-sm text-gray-500">
-                    <a href="../rules/terms.php" class="footer-link">Terms of use</a>
-                    <a href="../rules/policy.php" class="footer-link">Privacy Policy</a>
-                    <a href="../about/about.php" class="footer-link">About Noblehome</a>
-                    <a href="../rules/customer-services.php" class="footer-link">Help Center</a>
+                    <a href="<?= BASE_URL ?>/terms" class="footer-link">Terms of use</a>
+                    <a href="<?= BASE_URL ?>/policy" class="footer-link">Privacy Policy</a>
+                    <a href="<?= BASE_URL ?>/about" class="footer-link">About Noblehome</a>
+                    <a href="<?= BASE_URL ?>/help" class="footer-link">Help</a>
+                    <a href="<?= BASE_URL ?>/customerservices" class="footer-link">Customer Services</a>
                 </div>
             </div>
 
@@ -127,9 +123,9 @@
             <div>
                 <h3 class="text-sm font-semibold uppercase tracking-wide text-[#2f1200] mb-5">Customer Services</h3>
                 <div class="flex flex-col gap-3 text-sm text-gray-500">
-                    <a href="../rules/return-policy.php" class="footer-link">Return Policy</a>
-                    <a href="../rules/payment.php" class="footer-link">Payment Policy</a>
-                    <a href="#" class="footer-link">Shipping Policy</a>
+                    <a href="<?= BASE_URL ?>/returnpolicy" class="footer-link">Return Policy</a>
+                    <a href="<?= BASE_URL ?>/paymentpolicy" class="footer-link">Payment Policy</a>
+                    <a href="<?= BASE_URL ?>/shippingpolicy" class="footer-link">Shipping Policy</a>
                 </div>
             </div>
         </div>

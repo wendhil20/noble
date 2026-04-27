@@ -1,9 +1,10 @@
 <?php
 session_name("nobleuser");
 session_start();
-include '../../connection/connect.php';
 
-include 'index-recent_views_handler-page-14.php';
+include ROOT_PATH . '/connection/connect.php';
+
+include ROOT_PATH . '/user/otherpage/index-recent_views_handler-page-14.php';
 
 // Track this product view
 if (isset($_GET['id']) && is_numeric($_GET['id'])) {
@@ -151,13 +152,13 @@ if (!empty($product['product_images'])) {
       $cleanPath = str_replace(['\\/', '\\'], ['/', ''], $imagePath);
       $cleanPath = trim($cleanPath, '/');
 
-      $imageSrc = "../../" . $cleanPath;
+      $imageSrc = ROOT_PATH . "/" . $cleanPath;
 
       if (file_exists($imageSrc)) {
         $product_images[] = [
           'index' => $idx,
           'path' => $cleanPath,
-          'src' => $imageSrc
+          'src' => BASE_URL . "/" . $cleanPath  // ← use BASE_URL for HTML output
         ];
       }
     }
@@ -1011,15 +1012,19 @@ $is_guest = !isset($_SESSION['user_id']);
       }
     }
   </style>
+
+  <script>
+    const BASE_URL = '<?= BASE_URL ?>';
+  </script>
 </head>
 
 <body class="">
-  <?php include '../navbar/top.php'; ?>
+  <?php include ROOT_PATH . '/user/navbar/top.php'; ?>
   <!-- Breadcrumb -->
   <nav class="bg-white border-b border-gray-200 px-4 py-3">
     <div class="container mx-auto">
       <div class="flex items-center space-x-2 text-sm" style="font-family: 'Montserrat', sans-serif; color: #2f1200">
-        <a href="index-page-1-A-B-C-D-E" class=" hover:text-orange-700 transition duration-200 flex items-center">
+        <a href="<?= BASE_URL ?>/" class=" hover:text-orange-700 transition duration-200 flex items-center">
           <i class="fas fa-home mr-1"></i>Home
         </a>
         <i class="fas fa-chevron-right text-gray-400"></i>
@@ -1045,8 +1050,8 @@ $is_guest = !isset($_SESSION['user_id']);
                 w-48 h-48 sm:w-64 sm:h-64 md:w-80 md:h-80 lg:w-full lg:h-auto mx-auto lg:mx-0"
               id="magnifier-container">
 
-              <img id="main-product-image" src="../../<?= htmlspecialchars($display_image) ?>"
-                data-original-image="../../<?= htmlspecialchars($display_image) ?>"
+              <img id="main-product-image" src="<?= BASE_URL ?>/<?= htmlspecialchars($display_image) ?>"
+                data-original-image="<?= htmlspecialchars($display_image) ?>"
                 data-original-name="<?= htmlspecialchars($display_name) ?>"
                 class="w-full h-full object-contain transition-all duration-300"
                 alt="<?= htmlspecialchars($display_name) ?>">
@@ -1077,9 +1082,8 @@ $is_guest = !isset($_SESSION['user_id']);
                 <div class="flex gap-1 sm:gap-2 pb-2 justify-center lg:justify-start">
 
                   <!-- Main Thumbnail -->
-                  <div class="thumbnail-item cursor-pointer shrink-0 border border-gray-200 rounded-lg"
-                    data-index="0">
-                    <img src="../../<?= htmlspecialchars($display_image) ?>" loading="lazy"
+                  <div class="thumbnail-item cursor-pointer shrink-0 border border-gray-200 rounded-lg" data-index="0">
+                    <img src="<?= BASE_URL ?>/<?= htmlspecialchars($display_image) ?>" loading="lazy"
                       class="w-12 h-12 sm:w-14 sm:h-14 md:w-16 md:h-16 object-contain rounded-lg border-2 border-transparent hover:border-blue-500 transition-all duration-200 thumbnail-active"
                       alt="Main Image">
                   </div>
@@ -1088,7 +1092,7 @@ $is_guest = !isset($_SESSION['user_id']);
                   <?php foreach ($sub_images as $index => $sub_image): ?>
                     <div class="thumbnail-item cursor-pointer shrink-0 border border-gray-200 rounded-lg"
                       data-index="<?= $index + 1 ?>">
-                      <img src="../../uploads/<?= htmlspecialchars($sub_image) ?>" loading="lazy"
+                      <img src="<?= BASE_URL ?>/user/uploads/<?= htmlspecialchars($sub_image) ?>" loading="lazy"
                         class="w-12 h-12 sm:w-14 sm:h-14 md:w-16 md:h-16 object-contain rounded-lg border-2 border-transparent hover:border-blue-500 transition-all duration-200"
                         alt="Sub Image <?= $index + 1 ?>">
                     </div>
@@ -1202,9 +1206,9 @@ $is_guest = !isset($_SESSION['user_id']);
 
                       <div
                         class="aspect-square mb-1.5 overflow-hidden bg-gray-50 flex items-center justify-center relative rounded">
-                        <?php if (!empty($type['image']) && file_exists("../../" . $type['image'])): ?>
-                          <img src="../../<?= htmlspecialchars($type['image']) ?>" class="w-full h-full object-contain"
-                            alt="<?= htmlspecialchars($type['name']) ?>" loading="lazy"
+                        <?php if (!empty($type['image']) && file_exists(ROOT_PATH . "/" . $type['image'])): ?>
+                          <img src="<?= BASE_URL ?>/<?= htmlspecialchars($type['image']) ?>"
+                            class="w-full h-full object-contain" alt="<?= htmlspecialchars($type['name']) ?>" loading="lazy"
                             onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';">
                           <div class="w-full h-full flex items-center justify-center text-gray-300" style="display: none;">
                             <i class="fas fa-image text-lg"></i>
@@ -1248,7 +1252,7 @@ $is_guest = !isset($_SESSION['user_id']);
                 <div class="lg:hidden py-3 px-0 bg-white border-b border-gray-100 mb-4">
                   <div class="aspect-square w-32 mx-auto overflow-hidden">
                     <h1 class="text-center mb-2 text-xs text-gray-600">Display</h1>
-                    <img id="sidebar-product-image" src="../../<?= htmlspecialchars($display_image) ?>"
+                    <img id="sidebar-product-image" src="<?= BASE_URL ?>/<?= htmlspecialchars($display_image) ?>"
                       class="w-full h-full object-contain" alt="<?= htmlspecialchars($product['product_name']) ?>">
                   </div>
                   <h3 class="text-center mt-2 font-semibold text-gray-800 text-xs line-clamp-2"
@@ -1965,7 +1969,7 @@ $is_guest = !isset($_SESSION['user_id']);
                   </span>
                 </button>
 
-                <button type="button" onclick="window.location.href='index-cart_view-page-8.php'"
+                <button type="button" onclick="window.location.href='<?= BASE_URL ?>/cartview'"
                   class="flex-1 py-3 lg:py-4 text-sm lg:text-lg font-semibold transition-all duration-300 bg-black hover:bg-orange-500 text-white"
                   style="font-family: 'Montserrat', sans-serif;">
                   <span class="flex items-center justify-center gap-2">
@@ -1974,16 +1978,12 @@ $is_guest = !isset($_SESSION['user_id']);
                   </span>
                 </button>
               </div>
-
             </form>
           </div>
         </div>
       </div>
     </div>
   </div>
-  </div>
-
-
 
   <style>
     /* Step Section Spacing */
@@ -2088,11 +2088,11 @@ $is_guest = !isset($_SESSION['user_id']);
   </style>
 
   <?php if ($is_windows_category): ?>
-    <?php include 'index-product-windows-customize-modal.php'; ?>
+    <?php include ROOT_PATH . '/user/otherpage/index-product-windows-customize-modal.php'; ?>
   <?php endif; ?>
 
   <?php if ($related_products->num_rows > 0): ?>
-    <?php include 'index-product-related-products.php'; ?>
+    <?php include ROOT_PATH . '/user/otherpage/index-product-related-products.php'; ?>
   <?php endif; ?>
 
   <?php if (!empty($product_specs)): ?>
@@ -2658,14 +2658,16 @@ $is_guest = !isset($_SESSION['user_id']);
   <?php endif; ?>
 
   <script
-    src="js/index-product-view-junction-stock.obfuscated.js?v=<?= filemtime('js/index-product-view-junction-stock.obfuscated.js') ?>"></script>
+    src="<?= BASE_URL ?>/user/otherpage/js/index-product-view-junction-stock.obfuscated.js?v=<?= filemtime(ROOT_PATH . '/user/otherpage/js/index-product-view-junction-stock.obfuscated.js') ?>"></script>
 
   <script
-    src="js/index-product-view-page-4-AA.obfuscated.js?v=<?= filemtime('js/index-product-view-page-4-AA.obfuscated.js') ?>"></script>
+    src="<?= BASE_URL ?>/user/otherpage/js/index-product-view-page-4-AA.obfuscated.js?v=<?= filemtime(ROOT_PATH . '/user/otherpage/js/index-product-view-page-4-AA.obfuscated.js') ?>"></script>
 
-  <?php include '../navbar/footer.php'; ?>
+  <?php include ROOT_PATH . '/user/navbar/footer.php'; ?>
 
   <script>
+
+
     // ✅ REAL-TIME TIMER - Accurate countdown
     function initFlashSaleTimers() {
       console.log('🔥 Initializing flash sale timers...');

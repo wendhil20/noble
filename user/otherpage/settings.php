@@ -2,7 +2,7 @@
 // complete-profile.php
 session_name("nobleuser");
 session_start();
-include '../../connection/connect.php';
+include ROOT_PATH . "/connection/connect.php";
 
 // Restore session from remember_token if needed
 if (!isset($_SESSION['user_id']) && isset($_COOKIE['remember_token'])) {
@@ -23,7 +23,7 @@ if (!isset($_SESSION['user_id']) && isset($_COOKIE['remember_token'])) {
 
 // Check authentication
 if (!isset($_SESSION['user_id'])) {
-    header('Location: ../google-callback.php');
+    header('Location: ' . BASE_URL . '/googlecallback');
     exit;
 }
 
@@ -62,11 +62,11 @@ if ($profile_result->num_rows > 0) {
     if ($is_complete) {
         if ($profile_data['is_verified'] == 1) {
             // Already verified = go to dashboard
-            header('Location: index-page-1-A-B-C-D-E.php');
+            header('Location: ' . BASE_URL . '/');
             exit;
         } else {
             // Complete pero under review = go to verification pending
-            header('Location: settings-verification-pending.php');
+            header('Location: ' . BASE_URL . '/verificationsettings');
             exit;
         }
     }
@@ -326,7 +326,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
             // Success - redirect
             if (empty($error)) {
-                header('Location: settings-verification-pending.php');
+                header('Location: ' . BASE_URL . '/verifcationsettings');
                 exit;
             }
         }
@@ -346,12 +346,12 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 </head>
 
 <body style="font-family: 'Montserrat', sans-serif;">
-    <?php include '../navbar/top.php'; ?>
+    <?php include ROOT_PATH . '/user/navbar/top.php'; ?>
   <!-- Breadcrumb -->
   <nav class="bg-white border-b border-gray-200 px-4 py-3">
     <div class="container mx-auto">
       <div class="flex items-center space-x-2 text-sm" style="font-family: 'Montserrat', sans-serif; color: #2f1200">
-        <a href="index-profilepersonal-page-7.php" class=" hover:text-orange-700 transition duration-200 flex items-center">
+        <a href=" <?= BASE_URL ?>/profile" class=" hover:text-orange-700 transition duration-200 flex items-center">
           <i class="fas fa-home mr-1"></i>Back
         </a>
         <i class="fas fa-chevron-right text-gray-400"></i>
@@ -471,7 +471,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         </div>
     </div>
 
-    <?php include '../navbar/footer.php'; ?>
+    <?php include ROOT_PATH . '/user/navbar/footer.php'; ?>
 
     <script>
         // Disable submit button by default

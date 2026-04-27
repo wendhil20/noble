@@ -2,240 +2,146 @@
 
 
 function showCapacityExceededModal(vehicleAssignment) {
-    // ✅ PREVENT DOUBLE CALLS with a flag
-    if (window.capacityModalShowing) {
-    return;
-}
-    
-    // ✅ Set flag IMMEDIATELY
+    if (window.capacityModalShowing) return;
     window.capacityModalShowing = true;
-    
-    // ✅ Remove any existing modal
+
     const existingModal = document.getElementById('capacityExceededModal');
-if (existingModal) {
-    existingModal.remove();
-}
-    
-    // ✅ Add style ONLY ONCE
-    if (!document.getElementById('capacityModalStyle')) {
-        const style = document.createElement('style');
-        style.id = 'capacityModalStyle';
-        style.textContent = `
-            @keyframes slideIn {
-                from {
-                    opacity: 0;
-                    transform: translateY(-20px) scale(0.95);
-                }
-                to {
-                    opacity: 1;
-                    transform: translateY(0) scale(1);
-                }
-            }
-            .animate-slideIn {
-                animation: slideIn 0.3s ease-out;
-            }
-        `;
-        document.head.appendChild(style);
-    }
-    
+    if (existingModal) existingModal.remove();
+
     const details = vehicleAssignment.exceedanceDetails;
     const vehicle = vehicleAssignment.vehicle;
-    
+
     const modal = document.createElement('div');
     modal.id = 'capacityExceededModal';
-    modal.className = 'fixed inset-0 bg-black bg-opacity-60 z-[9999] flex items-center justify-center p-4';
+    modal.style.cssText = 'position:fixed; inset:0; background:rgba(0,0,0,0.45); z-index:9999; display:flex; align-items:center; justify-content:center; padding:1rem;';
+
     modal.innerHTML = `
-        <div class="bg-white rounded-2xl shadow-2xl max-w-2xl w-full max-h-[90vh] overflow-y-auto animate-slideIn">
+        <div style="background:var(--color-background-primary,#fff); border-radius:12px; border:0.5px solid rgba(0,0,0,0.12); width:100%; max-width:540px; max-height:90vh; overflow-y:auto;">
+            
             <!-- Header -->
-            <div class="bg-gradient-to-r from-red-600 to-red-700 text-white p-6 rounded-t-2xl">
-                <div class="flex items-center gap-4">
-                    <div class="bg-white bg-opacity-20 rounded-full p-3">
-                        <svg class="w-10 h-10" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"></path>
-                        </svg>
-                    </div>
-                    <div>
-                        <h2 class="text-2xl font-bold">Delivery Capacity Exceeded</h2>
-                        <p class="text-red-100 text-sm mt-1">Your order is too large for our available vehicles</p>
-                    </div>
+            <div style="background:#A32D2D; padding:1.25rem 1.5rem; display:flex; align-items:center; gap:12px; ">
+                <div style="width:40px; height:40px; border-radius:50%; background:rgba(255,255,255,0.15); display:flex; align-items:center; justify-content:center; flex-shrink:0;">
+                   <i class="fa-solid fa-triangle-exclamation text-white"></i>
                 </div>
+                <div style="flex:1;">
+                    <p style="color:#fff; font-size:15px; font-weight:500; margin:0;">Delivery capacity exceeded</p>
+                    <p style="color:#F09595; font-size:12px; margin:0; margin-top:2px;">Order is too large for available vehicles</p>
+                </div>
+                <button onclick="closeCapacityModal()" style="background:rgba(255,255,255,0.15); border:none; border-radius:8px; padding:6px; cursor:pointer; display:flex; align-items:center;">
+                    <svg width="16" height="16" fill="none" stroke="white" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
+                    </svg>
+                </button>
             </div>
 
             <!-- Body -->
-            <div class="p-6 space-y-6">
-                <!-- Problem Statement -->
-                <div class="bg-red-50 border-l-4 border-red-500 p-4 rounded">
-                    <div class="flex items-start gap-3">
-                        <svg class="w-6 h-6 text-red-600 flex-shrink-0 mt-0.5" fill="currentColor" viewBox="0 0 20 20">
-                            <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clip-rule="evenodd"></path>
-                        </svg>
-                        <div class="flex-1">
-                            <p class="font-semibold text-red-900">Unable to Process Delivery</p>
-                            <p class="text-sm text-red-800 mt-1">Your order exceeds the maximum capacity of our largest available delivery vehicle: <strong>${vehicle.vehicle_type}</strong></p>
-                        </div>
+            <div style="padding:1.25rem 1.5rem; display:flex; flex-direction:column; gap:12px;">
+
+                <!-- Alert -->
+                <div style="background:#FCEBEB; border:0.5px solid #F7C1C1; border-left:3px solid #A32D2D; border-radius:0 8px 8px 0; padding:12px 14px; display:flex; gap:10px; align-items:flex-start;">
+                    <svg width="16" height="16" fill="#A32D2D" viewBox="0 0 20 20" style="flex-shrink:0; margin-top:2px;">
+                        <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clip-rule="evenodd"/>
+                    </svg>
+                    <div>
+                        <p style="font-size:13px; font-weight:500; color:#791F1F; margin:0;">Unable to process delivery</p>
+                        <p style="font-size:12px; color:#A32D2D; margin:4px 0 0;">Exceeds maximum capacity of largest vehicle: <strong>${vehicle.vehicle_type}</strong></p>
                     </div>
                 </div>
 
-                <!-- Capacity Details -->
-                <div class="bg-gray-50 rounded-lg p-5">
-                    <h3 class="font-bold text-gray-800 mb-4 flex items-center gap-2">
-                        <svg class="w-5 h-5 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"></path>
-                        </svg>
-                        Capacity Comparison
-                    </h3>
-                    
-                    <div class="space-y-4">
+                <!-- Capacity Comparison -->
+                <div style="background:#f9f9f8; border-radius:8px; padding:14px;">
+                    <p style="font-size:11px; font-weight:500; color:#888; margin:0 0 10px; text-transform:uppercase; letter-spacing:0.05em;">Capacity comparison</p>
+                    <div style="display:flex; flex-direction:column; gap:10px;">
+
                         ${details.volumeExceeded ? `
-                        <div class="bg-white rounded-lg p-4 border-2 border-red-200">
-                            <div class="flex justify-between items-center mb-3">
-                                <span class="font-semibold text-gray-700">📦 Volume (Cubic Meters)</span>
-                                <span class="px-3 py-1 bg-red-100 text-red-800 rounded-full text-xs font-bold">EXCEEDED</span>
+                        <div style="background:#fff; border:0.5px solid #F7C1C1; border-radius:8px; padding:12px;">
+                            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:8px;">
+                                <span style="font-size:13px; font-weight:500; color:#333;">Volume (m³)</span>
+                                <span style="font-size:11px; font-weight:500; background:#FCEBEB; color:#A32D2D; padding:2px 8px; border-radius:99px;">exceeded</span>
                             </div>
-                            <div class="space-y-2">
-                                <div class="flex justify-between text-sm">
-                                    <span class="text-gray-600">Your Order:</span>
-                                    <span class="font-bold text-red-600">${vehicleAssignment.totalCubicMeters.toFixed(3)} m³</span>
-                                </div>
-                                <div class="flex justify-between text-sm">
-                                    <span class="text-gray-600">Vehicle Maximum:</span>
-                                    <span class="font-semibold text-gray-800">${parseFloat(vehicle.max_cubic_meter).toFixed(3)} m³</span>
-                                </div>
-                                <div class="pt-2 border-t border-red-200">
-                                    <div class="flex justify-between text-sm">
-                                        <span class="text-gray-700 font-medium">Over Limit By:</span>
-                                        <span class="font-bold text-red-700">${details.volumeOverage.toFixed(3)} m³ (${((details.volumeOverage / parseFloat(vehicle.max_cubic_meter)) * 100).toFixed(1)}%)</span>
-                                    </div>
-                                </div>
+                            <div style="display:flex; justify-content:space-between; font-size:12px; color:#666; margin-bottom:6px;">
+                                <span>Your order: <strong style="color:#A32D2D;">${vehicleAssignment.totalCubicMeters.toFixed(3)} m³</strong></span>
+                                <span>Max: ${parseFloat(vehicle.max_cubic_meter).toFixed(3)} m³</span>
                             </div>
-                            <div class="mt-3">
-                                <div class="w-full bg-gray-200 rounded-full h-3 overflow-hidden">
-                                    <div class="bg-red-600 h-3 rounded-full" style="width: 100%"></div>
-                                </div>
+                            <div style="height:6px; background:#f0f0f0; border-radius:99px; overflow:hidden;">
+                                <div style="height:100%; width:100%; background:#A32D2D; border-radius:99px;"></div>
                             </div>
+                            <p style="font-size:11px; color:#A32D2D; margin:5px 0 0; text-align:right;">+${details.volumeOverage.toFixed(3)} m³ over limit (${((details.volumeOverage / parseFloat(vehicle.max_cubic_meter)) * 100).toFixed(1)}%)</p>
                         </div>
                         ` : ''}
-                        
+
                         ${details.weightExceeded ? `
-                        <div class="bg-white rounded-lg p-4 border-2 border-red-200">
-                            <div class="flex justify-between items-center mb-3">
-                                <span class="font-semibold text-gray-700">⚖️ Weight (Kilograms)</span>
-                                <span class="px-3 py-1 bg-red-100 text-red-800 rounded-full text-xs font-bold">EXCEEDED</span>
+                        <div style="background:#fff; border:0.5px solid #F7C1C1; border-radius:8px; padding:12px;">
+                            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:8px;">
+                                <span style="font-size:13px; font-weight:500; color:#333;">Weight (kg)</span>
+                                <span style="font-size:11px; font-weight:500; background:#FCEBEB; color:#A32D2D; padding:2px 8px; border-radius:99px;">exceeded</span>
                             </div>
-                            <div class="space-y-2">
-                                <div class="flex justify-between text-sm">
-                                    <span class="text-gray-600">Your Order:</span>
-                                    <span class="font-bold text-red-600">${vehicleAssignment.totalWeightKg.toFixed(2)} kg</span>
-                                </div>
-                                <div class="flex justify-between text-sm">
-                                    <span class="text-gray-600">Vehicle Maximum:</span>
-                                    <span class="font-semibold text-gray-800">${parseFloat(vehicle.max_weight_capacity).toFixed(2)} kg</span>
-                                </div>
-                                <div class="pt-2 border-t border-red-200">
-                                    <div class="flex justify-between text-sm">
-                                        <span class="text-gray-700 font-medium">Over Limit By:</span>
-                                        <span class="font-bold text-red-700">${details.weightOverage.toFixed(2)} kg (${((details.weightOverage / parseFloat(vehicle.max_weight_capacity)) * 100).toFixed(1)}%)</span>
-                                    </div>
-                                </div>
+                            <div style="display:flex; justify-content:space-between; font-size:12px; color:#666; margin-bottom:6px;">
+                                <span>Your order: <strong style="color:#A32D2D;">${vehicleAssignment.totalWeightKg.toFixed(2)} kg</strong></span>
+                                <span>Max: ${parseFloat(vehicle.max_weight_capacity).toFixed(2)} kg</span>
                             </div>
-                            <div class="mt-3">
-                                <div class="w-full bg-gray-200 rounded-full h-3 overflow-hidden">
-                                    <div class="bg-red-600 h-3 rounded-full" style="width: 100%"></div>
-                                </div>
+                            <div style="height:6px; background:#f0f0f0; border-radius:99px; overflow:hidden;">
+                                <div style="height:100%; width:100%; background:#A32D2D; border-radius:99px;"></div>
                             </div>
-                        </div>
-                        ` : ''}
-                        
-                        ${!details.volumeExceeded && !details.weightExceeded ? `
-                        <div class="text-center text-gray-500 py-4">
-                            <p>Capacity within limits</p>
+                            <p style="font-size:11px; color:#A32D2D; margin:5px 0 0; text-align:right;">+${details.weightOverage.toFixed(2)} kg over limit (${((details.weightOverage / parseFloat(vehicle.max_weight_capacity)) * 100).toFixed(1)}%)</p>
                         </div>
                         ` : ''}
                     </div>
                 </div>
 
                 <!-- Solutions -->
-                <div class="bg-blue-50 rounded-lg p-5 border border-blue-200">
-                    <h3 class="font-bold text-blue-900 mb-3 flex items-center gap-2">
-                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z"></path>
-                        </svg>
-                        Available Solutions
-                    </h3>
-                    <div class="space-y-3 text-sm">
-                        <div class="flex items-start gap-3">
-                            <div class="bg-blue-600 text-white rounded-full w-6 h-6 flex items-center justify-center flex-shrink-0 font-bold text-xs">1</div>
+                <div style="background:#f9f9f8; border-radius:8px; padding:14px;">
+                    <p style="font-size:11px; font-weight:500; color:#888; margin:0 0 10px; text-transform:uppercase; letter-spacing:0.05em;">Available solutions</p>
+                    <div style="display:flex; flex-direction:column; gap:10px;">
+                        ${[
+                            ['Reduce order quantity', 'Go back to cart and decrease item quantities.'],
+                            ['Split into multiple orders', 'Place separate orders within vehicle limits.'],
+                            ['Contact us for bulk delivery', 'We can arrange special options for large orders.']
+                        ].map((item, i) => `
+                        <div style="display:flex; gap:10px; align-items:flex-start;">
+                            <div style="width:20px; height:20px; border-radius:50%; background:#185FA5; display:flex; align-items:center; justify-content:center; flex-shrink:0; font-size:11px; font-weight:500; color:#fff;">${i+1}</div>
                             <div>
-                                <p class="font-semibold text-blue-900">Reduce Order Quantity</p>
-                                <p class="text-blue-800">Go back to your cart and decrease the quantity of items to fit within vehicle capacity.</p>
+                                <p style="font-size:13px; font-weight:500; color:#222; margin:0;">${item[0]}</p>
+                                <p style="font-size:12px; color:#666; margin:2px 0 0;">${item[1]}</p>
                             </div>
-                        </div>
-                        <div class="flex items-start gap-3">
-                            <div class="bg-blue-600 text-white rounded-full w-6 h-6 flex items-center justify-center flex-shrink-0 font-bold text-xs">2</div>
-                            <div>
-                                <p class="font-semibold text-blue-900">Split Into Multiple Orders</p>
-                                <p class="text-blue-800">Place multiple separate orders to stay within vehicle limits for each delivery.</p>
-                            </div>
-                        </div>
-                        <div class="flex items-start gap-3">
-                            <div class="bg-blue-600 text-white rounded-full w-6 h-6 flex items-center justify-center flex-shrink-0 font-bold text-xs">3</div>
-                            <div>
-                                <p class="font-semibold text-blue-900">Contact Us for Bulk Delivery</p>
-                                <p class="text-blue-800">For large orders, we can arrange special bulk delivery options.</p>
-                            </div>
-                        </div>
+                        </div>`).join('')}
                     </div>
                 </div>
 
-                <!-- Contact Information -->
-                <div class="bg-gradient-to-r from-orange-50 to-yellow-50 rounded-lg p-4 border border-orange-200">
-                    <div class="flex items-start gap-3">
-                        <svg class="w-6 h-6 text-orange-600 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"></path>
-                        </svg>
-                        <div class="flex-1">
-                            <p class="font-semibold text-gray-800 mb-1">Need Help?</p>
-                            <p class="text-sm text-gray-700">Contact our support team for bulk order arrangements:</p>
-                            <div class="mt-2 space-y-1 text-sm">
-                                <p class="text-orange-700 font-medium">📧 Email: <a href="mailto:support@noblehome.com" class="underline hover:text-orange-800">support@noblehome.com</a></p>
-                                <p class="text-orange-700 font-medium">📞 Phone: <a href="tel:+1234567890" class="underline hover:text-orange-800">+123 456 7890</a></p>
-                            </div>
-                        </div>
-                    </div>
-                </div>
             </div>
 
-            <!-- Footer Actions -->
-            <div class="bg-gray-50 px-6 py-4 rounded-b-2xl flex gap-3 justify-end border-t">
-                <a href="index-cart_view-page-8.php" class="px-6 py-3 bg-orange-600 text-white rounded-lg hover:bg-orange-700 transition font-medium flex items-center gap-2 shadow-md hover:shadow-lg">
-                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.293 2.293c-.63.63-.184 1.707.707 1.707H17m0 0a2 2 0 100 4 2 2 0 000-4zm-8 2a2 2 0 11-4 0 2 2 0 014 0z"></path>
+            <!-- Footer -->
+            <div style="padding:12px 1.5rem; border-top:0.5px solid #eee; display:flex; gap:8px; justify-content:flex-end; border-radius:0 0 12px 12px;">
+                 <a href="${window.BASE_URL || ''}/cartview" style="padding:8px 16px; font-size:13px; border-radius:8px; cursor:pointer; background:#d97706; color:#fff; border:none; text-decoration:none; display:flex; align-items:center; gap:6px;">
+                    <svg width="14" height="14" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"/>
                     </svg>
-                    Go to Cart
+                    Modify cart
                 </a>
-                <button onclick="closeCapacityModal()" class="px-6 py-3 bg-gray-200 text-gray-700 rounded-lg hover:bg-gray-300 transition font-medium">
+                <button onclick="closeCapacityModal()" style="padding:8px 16px; font-size:13px; border-radius:8px; cursor:pointer; background:#f0f0f0; color:#444; border:0.5px solid #ddd;">
                     Close
                 </button>
             </div>
         </div>
     `;
-    
+
     document.body.appendChild(modal);
-    
-    // Close on background click
+
     modal.addEventListener('click', function(e) {
-        if (e.target === modal) {
+        if (e.target === modal) closeCapacityModal();
+    });
+
+    document.addEventListener('keydown', function escHandler(e) {
+        if (e.key === 'Escape') {
             closeCapacityModal();
+            document.removeEventListener('keydown', escHandler);
         }
     });
 }
 
-// ✅ NEW: Separate close function that resets the flag
 function closeCapacityModal() {
     const modal = document.getElementById('capacityExceededModal');
-    if (modal) {
-        modal.remove();
-    }
+    if (modal) modal.remove();
     window.capacityModalShowing = false;
 }
 
@@ -441,7 +347,7 @@ if (vehicleAssignment.exceededCapacity) {
                             </div>` : ''}
                         </div>
                         <div class="flex gap-2">
-                            <a href="index-cart_view-page-8.php" class="inline-flex items-center gap-2 px-4 py-2 bg-orange-600 text-white text-sm font-semibold rounded-lg hover:bg-orange-700 transition shadow-md">
+                            <a href="${window.BASE_URL || ''}/cartview" class="inline-flex items-center gap-2 px-4 py-2 bg-orange-600 text-white text-sm font-semibold rounded-lg hover:bg-orange-700 transition shadow-md">
                                 <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"></path>
                                 </svg>

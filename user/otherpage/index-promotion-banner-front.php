@@ -1,18 +1,4 @@
 <?php
-/**
- * index-promotion-banner-front.php
- *
- * I-include isang beses sa TUKTOK ng page (bago ang HTML output):
- *   include 'index-promotion-banner-front.php';
- *
- * Tapos gamitin kung saan mo gusto:
- *   <?php include_banner(1); ?>   <- Stage 1 (Top)
- *   <?php include_banner(3); ?>   <- Stage 3 (Middle)
- *   <?php include_banner(2); ?>   <- Stage 2 (Bottom)
- *
- * IMPORTANTE: Kung walang active banner sa isang stage,
- * ZERO HTML ang ilalabas — walang blank space, walang section tag.
- */
 
 // ── Load all 3 active banners ONCE ───────────────────────────────────────────
 if (!isset($__promo_banners_loaded)) {
@@ -87,7 +73,7 @@ if (!function_exists('include_banner')) {
 
                     <div class="promo-shimmer"></div>
 
-                    <img src="<?= $img_src ?>" alt="<?= $has_title ? htmlspecialchars($title) : 'Promotion Banner' ?>"
+                    <img src="<?= BASE_URL ?>/user/uploads/<?= $img_src ?>" alt="<?= $has_title ? htmlspecialchars($title) : 'Promotion Banner' ?>"
                         class="promo-img w-full object-contain opacity-0 relative z-10 rounded-xl block" loading="lazy"
                         onload="this.style.opacity='1';this.previousElementSibling.style.display='none';"
                         onerror="this.closest('section').remove();">

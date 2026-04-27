@@ -2,9 +2,13 @@
 session_name("nobleuser");
 session_start();
 
-require_once '../connection/connect.php';
+if (!defined('ROOT_PATH')) {
+    define('ROOT_PATH', dirname(__DIR__));
+}
 
-// ✅ DAGDAG - Clear remember_token sa DB
+require_once ROOT_PATH . '/connection/connect.php';
+
+// Clear remember_token in DB
 if (isset($_SESSION['user_id'])) {
     $stmt = $conn->prepare("UPDATE users SET remember_token = NULL WHERE id = ?");
     $stmt->bind_param("i", $_SESSION['user_id']);
@@ -12,22 +16,21 @@ if (isset($_SESSION['user_id'])) {
     $stmt->close();
 }
 
-// ✅ Clear cookie - dapat may httponly flag din
+// Clear cookie
 setcookie("remember_token", "", time() - 3600, "/", "", false, true);
 
 // Clear session
-session_unset();
+$_SESSION = [];
 session_destroy();
 
-// Build dynamic redirect
+// Redirect
 $protocol = (!empty($_SERVER['HTTPS']) && $_SERVER['HTTPS'] !== 'off') ? 'https://' : 'http://';
 $host = $_SERVER['HTTP_HOST'];
 $isLocalhost = (strpos($host, 'localhost') !== false || strpos($host, '127.0.0.1') !== false);
 
 $redirectUrl = $isLocalhost
-    ? $protocol . $host . '/noble/index.php'
-    : $protocol . $host . '/index.php';
+    ? $protocol . $host . '/noble/'
+    : $protocol . $host . '/';
 
 header("Location: $redirectUrl");
 exit;
-?>

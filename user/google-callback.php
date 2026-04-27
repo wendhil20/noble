@@ -4,9 +4,9 @@ session_name("nobleuser");
 session_start();
 
 // ✅ LOAD ENVIRONMENT VARIABLES
-require_once '../.env.php';
-require_once '../vendor/autoload.php';
-require_once '../connection/connect.php';
+require_once ROOT_PATH . '/.env.php';
+require_once ROOT_PATH . '/vendor/autoload.php';
+require_once ROOT_PATH . '/connection/connect.php';
 
 use Google\Service\PeopleService;
 
@@ -23,13 +23,13 @@ $isLocalhost = (strpos($host, 'localhost') !== false || strpos($host, '127.0.0.1
 
 // ✅ ABSOLUTE URLs - hindi nasasalo ng .htaccess rewrite
 if ($isLocalhost) {
-    $redirectUri   = $protocol . $host . '/noble/user/google-callback.php';
-    $closeUrl      = $protocol . $host . '/noble/user/google-popup-close.php';
-    $closeErrorUrl = $protocol . $host . '/noble/user/google-popup-close.php?error=1';
+    $redirectUri   = $protocol . $host . '/noble/googlecallback';
+    $closeUrl      = $protocol . $host . '/noble/googlepopup';
+    $closeErrorUrl = $protocol . $host . '/noble/googlepopup?error=1';
 } else {
-    $redirectUri   = $protocol . $host . '/user/google-callback.php';
-    $closeUrl      = $protocol . $host . '/user/google-popup-close.php';
-    $closeErrorUrl = $protocol . $host . '/user/google-popup-close.php?error=1';
+    $redirectUri   = $protocol . $host . '/googlecallback';
+    $closeUrl      = $protocol . $host . '/googlepopup';
+    $closeErrorUrl = $protocol . $host . '/googlepopup?error=1';
 }
 
 if (empty($clientId) || empty($clientSecret)) {
@@ -157,7 +157,7 @@ if (isset($_GET['code'])) {
         $_SESSION['login_success']   = 'Welcome, ' . htmlspecialchars($name) . '!';
         
         // Assign referral code if user came from a referral link
-        require_once '../includes/referral_tracker.php';
+        require_once  ROOT_PATH . '/includes/referral_tracker.php';
         assignReferralToUser($conn, $user_id);
         
         // Set remember token cookie

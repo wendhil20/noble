@@ -9,12 +9,8 @@ ini_set('error_log', __DIR__ . '/error_log.txt');
 session_name("nobleuser");
 session_start();
 
-// Check if connection file exists
-if (!file_exists('../../connection/connect.php')) {
-    die('Database connection file not found');
-}
 
-include '../../connection/connect.php';
+include ROOT_PATH . '/connection/connect.php';
 
 // Check database connection
 if (!isset($conn) || $conn->connect_error) {
@@ -381,12 +377,12 @@ $filter_description = ($show_sale == 1) ? 'discounted' : '';
 <body class="min-h-screen " style="font-family: 'Montserrat', sans-serif; color: #2f1200">
     <?php 
     // Safe include with error handling
-    $navbar_path = '../navbar/top.php';
+    $navbar_path = ROOT_PATH . '/user/navbar/top.php';
     if (file_exists($navbar_path)) {
         include $navbar_path;
     }
     ?>
-<?php include 'push-notification.php'; ?>
+<?php include ROOT_PATH . '/user/otherpage/push-notification.php'; ?>
     <!-- Header Section -->
     <div class="bg-black text-white">
         <div class="container mx-auto px-3 py-5">
@@ -400,7 +396,7 @@ $filter_description = ($show_sale == 1) ? 'discounted' : '';
                     <ol class="inline-flex items-start space-x-2 text-sm">
                         <?php if ($category_name): ?>
                             <li>
-                                <a href="index-subcategory_grid_page-14.php?category_name=<?php echo urlencode(strtolower($category_name)); ?>"
+                                <a href="<?= BASE_URL ?>/subcategorygrid?category_name=<?php echo urlencode(strtolower($category_name)); ?>"
                                     class="text-white hover:text-gray-300 uppercase">
                                     <?php echo htmlspecialchars($category_name); ?>
                                 </a>
@@ -451,13 +447,13 @@ $filter_description = ($show_sale == 1) ? 'discounted' : '';
                     <!-- Toggle Filter Button -->
                     <div class="flex gap-2 flex-wrap">
                         <?php if ($show_sale == 1): ?>
-                            <a href="?<?php echo $sub_subcategory_id > 0 ? 'sub_subcategory_id=' . $sub_subcategory_id : 'subcategory_id=' . $subcategory_id; ?>"
+                            <a href="<?= BASE_URL ?>/productsubviews?<?php echo $sub_subcategory_id > 0 ? 'sub_subcategory_id=' . $sub_subcategory_id : 'subcategory_id=' . $subcategory_id; ?>"
                                 class="inline-flex items-center px-4 py-2 bg-gray-200 text-gray-700 hover:bg-gray-300 rounded-lg transition-colors uppercase text-sm font-semibold">
                                 <i class="fas fa-list mr-2"></i>
                                 Show All Products
                             </a>
                         <?php else: ?>
-                            <a href="?<?php echo $sub_subcategory_id > 0 ? 'sub_subcategory_id=' . $sub_subcategory_id : 'subcategory_id=' . $subcategory_id; ?>&sale=1"
+                            <a href="<?= BASE_URL ?>/productsubviews?<?php echo $sub_subcategory_id > 0 ? 'sub_subcategory_id=' . $sub_subcategory_id : 'subcategory_id=' . $subcategory_id; ?>&sale=1"
                                 class="inline-flex items-center px-4 py-2 bg-red-600 text-white hover:bg-red-700 rounded-lg transition-colors uppercase text-sm font-semibold">
                                 <i class="fas fa-tag mr-2"></i>
                                 Show Sale Items Only
@@ -506,11 +502,11 @@ $filter_description = ($show_sale == 1) ? 'discounted' : '';
 
                         <!-- Product Image -->
                         <div class="relative overflow-hidden bg-gray-50" style="height: 120px;min-height: 120px;">
-                            <img src="../../<?php echo htmlspecialchars($product['main_image']); ?>"
+                            <img src="<?= BASE_URL ?>/<?php echo htmlspecialchars($product['main_image']); ?>"
                                 alt="<?php echo htmlspecialchars($product['product_name']); ?>"
                                 class="w-full h-full object-contain group-hover:scale-105 transition-transform duration-500"
                                 loading="lazy"
-                                onerror="this.src='../../uploads/placeholder.jpg'">
+                                onerror="this.src='<?= BASE_URL ?>/uploads/placeholder.jpg'">
                         </div>
 
                         <!-- Product Details -->
@@ -602,7 +598,7 @@ $filter_description = ($show_sale == 1) ? 'discounted' : '';
                                 <?php endif; ?>
                             <?php endif; ?>
 
-                            <form action="index-product_view-page-4-AA.php" method="GET">
+                            <form action="<?= BASE_URL ?>/productview" method="GET">
                                 <input type="hidden" name="id" value="<?php echo (int)$product['id']; ?>">
                                 <button type="submit" class="w-full bg-black text-white py-1 md:py-1.5 px-2 rounded text-[9px] md:text-[11px] uppercase hover:bg-gray-700 transition-colors font-semibold">
                                     VIEW
@@ -659,7 +655,7 @@ $filter_description = ($show_sale == 1) ? 'discounted' : '';
                 </p>
                 
                 <?php if ($show_sale == 1): ?>
-                    <a href="?<?php echo $sub_subcategory_id > 0 ? 'sub_subcategory_id=' . $sub_subcategory_id : 'subcategory_id=' . $subcategory_id; ?>"
+                    <a href="<?= BASE_URL ?>/productsubviews?<?php echo $sub_subcategory_id > 0 ? 'sub_subcategory_id=' . $sub_subcategory_id : 'subcategory_id=' . $subcategory_id; ?>"
                         class="inline-flex items-center px-6 py-3 bg-gray-600 text-white font-semibold rounded-lg hover:bg-gray-700 transition-colors shadow-md">
                         <i class="fas fa-list mr-2"></i>
                         View All Products
@@ -673,7 +669,7 @@ $filter_description = ($show_sale == 1) ? 'discounted' : '';
 
     <?php 
     // Safe include footer
-    $footer_path = '../navbar/footer.php';
+    $footer_path = ROOT_PATH . '/user/navbar/footer.php';
     if (file_exists($footer_path)) {
         include $footer_path;
     }

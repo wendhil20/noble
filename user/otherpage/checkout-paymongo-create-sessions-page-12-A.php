@@ -17,7 +17,7 @@ header('Access-Control-Allow-Headers: Content-Type');
 
 ob_start();
 
-require_once '../../.env.php';
+require_once ROOT_PATH . '/.env.php';
 
 if ($_SERVER['REQUEST_METHOD'] === 'OPTIONS') {
     ob_end_clean();
@@ -32,7 +32,7 @@ if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
 }
 
 try {
-    require_once '../../connection/connect.php';
+    require_once ROOT_PATH . '/connection/connect.php';
 
     if (!isset($_SESSION['user_id'])) {
         throw new Exception('User not logged in');
@@ -44,8 +44,8 @@ try {
     $isLocalhost = (strpos($host, 'localhost') !== false || strpos($host, '127.0.0.1') !== false);
     $basePath = $isLocalhost ? '/noble/user/otherpage' : '/user/otherpage';
 
-    $success_url = $protocol . $host . $basePath . '/checkout-paymongo-success-page-12-A.php';
-    $cancel_url  = $protocol . $host . $basePath . '/index-checkout-page-12.php';
+    $success_url = $protocol . $host . ($isLocalhost ? '/noble' : '') . '/payment2mongo';
+    $cancel_url  = $protocol . $host . ($isLocalhost ? '/noble' : '') . '/checkout4';
 
     $input = json_decode(file_get_contents("php://input"), true);
 

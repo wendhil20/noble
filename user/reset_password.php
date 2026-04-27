@@ -2,7 +2,7 @@
 // reset_password.php - Password reset form with debugging
 session_name("nobleuser");
 session_start();
-include '../connection/connect.php';
+include ROOT_PATH . '/connection/connect.php';
 
 $token = $_GET['token'] ?? '';
 $error = '';
@@ -121,7 +121,7 @@ $show_debug = false; // Set to false in production
                     <div>
                         <?= htmlspecialchars($error) ?>
                         <div class="mt-2">
-                            <a href="forgot_password.php" class="text-sm text-red-600 underline">Request New Reset Link</a>
+                            <a href="<?= BASE_URL ?>/forgotpass" class="text-sm text-red-600 underline">Request New Reset Link</a>
                         </div>
                     </div>
                 </div>
@@ -137,7 +137,7 @@ $show_debug = false; // Set to false in production
                     <div>
                         <?= htmlspecialchars($message) ?>
                         <div class="mt-3">
-                            <a href="otherpage/index-page-1-A-B-C-D-E.php" class="text-sm text-green-600 underline font-semibold">Go to Login →</a>
+                            <a href="<?= BASE_URL ?>/" class="text-sm text-green-600 underline font-semibold">Go to Login →</a>
                         </div>
                     </div>
                 </div>
@@ -197,7 +197,7 @@ $show_debug = false; // Set to false in production
                 <h3 class="mt-4 text-lg font-medium text-gray-900">Invalid or Expired Link</h3>
                 <p class="mt-2 text-sm text-gray-600">The password reset link is invalid or has expired.</p>
                 <div class="mt-6">
-                    <a href="forgot_password.php" class="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md text-white bg-orange-500 hover:bg-orange-600">
+                    <a href="<?= BASE_URL ?>/forgotpass" class="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md text-white bg-orange-500 hover:bg-orange-600">
                         Request New Reset Link
                     </a>
                 </div>
@@ -206,7 +206,7 @@ $show_debug = false; // Set to false in production
 
         <!-- Back to Login -->
         <div class="text-center">
-            <a href="otherpage/index-page-1-A-B-C-D-E.php" class="text-sm text-orange-500 hover:underline">
+            <a href="<?= BASE_URL ?>/" class="text-sm text-orange-500 hover:underline">
                 ← Back to Login
             </a>
         </div>

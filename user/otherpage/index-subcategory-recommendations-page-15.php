@@ -2,7 +2,7 @@
 // index-subcategory-recommendations-page-15.php
 session_name("nobleuser");
 session_start();
-include '../../connection/connect.php';
+include ROOT_PATH . '/connection/connect.php';
 
 // Session restoration from remember_token
 if (!isset($_SESSION['user_id']) && isset($_COOKIE['remember_token'])) {
@@ -30,7 +30,7 @@ $is_guest = !isset($_SESSION['user_id']);
 
 $from_page = isset($_GET['from']) ? $_GET['from'] : '';
 
-$subcategory_id = isset($_GET['subcategory_id']) ? (int)$_GET['subcategory_id'] : 0;
+$subcategory_id = isset($_GET['subcategory_id']) ? (int) $_GET['subcategory_id'] : 0;
 
 if ($subcategory_id === 0) {
     header('Location: index-shop-page-2.php');
@@ -183,10 +183,10 @@ foreach ($collections as &$collection) {
         ORDER BY p.view_count DESC
         LIMIT 6
     ";
-    
+
     $products_stmt = $conn->prepare($products_query);
     $coll_id = $collection['id'];
-    
+
     // Bind params: main WHERE + 6 OR conditions = 7 total
     $products_stmt->bind_param(
         "iiiiiii",
@@ -198,10 +198,10 @@ foreach ($collections as &$collection) {
         $coll_id,
         $coll_id
     );
-    
+
     $products_stmt->execute();
     $products_result = $products_stmt->get_result();
-    
+
     $collection['products'] = [];
     while ($product = $products_result->fetch_assoc()) {
         $collection['products'][] = $product;
@@ -270,7 +270,8 @@ function calculateSmartPriceDisplay($product)
     return $result;
 }
 
-function formatViewCount($count) {
+function formatViewCount($count)
+{
     if ($count >= 1000) {
         return number_format($count / 1000, 1) . 'k';
     }
@@ -280,6 +281,7 @@ function formatViewCount($count) {
 
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -287,8 +289,8 @@ function formatViewCount($count) {
 </head>
 
 <body class="min-h-screen bg-gray-50" style="font-family: 'Montserrat', sans-serif; color: #2f1200">
-    <?php include '../navbar/top.php'; ?>
-<?php include 'push-notification.php'; ?>
+    <?php include ROOT_PATH . '/user/navbar/top.php'; ?>
+    <?php include ROOT_PATH . '/user/otherpage/push-notification.php'; ?>
     <!-- Header Section -->
     <div class="bg-black text-white">
         <div class="container mx-auto px-6 py-8">
@@ -301,14 +303,14 @@ function formatViewCount($count) {
                 <nav class="flex items-center" aria-label="Breadcrumb">
                     <ol class="inline-flex items-center space-x-2 text-sm">
                         <li>
-                            <a href="index-page-1-A-B-C-D-E.php" class="text-white hover:text-gray-200 uppercase">
+                            <a href="<?= BASE_URL ?>/" class="text-white hover:text-gray-200 uppercase">
                                 Home
                             </a>
                         </li>
                         <li><i class="fas fa-chevron-right text-white mx-2"></i></li>
                         <li>
-                            <a href="index-subcategory_grid_page-14.php?category_name=<?= urlencode(strtolower($category_name)) ?>"
-                               class="text-white hover:text-gray-300 uppercase">
+                            <a href="<?= BASE_URL ?>/subcategorygrid?category_name=<?= urlencode(strtolower($category_name)) ?>"
+                                class="text-white hover:text-gray-300 uppercase">
                                 <?= htmlspecialchars($category_name) ?>
                             </a>
                         </li>
@@ -324,7 +326,7 @@ function formatViewCount($count) {
 
     <!-- Main Content -->
     <div class="container mx-auto px-6 py-12">
-        
+
         <?php if (!empty($collections)): ?>
             <!-- Collections Loop -->
             <?php foreach ($collections as $collection): ?>
@@ -332,7 +334,8 @@ function formatViewCount($count) {
                     <!-- Collection Header -->
                     <div class="flex items-center justify-between mb-6">
                         <div>
-                            <div class="inline-flex items-center gap-2 <?= !empty($collection['products']) ? 'bg-orange-500' : 'bg-gray-400' ?> px-4 py-2 rounded-full text-sm mb-3 font-semibold">
+                            <div
+                                class="inline-flex items-center gap-2 <?= !empty($collection['products']) ? 'bg-orange-500' : 'bg-gray-400' ?> px-4 py-2 rounded-full text-sm mb-3 font-semibold">
                                 <?= !empty($collection['products']) ? 'Recommended' : 'NO PRODUCTS YET' ?>
                             </div>
                             <h2 class="text-3xl font-bold  uppercase">
@@ -346,12 +349,12 @@ function formatViewCount($count) {
                         <div class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-4">
                             <?php foreach ($collection['products'] as $row): ?>
                                 <?php
-                                $product_id = (int)$row['id'];
-                                $view_count = (int)($row['view_count'] ?? 0);
-                                
+                                $product_id = (int) $row['id'];
+                                $view_count = (int) ($row['view_count'] ?? 0);
+
                                 // 🔥 Use the smart price display function
                                 $priceData = calculateSmartPriceDisplay($row);
-                                $discount = (float)($row['discount'] ?? 0);
+                                $discount = (float) ($row['discount'] ?? 0);
 
                                 // Get rating
                                 $rating_q = $conn->prepare("SELECT ROUND(AVG(rating), 1) AS avg_rating, COUNT(*) AS total_raters FROM product_ratings WHERE product_id = ?");
@@ -372,24 +375,24 @@ function formatViewCount($count) {
                                 $sold_q->bind_param("i", $product_id);
                                 $sold_q->execute();
                                 $sold_result = $sold_q->get_result()->fetch_assoc();
-                                $total_sold = (int)($sold_result['total_sold'] ?? 0);
+                                $total_sold = (int) ($sold_result['total_sold'] ?? 0);
                                 $sold_q->close();
 
                                 $colors = !empty($row['color_name']) ? explode(',', $row['color_name']) : [];
                                 $firstColor = !empty($colors) ? trim($colors[0]) : '';
                                 ?>
 
-                                <div class="group relative bg-white rounded-lg overflow-hidden shadow hover:shadow-xl transition-all duration-300">
+                                <div
+                                    class="group relative bg-white rounded-lg overflow-hidden shadow hover:shadow-xl transition-all duration-300">
 
                                     <!-- Product Image -->
                                     <div class="relative overflow-hidden bg-gray-50" style="height: 180px;">
-                                        <a href="index-product_view-page-4-AA.php?id=<?= $product_id ?>" class="block">
+                                        <a href="<?= BASE_URL ?>/productview?id=<?= $product_id ?>" class="block">
                                             <?php if (!empty($row['main_image'])): ?>
-                                                <img src="../../<?= htmlspecialchars($row['main_image']) ?>"
-                                                     alt="<?= htmlspecialchars($row['product_name']) ?>"
-                                                     class="w-full h-full object-contain group-hover:scale-105 transition-transform duration-500"
-                                                     loading="lazy"
-                                                     onerror="this.src='../../uploads/placeholder.jpg'">
+                                                <img src="<?= BASE_URL ?>/<?= htmlspecialchars($row['main_image']) ?>"
+                                                    alt="<?= htmlspecialchars($row['product_name']) ?>"
+                                                    class="w-full h-full object-contain group-hover:scale-105 transition-transform duration-500"
+                                                    loading="lazy" onerror="this.src='<?= BASE_URL ?>/uploads/placeholder.jpg'">
                                             <?php else: ?>
                                                 <div class="w-full h-full flex items-center justify-center">
                                                     <i class="fas fa-image text-gray-300 text-4xl"></i>
@@ -398,7 +401,8 @@ function formatViewCount($count) {
                                         </a>
 
                                         <?php if ($discount > 0): ?>
-                                            <div class="absolute top-2 right-2 bg-red-600 text-white px-2 py-1 rounded-full text-xs font-bold">
+                                            <div
+                                                class="absolute top-2 right-2 bg-red-600 text-white px-2 py-1 rounded-full text-xs font-bold">
                                                 -<?= number_format($discount, 0) ?>%
                                             </div>
                                         <?php endif; ?>
@@ -406,8 +410,9 @@ function formatViewCount($count) {
 
                                     <!-- Product Details -->
                                     <div class="p-3">
-                                        <a href="index-product_view-page-4-AA.php?id=<?= $product_id ?>">
-                                            <h3 class="text-sm font-medium  mb-1 line-clamp-1 group-hover:text-orange-600 transition-colors">
+                                        <a href="<?= BASE_URL ?>/productview?id=<?= $product_id ?>">
+                                            <h3
+                                                class="text-sm font-medium  mb-1 line-clamp-1 group-hover:text-orange-600 transition-colors">
                                                 <?= htmlspecialchars($row['product_name']) ?>
                                             </h3>
                                             <?php if (!empty($row['description'])): ?>
@@ -423,9 +428,12 @@ function formatViewCount($count) {
                                                 <div class="flex items-center gap-2">
                                                     <div class="flex  text-xs">
                                                         <?php
-                                                        for ($i = 0; $i < $full; $i++) echo '<i class="fas fa-star"></i>';
-                                                        if ($half) echo '<i class="fas fa-star-half-alt"></i>';
-                                                        for ($i = 0; $i < $empty; $i++) echo '<i class="far fa-star text-gray-300"></i>';
+                                                        for ($i = 0; $i < $full; $i++)
+                                                            echo '<i class="fas fa-star"></i>';
+                                                        if ($half)
+                                                            echo '<i class="fas fa-star-half-alt"></i>';
+                                                        for ($i = 0; $i < $empty; $i++)
+                                                            echo '<i class="far fa-star text-gray-300"></i>';
                                                         ?>
                                                     </div>
                                                     <span class="text-xs  font-medium"><?= $avg_rating ?></span>
@@ -434,7 +442,8 @@ function formatViewCount($count) {
                                             <?php else: ?>
                                                 <div class="flex items-center gap-1">
                                                     <div class="flex  text-xs">
-                                                        <?php for ($i = 0; $i < 5; $i++) echo '<i class="far fa-star"></i>'; ?>
+                                                        <?php for ($i = 0; $i < 5; $i++)
+                                                            echo '<i class="far fa-star"></i>'; ?>
                                                     </div>
                                                     <span class="text-xs 0">No rating</span>
                                                 </div>
@@ -458,11 +467,11 @@ function formatViewCount($count) {
                                             <div class="text-xs mb-2 flex items-center gap-2">
                                                 <?php if ($view_count > 0): ?>
                                                     <span class="flex items-center gap-1">
-                                                     
+
                                                         <?= formatViewCount($view_count) ?> viewing
                                                     </span>
                                                 <?php endif; ?>
-                                                
+
                                                 <?php if ($total_sold > 0): ?>
                                                     <?php if ($view_count > 0): ?>
                                                         <span class="text-gray-300">|</span>
@@ -476,8 +485,8 @@ function formatViewCount($count) {
                                         <?php endif; ?>
 
                                         <!-- Button -->
-                                        <a href="index-product_view-page-4-AA.php?id=<?= $product_id ?>"
-                                           class="mt-2 block w-full bg-black text-white py-2 rounded text-sm font-semibold text-center hover:bg-orange-600 transition-colors">
+                                        <a href="<?= BASE_URL ?>/productview?id=<?= $product_id ?>"
+                                            class="mt-2 block w-full bg-black text-white py-2 rounded text-sm font-semibold text-center hover:bg-orange-600 transition-colors">
                                             View Details
                                         </a>
                                     </div>
@@ -498,7 +507,7 @@ function formatViewCount($count) {
                     <?php endif; ?>
                 </div>
             <?php endforeach; ?>
-            
+
         <?php else: ?>
             <!-- No Collections -->
             <div class="text-center py-20 bg-white rounded-lg shadow-sm">
@@ -509,8 +518,8 @@ function formatViewCount($count) {
                 <p class="text-gray-600 mb-8 max-w-md mx-auto text-lg">
                     There are no product collections in this category yet.
                 </p>
-                <a href="allproduct-allproductsub_variant-page-3-A.php?subcategory_id=<?= $subcategory_id ?>"
-                   class="inline-flex items-center px-6 py-3 bg-black text-white font-semibold rounded-lg hover:bg-orange-600 transition-colors">
+                <a href="<?= BASE_URL ?>/productsubviews?subcategory_id=<?= $subcategory_id ?>"
+                    class="inline-flex items-center px-6 py-3 bg-black text-white font-semibold rounded-lg hover:bg-orange-600 transition-colors">
                     <i class="fas fa-shopping-bag mr-2"></i>
                     Browse All Products
                 </a>
@@ -518,7 +527,7 @@ function formatViewCount($count) {
         <?php endif; ?>
     </div>
 
-    <?php include '../navbar/footer.php'; ?>
+    <?php include ROOT_PATH . '/user/navbar/footer.php'; ?>
 
     <style>
         .line-clamp-1 {
@@ -528,7 +537,7 @@ function formatViewCount($count) {
             -webkit-box-orient: vertical;
             overflow: hidden;
         }
-        
+
         .line-clamp-2 {
             display: -webkit-box;
             -webkit-line-clamp: 2;
@@ -538,4 +547,5 @@ function formatViewCount($count) {
         }
     </style>
 </body>
+
 </html>

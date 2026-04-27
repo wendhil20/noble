@@ -1,10 +1,10 @@
 <?php
 session_name("nobleuser");
 session_start();
-include '../../connection/connect.php';
+include ROOT_PATH . '/connection/connect.php';
 
 if (!isset($_SESSION['user_id'])) {
-    header("Location: ../otherpage/index-cart_view-page-8.php");
+    header("Location: " . BASE_URL . "/cartview");
     exit;
 }
 
@@ -12,7 +12,7 @@ $user_id = $_SESSION['user_id'];
 $key = $_GET['key'] ?? '';
 
 if (!$key) {
-    header("Location: ../otherpage/index-cart_view-page-8.php");
+    header("Location: " . BASE_URL . "/cartview");
     exit;
 }
 
@@ -60,5 +60,5 @@ if (is_numeric($key)) {
     $stmt->close();
 }
 
-header("Location: ../otherpage/index-cart_view-page-8.php");
+header("Location: " . BASE_URL . "/cartview");
 exit;

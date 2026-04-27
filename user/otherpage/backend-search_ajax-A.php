@@ -1,5 +1,5 @@
 <?php
-include '../../connection/connect.php';
+include ROOT_PATH . '/connection/connect.php';
 header('Content-Type: application/json; charset=utf-8');
 
 // Force UTF-8

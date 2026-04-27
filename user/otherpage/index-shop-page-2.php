@@ -1,10 +1,8 @@
 <?php
 session_name("nobleuser");
 session_start();
-include '../../connection/connect.php';
 
-// ===== GUEST MODE: Allow guests to browse =====
-// Removed: redirect to login requirement
+include ROOT_PATH . '/connection/connect.php';
 
 // Session restoration from remember_token (KEEP THIS)
 if (!isset($_SESSION['user_id']) && isset($_COOKIE['remember_token'])) {
@@ -438,18 +436,18 @@ $is_guest = !isset($_SESSION['user_id']);
 </head>
 
 <body class="font-roboto">
-    <?php include '../navbar/top.php'; ?>
-    <?php include 'push-notification.php'; ?>
+    <?php include ROOT_PATH . '/user/navbar/top.php'; ?>
+    <?php include ROOT_PATH . '/user/otherpage/push-notification.php'; ?>
     <section class="bg-white relative mb-12">
         <div class="w-full px-4 sm:px-6 lg:px-8 py-2">
             <!-- Two Container Buttons with Background Images -->
             <div class="grid grid-cols-1 md:grid-cols-2 gap-3 sm:gap-4">
                 <!-- Explore Products Container -->
-                <a href="index-allproduct-page-3"
+                <a href="<?= BASE_URL ?>/product-normal-and-discounted"
                     class="group relative overflow-hidden h-40 sm:h-52 lg:h-64 shadow-lg hover:shadow-2xl transition-all duration-300 transform hover:scale-[1.02]">
                     <!-- Background Image with Overlay -->
                     <div class="absolute inset-0 bg-cover bg-center"
-                        style="background-image: url('../img/saleandexplore/a.png');">
+                        style="background-image: url('<?= BASE_URL ?>/user/img/saleandexplore/a.png');">
                         <div
                             class="absolute inset-0 bg-black/40 group-hover:from-black/50 group-hover:via-black/60 group-hover:to-black/80 transition-all duration-300">
                         </div>
@@ -474,11 +472,11 @@ $is_guest = !isset($_SESSION['user_id']);
                 </a>
 
                 <!-- On Sale Products Container -->
-                <a href="index-allproductsub-page-5"
+                <a href="<?= BASE_URL ?>/sale"
                     class="group relative overflow-hidden h-40 sm:h-52 lg:h-64 shadow-lg hover:shadow-2xl transition-all duration-300 transform hover:scale-[1.02]">
                     <!-- Background Image with Overlay -->
                     <div class="absolute inset-0 bg-cover bg-center"
-                        style="background-image: url('../img/saleandexplore/b.png');">
+                        style="background-image: url('<?= BASE_URL ?>/user/img/saleandexplore/b.png');">
                         <div
                             class="absolute inset-0 bg-black/40 group-hover:from-black/50 group-hover:via-black/60 group-hover:to-black/80 transition-all duration-300">
                         </div>
@@ -634,7 +632,7 @@ $is_guest = !isset($_SESSION['user_id']);
     <!-- Mobile Filter Toggle Button -->
     <div class="mobile-filter-toggle">
         <button id="mobileFilterToggle"
-            class="bg-primary hover:bg-primary-dark text-white px-4 py-2.5 rounded-full font-semibold flex items-center shadow-lg transition-all hover:scale-105 text-sm">
+            class="bg-white hover:bg-white text-black px-4 py-2.5 rounded-full font-semibold flex items-center shadow-lg transition-all hover:scale-105 text-sm">
             <i class="fas fa-sliders-h mr-1.5 text-xs"></i>
             Filters
             <?php if ($active_filters > 0): ?>
@@ -798,12 +796,12 @@ $is_guest = !isset($_SESSION['user_id']);
 
                         <div
                             class="card-hover bg-white overflow-hidden flex flex-col group rounded-lg hover:shadow-xl transition-all duration-300">
-                            <a href="index-product_view-page-4-AA.php?id=<?= $product_id ?>" class="flex flex-col h-full">
+                            <a href="<?= BASE_URL ?>/productview?id=<?= $product_id ?>" class="flex flex-col h-full">
                                 <!-- Image Container - Fixed Square -->
                                 <div class="relative w-full " style="padding-bottom: 100%;">
                                     <div class="absolute inset-0 p-2 sm:p-4">
                                         <?php if (!empty($row['main_image'])): ?>
-                                            <img src="../../<?= htmlspecialchars($row['main_image']) ?>"
+                                            <img src="<?= BASE_URL ?>/<?= htmlspecialchars($row['main_image']) ?>"
                                                 alt="<?= htmlspecialchars($row['product_name']) ?>"
                                                 class="w-full h-full object-contain group-hover:scale-105 transition-transform duration-500"
                                                 loading="lazy">
@@ -904,9 +902,9 @@ $is_guest = !isset($_SESSION['user_id']);
                     <div class="p-4 sm:p-8" data-aos="fade-up">
                         <!-- Navigation Buttons -->
                         <div class="flex items-center justify-between gap-2 sm:gap-4 mb-4">
-                            <a href="?<?= http_build_query(array_merge($_GET, ['page' => max(1, $page - 1)])) ?>"
+                            <a href="<?= BASE_URL ?>/shop?<?= http_build_query(array_merge($_GET, ['page' => max(1, $page - 1)])) ?>"
                                 class="pagination-btn px-3 py-2 sm:px-6 sm:py-3 text-xs sm:text-sm bg-white text-gray-700 shadow-sm <?= $page <= 1 ? 'disabled' : '' ?>">
-                                <i class="fas fa-chevron-left mr-1 sm:mr-2 text-[10px] sm:text-xs"></i>Previous
+                                <i class="fas fa-chevron-left mr-1 sm:mr-2 text-[10px] sm:text-xs"></i>Prev
                             </a>
 
                             <div class="flex items-center gap-1 sm:gap-2">
@@ -914,15 +912,15 @@ $is_guest = !isset($_SESSION['user_id']);
                                 $start = max(1, $page - 2);
                                 $end = min($total_pages, $page + 2);
                                 for ($i = $start; $i <= $end; $i++): ?>
-                                    <a href="?<?= http_build_query(array_merge($_GET, ['page' => $i])) ?>"
+                                    <a href="<?= BASE_URL ?>/shop?<?= http_build_query(array_merge($_GET, ['page' => $i])) ?>"
                                         class="pagination-btn w-8 h-8 sm:w-12 sm:h-12 flex items-center justify-center text-xs sm:text-sm <?= $page === $i ? 'active' : 'bg-white text-black' ?> shadow-sm">
                                         <?= $i ?>
                                     </a>
                                 <?php endfor; ?>
                             </div>
 
-                            <a href="?<?= http_build_query(array_merge($_GET, ['page' => min($total_pages, $page + 1)])) ?>"
-                                class="pagination-btn px-3 py-2 sm:px-6 sm:py-3 text-xs sm:text-sm bg-white text-gray-700 shadow-sm <?= $page >= $total_pages ? 'disabled' : '' ?>">
+                            <a href="<?= BASE_URL ?>/shop?<?= http_build_query(array_merge($_GET, ['page' => min($total_pages, $page + 1)])) ?>"
+                                class="pagination-btn px-3 py-2 sm:px-6 sm:py-3 text-xs sm:text-sm bg-white text-gray-700 shadow-sm<?= $page >= $total_pages ? 'disabled' : '' ?>">
                                 Next<i class="fas fa-chevron-right ml-1 sm:ml-2 text-[10px] sm:text-xs"></i>
                             </a>
                         </div>
@@ -1043,9 +1041,8 @@ $is_guest = !isset($_SESSION['user_id']);
         </div>
     </main>
 
-    <?php include '../navbar/footer.php'; ?>
+    <?php include ROOT_PATH . '/user/navbar/footer.php'; ?>
 
-    <script src="https://unpkg.com/aos@2.3.4/dist/aos.js"></script>
     <script>
         // Initialize Lenis
         const lenis = new Lenis({

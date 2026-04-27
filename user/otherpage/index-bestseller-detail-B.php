@@ -1,7 +1,7 @@
 <?php
 session_name("nobleuser");
 session_start();
-include '../../connection/connect.php';
+include ROOT_PATH . '/connection/connect.php';
 
 if (!isset($_SESSION['user_id']) && isset($_COOKIE['remember_token'])) {
     $token = $_COOKIE['remember_token'];
@@ -111,7 +111,7 @@ function formatViewCount($count) {
 
 <body class="">
 
-    <?php include '../navbar/top.php'; ?>
+    <?php include ROOT_PATH . '/user/navbar/top.php'; ?>
 
     <?php
     // Fetch product data with stats
@@ -235,7 +235,7 @@ function formatViewCount($count) {
 
                     <!-- CTA Button -->
                     <?php if ($product): ?>
-                        <form action="index-product_view-page-4-AA" method="GET">
+                        <form action="<?= BASE_URL ?>/productview" method="GET">
                             <input type="hidden" name="id" value="<?= (int)$product['product_id'] ?>">
                             <button type="submit"
                                 class="group relative inline-flex items-center gap-3 px-10 py-5  text-black font-bold text-lg rounded-2xl overflow-hidden shadow-2xl transform hover:scale-105 transition-all duration-300">
@@ -366,7 +366,7 @@ function formatViewCount($count) {
 
    
 
-    <?php include '../navbar/footer.php'; ?>
+    <?php include ROOT_PATH . '/user/navbar/footer.php'; ?>
 
 </body>
 

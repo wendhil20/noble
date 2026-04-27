@@ -2,7 +2,7 @@
 //login.php
 session_name("nobleuser");
 session_start();
-include '../connection/connect.php';
+include ROOT_PATH . '/connection/connect.php';
 header('Content-Type: application/json');
 
 $response = ['success' => false, 'message' => 'Unknown error'];
@@ -97,7 +97,7 @@ try {
 }
 
     // ✅ Assign referral code if user came from a referral link
-    require_once '../includes/referral_tracker.php';
+    require_once ROOT_PATH . '/includes/referral_tracker.php';
     assignReferralToUser($conn, $user['id']);
 
     // ✅ Remember Me (set only after correct login)

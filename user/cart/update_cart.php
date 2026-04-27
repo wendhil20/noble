@@ -1,7 +1,7 @@
 <?php
 session_name("nobleuser");
 session_start();
-include '../../connection/connect.php';
+include ROOT_PATH . '/connection/connect.php';
 
 $user_id = $_SESSION['user_id'] ?? null;
 
@@ -17,7 +17,7 @@ if (!$user_id) {
         exit;
     } else {
         $_SESSION['checkout_notice'] = "Please log in to update your cart.";
-        header("Location: ../otherpage/index-cart_view-page-8.php");
+        header("Location: " . BASE_URL . "/cartview");
         exit;
     }
 }
@@ -77,7 +77,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['quantities']) && is_a
 
     if (empty($quantities)) {
         $_SESSION['checkout_notice'] = "No items to update.";
-        header("Location: ../otherpage/index-cart_view-page-8.php");
+        header("Location: " . BASE_URL . "/cartview");
         exit;
     }
 
@@ -119,7 +119,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['quantities']) && is_a
     }
 
     $conn->close();
-    header("Location: ../otherpage/index-cart_view-page-8.php");
+    header("Location: " . BASE_URL . "/cartview");
     exit;
 }
 
@@ -134,7 +134,7 @@ if ($isAjax) {
     ]);
 } else {
     $_SESSION['checkout_notice'] = "Invalid request method.";
-    header("Location: ../otherpage/index-cart_view-page-8.php");
+    header("Location: " . BASE_URL . "/cartview");
 }
 
 exit;

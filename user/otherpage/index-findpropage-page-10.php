@@ -1,7 +1,7 @@
 <?php
 session_name("nobleuser");
 session_start();
-include '../../connection/connect.php';
+include ROOT_PATH . '/connection/connect.php';
 
 // ✅ Restore session from remember_token (normal account or Google)
 if (!isset($_SESSION['user_id']) && isset($_COOKIE['remember_token'])) {
@@ -36,7 +36,7 @@ $is_guest = !isset($_SESSION['user_id']);
     <title>Document</title>
 </head>
 <body class="bg-gray-50">
-    <?php include '../navbar/top.php' ?>
+    <?php include ROOT_PATH . '/user/navbar/top.php' ?>
     
     <!-- Not Available Message -->
     <div class="flex items-center justify-center min-h-[calc(100vh-64px)] p-4">

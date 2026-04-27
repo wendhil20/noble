@@ -2,13 +2,13 @@
 // register.php
 session_name("nobleuser");
 session_start();
-include '../connection/connect.php';
+include ROOT_PATH . '/connection/connect.php';
 
 // Install PHPMailer first:
 // composer require phpmailer/phpmailer
 use PHPMailer\PHPMailer\PHPMailer;
 use PHPMailer\PHPMailer\Exception;
-require '../vendor/autoload.php';
+require ROOT_PATH . '/vendor/autoload.php';
 
 function validateMobileNumber($mobile)
 {
@@ -108,7 +108,7 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
                 $_SESSION['register_error'] = "Account updated but failed to send verification email.";
             }
 
-            header("Location: otherpage/index-page-1-A-B-C-D-E.php");
+            header("Location: " . ROOT_PATH . "/");
             exit();
 
         } else {
@@ -186,12 +186,12 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
             $_SESSION['register_error'] = "Something went wrong. Try again.";
         }
 
-        header("Location: otherpage/index-page-1-A-B-C-D-E.php");
+        header("Location: " . ROOT_PATH . "/");
         exit();
 
     } else {
         $_SESSION['register_error'] = implode("<br>", $errors);
-        header("Location: otherpage/index-page-1-A-B-C-D-E.php");
+        header("Location: " . ROOT_PATH . "/");
         exit();
     }
 }

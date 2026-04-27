@@ -2,7 +2,12 @@
 if (session_status() === PHP_SESSION_NONE) {
   session_start();
 }
-include '../../connection/connect.php';
+// ✅ Bago
+if (!defined('ROOT_PATH')) {
+  define('ROOT_PATH', dirname(__DIR__, 2)); // fallback kung hindi pa defined
+}
+
+include ROOT_PATH . '/connection/connect.php';
 
 $total_cart_items = 0;
 $user_id = $_SESSION['user_id'] ?? null;
@@ -142,22 +147,23 @@ function generateSlug($string)
 }
 
 $display_categories = getNavigationData($conn);
-
 $current_page = basename($_SERVER['PHP_SELF']);
 $hidden_pages = ['help.php', 'about.php'];
 ?>
 
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/swiper@11/swiper-bundle.min.css" />
-<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap" rel="stylesheet" />
+<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap"
+  rel="stylesheet" />
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-<link href="../../output.css" rel="stylesheet">
+<link href="<?= BASE_URL ?>/output.css" rel="stylesheet">
 <link href="https://api.mapbox.com/mapbox-gl-js/v3.3.0/mapbox-gl.css" rel="stylesheet" />
+<script src="https://cdn.jsdelivr.net/npm/@studio-freight/lenis@1.0.42/dist/lenis.min.js"></script>
+<script src="https://unpkg.com/aos@2.3.4/dist/aos.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/dompurify@3.0.6/dist/purify.min.js"></script>
 <script src="https://www.google.com/recaptcha/api.js" async defer></script>
 <script src="https://api.mapbox.com/mapbox-gl-js/v3.3.0/mapbox-gl.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/swiper@11/swiper-bundle.min.js"></script>
 <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js"></script>
-<script src="https://unpkg.com/lucide@latest/dist/umd/lucide.min.js" defer></script>
 <script src="https://cdn.socket.io/4.7.2/socket.io.min.js"></script>
 <script src="https://unpkg.com/lucide@latest"></script>
 <script>
@@ -444,6 +450,295 @@ $hidden_pages = ['help.php', 'about.php'];
       transform: translateX(-350px);
     }
   }
+
+  /* Smooth scrollbar for modal */
+  .overflow-y-auto::-webkit-scrollbar {
+    width: 6px;
+  }
+
+  .overflow-y-auto::-webkit-scrollbar-track {
+    background: #f9fafb;
+  }
+
+  .overflow-y-auto::-webkit-scrollbar-thumb {
+    background: #d1d5db;
+    border-radius: 3px;
+  }
+
+  .overflow-y-auto::-webkit-scrollbar-thumb:hover {
+    background: #9ca3af;
+  }
+
+  /* Line clamp utilities */
+  .line-clamp-2 {
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    line-clamp: 2;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+  }
+
+  /* Loading Spinner */
+  .loading-spinner {
+    border: 3px solid #f3f4f6;
+    border-top: 3px solid #f97316;
+    border-radius: 50%;
+    width: 40px;
+    height: 40px;
+    animation: spin 0.8s linear infinite;
+  }
+
+  @keyframes spin {
+    0% {
+      transform: rotate(0deg);
+    }
+
+    100% {
+      transform: rotate(360deg);
+    }
+  }
+
+  /* Keyboard shortcut styling */
+  kbd {
+    font-family: monospace;
+    font-size: 0.75rem;
+    font-weight: 600;
+  }
+
+  /* Smooth scrolling */
+  .overflow-y-auto {
+    scrollbar-width: thin;
+    scrollbar-color: rgba(249, 115, 22, 0.3) transparent;
+  }
+
+  .overflow-y-auto::-webkit-scrollbar {
+    width: 8px;
+  }
+
+  .overflow-y-auto::-webkit-scrollbar-track {
+    background: transparent;
+  }
+
+  .overflow-y-auto::-webkit-scrollbar-thumb {
+    background-color: rgba(249, 115, 22, 0.3);
+    border-radius: 4px;
+  }
+
+  .overflow-y-auto::-webkit-scrollbar-thumb:hover {
+    background-color: rgba(249, 115, 22, 0.5);
+  }
+
+  .cart-modal {
+    opacity: 0 !important;
+    visibility: hidden !important;
+    transform: translateY(-10px);
+    transition: all 0.3s ease-in-out;
+    z-index: 9999 !important;
+    display: none;
+  }
+
+  .cart-modal.show {
+    opacity: 1 !important;
+    visibility: visible !important;
+    transform: translateY(0);
+    display: block;
+  }
+
+  .cart-item-slide {
+    animation: slideInRight 0.3s ease-out forwards;
+  }
+
+  @keyframes slideInRight {
+    from {
+      opacity: 0;
+      transform: translateX(20px);
+    }
+
+    to {
+      opacity: 1;
+      transform: translateX(0);
+    }
+  }
+
+  #cart-items-container {
+    max-height: 400px;
+    /* Increase from 240px/256px */
+    overflow-y: auto;
+    scroll-behavior: smooth;
+    scrollbar-width: thin;
+    scrollbar-color: #d1d5db #f3f4f6;
+  }
+
+  /* WebKit browsers scrollbar */
+  #cart-items-container::-webkit-scrollbar {
+    width: 6px;
+  }
+
+  #cart-items-container::-webkit-scrollbar-track {
+    background: #f3f4f6;
+    border-radius: 10px;
+  }
+
+  #cart-items-container::-webkit-scrollbar-thumb {
+    background: #d1d5db;
+    border-radius: 10px;
+  }
+
+  #cart-items-container::-webkit-scrollbar-thumb:hover {
+    background: #9ca3af;
+  }
+
+  /* Mobile responsive */
+  @media (max-width: 640px) {
+    #cart-items-container {
+      max-height: 350px;
+    }
+  }
+
+  @media (max-width: 480px) {
+    #cart-items-container {
+      max-height: 300px;
+    }
+  }
+
+  @media (max-width: 375px) {
+    #cart-items-container {
+      max-height: 250px;
+    }
+  }
+
+  /* Responsive positioning */
+  @media (max-width: 640px) {
+    .cart-modal {
+      right: 0.5rem !important;
+      left: 0.5rem !important;
+      width: auto !important;
+      max-width: none !important;
+      top: 4rem !important;
+    }
+  }
+
+  @media (max-width: 480px) {
+    .cart-modal {
+      right: 0.25rem !important;
+      left: 0.25rem !important;
+      top: 3.5rem !important;
+      max-height: 85vh !important;
+    }
+
+    /* Adjust padding for mobile */
+    .cart-modal .p-4 {
+      padding: 0.75rem !important;
+    }
+
+    .cart-modal .p-3 {
+      padding: 0.5rem !important;
+    }
+
+    /* Make cart items more compact on mobile */
+    .cart-modal .space-y-3 {
+      gap: 0.5rem;
+    }
+
+    .cart-modal .space-y-3>*+* {
+      margin-top: 0.5rem;
+    }
+  }
+
+  @media (max-width: 375px) {
+    .cart-modal {
+      right: 0.125rem !important;
+      left: 0.125rem !important;
+      max-height: 80vh !important;
+    }
+
+    /* Further reduce spacing for very small screens */
+    #cart-items-container {
+      max-height: 12rem !important;
+      /* Reduce max height */
+    }
+  }
+
+  /* Ensure modal appears above all other elements */
+  .cart-modal {
+    position: fixed !important;
+  }
+
+  /* Button hover effects */
+  #refresh-cart-btn:hover i {
+    transform: rotate(180deg);
+    transition: transform 0.3s ease;
+  }
+
+  #refresh-cart-btn:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+  }
+
+  /* Smooth scrolling for cart items */
+  #cart-items-container {
+    scroll-behavior: smooth;
+  }
+
+  /* Add subtle gradient fade at bottom when scrolling */
+  #cart-items-container::after {
+    content: '';
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    height: 20px;
+    background: linear-gradient(transparent, rgba(255, 255, 255, 0.8));
+    pointer-events: none;
+    opacity: 0;
+    transition: opacity 0.3s ease;
+  }
+
+  #cart-items-container.has-scroll::after {
+    opacity: 1;
+  }
+
+  /* Responsive text sizes */
+  @media (max-width: 640px) {
+    .cart-modal h3 {
+      font-size: 1rem !important;
+    }
+
+    .cart-modal .text-lg {
+      font-size: 1rem !important;
+    }
+
+    .cart-modal .text-base {
+      font-size: 0.875rem !important;
+    }
+  }
+
+  @media (max-width: 480px) {
+    .cart-modal h3 {
+      font-size: 0.875rem !important;
+    }
+
+    .cart-modal .font-bold.text-lg {
+      font-size: 0.875rem !important;
+    }
+  }
+
+  /* Improve touch targets for mobile */
+  @media (max-width: 640px) {
+
+    .cart-modal a,
+    .cart-modal button {
+      min-height: 44px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    /* Remove item button */
+    .cart-modal .fa-times {
+      padding: 0.5rem;
+    }
+  }
 </style>
 
 <nav x-data="{ 
@@ -463,19 +758,20 @@ $hidden_pages = ['help.php', 'about.php'];
       <div class="flex items-center space-x-6 sm:space-x-6 flex-1">
 
         <!-- Logo -->
-        <a href="javascript:void(0)" onclick="navigateWithLoading('../otherpage/index-page-1-A-B-C-D-E')"
+        <a href="<?= BASE_URL ?>/" onclick="navigateWithLoading('<?= BASE_URL ?>/')"
           class="flex items-center space-x-2 sm:space-x-3 hover:opacity-80 transition duration-200 shrink-0">
           <div class="w-8 h-8 sm:w-10 sm:h-10 lg:w-12 lg:h-12 overflow-hidden">
-            <img src="../img/logo.png" alt="Noble Home Logo" class="w-full h-full object-contain">
+            <img src="<?= BASE_URL ?>/user/img/logo.png" alt="Noble Home Logo" class="w-full h-full object-contain">
           </div>
 
         </a>
-        <a href="../otherpage/index-findpropage-page-10.php"
+
+        <a href="<?= BASE_URL ?>/15" onclick="navigateWithLoading('<?= BASE_URL ?>/15')"
           class="hidden xl:block text-lg text-black font-semibold hover:bg-gray-100 rounded-lg px-2 py-1">
           Find Professional
         </a>
 
-        <a href="../otherpage/index-inspirationpage-page-11.php"
+        <a href="<?= BASE_URL ?>/18" onclick="navigateWithLoading('<?= BASE_URL ?>/18')"
           class="hidden xl:block text-lg text-black font-semibold hover:bg-gray-100 rounded-lg px-2 py-1">
           Inspiration
         </a>
@@ -588,7 +884,7 @@ $hidden_pages = ['help.php', 'about.php'];
   isSearching: false
 }" class="hidden xl:inline-flex items-center">
 
-          <a href="javascript:void(0)" onclick="navigateWithLoading('../otherpage/index-shop-page-2')" @mouseenter="
+          <a href="javascript:void(0)" onclick="navigateWithLoading('<?= BASE_URL ?>/shop')" @mouseenter="
     clearTimeout(hoverTimeout);
     hoverTimeout = setTimeout(() => { productsOpen = true; }, 150);
   " @mouseleave="
@@ -599,7 +895,7 @@ $hidden_pages = ['help.php', 'about.php'];
       selectedSubcategory = null;
       searchTerm = '';
     }, 200);
-  " class="hover:bg-gray-100 rounded-lg px-2 py-1 font-semibold flex items-center gap-2 <?= basename($_SERVER['PHP_SELF']) == 'index-shop-page-2.php' ? 'text-orange-600 underline ' : 'text-black' ?> hover:text-orange-500 transition text-lg relative">
+  " class="hover:bg-gray-100 rounded-lg px-2 py-1 font-semibold flex items-center gap-2 <?= basename($_SERVER['PHP_SELF']) == '<?= BASE_URL ?>/shop' ? 'text-orange-600 underline ' : 'text-black' ?> hover:text-orange-500 transition text-lg relative">
 
             Products
             <svg class="w-4 h-4 transition-transform" :class="productsOpen ? 'rotate-180' : ''" fill="none"
@@ -634,8 +930,7 @@ $hidden_pages = ['help.php', 'about.php'];
                 <div class="flex items-center justify-between mb-2 px-1 sticky top-0 bg-gray-50 pb-1 z-10">
                   <h3 class="text-xs uppercase">
                     Categories</h3>
-                  <a href="../otherpage/index-shop-page-2.php"
-                    class="text-[11px] hover:text-orange-600 font-medium transition-all">
+                  <a href="<?= BASE_URL ?>/shop" class="text-[11px] hover:text-orange-600 font-medium transition-all">
                     View All →
                   </a>
                 </div>
@@ -658,7 +953,7 @@ $hidden_pages = ['help.php', 'about.php'];
 
                         <?php if (!empty($category['image_path'])): ?>
                           <div class="shrink-0">
-                            <img src="../../uploads/categories/<?= htmlspecialchars($category['image_path']) ?>"
+                            <img src="<?= BASE_URL ?>/uploads/categories/<?= htmlspecialchars($category['image_path']) ?>"
                               alt="<?= htmlspecialchars($category['name']) ?>" class="w-8 h-8 object-contain rounded"
                               loading="lazy" onerror="this.style.display='none'">
                           </div>
@@ -735,7 +1030,7 @@ $hidden_pages = ['help.php', 'about.php'];
                             <?php if (!empty($sub['image_path'])): ?>
                               <div class="shrink-0">
                                 <img
-                                  src="../../uploads/<?= htmlspecialchars($sub['slug']) ?>/<?= htmlspecialchars($sub['image_path']) ?>"
+                                  src="<?= BASE_URL ?>/uploads/<?= htmlspecialchars($sub['slug']) ?>/<?= htmlspecialchars($sub['image_path']) ?>"
                                   alt="<?= htmlspecialchars($sub['name']) ?>" class="w-9 h-9 object-cover rounded" loading="lazy"
                                   onerror="this.style.display='none'">
                               </div>
@@ -800,14 +1095,14 @@ $hidden_pages = ['help.php', 'about.php'];
 
                           <?php if (!empty($sub['sub_subcategories'])): ?>
                             <?php foreach ($sub['sub_subcategories'] as $subsub): ?>
-                              <a href="../otherpage/allproduct-allproductsub_variant-page-3-A.php?sub_subcategory_id=<?= $subsub['id'] ?>"
+                              <a href="<?= BASE_URL ?>/productsubviews?sub_subcategory_id=<?= $subsub['id'] ?>"
                                 x-show="searchTerm === '' || '<?= strtolower($subsub['name']) ?>'.includes(searchTerm.toLowerCase())"
                                 class="flex items-center gap-2 p-1.5 rounded hover:bg-purple-50 transition-all duration-200 group cursor-pointer border border-transparent hover:border-orange-200">
 
                                 <?php if (!empty($subsub['image_path'])): ?>
                                   <div class="shrink-0">
                                     <img
-                                      src="../../uploads/<?= htmlspecialchars($subsub['parent_slug']) ?>/<?= htmlspecialchars($subsub['slug']) ?>/<?= htmlspecialchars($subsub['image_path']) ?>"
+                                      src="<?= BASE_URL ?>/uploads/<?= htmlspecialchars($subsub['parent_slug']) ?>/<?= htmlspecialchars($subsub['slug']) ?>/<?= htmlspecialchars($subsub['image_path']) ?>"
                                       alt="<?= htmlspecialchars($subsub['name']) ?>" class="w-10 h-10 object-cover rounded"
                                       loading="lazy" onerror="this.style.display='none'">
                                   </div>
@@ -877,12 +1172,11 @@ $hidden_pages = ['help.php', 'about.php'];
       <div class="flex items-center space-x-3 lg:hidden">
 
         <!-- Mobile Cart Icon -->
-        <a href="javascript:void(0)" onclick="navigateWithLoading('../otherpage/index-cart_view-page-8')"
-          class="relative p-2 hover:bg-gray-100 rounded-full transition">
-          <img src="../img/ecommerce.png" alt="Cart" class="w-5 h-5 object-contain" />
+        <a href="javascript:void(0)" onclick="navigateWithLoading('<?= BASE_URL ?>/cartview')"
+          class="relative p-1 hover:bg-gray-100 rounded-full transition">
+          <i class="fa-solid fa-cart-plus text-black"></i>
           <span
             class="cart-count absolute -top-1 -right-1 bg-red-500 text-white text-xs px-1.5 py-0.5 rounded-full font-bold leading-none <?= $total_cart_items > 0 ? '' : 'hidden' ?>">
-
           </span>
         </a>
 
@@ -910,11 +1204,11 @@ $hidden_pages = ['help.php', 'about.php'];
               <div class="py-2 px-3 text-sm text-gray-700 border-b">
                 <span class="block truncate"><?= htmlspecialchars($_SESSION['user_name']) ?></span>
               </div>
-              <a href="../otherpage/index-profilepersonal-page-7.php"
+              <a href="<?= BASE_URL ?>/profile"
                 class="block w-full text-left px-4 py-2 text-sm text-red-600 hover:bg-red-50">
                 Profile
               </a>
-              <a href="../logout.php" class="block w-full text-left px-4 py-2 text-sm text-red-600 hover:bg-red-50">
+              <a href="<?= BASE_URL ?>/logout" class="block w-full text-left px-4 py-2 text-sm text-red-600 hover:bg-red-50">
                 Logout
               </a>
             </div>
@@ -1017,7 +1311,7 @@ $hidden_pages = ['help.php', 'about.php'];
 
 
             <!-- Inspiration -->
-            <a href="../otherpage/index-inspirationpage-page-11.php"
+            <a href="<?= BASE_URL ?>/inspiration"
               class="flex items-center gap-3 px-4 py-3 text-md text-gray-700 hover:bg-orange-50 hover:text-orange-600 transition border-b border-gray-100">
               <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
@@ -1027,7 +1321,7 @@ $hidden_pages = ['help.php', 'about.php'];
             </a>
 
             <!-- Find Professionals -->
-            <a href="../otherpage/index-findpropage-page-10.php"
+            <a href="<?= BASE_URL ?>/findprofessional"
               class="flex items-center gap-3 px-4 py-3 text-md text-gray-700 hover:bg-orange-50 hover:text-orange-600 transition">
               <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
@@ -1060,7 +1354,7 @@ $hidden_pages = ['help.php', 'about.php'];
             return;
           }
           this.isLoading = true;
-          fetch(`backend-search_ajax-A.php?search=${encodeURIComponent(this.search)}`)
+          fetch(`<?= BASE_URL ?>/search?search=${encodeURIComponent(this.search)}`)
             .then(res => res.json())
             .then(data => {
               this.results = data;
@@ -1144,7 +1438,7 @@ $hidden_pages = ['help.php', 'about.php'];
                     Found <span x-text="results.length"></span> result(s)
                   </p>
                   <template x-for="item in results" :key="item.id">
-                    <a :href="'index-shop-page-2.php?search=' + encodeURIComponent(item.product_name)"
+                    <a :href="'<?= BASE_URL ?>/shop?search=' + encodeURIComponent(item.product_name)"
                       class="flex items-center gap-4 p-3 hover:bg-orange-50 rounded-lg transition-all border border-transparent hover:border-orange-200 group">
                       <div class="shrink-0">
                         <img :src="item.main_image" alt=""
@@ -1199,58 +1493,6 @@ $hidden_pages = ['help.php', 'about.php'];
         </div>
 
 
-
-        <style>
-          /* Loading Spinner */
-          .loading-spinner {
-            border: 3px solid #f3f4f6;
-            border-top: 3px solid #f97316;
-            border-radius: 50%;
-            width: 40px;
-            height: 40px;
-            animation: spin 0.8s linear infinite;
-          }
-
-          @keyframes spin {
-            0% {
-              transform: rotate(0deg);
-            }
-
-            100% {
-              transform: rotate(360deg);
-            }
-          }
-
-          /* Keyboard shortcut styling */
-          kbd {
-            font-family: monospace;
-            font-size: 0.75rem;
-            font-weight: 600;
-          }
-
-          /* Smooth scrolling */
-          .overflow-y-auto {
-            scrollbar-width: thin;
-            scrollbar-color: rgba(249, 115, 22, 0.3) transparent;
-          }
-
-          .overflow-y-auto::-webkit-scrollbar {
-            width: 8px;
-          }
-
-          .overflow-y-auto::-webkit-scrollbar-track {
-            background: transparent;
-          }
-
-          .overflow-y-auto::-webkit-scrollbar-thumb {
-            background-color: rgba(249, 115, 22, 0.3);
-            border-radius: 4px;
-          }
-
-          .overflow-y-auto::-webkit-scrollbar-thumb:hover {
-            background-color: rgba(249, 115, 22, 0.5);
-          }
-        </style>
         <!-- Search Bar with History - With localStorage -->
         <div x-data="{
   search: '',
@@ -1271,7 +1513,7 @@ $hidden_pages = ['help.php', 'about.php'];
           this.showDropdown = false;
           return;
       }
-      fetch(`backend-search_ajax-A.php?search=${encodeURIComponent(this.search)}`)
+      fetch(`<?= BASE_URL ?>/search?search=${encodeURIComponent(this.search)}`)
           .then(res => res.json())
           .then(data => {
               this.results = data;
@@ -1302,7 +1544,7 @@ $hidden_pages = ['help.php', 'about.php'];
       this.saveSearch(query);
       this.showHistory = false;
       this.showDropdown = false;
-      window.location.href = 'index-shop-page-2.php?search=' + encodeURIComponent(query);
+      window.location.href = '<?= BASE_URL ?>/shop?search=' + encodeURIComponent(query);
   }
  }" @click.away="showHistory = false; showDropdown = false"
           class="relative w-64 md:w-96 font-mont hidden xl:block flex-1 max-w-2xl">
@@ -1377,10 +1619,11 @@ $hidden_pages = ['help.php', 'about.php'];
             <ul>
               <template x-for="item in results" :key="item.id">
                 <li class="border-b last:border-0">
-                  <a :href="'index-shop-page-2.php?search=' + encodeURIComponent(item.product_name)"
+                  <a :href="'<?= BASE_URL ?>/shop?search=' + encodeURIComponent(item.product_name)"
                     @click="saveSearch(item.product_name)"
                     class="flex items-center gap-3 px-4 py-2 hover:bg-orange-100 text-sm text-gray-700">
-                    <img :src="item.main_image" alt="" class="w-10 h-10 object-contain rounded border border-gray-300">
+                    <img :src="'<?= BASE_URL ?>/user/uploads/' + item.main_image" alt=""
+                      class="w-10 h-10 object-contain rounded border border-gray-300">
                     <span x-text="item.product_name"></span>
                   </a>
                 </li>
@@ -1389,516 +1632,28 @@ $hidden_pages = ['help.php', 'about.php'];
           </div>
         </div>
 
+        <!-- Desktop cart icon -->
 
+        <?php include ROOT_PATH . '/user/navbar/cart-sidebar.php'; ?>
 
-        <!-- Cart Link with Hover Modal -->
-        <div class="relative" id="cart-container">
-          <?php if (!in_array($current_page, $hidden_pages)): ?>
-            <a href="javascript:void(0)" onclick="navigateWithLoading('../otherpage/index-cart_view-page-8')"
-              class="<?= $current_page == 'index-cart_view-page-8.php' ? 'text-orange-600 underline ' : 'text-black' ?> transition inline-flex items-center relative  p-2 rounded-lg hover:bg-gray-100 group"
-              id="cart-link">
-              <i class="fas fa-shopping-cart fa-md"></i>
-              <!-- Cart -->
-              <span id="cart-count-bubble"
-                class="absolute top-0 right-0 w-2.5 h-2.5 bg-red-500 rounded-full <?= $total_cart_items > 0 ? '' : 'hidden' ?>"></span>
+        <a href="javascript:void(0)" onclick="openCartSidebar()" id="cartNavIcon"
+          class="relative group flex items-center justify-center w-9 h-9 rounded-lg transition text-black hover:bg-orange-50 hover:text-orange-500">
+          <i class="fa-solid fa-cart-shopping text-[18px]"></i>
 
-              <!-- Tooltip -->
-              <span
-                class="absolute top-1/2 -translate-y-1/2 left-full ml-2 bg-gray-800 text-white text-xs px-2 py-1 rounded whitespace-nowrap opacity-0 group-hover:opacity-100 transition-opacity duration-200 pointer-events-none z-50">
-                Cart
-              </span>
-            </a>
-          <?php endif; ?>
+          <!-- Red dot badge -->
+          <span id="cartNavBadge" style="display:none;"
+            class="absolute top-0 right-0 w-2.5 h-2.5 bg-red-500 rounded-full border-2 border-white">
+          </span>
 
-          <!-- Cart Hover Modal -->
-          <div id="cart-modal"
-            class="cart-modal fixed right-4 top-16 w-80 sm:w-96 bg-white rounded-xl shadow-2xl border border-gray-200 z-9999 max-h-[80vh] overflow-hidden max-w-[calc(100vw-2rem)] opacity-0 invisible">
-            <!-- Modal Header -->
-            <div class="bg-black text-white p-4 rounded-t-xl">
-              <div class="flex items-center justify-between">
-                <h3 class=" text-lg flex items-center gap-2" style="font-family: 'Montserrat', sans-serif;">
-                  <i class="fas fa-shopping-cart"></i>
-                  Your Cart
-                </h3>
-                <div class="flex items-center gap-2">
-                  <span class="bg-white/20 px-2 py-1 rounded-full text-sm " id="modal-cart-count">
-                    <?= $total_cart_items ?> items
-                  </span>
-                </div>
-              </div>
-            </div>
+          <span
+            class="absolute -bottom-8 left-1/2 -translate-x-1/2 bg-gray-800 text-white text-xs px-2 py-1 rounded whitespace-nowrap opacity-0 group-hover:opacity-100 transition-opacity duration-200 pointer-events-none z-50">
+            Cart
+          </span>
+        </a>
 
-            <!-- Loading Indicator -->
-            <div id="cart-loading" class="hidden p-4 text-center">
-              <i class="fas fa-spinner fa-spin text-orange-500 text-xl"></i>
-              <p class="text-sm text-gray-500 mt-2">Updating cart...</p>
-            </div>
-
-            <!-- Cart Items -->
-            <div class="max-h-60 sm:max-h-64 overflow-y-auto p-3 sm:p-4" id="cart-items-container">
-
-              <?php
-              // ===== GUEST CART =====
-              if (!$user_id && isset($_SESSION['guest_cart']) && count($_SESSION['guest_cart']) > 0):
-                ?>
-                <div class="space-y-3">
-                  <?php
-                  $guest_total = 0;
-                  foreach ($_SESSION['guest_cart'] as $item):
-                    $unit_price = floatval($item['price']);
-                    $quantity = intval($item['quantity']);
-                    $guest_total += $unit_price * $quantity;
-                    ?>
-                    <div
-                      class="flex items-center gap-2 sm:gap-3 p-2 sm:p-3 border border-gray-100 rounded-lg hover:bg-gray-50 transition cart-item-slide">
-                      <!-- Product Image - UPDATED FOR GUESTS -->
-                      <?php
-                      // Try to fetch product image from database for guests
-                      $guest_img_stmt = $conn->prepare("SELECT main_image FROM products WHERE id = ? LIMIT 1");
-                      $product_id = intval($item['product_id']);
-                      $guest_img_stmt->bind_param("i", $product_id);
-                      $guest_img_stmt->execute();
-                      $guest_img_result = $guest_img_stmt->get_result();
-                      $guest_img_row = $guest_img_result->fetch_assoc();
-                      $guest_img_stmt->close();
-
-                      $has_image = !empty($guest_img_row['main_image']);
-                      ?>
-
-                      <?php if ($has_image): ?>
-                        <img src="../../<?= htmlspecialchars($guest_img_row['main_image']) ?>"
-                          alt="<?= htmlspecialchars($item['product_name']) ?>"
-                          class="w-10 h-10 sm:w-12 sm:h-12 object-contain rounded-lg shrink-0 bg-gray-50">
-                      <?php else: ?>
-                        <div
-                          class="w-10 h-10 sm:w-12 sm:h-12 bg-gray-200 rounded-lg flex items-center justify-center shrink-0">
-                          <i class="fas fa-image text-gray-400 text-xs"></i>
-                        </div>
-                      <?php endif; ?>
-
-                      <div class="flex-1 min-w-0">
-                        <h4 class="font-medium text-xs sm:text-sm text-gray-800 truncate">
-                          <?= htmlspecialchars($item['product_name']) ?>
-                        </h4>
-                        <p class="text-[10px] sm:text-xs text-gray-500 truncate">
-                          <?= htmlspecialchars($item['variant_name'] ?: '') ?>
-                          <?= !empty($item['color_name']) ? ', ' . htmlspecialchars($item['color_name']) : '' ?>
-                          <?= !empty($item['size']) ? ', ' . htmlspecialchars($item['size']) : '' ?>
-                        </p>
-
-                        <?php if (!empty($item['descrip6']) || !empty($item['descrip7'])): ?>
-                          <p class="text-[9px] sm:text-[10px] text-gray-400 truncate mt-1">
-                            <?= htmlspecialchars($item['descrip6'] ?: '') ?>
-                            <?= !empty($item['descrip6']) && !empty($item['descrip7']) ? ' • ' : '' ?>
-                            <?= htmlspecialchars($item['descrip7'] ?: '') ?>
-                          </p>
-                        <?php endif; ?>
-
-                        <div class="flex items-center justify-between mt-1">
-                          <span class="text-xs sm:text-sm text-orange-600">₱<?= number_format($unit_price, 2) ?></span>
-                          <span class="text-[10px] sm:text-xs text-gray-500">Qty: <?= $quantity ?></span>
-                        </div>
-                      </div>
-
-                      <!-- Remove Button (Disabled for guests) -->
-                      <button onclick="showGuestLoginAlert()" class="text-gray-400 cursor-not-allowed p-1 shrink-0"
-                        title="Login to remove items">
-                        <i class="fas fa-times text-xs"></i>
-                      </button>
-                    </div>
-                  <?php endforeach; ?>
-                </div>
-
-                <?php
-                // ===== LOGGED IN USER CART (existing code) =====
-              elseif ($user_id && $total_cart_items > 0):
-                ?>
-                <div class="space-y-3">
-                  <?php
-                  $modal_stmt = $conn->prepare("
-          SELECT 
-            c.*, 
-            t.type_image, 
-            p.descrip6, 
-            p.descrip7,
-            p.product_name,
-            p.main_image,
-            pc.image as pc_image
-          FROM user_cart_items c
-          LEFT JOIN product_types t ON t.product_id = c.product_id AND t.type_name = c.type_name
-          LEFT JOIN products p ON c.product_id = p.id
-          LEFT JOIN product_colors pc ON pc.id = c.color_id
-          WHERE c.user_id = ?
-         ");
-                  $modal_stmt->bind_param("i", $user_id);
-                  $modal_stmt->execute();
-                  $modal_result = $modal_stmt->get_result();
-
-                  while ($item = $modal_result->fetch_assoc()):
-                    $unit_price = floatval($item['price']);
-                    $quantity = intval($item['quantity']);
-                    ?>
-                    <div
-                      class="flex items-center gap-2 sm:gap-3 p-2 sm:p-3 border border-gray-100 rounded-lg hover:bg-gray-50 transition cart-item-slide">
-                      <?php if (!empty($item['pc_image'])): ?>
-                        <img src="../../<?= htmlspecialchars($item['pc_image']) ?>" alt="Product"
-                          class="w-10 h-10 sm:w-12 sm:h-12 object-contain rounded-lg shrink-0">
-                      <?php elseif (!empty($item['type_image'])): ?>
-                        <img src="../../<?= htmlspecialchars($item['type_image']) ?>" alt="Product"
-                          class="w-10 h-10 sm:w-12 sm:h-12 object-contain rounded-lg shrink-0">
-                      <?php elseif (!empty($item['main_image'])): ?>
-                        <img src="../../<?= htmlspecialchars($item['main_image']) ?>" alt="Product"
-                          class="w-10 h-10 sm:w-12 sm:h-12 object-contain rounded-lg shrink-0">
-                      <?php else: ?>
-                        <div
-                          class="w-10 h-10 sm:w-12 sm:h-12 bg-gray-200 rounded-lg flex items-center justify-center shrink-0">
-                          <i class="fas fa-image text-gray-400 text-xs"></i>
-                        </div>
-                      <?php endif; ?>
-
-                      <div class="flex-1 min-w-0">
-                        <h4 class="font-medium text-xs sm:text-sm text-gray-800 truncate">
-                          <?= htmlspecialchars($item['product_name'] ?: $item['codename']) ?>
-                        </h4>
-                        <p class="text-[10px] sm:text-xs text-gray-500 truncate">
-                          <?= htmlspecialchars($item['variant_name'] ?: '') ?>
-                          <?= !empty($item['color_name']) ? ', ' . htmlspecialchars($item['color_name']) : '' ?>
-                          <?= !empty($item['size']) ? ', ' . htmlspecialchars($item['size']) : '' ?>
-                        </p>
-
-                        <?php if (!empty($item['descrip6']) || !empty($item['descrip7'])): ?>
-                          <p class="text-[9px] sm:text-[10px] text-gray-400 truncate mt-1">
-                            <?= htmlspecialchars($item['descrip6'] ?: '') ?>
-                            <?= !empty($item['descrip6']) && !empty($item['descrip7']) ? ' • ' : '' ?>
-                            <?= htmlspecialchars($item['descrip7'] ?: '') ?>
-                          </p>
-                        <?php endif; ?>
-
-                        <div class="flex items-center justify-between mt-1">
-                          <span class="text-xs sm:text-sm text-orange-600">₱<?= number_format($unit_price, 2) ?></span>
-                          <span class="text-[10px] sm:text-xs text-gray-500">Qty: <?= $quantity ?></span>
-                        </div>
-                      </div>
-
-                      <a href="javascript:void(0)" onclick="removeFromCart(<?= $item['id'] ?>)"
-                        class="text-red-500 hover:text-red-700 transition p-1 shrink-0">
-                        <i class="fas fa-times text-xs"></i>
-                      </a>
-                    </div>
-                    <?php
-                  endwhile;
-                  $modal_stmt->close();
-                  ?>
-                </div>
-
-              <?php else: ?>
-                <!-- Empty Cart -->
-                <div class="text-center py-8">
-                  <i class="fas fa-shopping-cart text-4xl text-gray-300 mb-3"></i>
-                  <p class="text-gray-500 text-sm">Your cart is empty</p>
-                  <a href="index-shop-page-2.php" class="inline-block mt-3 text-orange-600 hover:text-orange-700 text-sm">
-                    Start Shopping
-                  </a>
-                </div>
-              <?php endif; ?>
-            </div>
-
-            <!-- Modal Footer -->
-            <?php
-
-            // Guest cart footer
-            if (!$user_id && isset($_SESSION['guest_cart']) && count($_SESSION['guest_cart']) > 0):
-
-              foreach ($_SESSION['guest_cart'] as $item) {
-                $footer_total += floatval($item['price']) * intval($item['quantity']);
-              }
-              ?>
-              <div class="border-t border-gray-200 p-3 sm:p-4 bg-linear-to-r from-orange-50 to-orange-100 rounded-b-xl"
-                id="cart-footer">
-                <!-- Total Price -->
-                <div class="flex justify-between items-center mb-3">
-                  <span class="text-sm text-gray-700">Total:</span>
-                  <span class="text-base sm:text-lg text-orange-600" id="cart-total">
-                    ₱<?= number_format($footer_total, 2) ?>
-                  </span>
-                </div>
-
-                <!-- Guest Alert Message -->
-                <div class="mb-3 p-2 bg-orange-200 border border-orange-400 rounded text-xs text-orange-800">
-                  <i class="fas fa-info-circle mr-1"></i>
-                  <strong>Guest Mode:</strong> Login to proceed with checkout
-                </div>
-
-                <!-- Action Buttons -->
-                <div class="grid grid-cols-2 gap-2">
-                  <button onclick="navigateWithLoading('../otherpage/index-cart_view-page-8')"
-                    class="bg-black hover:bg-gray-800 text-white px-3 py-2 text-xs sm:text-sm text-center rounded transition">
-                    View Cart
-                  </button>
-                  <button onclick="showGuestLoginAlert()"
-                    class="bg-gray-400 cursor-not-allowed text-white px-3 py-2 text-xs sm:text-sm text-center rounded transition opacity-60">
-                    Login to Checkout
-                  </button>
-                </div>
-              </div>
-
-              <?php
-              // Logged in user footer (existing code)
-            elseif ($user_id && $total_cart_items > 0):
-
-              ?>
-              <div class="border-t border-gray-200 p-3 sm:p-4 bg-gray-50 rounded-b-xl" id="cart-footer">
-                <!-- Total Price -->
-                <div class="flex justify-between items-center mb-3">
-                  <span class="text-sm text-gray-700">Total:</span>
-                  <span class="text-base sm:text-lg text-orange-600" id="cart-total">
-                    ₱<?php
-                    $total_stmt = $conn->prepare("SELECT SUM(price * quantity) as total FROM user_cart_items WHERE user_id = ?");
-                    $total_stmt->bind_param("i", $user_id);
-                    $total_stmt->execute();
-                    $total_result = $total_stmt->get_result();
-                    $total_row = $total_result->fetch_assoc();
-                    echo number_format($total_row['total'] ?? 0, 2);
-                    $total_stmt->close();
-                    ?>
-                  </span>
-                </div>
-                <!-- Action Buttons -->
-                <div class="grid grid-cols-2 gap-2">
-                  <a href="../otherpage/index-cart_view-page-8.php"
-                    class="bg-black hover:bg-gray-800 text-white px-3 py-2 text-xs sm:text-sm text-center rounded transition">
-                    View Cart
-                  </a>
-                  <a href="javascript:void(0)" onclick="proceedToCheckout()"
-                    class="bg-orange-500 hover:bg-orange-600 text-white px-3 py-2 text-xs sm:text-sm text-center rounded transition">
-                    Checkout
-                  </a>
-                </div>
-              </div>
-            <?php endif; ?>
-
-          </div>
-        </div>
-
-
-        <style>
-          .cart-modal {
-            opacity: 0 !important;
-            visibility: hidden !important;
-            transform: translateY(-10px);
-            transition: all 0.3s ease-in-out;
-            z-index: 9999 !important;
-            display: none;
-          }
-
-          .cart-modal.show {
-            opacity: 1 !important;
-            visibility: visible !important;
-            transform: translateY(0);
-            display: block;
-          }
-
-          .cart-item-slide {
-            animation: slideInRight 0.3s ease-out forwards;
-          }
-
-          @keyframes slideInRight {
-            from {
-              opacity: 0;
-              transform: translateX(20px);
-            }
-
-            to {
-              opacity: 1;
-              transform: translateX(0);
-            }
-          }
-
-          #cart-items-container {
-            max-height: 400px;
-            /* Increase from 240px/256px */
-            overflow-y: auto;
-            scroll-behavior: smooth;
-            scrollbar-width: thin;
-            scrollbar-color: #d1d5db #f3f4f6;
-          }
-
-          /* WebKit browsers scrollbar */
-          #cart-items-container::-webkit-scrollbar {
-            width: 6px;
-          }
-
-          #cart-items-container::-webkit-scrollbar-track {
-            background: #f3f4f6;
-            border-radius: 10px;
-          }
-
-          #cart-items-container::-webkit-scrollbar-thumb {
-            background: #d1d5db;
-            border-radius: 10px;
-          }
-
-          #cart-items-container::-webkit-scrollbar-thumb:hover {
-            background: #9ca3af;
-          }
-
-          /* Mobile responsive */
-          @media (max-width: 640px) {
-            #cart-items-container {
-              max-height: 350px;
-            }
-          }
-
-          @media (max-width: 480px) {
-            #cart-items-container {
-              max-height: 300px;
-            }
-          }
-
-          @media (max-width: 375px) {
-            #cart-items-container {
-              max-height: 250px;
-            }
-          }
-
-          /* Responsive positioning */
-          @media (max-width: 640px) {
-            .cart-modal {
-              right: 0.5rem !important;
-              left: 0.5rem !important;
-              width: auto !important;
-              max-width: none !important;
-              top: 4rem !important;
-            }
-          }
-
-          @media (max-width: 480px) {
-            .cart-modal {
-              right: 0.25rem !important;
-              left: 0.25rem !important;
-              top: 3.5rem !important;
-              max-height: 85vh !important;
-            }
-
-            /* Adjust padding for mobile */
-            .cart-modal .p-4 {
-              padding: 0.75rem !important;
-            }
-
-            .cart-modal .p-3 {
-              padding: 0.5rem !important;
-            }
-
-            /* Make cart items more compact on mobile */
-            .cart-modal .space-y-3 {
-              gap: 0.5rem;
-            }
-
-            .cart-modal .space-y-3>*+* {
-              margin-top: 0.5rem;
-            }
-          }
-
-          @media (max-width: 375px) {
-            .cart-modal {
-              right: 0.125rem !important;
-              left: 0.125rem !important;
-              max-height: 80vh !important;
-            }
-
-            /* Further reduce spacing for very small screens */
-            #cart-items-container {
-              max-height: 12rem !important;
-              /* Reduce max height */
-            }
-          }
-
-          /* Ensure modal appears above all other elements */
-          .cart-modal {
-            position: fixed !important;
-          }
-
-          /* Button hover effects */
-          #refresh-cart-btn:hover i {
-            transform: rotate(180deg);
-            transition: transform 0.3s ease;
-          }
-
-          #refresh-cart-btn:disabled {
-            opacity: 0.6;
-            cursor: not-allowed;
-          }
-
-          /* Smooth scrolling for cart items */
-          #cart-items-container {
-            scroll-behavior: smooth;
-          }
-
-          /* Add subtle gradient fade at bottom when scrolling */
-          #cart-items-container::after {
-            content: '';
-            position: absolute;
-            bottom: 0;
-            left: 0;
-            right: 0;
-            height: 20px;
-            background: linear-gradient(transparent, rgba(255, 255, 255, 0.8));
-            pointer-events: none;
-            opacity: 0;
-            transition: opacity 0.3s ease;
-          }
-
-          #cart-items-container.has-scroll::after {
-            opacity: 1;
-          }
-
-          /* Responsive text sizes */
-          @media (max-width: 640px) {
-            .cart-modal h3 {
-              font-size: 1rem !important;
-            }
-
-            .cart-modal .text-lg {
-              font-size: 1rem !important;
-            }
-
-            .cart-modal .text-base {
-              font-size: 0.875rem !important;
-            }
-          }
-
-          @media (max-width: 480px) {
-            .cart-modal h3 {
-              font-size: 0.875rem !important;
-            }
-
-            .cart-modal .font-bold.text-lg {
-              font-size: 0.875rem !important;
-            }
-          }
-
-          /* Improve touch targets for mobile */
-          @media (max-width: 640px) {
-
-            .cart-modal a,
-            .cart-modal button {
-              min-height: 44px;
-              display: flex;
-              align-items: center;
-              justify-content: center;
-            }
-
-            /* Remove item button */
-            .cart-modal .fa-times {
-              padding: 0.5rem;
-            }
-          }
-        </style>
-
-        <a href="javascript:void(0)" onclick="navigateWithLoading('../otherpage/index-profile-page-6')"
+        <a href="javascript:void(0)" onclick="navigateWithLoading('<?= BASE_URL ?>/order')"
           class="p-2 rounded-lg hover:bg-orange-50 <?= strpos($_SERVER['REQUEST_URI'], 'index-profile-page-6') !== false ? 'text-orange-600 underline ' : 'text-black' ?> hover:text-orange-500 transition text-md flex items-center gap-3 relative group">
           <i class="fa-solid fa-clipboard"></i>
-
           <!-- Tooltip -->
           <span
             class="absolute -bottom-8 left-1/2 -translate-x-1/2 bg-gray-800 text-white text-xs px-2 py-1 rounded whitespace-nowrap opacity-0 group-hover:opacity-100 transition-opacity duration-200 pointer-events-none z-50">
@@ -1997,33 +1752,26 @@ $hidden_pages = ['help.php', 'about.php'];
                 </span>
               </div>
 
-              <a href="../otherpage/index-profilepersonal-page-7.php"
+              <a href="<?= BASE_URL ?>/profile"
                 class="flex items-center gap-2 px-4 py-2 text-sm text-gray-700 hover:bg-orange-50">
                 <i class="fa-solid fa-circle-user text-sm text-center bg-gray-300 p-2 rounded-lg"></i>
                 <span>Profile</span>
               </a>
 
-              <a href="../otherpage/index-order_history-page-13.php"
+              <a href="<?= BASE_URL ?>/history"
                 class="flex items-center gap-2 px-4 py-2 text-sm text-gray-700 hover:bg-orange-50">
                 <i class="fa-solid fa-cart-flatbed-suitcase text-sm text-center bg-gray-300 p-2 rounded-lg"></i>
                 <span>Order History</span>
               </a>
 
-              <div x-data="chatNotif" x-init="init()">
-                <a href="../otherpage/index-chat_main-page-9.php"
-                  class="flex items-center gap-2 px-4 py-2 text-sm text-gray-700 hover:bg-orange-50 relative">
-                  <i class="fa-solid fa-headset text-sm text-center bg-gray-300 p-2 rounded-lg"></i>
-                  <span>Customer Service</span>
-                  <template x-if="unreadCount > 0">
-                    <span
-                      class="ml-auto bg-red-500 text-white text-xs w-4 h-4 flex items-center justify-center rounded-full"
-                      x-text="unreadCount">
-                    </span>
-                  </template>
-                </a>
-              </div>
+              <a href="<?= BASE_URL ?>/chat"
+                class="flex items-center gap-2 px-4 py-2 text-sm text-gray-700 hover:bg-orange-50">
+                <i class="fa-solid fa-headset text-sm text-center bg-gray-300 p-2 rounded-lg"></i>
+                <span>Customer Service</span>
+              </a>
 
-              <a href="../logout.php" class="flex items-center gap-2 px-4 py-2 text-sm text-gray-700 hover:bg-orange-50">
+              <a href="<?= BASE_URL ?>/logout"
+                class="flex items-center gap-2 px-4 py-2 text-sm text-gray-700 hover:bg-orange-50">
                 <i class="fa-solid fa-arrow-right-from-bracket text-sm text-center bg-gray-300 p-2 rounded-lg"></i>
                 <span>Logout</span>
               </a>
@@ -2174,7 +1922,8 @@ $hidden_pages = ['help.php', 'about.php'];
 
                 <!-- Additional Links -->
                 <div class="text-center text-xs mb-2">
-                  <a href="../forgot_password" class="text-orange-500 hover:underline">Forgot password?</a>
+                  <a href="<?= BASE_URL ?>/forgotpass" class="text-orange-500 hover:underline">Forgot
+                    password?</a>
                 </div>
 
                 <div class="text-center text-xs mb-4">
@@ -2185,7 +1934,7 @@ $hidden_pages = ['help.php', 'about.php'];
 
                 <!-- Google Login -->
                 <div class="text-center">
-                  <a href="javascript:void(0)" onclick="openGooglePopup('../google-login.php')"
+                  <a href="javascript:void(0)" onclick="openGooglePopup('<?= BASE_URL ?>/login')"
                     class="inline-flex items-center justify-center w-full gap-3 bg-red-500 hover:bg-red-600 text-white font-semibold py-2 px-4 rounded-lg">
                     <svg class="w-5 h-5 bg-white rounded-full p-[2px]" viewBox="0 0 48 48">
                       <path fill="#EA4335"
@@ -2207,47 +1956,47 @@ $hidden_pages = ['help.php', 'about.php'];
       </div>
     </div>
 
-<script>
-function openGooglePopup(url) {
-  const width = 500;
-  const height = 620;
-  const left = Math.round((screen.width - width) / 2);
-  const top = Math.round((screen.height - height) / 2);
+    <script>
+      function openGooglePopup(url) {
+        const width = 500;
+        const height = 620;
+        const left = Math.round((screen.width - width) / 2);
+        const top = Math.round((screen.height - height) / 2);
 
-  const popup = window.open(
-    url,
-    'googleLoginPopup',
-    `width=${width},height=${height},top=${top},left=${left},` +
-    `toolbar=no,menubar=no,scrollbars=yes,resizable=no,status=no,location=no`
-  );
+        const popup = window.open(
+          url,
+          'googleLoginPopup',
+          `width=${width},height=${height},top=${top},left=${left},` +
+          `toolbar=no,menubar=no,scrollbars=yes,resizable=no,status=no,location=no`
+        );
 
-  if (!popup || popup.closed || typeof popup.closed === 'undefined') {
-    // Popup blocked - fallback to redirect
-    window.location.href = url;
-    return;
-  }
+        if (!popup || popup.closed || typeof popup.closed === 'undefined') {
+          // Popup blocked - fallback to redirect
+          window.location.href = url;
+          return;
+        }
 
-  // ✅ Listen for postMessage from popup (works even with COOP)
-  function onMessage(event) {
-    if (event.data === 'google-login-success') {
-      window.removeEventListener('message', onMessage);
-      clearInterval(pollTimer);
-      popup.close();
-      window.location.reload();
-    }
-  }
-  window.addEventListener('message', onMessage);
+        // ✅ Listen for postMessage from popup (works even with COOP)
+        function onMessage(event) {
+          if (event.data === 'google-login-success') {
+            window.removeEventListener('message', onMessage);
+            clearInterval(pollTimer);
+            popup.close();
+            window.location.reload();
+          }
+        }
+        window.addEventListener('message', onMessage);
 
-  // ✅ Fallback: poll if popup closed without postMessage
-  const pollTimer = setInterval(function() {
-    if (popup.closed) {
-      clearInterval(pollTimer);
-      window.removeEventListener('message', onMessage);
-      window.location.reload();
-    }
-  }, 500);
-}
-</script>
+        // ✅ Fallback: poll if popup closed without postMessage
+        const pollTimer = setInterval(function () {
+          if (popup.closed) {
+            clearInterval(pollTimer);
+            window.removeEventListener('message', onMessage);
+            window.location.reload();
+          }
+        }, 500);
+      }
+    </script>
 
     <!-- Mobile Sidebar -->
     <div x-show="mobileOpen" x-cloak @click.self="mobileOpen = false"
@@ -2266,7 +2015,7 @@ function openGooglePopup(url) {
         <div class="sticky top-0 bg-white p-4 flex items-center justify-between z-10">
           <div class="flex items-center space-x-3">
             <div class="w-10 h-10 overflow-hidden">
-              <img src="../img/logo.png" alt="Logo" class="w-full h-full object-contain">
+              <img src="<?= BASE_URL ?>/user/img/logo.png" alt="Logo" class="w-full h-full object-contain">
             </div>
             <div>
               <span class="block text-lg text-orange-500"
@@ -2317,7 +2066,7 @@ function openGooglePopup(url) {
                    this.searchOpen = false;
                    return;
                  }
-                 fetch(`../otherpage/backend-search_ajax-A.php?search=${encodeURIComponent(this.search)}`)
+                 fetch(`<?= BASE_URL ?>/search?search=${encodeURIComponent(this.search)}`)
                      .then(res => res.json())
                      .then(data => {
                          this.results = data;
@@ -2340,9 +2089,10 @@ function openGooglePopup(url) {
           <div x-show="searchOpen && results.length > 0" x-cloak x-transition @click.away="searchOpen = false"
             class="mt-2 bg-white border border-gray-200 rounded-lg shadow-lg max-h-60 overflow-y-auto">
             <template x-for="item in results" :key="item.id">
-              <a :href="'../otherpage/index-shop-page-2.php?search=' + encodeURIComponent(item.product_name)"
+              <a :href="'<?= BASE_URL ?>/shop?search=' + encodeURIComponent(item.product_name)"
                 class="flex items-center gap-3 px-4 py-3 hover:bg-orange-50 border-b last:border-0">
-                <img :src="item.main_image" alt="" class="w-10 h-10 object-contain rounded border border-gray-200">
+                <img :src="'<?= BASE_URL ?>/user/uploads/' + item.main_image" alt=""
+                  class="w-10 h-10 object-contain rounded border border-gray-200">
                 <span x-text="item.product_name" class="text-sm text-gray-700 flex-1"></span>
               </a>
             </template>
@@ -2369,7 +2119,7 @@ function openGooglePopup(url) {
           <?php endif; ?>
 
           <!-- INSPIRATION LINK - Mobile -->
-          <a href="../otherpage/index-inspirationpage-page-11.php"
+          <a href="<?= BASE_URL ?>/inspiration"
             class="flex items-center gap-3 px-4 py-3 text-gray-700 hover:bg-orange-50 hover:text-orange-600 transition">
             <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
@@ -2379,7 +2129,7 @@ function openGooglePopup(url) {
           </a>
 
           <!-- FIND PROFESSIONALS LINK - Mobile -->
-          <a href="../otherpage/index-findpropage-page-10.php"
+          <a href="<?= BASE_URL ?>/findprofessional"
             class="flex items-center gap-3 px-4 py-3 text-gray-700 hover:bg-orange-50 hover:text-orange-600 transition">
             <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
@@ -2391,7 +2141,7 @@ function openGooglePopup(url) {
 
 
           <!-- Orders -->
-          <a href="javascript:void(0)" onclick="navigateWithLoading('../otherpage/index-profile-page-6')"
+          <a href="javascript:void(0)" onclick="navigateWithLoading('<?= BASE_URL ?>/order')"
             class="flex items-center gap-3 px-4 py-3 text-gray-700 hover:bg-orange-50 hover:text-orange-600 transition">
             <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
@@ -2401,9 +2151,9 @@ function openGooglePopup(url) {
           </a>
 
           <!-- Shop -->
-          <a href="javascript:void(0)" onclick="navigateWithLoading('../otherpage/index-shop-page-2')"
+          <a href="javascript:void(0)" onclick="navigateWithLoading('<?= BASE_URL ?>/shop')"
             class="flex items-center gap-3 px-4 py-3 text-gray-700 hover:bg-orange-50 hover:text-orange-600 transition">
-            <img src="../img/shopping-cart.png" alt="Shop" class="w-5 h-5 object-contain" />
+            <i class="fa-solid fa-cart-shopping"></i>
             <span class="font-medium" style="font-family: 'Montserrat', sans-serif; color: #2f1200;">Products</span>
           </a>
 
@@ -2412,11 +2162,9 @@ function openGooglePopup(url) {
             <button @click="productsOpen = !productsOpen"
               class="flex items-center justify-between w-full px-4 py-3 text-gray-700 hover:bg-orange-50 hover:text-orange-600 transition">
               <div class="flex items-center gap-3">
-                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                    d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10" />
-                </svg>
-                <span class="font-medium" style="font-family: 'Montserrat', sans-serif; color: #2f1200;">Products</span>
+                <i class="fa-solid fa-angles-down"></i>
+                <span class="font-medium"
+                  style="font-family: 'Montserrat', sans-serif; color: #2f1200;">Categories</span>
               </div>
               <svg class="w-4 h-4 transition-transform" :class="productsOpen ? 'rotate-180' : ''" fill="none"
                 stroke="currentColor" viewBox="0 0 24 24">
@@ -2438,7 +2186,7 @@ function openGooglePopup(url) {
                       class="flex items-center justify-between w-full px-6 py-2.5 text-sm text-gray-700 hover:bg-orange-50 hover:text-orange-600 transition">
                       <div class="flex items-center gap-2">
                         <?php if (!empty($category['image_path'])): ?>
-                          <img src="../../uploads/categories/<?= htmlspecialchars($category['image_path']) ?>"
+                          <img src="<?= BASE_URL ?>/uploads/categories/<?= htmlspecialchars($category['image_path']) ?>"
                             alt="<?= htmlspecialchars($category['name']) ?>" class="w-6 h-6 object-cover rounded"
                             onerror="this.style.display='none'">
                         <?php endif; ?>
@@ -2458,11 +2206,11 @@ function openGooglePopup(url) {
                       x-transition:leave-end="opacity-0 max-h-0" class="bg-white overflow-hidden">
                       <?php if (!empty($category['subcategories'])): ?>
                         <?php foreach ($category['subcategories'] as $sub): ?>
-                          <a href="../otherpage/allproduct-allproductsub_variant-page-3-A.php?subcategory_id=<?= $sub['id'] ?>"
+                          <a href="<?= BASE_URL ?>/productsubviews?subcategory_id=<?= $sub['id'] ?>"
                             class="flex items-center gap-2 px-10 py-2 text-sm text-gray-600 hover:bg-orange-50 hover:text-orange-600 transition">
                             <?php if (!empty($sub['image_path'])): ?>
                               <img
-                                src="../../uploads/<?= htmlspecialchars($sub['slug']) ?>/<?= htmlspecialchars($sub['image_path']) ?>"
+                                src="<?= BASE_URL ?>/uploads/<?= htmlspecialchars($sub['slug']) ?>/<?= htmlspecialchars($sub['image_path']) ?>"
                                 alt="<?= htmlspecialchars($sub['name']) ?>" class="w-5 h-5 object-contain rounded"
                                 onerror="this.style.display='none'">
                             <?php endif; ?>
@@ -2483,7 +2231,7 @@ function openGooglePopup(url) {
           </div>
 
           <!-- Messages -->
-          <a href="../otherpage/index-chat_main-page-9.php"
+          <a href="<?= BASE_URL ?>/chat"
             class="flex items-center gap-3 px-4 py-3 text-gray-700 hover:bg-orange-50 hover:text-orange-600 transition border-t border-gray-200">
             <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
@@ -2610,7 +2358,7 @@ function openGooglePopup(url) {
         <?php else: ?>
           <!-- Logout Button -->
           <div class="border-t border-gray-200 p-4">
-            <a href="../otherpage/index-profilepersonal-page-7.php"
+            <a href="<?= BASE_URL ?>/profile"
               class="flex items-center gap-3 px-4 py-3 text-gray-700 hover:bg-orange-50 hover:text-orange-600 transition rounded-lg mb-2">
               <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
@@ -2618,7 +2366,7 @@ function openGooglePopup(url) {
               </svg>
               <span class="font-medium" style="font-family: 'Montserrat', sans-serif; color: #2f1200;">Profile</span>
             </a>
-            <a href="../logout.php"
+            <a href="<?= BASE_URL ?>/logout"
               class="flex items-center gap-3 px-4 py-3 text-red-600 hover:bg-red-50 transition rounded-lg">
               <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
@@ -2677,7 +2425,7 @@ function openGooglePopup(url) {
                   <!-- Product Image -->
                   <div class="relative shrink-0">
                     <?php if (!empty($product['main_image'])): ?>
-                      <img src="../../<?php echo htmlspecialchars($product['main_image']); ?>"
+                      <img src="<?= BASE_URL ?>/<?php echo htmlspecialchars($product['main_image']); ?>"
                         alt="<?php echo htmlspecialchars($product['name']); ?>" class="w-20 h-20 object-contain rounded"
                         onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';">
                       <div class="w-20 h-20 bg-gray-200 rounded hidden items-center justify-center">
@@ -2745,7 +2493,7 @@ function openGooglePopup(url) {
                     <?php endif; ?>
 
                     <!-- Action Button -->
-                    <form action="index-product_view-page-4-AA" method="GET" class="mt-2">
+                    <form action="<?= BASE_URL ?>/productview" method="GET" class="mt-2">
                       <input type="hidden" name="id" value="<?= (int) $product['id'] ?>">
                       <button type="submit"
                         class="w-full bg-black hover:bg-gray-800 text-white text-xs py-2 px-3 rounded-lg transition-all duration-200 flex items-center justify-center gap-2">
@@ -2898,7 +2646,7 @@ function openGooglePopup(url) {
 
             <div class="text-center space-y-3 pt-4 border-t border-gray-200">
               <div>
-                <a href="../forgot_password.php" class="text-orange-500 hover:underline text-sm font-medium">Forgot
+                <a href="<?= BASE_URL ?>/forgotpass" class="text-orange-500 hover:underline text-sm font-medium">Forgot
                   password?</a>
               </div>
               <div>
@@ -2909,7 +2657,7 @@ function openGooglePopup(url) {
             </div>
 
             <div class="pt-4 border-t border-gray-200">
-              <a href="javascript:void(0)" onclick="openGooglePopup('../google-login.php')"
+              <a href="javascript:void(0)" onclick="openGooglePopup('<?= BASE_URL ?>/login')"
                 class="inline-flex items-center justify-center w-full gap-3 bg-red-500 hover:bg-red-600 text-white font-semibold py-3 px-4 rounded-lg transition">
                 <svg class="w-5 h-5 bg-white rounded-full p-[2px]" viewBox="0 0 48 48">
                   <path fill="#EA4335"
@@ -2944,7 +2692,7 @@ function openGooglePopup(url) {
 
         <!-- Modal Content -->
         <div class="p-6">
-          <form action="../register.php" method="POST" class="space-y-4">
+          <form action="<?= BASE_URL ?>/register" method="POST" class="space-y-4">
             <div>
               <label for="name" class="block text-sm font-medium text-gray-700 mb-2">Full Name</label>
               <input type="text" name="name" id="name" required
@@ -3053,7 +2801,7 @@ function openGooglePopup(url) {
                     <!-- Product Image -->
                     <div class="shrink-0 relative">
                       <?php if (!empty($product['main_image'])): ?>
-                        <img src="../../<?php echo htmlspecialchars($product['main_image']); ?>"
+                        <img src="<?= BASE_URL ?>/<?php echo htmlspecialchars($product['main_image']); ?>"
                           alt="<?php echo htmlspecialchars($product['name']); ?>"
                           class="w-20 h-20 sm:w-24 sm:h-24 object-contain rounded-lg border border-gray-200 group-hover:border-orange-300 transition"
                           onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';">
@@ -3128,7 +2876,7 @@ function openGooglePopup(url) {
                       </div>
 
                       <!-- Action Button -->
-                      <form action="index-product_view-page-4-AA" method="GET">
+                      <form action="<?= BASE_URL ?>/productview" method="GET">
                         <input type="hidden" name="id" value="<?= (int) $product['id'] ?>">
                         <button type="submit"
                           class="inline-flex items-center gap-2 bg-black hover:bg-orange-600 text-white text-xs py-2 px-4 transition-all">
@@ -3157,7 +2905,7 @@ function openGooglePopup(url) {
           <!-- Modal Footer -->
           <div class="p-4 bg-gray-50 border-t shrink-0">
             <div class="flex flex-col sm:flex-row gap-2">
-              <button onclick="window.location.href='../otherpage/index-allproduct-page-3.php'"
+              <button onclick="window.location.href='<?= BASE_URL ?>/product-normal-and-discounted'"
                 class="flex-1 bg-black hover:bg-orange-600 text-white py-2.5 px-4 transition-all flex items-center justify-center gap-2 text-sm">
                 <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
@@ -3173,35 +2921,6 @@ function openGooglePopup(url) {
           </div>
         </div>
       </div>
-
-      <style>
-        /* Smooth scrollbar for modal */
-        .overflow-y-auto::-webkit-scrollbar {
-          width: 6px;
-        }
-
-        .overflow-y-auto::-webkit-scrollbar-track {
-          background: #f9fafb;
-        }
-
-        .overflow-y-auto::-webkit-scrollbar-thumb {
-          background: #d1d5db;
-          border-radius: 3px;
-        }
-
-        .overflow-y-auto::-webkit-scrollbar-thumb:hover {
-          background: #9ca3af;
-        }
-
-        /* Line clamp utilities */
-        .line-clamp-2 {
-          display: -webkit-box;
-          -webkit-line-clamp: 2;
-          line-clamp: 2;
-          -webkit-box-orient: vertical;
-          overflow: hidden;
-        }
-      </style>
 
       <script>
         //Auto-refresh new products count
@@ -3228,14 +2947,12 @@ function openGooglePopup(url) {
       </script>
     <?php endif; ?>
   </section>
-
 </nav>
 
-
-
-<script src="../navbar/js/top-obf.js?v=<?= file_exists($top_js) ? md5_file($top_js) : '1' ?>"></script>
-<script src="../navbar/js/topcart.obfuscated.js?v=<?= file_exists($cart_js) ? md5_file($cart_js) : '1' ?>"></script>
-<script src="../navbar/js/noble-fcm.js?v=<?= filemtime('../navbar/js/noble-fcm.js') ?>"></script>
+<script
+  src="<?= BASE_URL ?>/user/navbar/js/top-obf.js?v=<?= file_exists(ROOT_PATH . '/user/navbar/js/top-obf.js') ? md5_file(ROOT_PATH . '/user/navbar/js/top-obf.js') : '1' ?>"></script>
+<script
+  src="<?= BASE_URL ?>/user/navbar/js/noble-fcm.js?v=<?= file_exists(ROOT_PATH . '/user/navbar/js/noble-fcm.js') ? filemtime(ROOT_PATH . '/user/navbar/js/noble-fcm.js') : '1' ?>"></script>
 
 <script>
   // Wait para ready na lahat bago mag-initFCM
@@ -3255,6 +2972,8 @@ function openGooglePopup(url) {
 </script>
 
 <script>
+
+  const BASE_URL = "<?= BASE_URL ?>";
 
   function showGuestLoginAlert() {
     showNotification('Please login to proceed', 'info');
@@ -3288,7 +3007,7 @@ function openGooglePopup(url) {
 
         this.isFetching = true;
 
-        fetch("../navbar/topcheck_getnotif.php", {
+        fetch(BASE_URL + "/getnotif", {
           credentials: 'include',
           signal: AbortSignal.timeout(10000)
         })
@@ -3335,7 +3054,7 @@ function openGooglePopup(url) {
       },
 
       markAsRead() {
-        fetch("../navbar/topcheck_getmarked.php", {
+        fetch(BASE_URL + "/getmark", {
           method: "POST",
           credentials: 'include'
         })
@@ -3350,7 +3069,7 @@ function openGooglePopup(url) {
       clearNotifications() {
         if (!confirm('Clear all notifications?')) return;
 
-        fetch("../navbar/topcheck_clearall.php", {
+        fetch(BASE_URL + "/clearall", {
           method: "POST",
           credentials: 'include'
         })
@@ -3416,86 +3135,6 @@ function openGooglePopup(url) {
           if (this.pollTimer) clearTimeout(this.pollTimer);
         });
       }
-    }));
-
-    // Chat notification system - same logic
-    Alpine.data('chatNotif', () => ({
-      unreadCount: 0,
-      pollTimer: null,
-      isPageVisible: true,
-      isFetching: false,
-
-      fetchUnread() {
-        if (!this.isPageVisible) return;
-        if (this.isFetching) return;
-
-        this.isFetching = true;
-
-        fetch('../otherpage/chat-chat_get_unread-page-9-A.php', {
-          credentials: 'include',
-          signal: AbortSignal.timeout(10000)
-        })
-          .then(res => {
-            if (!res.ok) throw new Error(`HTTP ${res.status}`);
-            return res.json();
-          })
-          .then(data => {
-            this.unreadCount = data.unread_count || 0;
-
-            // Only poll if may unread messages
-            if (this.unreadCount > 0) {
-              console.log(`[CHAT] Found ${this.unreadCount} unread - checking again in 5s`);
-              this.scheduleNextPoll(5000);
-            } else {
-              console.log(`[CHAT] No unread messages - stopping polls`);
-            }
-          })
-          .catch(error => {
-            console.error('[CHAT] Error:', error);
-            this.scheduleNextPoll(30000);
-          })
-          .finally(() => {
-            this.isFetching = false;
-          });
-      },
-
-      scheduleNextPoll(interval = 5000) {
-        if (this.pollTimer) {
-          clearTimeout(this.pollTimer);
-          this.pollTimer = null;
-        }
-
-        if (!this.isPageVisible) return;
-
-        this.pollTimer = setTimeout(() => {
-          this.fetchUnread();
-        }, interval);
-      },
-
-      init() {
-        console.log('[CHAT] System initialized - will only poll when unread exist');
-
-        this.fetchUnread();
-
-        document.addEventListener('visibilitychange', () => {
-          this.isPageVisible = !document.hidden;
-
-          if (this.isPageVisible) {
-            console.log('[CHAT] Page visible - fetching unread');
-            this.fetchUnread();
-          } else {
-            console.log('[CHAT] Page hidden - clearing polls');
-            if (this.pollTimer) {
-              clearTimeout(this.pollTimer);
-              this.pollTimer = null;
-            }
-          }
-        });
-
-        window.addEventListener('beforeunload', () => {
-          if (this.pollTimer) clearTimeout(this.pollTimer);
-        });
-      },
     }));
   });
 </script>

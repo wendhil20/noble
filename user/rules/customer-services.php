@@ -1,7 +1,7 @@
 <?php
 session_name("nobleuser");
 session_start();
-include '../../connection/connect.php';
+include ROOT_PATH . '/connection/connect.php';
 
 // ✅ Restore session from remember_token
 if (!isset($_SESSION['user_id']) && isset($_COOKIE['remember_token'])) {
@@ -33,8 +33,7 @@ if (!isset($_SESSION['user_id']) && isset($_COOKIE['remember_token'])) {
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Help Center & Customer Service - NobleHome Depot</title>
-  <script src="https://cdn.tailwindcss.com"></script>
-  <link rel="preconnect" href="https://fonts.googleapis.com/css2?family=Montserrat:wght@300;400;600;700&family=Poppins:wght@300;400;600;700&display=swap" rel="stylesheet">
+  
   <style>
     body { font-family: 'Montserrat', sans-serif; }
     .glass-effect { background: rgba(255, 255, 255, 0.05); backdrop-filter: blur(10px); border: 1px solid rgba(255, 255, 255, 0.1); }
@@ -42,17 +41,6 @@ if (!isset($_SESSION['user_id']) && isset($_COOKIE['remember_token'])) {
     .animate-slideDown { animation: slideDown 0.3s ease-out; }
   </style>
   <script>
-    tailwind.config = {
-      theme: {
-        extend: {
-          colors: {
-            'noble-orange': '#f97316',
-            'noble-orange-dark': '#ea580c',
-          }
-        }
-      }
-    }
-
     function toggleFAQ(id) {
       const answer = document.getElementById(id);
       const icon = document.getElementById(id + '-icon');
@@ -73,9 +61,10 @@ if (!isset($_SESSION['user_id']) && isset($_COOKIE['remember_token'])) {
     }
   </script>
 </head>
+
 <body class="bg-gray-50 text-gray-800">
 
-<?php include '../navbar/top.php'; ?>
+<?php include ROOT_PATH . '/user/navbar/top.php'; ?>
 
 <!-- Header Section -->
 <div class="bg-gradient-to-r from-black via-gray-900 to-black border-b-4 border-noble-orange py-16">
@@ -374,7 +363,7 @@ if (!isset($_SESSION['user_id']) && isset($_COOKIE['remember_token'])) {
 </div>
 
 <!-- Footer -->
-<?php include '../navbar/footer.php'; ?>
+<?php include ROOT_PATH . '/user/navbar/footer.php'; ?>
 
 </body>
 </html>

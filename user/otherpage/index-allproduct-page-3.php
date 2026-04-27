@@ -2,7 +2,9 @@
 // index-allproduct-page-3.php
 session_name("nobleuser");
 session_start();
-include '../../connection/connect.php';
+
+include ROOT_PATH . '/connection/connect.php';
+
 mysqli_query($conn, "SET SESSION group_concat_max_len = 10000;");
 
 if (!isset($_SESSION['user_id']) && isset($_COOKIE['remember_token'])) {
@@ -305,13 +307,13 @@ function calculate_price($variant_price, $color_price, $percent = 0, $discount =
 </head>
 
 <body class="bg-gray-50">
-    <?php include '../navbar/top.php'; ?>
-    <?php include 'push-notification.php'; ?>
+    <?php include ROOT_PATH . '/user/navbar/top.php'; ?>
+    <?php include ROOT_PATH . '/user/otherpage/push-notification.php'; ?>
 
     <!-- Hero Banner - Desktop only -->
     <div class="hidden md:block mb-4">
         <div class="container mx-auto px-1 bg-contain bg-center h-96"
-            style="background-image: url('../img/display2.webp');"></div>
+            style="background-image: url('<?= BASE_URL ?>/user/img/display2.webp');"></div>
     </div>
 
     <!-- Filter Overlay -->
@@ -562,7 +564,7 @@ function calculate_price($variant_price, $color_price, $percent = 0, $discount =
                             $first_variant['discount']
                         );
 
-                        $color_image_path = !empty($row['color_image']) ? '../../' . $row['color_image'] : '../img/placeholder.jpg';
+                       $color_image_path = !empty($row['color_image']) ? BASE_URL . '/' . ltrim($row['color_image'], '/') : BASE_URL . '/user/img/placeholder.jpg';
 
                         $product = [
                             'id' => (int) $row['product_id'],
@@ -572,6 +574,7 @@ function calculate_price($variant_price, $color_price, $percent = 0, $discount =
                             'color_code' => safe_output($row['color_code']),
                             'color_price' => (float) $row['color_price'],
                             'color_image' => safe_output($color_image_path),
+'color_image2' => !empty($row['color_image2']) ? BASE_URL . '/' . ltrim($row['color_image2'], '/') : '',
                             'min_order_qty' => (int) ($row['min_order_qty'] ?? 1),
                             'variants' => $variants,
                             'initial_variant' => [
@@ -607,7 +610,7 @@ function calculate_price($variant_price, $color_price, $percent = 0, $discount =
         </main>
     </div>
 
-    <?php include '../navbar/footer.php'; ?>
+    <?php include ROOT_PATH . '/user/navbar/footer.php'; ?>
     <div id="notificationContainer"></div>
 
     <script>
@@ -1165,7 +1168,7 @@ function calculate_price($variant_price, $color_price, $percent = 0, $discount =
                 buttonsDiv.className = 'space-y-1 mt-auto pt-2';
 
                 const viewForm = document.createElement('form');
-                viewForm.action = 'index-product_view-page-4-AA';
+                viewForm.action = '<?= BASE_URL ?>/productview';
                 viewForm.method = 'GET';
                 const viewInput = document.createElement('input');
                 viewInput.type = 'hidden';
@@ -1379,15 +1382,18 @@ function calculate_price($variant_price, $color_price, $percent = 0, $discount =
                 button.innerHTML = '<div class="loading-spinner"></div> Adding...';
 
                 try {
-                    const response = await fetch('../cart/add_to_cart', {
+                    const response = await fetch('<?= BASE_URL ?>/addcart', {
                         method: 'POST',
                         body: new FormData(form)
                     });
                     const data = await response.json();
                     if (data.success) {
+                        if (typeof refreshCart === 'function') {
+                            refreshCart();
+                        }
                         this.showNotification(data.message || 'Added to cart!', 'success');
                         this.updateCartCount(data.cart_count);
-                        button.innerHTML = '✓ Added!';
+                        button.innerHTML = 'Added!';
                         setTimeout(() => { button.innerHTML = originalContent; button.disabled = false; }, 2000);
                     } else {
                         throw new Error(data.message || 'Failed to add to cart');

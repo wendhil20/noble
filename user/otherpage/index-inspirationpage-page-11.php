@@ -1,7 +1,7 @@
 <?php
 session_name("nobleuser");
 session_start();
-include '../../connection/connect.php';
+include ROOT_PATH . '/connection/connect.php';
 
 // ✅ Restore session from remember_token
 if (!isset($_SESSION['user_id']) && isset($_COOKIE['remember_token'])) {
@@ -172,7 +172,7 @@ if (!$viewing_inspiration) {
 </head>
 
 <body class="bg-white min-h-screen" style="color: #3d2f26">
-    <?php include '../navbar/top.php' ?>
+    <?php include ROOT_PATH . '/user/navbar/top.php' ?>
 
     <?php if ($viewing_inspiration && $inspiration): ?>
         <!-- DETAIL VIEW -->

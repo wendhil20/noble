@@ -1,22 +1,15 @@
 RewriteEngine On
+RewriteBase /noble/
 
-# Optional: Force HTTPS
-# RewriteCond %{HTTPS} off
-# RewriteRule ^(.*)$ https://%{HTTP_HOST}%{REQUEST_URI} [L,R=301]
+# Redirect /noble/home to /noble/
+RewriteRule ^home/?$ / [R=301,L]
 
-# Hide .php extension
-RewriteCond %{REQUEST_FILENAME} !-d
-RewriteCond %{REQUEST_FILENAME}\.php -f
-RewriteRule ^([^\.]+)$ $1.php [NC,L]
+# Allow direct access to real files and folders
+RewriteCond %{REQUEST_FILENAME} -f [OR]
+RewriteCond %{REQUEST_FILENAME} -d
+RewriteRule ^ - [L]
 
-# Custom route: /orders → /user/otherpage/index-page-1-A-B-C-D-E.php
-RewriteRule ^orders/?$ user/otherpage/index-page-1-A-B-C-D-E.php [L,QSA]
-
-# Default route (index.php)
-RewriteCond %{REQUEST_FILENAME} !-f
-RewriteCond %{REQUEST_FILENAME} !-d
+# Exclude admin from routing
 RewriteCond %{REQUEST_URI} !^/noble/loginpage/admin/
+# Route everything else to index.php
 RewriteRule ^(.*)$ index.php [QSA,L]
-
-Header always set X-Frame-Options "DENY"
-Header always set Content-Security-Policy "frame-ancestors 'none'"

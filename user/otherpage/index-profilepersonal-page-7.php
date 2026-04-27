@@ -1,12 +1,12 @@
 <?php
-// order_history.php
+// index-profilepersonal-page-7.php
 session_name("nobleuser");
 session_start();
-include '../../connection/connect.php';
+include ROOT_PATH . '/connection/connect.php';
 
 // Check if user is logged in
 if (!isset($_SESSION['user_id'])) {
-    header('Location: ../google-callback.php');
+    header('Location: ' . BASE_URL . '/googlecallback');
     exit;
 }
 
@@ -36,7 +36,7 @@ if (!isset($_SESSION['user_id']) && isset($_COOKIE['remember_token'])) {
 // ✅ Final check if logged in (either normal or Google)
 if (!isset($_SESSION['user_id'])) {
     // Not logged in, redirect to login/Google callback
-    header('Location: ../google-callback.php');
+    header('Location: ../googlecallback.php');
     exit;
 }
 
@@ -265,7 +265,7 @@ $recent_count = $recent_products->num_rows;
 </head>
 
 <body class="bg-gray-50 min-h-screen " style="font-family: 'Montserrat', sans-serif; color: #2f1200">
-    <?php include '../navbar/top.php'; ?>
+    <?php include ROOT_PATH . '/user/navbar/top.php'; ?>
 
     <div class="max-w-7xl mx-auto px-4 py-6">
         <div class="professional-card rounded-xl p-4 sm:p-6 lg:p-8 mb-4 sm:mb-6 lg:mb-8 animate-fade-in">
@@ -323,7 +323,7 @@ $recent_count = $recent_products->num_rows;
                                         Account Verified
                                     </button>
                                 <?php else: ?>
-                                    <a href="settings.php" class="w-full sm:w-auto inline-flex items-center justify-center gap-3 px-4 sm:px-6 py-2 sm:py-3 bg-red-600 text-white font-semibold rounded-lg hover:bg-blue-700 transition-all duration-300 shadow-md hover:shadow-lg text-sm sm:text-base">
+                                    <a href="<?= BASE_URL ?>/form" class="w-full sm:w-auto inline-flex items-center justify-center gap-3 px-4 sm:px-6 py-2 sm:py-3 bg-red-600 text-white font-semibold rounded-lg hover:bg-blue-700 transition-all duration-300 shadow-md hover:shadow-lg text-sm sm:text-base">
                                         <i class="fas fa-user-cog"></i>
                                         Upgrade to Verification
                                     </a>
@@ -333,7 +333,7 @@ $recent_count = $recent_products->num_rows;
                             <!-- Feedback Form -->
                             <div class="mt-4 sm:mt-6 p-3 sm:p-4 border rounded-lg bg-gray-50">
                                 <h3 class="text-base sm:text-lg font-semibold text-gray-900 mb-3">Comment on this Website</h3>
-                                <form action="profile-profilerate-page-7-A.php" method="POST" class="space-y-3">
+                                <form action="<?= BASE_URL ?>/profilerate" method="POST" class="space-y-3">
                                     <input type="hidden" name="user_id" value="<?= $user_id; ?>">
 
                                     <!-- Rating -->
@@ -406,11 +406,11 @@ $recent_count = $recent_products->num_rows;
                                 </div>
                             </div>
                             <button onclick="openBillingModal()" class="px-2 sm:px-3 py-1 sm:py-2 bg-gray-100 text-gray-700 rounded-md hover:bg-gray-200 transition-colors text-xs sm:text-sm font-medium whitespace-nowrap">
-                                <i class="fas fa-eye mr-1"></i>View
+                               <i class="fa-solid fa-street-view"></i>
                             </button>
                         </div>
 
-                        <button onclick="window.location.href='profile-update_billing_add-page-7-A.php'" class="w-full px-3 sm:px-4 py-2 bg-black text-white rounded-lg hover:bg-blue-700 transition-colors text-xs sm:text-sm font-medium">
+                        <button onclick="window.location.href='<?= BASE_URL ?>/address'" class="w-full px-3 sm:px-4 py-2 bg-black text-white rounded-lg hover:bg-blue-700 transition-colors text-xs sm:text-sm font-medium">
                             <i class="fas fa-plus mr-2"></i>Add New Address
                         </button>
                     </div>
@@ -438,7 +438,7 @@ $recent_count = $recent_products->num_rows;
 
                 <!-- Add New Address Button -->
                 <div class="mb-6">
-                    <button onclick="window.location.href='profile-update_billing_add-page-7-A.php'" class="w-full px-6 py-3 bg-black text-white rounded-lg hover:bg-blue-700 transition-all duration-300 flex items-center justify-center gap-2 font-medium">
+                    <button onclick="window.location.href='<?= BASE_URL ?>/address'" class="w-full px-6 py-3 bg-black text-white rounded-lg hover:bg-blue-700 transition-all duration-300 flex items-center justify-center gap-2 font-medium">
                         <i class="fas fa-plus"></i>
                         Add New Address
                     </button>
@@ -453,7 +453,7 @@ $recent_count = $recent_products->num_rows;
                             </div>
                             <h4 class="text-lg font-semibold text-gray-900 mb-2">No Addresses Saved</h4>
                             <p class="text-gray-600 mb-6">Add your first delivery address for faster checkout</p>
-                            <button onclick="window.location.href='profile-update_billing_add-page-7-A.php'" class="inline-flex items-center gap-2 bg-primary text-white px-6 py-3 rounded-lg hover:bg-blue-700 transition-colors font-medium">
+                            <button onclick="window.location.href='<?= BASE_URL ?>/address'" class="inline-flex items-center gap-2 bg-primary text-white px-6 py-3 rounded-lg hover:bg-blue-700 transition-colors font-medium">
                                 <i class="fas fa-plus"></i>
                                 Add Address
                             </button>
@@ -633,13 +633,13 @@ function getRecentlyViewedByUser($conn, $user_id, $limit = 10)
 
         $view_count = formatViewCount($row['view_count'] ?? 0);
     ?>
-        <a href="index-product_view-page-4-AA?id=<?= $product_id ?>" class="group">
+        <a href="<?= BASE_URL ?>/productview?id=<?= $product_id ?>" class="group">
             <div class="bg-white rounded-lg border border-gray-200 overflow-hidden hover:shadow-lg transition-all duration-300 flex flex-col h-full">
 
                 <!-- Image Container -->
                 <div class="relative bg-gray-50 overflow-hidden" style="aspect-ratio: 1/1;">
                     <?php if (!empty($row['main_image'])): ?>
-                        <img src="../../<?= htmlspecialchars($row['main_image']) ?>" loading="lazy" alt="<?= htmlspecialchars($row['product_name']) ?>" class="w-full h-full object-contain p-2 group-hover:scale-110 transition-transform duration-300" />
+                        <img src="<?= BASE_URL ?>/<?= htmlspecialchars($row['main_image']) ?>" loading="lazy" alt="<?= htmlspecialchars($row['product_name']) ?>" class="w-full h-full object-contain p-2 group-hover:scale-110 transition-transform duration-300" />
                     <?php else: ?>
                         <div class="w-full h-full flex items-center justify-center bg-gray-100">
                             <i class="fas fa-image text-gray-300 text-3xl"></i>
@@ -726,7 +726,7 @@ function getRecentlyViewedByUser($conn, $user_id, $limit = 10)
                             <p class="text-sm text-gray-500 mt-1">Products you've looked at recently</p>
                         </div>
                     </div>
-                    <a href="index-shop-page-2.php" class="text-sm text-black hover:text-blue-700 font-semibold whitespace-nowrap">
+                    <a href="<?= BASE_URL ?>/shop" class="text-sm text-black hover:text-blue-700 font-semibold whitespace-nowrap">
                         See more <i class="fas fa-arrow-right ml-1"></i>
                     </a>
                 </div>
@@ -747,59 +747,68 @@ function getRecentlyViewedByUser($conn, $user_id, $limit = 10)
     <?php endif; ?>
 
 
-    <?php include '../navbar/footer.php'; ?>
+    <?php include ROOT_PATH . '/user/navbar/footer.php'; ?>
 
     <script>
+        const BASE_URL = `<?= BASE_URL ?>`;
         function editAddress(addressId) {
             // Redirect to edit page with address ID
-            window.location.href = `profile-update_billing_add-page-7-A.php?edit=${addressId}`;
+            window.location.href = `${BASE_URL}/address?edit=${addressId}`;
         }
 
         function deleteAddress(addressId, fullName) {
-            // Show confirmation dialog
-            if (confirm(`Are you sure you want to delete the address for "${fullName}"?\n\nThis action cannot be undone.`)) {
-                // Show loading state
-                const button = event.target.closest('button');
-                const originalContent = button.innerHTML;
-                button.innerHTML = '<div class="w-4 h-4 border-2 border-red-600 border-t-transparent rounded-full animate-spin"></div>';
-                button.disabled = true;
+    if (!confirm(`Are you sure you want to delete the address for "${fullName}"?\n\nThis action cannot be undone.`)) {
+        return; // ✅ gamitin return, hindi mag-proceed
+    }
 
-                // Send delete request
-                fetch('profile-delete_billing_address-page-7-A.php', {
-                        method: 'POST',
-                        headers: {
-                            'Content-Type': 'application/json',
-                        },
-                        body: JSON.stringify({
-                            address_id: addressId
-                        })
-                    })
-                    .then(response => response.json())
-                    .then(data => {
-                        if (data.success) {
-                            // Show success message
-                            showNotification('Address deleted successfully!', 'success');
-                            // Reload page after short delay
-                            setTimeout(() => {
-                                window.location.reload();
-                            }, 1000);
-                        } else {
-                            // Show error message
-                            showNotification(data.message || 'Failed to delete address', 'error');
-                            // Restore button
-                            button.innerHTML = originalContent;
-                            button.disabled = false;
-                        }
-                    })
-                    .catch(error => {
-                        console.error('Error:', error);
-                        showNotification('An error occurred while deleting the address', 'error');
-                        // Restore button
-                        button.innerHTML = originalContent;
-                        button.disabled = false;
-                    });
+    const button = event.target.closest('button');
+    const originalContent = button.innerHTML;
+    button.innerHTML = '<div class="w-4 h-4 border-2 border-red-600 border-t-transparent rounded-full animate-spin"></div>';
+    button.disabled = true;
+
+    fetch(`${BASE_URL}/address`, {  // ✅ siguraduhing tama ang URL
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+            address_id: addressId
+        })
+    })
+    .then(response => {
+        if (!response.ok) throw new Error('Network error');
+        return response.json();
+    })
+    .then(data => {
+        if (data.success) {
+            // ✅ Alisin ang card sa DOM agad, hindi na mag-reload
+            const card = button.closest('.border.border-gray-200.rounded-lg');
+            if (card) {
+                card.style.transition = 'opacity 0.3s';
+                card.style.opacity = '0';
+                setTimeout(() => {
+                    card.remove();
+                    // Update count
+                    const countEl = document.querySelector('#billingModal .text-sm.text-gray-600');
+                    if (countEl) {
+                        const current = parseInt(countEl.textContent) || 0;
+                        countEl.textContent = `${Math.max(0, current - 1)} saved addresses`;
+                    }
+                }, 300);
             }
+        } else {
+            alert(data.message || 'Failed to delete address');
+            button.innerHTML = originalContent;
+            button.disabled = false;
         }
+    })
+    .catch(error => {
+        console.error('Error:', error);
+        alert('An error occurred. Please try again.');
+        button.innerHTML = originalContent;
+        button.disabled = false;
+    });
+}
 
         // Billing Modal Functions
         function openBillingModal() {

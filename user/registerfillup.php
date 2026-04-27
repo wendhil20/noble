@@ -1,4 +1,4 @@
-<form action="register.php" method="POST" class="space-y-3">
+<form action="<?= BASE_URL ?>/register" method="POST" class="space-y-3">
   <div>
     <label class="block text-sm font-medium text-gray-600">Name</label>
     <input type="text" name="name" required

@@ -1,7 +1,7 @@
 <?php
 session_name("nobleuser");
 session_start();
-include '../../connection/connect.php';
+include ROOT_PATH . '/connection/connect.php';
 
 /**
  * Calculate delivery date range based on lead time settings
@@ -65,8 +65,8 @@ if (!isset($_SESSION['user_id']) && isset($_COOKIE['remember_token'])) {
     $user = $res->fetch_assoc();
 
     // 🔐 Store essential user session info
-    $_SESSION['user_id']    = $user['id'];
-    $_SESSION['user_name']  = $user['name'];
+    $_SESSION['user_id'] = $user['id'];
+    $_SESSION['user_name'] = $user['name'];
     $_SESSION['user_email'] = $user['email'] ?? '';
     $_SESSION['user_mobile'] = $user['mobile'] ?? '';
 
@@ -95,8 +95,8 @@ unset($_SESSION['checkout_notice']);
 
 // ✅ Fetch cart items - BOTH logged-in users AND guests
 if ($user_id) {
-    // LOGGED-IN USER: Fetch from database
-    $stmt = $conn->prepare("
+  // LOGGED-IN USER: Fetch from database
+  $stmt = $conn->prepare("
         SELECT 
             c.*, 
             t.type_image, 
@@ -122,23 +122,23 @@ if ($user_id) {
         ORDER BY c.id DESC
     ");
 
-    $stmt->bind_param("i", $user_id);
-    $stmt->execute();
-    $result = $stmt->get_result();
+  $stmt->bind_param("i", $user_id);
+  $stmt->execute();
+  $result = $stmt->get_result();
 
-    while ($row = $result->fetch_assoc()) {
-        $cart_items[] = $row;
-        $item_total = floatval($row['price']) * intval($row['quantity']);
-        $total_price += $item_total;
-    }
+  while ($row = $result->fetch_assoc()) {
+    $cart_items[] = $row;
+    $item_total = floatval($row['price']) * intval($row['quantity']);
+    $total_price += $item_total;
+  }
 
-    $stmt->close();
+  $stmt->close();
 } else {
-    // GUEST USER: Fetch from session
-    if (isset($_SESSION['guest_cart']) && !empty($_SESSION['guest_cart'])) {
-        foreach ($_SESSION['guest_cart'] as $cart_id => $guest_item) {
-            // Fetch product details from database
-            $stmt = $conn->prepare("
+  // GUEST USER: Fetch from session
+  if (isset($_SESSION['guest_cart']) && !empty($_SESSION['guest_cart'])) {
+    foreach ($_SESSION['guest_cart'] as $cart_id => $guest_item) {
+      // Fetch product details from database
+      $stmt = $conn->prepare("
                 SELECT 
                     p.id as product_id,
                     p.product_name,
@@ -161,29 +161,30 @@ if ($user_id) {
                 WHERE p.id = ?
             ");
 
-            $stmt->bind_param("sii", 
-                $guest_item['type_name'], 
-                $guest_item['variant_id'], 
-                $guest_item['product_id']
-            );
-            $stmt->execute();
-            $result = $stmt->get_result();
+      $stmt->bind_param(
+        "sii",
+        $guest_item['type_name'],
+        $guest_item['variant_id'],
+        $guest_item['product_id']
+      );
+      $stmt->execute();
+      $result = $stmt->get_result();
 
-            if ($result->num_rows > 0) {
-                $product_data = $result->fetch_assoc();
-                
-                // Merge guest cart data with product data
-                $item = array_merge($guest_item, $product_data);
-                $item['id'] = $cart_id; // Use session key as ID
-                
-                $cart_items[] = $item;
-                $item_total = floatval($item['price']) * intval($item['quantity']);
-                $total_price += $item_total;
-            }
+      if ($result->num_rows > 0) {
+        $product_data = $result->fetch_assoc();
 
-            $stmt->close();
-        }
+        // Merge guest cart data with product data
+        $item = array_merge($guest_item, $product_data);
+        $item['id'] = $cart_id; // Use session key as ID
+
+        $cart_items[] = $item;
+        $item_total = floatval($item['price']) * intval($item['quantity']);
+        $total_price += $item_total;
+      }
+
+      $stmt->close();
     }
+  }
 }
 
 $total_cart_items = count($cart_items);
@@ -201,12 +202,13 @@ $total_cart_items = count($cart_items);
 </head>
 
 <body class="bg-gray-100 font-roboto">
-  <?php include '../navbar/top.php'; ?>
-<?php include 'push-notification.php'; ?>
+  <?php include ROOT_PATH . '/user/navbar/top.php'; ?>
+  <?php include ROOT_PATH . '/user/otherpage/push-notification.php'; ?>
   <!-- Hero Section -->
   <div class="gradient-bg text-white relative overflow-hidden">
     <div class="absolute inset-0 pointer-events-none z-0">
-      <svg width="100%" height="100%" class="w-full h-full" style="position:absolute;top:0;left:0;" xmlns="http://www.w3.org/2000/svg">
+      <svg width="100%" height="100%" class="w-full h-full" style="position:absolute;top:0;left:0;"
+        xmlns="http://www.w3.org/2000/svg">
         <circle class="bubble bubble1" cx="10%" cy="80%" r="32" fill="#fff" fill-opacity="0.13" />
         <circle class="bubble bubble2" cx="25%" cy="90%" r="18" fill="#fff" fill-opacity="0.10" />
         <circle class="bubble bubble3" cx="40%" cy="85%" r="24" fill="#fff" fill-opacity="0.09" />
@@ -384,7 +386,7 @@ $total_cart_items = count($cart_items);
   <nav class="bg-white border-b border-gray-200 px-4 py-3">
     <div class="container mx-auto">
       <div class="flex items-center space-x-2 text-sm">
-        <a href="index-page-1-A-B-C-D-E" class="text-black hover:text-orange-700 transition duration-200 flex items-center">
+        <a href="<?= BASE_URL ?>/" class="text-black hover:text-orange-700 transition duration-200 flex items-center">
           <i class="fas fa-home mr-1"></i>Home
         </a>
         <i class="fas fa-chevron-right text-gray-400"></i>
@@ -411,17 +413,18 @@ $total_cart_items = count($cart_items);
         <div class="text-center py-12">
           <i class="fas fa-shopping-cart text-6xl text-gray-300 mb-4"></i>
           <p class="text-gray-600 text-lg mb-4">Your cart is currently empty.</p>
-          <a href="index-shop-page-2" class="inline-block bg-black hover:bg-orange-600 text-white px-6 py-3 rounded-lg transition-colors font-medium">
+          <a href="<?= BASE_URL ?>/shop"
+            class="inline-block bg-black hover:bg-orange-600 text-white px-6 py-3 rounded-lg transition-colors font-medium">
             <i class="fas fa-store mr-2"></i>Continue Shopping
           </a>
         </div>
       <?php else: ?>
         <!-- Cart Items - Desktop Table -->
         <div class="cart-table-desktop">
-          <form action="../cart/update_cart.php" method="POST">
+          <form action="<?= BASE_URL ?>/updatecart" method="POST">
             <div class="overflow-x-auto">
               <table class="w-full text-sm text-left border-collapse">
-                <thead class="bg-orange-400 text-white uppercase text-xs">
+                <thead class="bg-black text-white uppercase text-xs">
                   <tr>
                     <th class="py-3 px-4 rounded-tl-lg">Category</th>
                     <th class="py-3 px-4">Product</th>
@@ -439,41 +442,38 @@ $total_cart_items = count($cart_items);
                     $unit_price = floatval($item['price']);
                     $quantity = intval($item['quantity']);
                     $subtotal = $unit_price * $quantity;
-                  ?>
+                    ?>
                     <tr class="hover:bg-gray-50 transition-colors">
-                      <td class="py-4 px-4 font-semibold text-gray-800 uppercase"><?= htmlspecialchars($item['codename']) ?></td>
+                      <td class="py-4 px-4 font-semibold text-gray-800 uppercase"><?= htmlspecialchars($item['codename']) ?>
+                      </td>
                       <td class="py-4 px-4 text-sm text-gray-700 space-y-1 uppercase">
-                        <div><span class="font-semibold">Variant:</span> <?= htmlspecialchars($item['variant_name'] ?: '—') ?></div>
-                        <div><span class="font-semibold">Type:</span> <?= htmlspecialchars($item['type_name'] ?: '—') ?></div>
+                        <div><span class="font-semibold">Variant:</span>
+                          <?= htmlspecialchars($item['variant_name'] ?: '—') ?></div>
+                        <div><span class="font-semibold">Type:</span> <?= htmlspecialchars($item['type_name'] ?: '—') ?>
+                        </div>
                         <div><span class="font-semibold">Size:</span> <?= htmlspecialchars($item['size'] ?: '—') ?></div>
-                        <div><span class="font-semibold">Color:</span> <?= htmlspecialchars($item['color_name'] ?: '—') ?></div>
+                        <div><span class="font-semibold">Color:</span> <?= htmlspecialchars($item['color_name'] ?: '—') ?>
+                        </div>
                         <div><span class="font-semibold"></span> <?= htmlspecialchars($item['descrip6'] ?? '—') ?></div>
                         <div><span class="font-semibold"></span> <?= htmlspecialchars($item['descrip7'] ?? '—') ?></div>
                       </td>
                       <td class="py-4 px-4">
                         <div class="flex items-center justify-center gap-1">
                           <!-- Minus Button -->
-                          <button type="button"
-                            onclick="updateQuantity(<?= $item['id'] ?>, -1)"
+                          <button type="button" onclick="updateQuantity(<?= $item['id'] ?>, -1)"
                             class="quantity-btn w-8 h-8 bg-gray-200 hover:bg-gray-300 text-gray-700 rounded-l-lg flex items-center justify-center transition-colors border border-gray-300">
                             <i class="fas fa-minus text-xs"></i>
                           </button>
 
                           <!-- Quantity Display/Input - MADE EDITABLE -->
-                          <input type="number"
-                            id="qty_<?= $item['id'] ?>"
-                            name="quantities[<?= $item['id'] ?>]"
-                            value="<?= $quantity ?>"
-                            min="1"
-                            max="9999"
+                          <input type="number" id="qty_<?= $item['id'] ?>" name="quantities[<?= $item['id'] ?>]"
+                            value="<?= $quantity ?>" min="1" max="9999"
                             class="w-20 h-8 text-sm border-t border-b border-gray-300 text-center bg-white focus:outline-none focus:ring-2 focus:ring-orange-400 focus:border-orange-400"
                             onchange="handleManualQuantityChange(<?= $item['id'] ?>)"
-                            onkeypress="handleQuantityKeypress(event, <?= $item['id'] ?>)"
-                            onfocus="this.select()">
+                            onkeypress="handleQuantityKeypress(event, <?= $item['id'] ?>)" onfocus="this.select()">
 
                           <!-- Plus Button -->
-                          <button type="button"
-                            onclick="updateQuantity(<?= $item['id'] ?>, 1)"
+                          <button type="button" onclick="updateQuantity(<?= $item['id'] ?>, 1)"
                             class="quantity-btn w-8 h-8 bg-gray-200 hover:bg-gray-300 text-gray-700 rounded-r-lg flex items-center justify-center transition-colors border border-gray-300">
                             <i class="fas fa-plus text-xs"></i>
                           </button>
@@ -483,12 +483,16 @@ $total_cart_items = count($cart_items);
                         <div id="qty_status_<?= $item['id'] ?>" class="text-center mt-1 text-xs h-4"></div>
                       </td>
                       <td class="py-4 px-4 text-orange-600 font-medium">₱<?= number_format($unit_price, 2) ?></td>
-                      <td class="py-4 px-4 text-green-600 font-bold" id="subtotal_<?= $item['id'] ?>">₱<?= number_format($subtotal, 2) ?></td>
+                      <td class="py-4 px-4 text-green-600 font-bold" id="subtotal_<?= $item['id'] ?>">
+                        ₱<?= number_format($subtotal, 2) ?></td>
                       <td class="py-4 px-4">
                         <?php if (!empty($item['type_image'])): ?>
-                          <img src="../../<?= ($item['type_image']) ?>" class="w-16 h-16 object-cover rounded-lg shadow-sm" alt="Product Image">
+                          <img src="<?= BASE_URL?>/<?= ($item['type_image']) ?>" class="w-16 h-16 object-cover rounded-lg shadow-sm"
+                            alt="Product Image">
                         <?php else: ?>
-                          <div class="w-16 h-16 bg-gray-200 flex items-center justify-center text-gray-500 text-xs rounded-lg">No Image</div>
+                          <div
+                            class="w-16 h-16 bg-gray-200 flex items-center justify-center text-gray-500 text-xs rounded-lg">No
+                            Image</div>
                         <?php endif; ?>
                       </td>
                       <td class="py-4 px-4">
@@ -498,7 +502,8 @@ $total_cart_items = count($cart_items);
                           <?php elseif ($item['origin'] === 'international'): ?>
                             <span class="text-red-600 font-medium text-sm bg-red-50 px-2 py-1 rounded-full">International</span>
                           <?php else: ?>
-                            <span class="text-gray-600 font-medium text-sm bg-gray-50 px-2 py-1 rounded-full"><?= htmlspecialchars($item['origin']) ?></span>
+                            <span
+                              class="text-gray-600 font-medium text-sm bg-gray-50 px-2 py-1 rounded-full"><?= htmlspecialchars($item['origin']) ?></span>
                           <?php endif; ?>
                         <?php else: ?>
                           <span class="text-gray-400 text-sm">—</span>
@@ -513,7 +518,7 @@ $total_cart_items = count($cart_items);
                         );
 
                         if ($deliveryDates):
-                        ?>
+                          ?>
                           <div class="text-sm">
                             <div class="font-semibold text-green-700">Get Items By:</div>
                             <div class="text-gray-700"><?= htmlspecialchars($deliveryDates['display']) ?></div>
@@ -523,10 +528,13 @@ $total_cart_items = count($cart_items);
                         <?php endif; ?>
                       </td>
                       <td class="py-4 px-4 align-middle">
-                        <a href="../cart/remove_from_cart.php?key=<?= $item['id'] ?>"
-                          class="inline-flex items-center gap-1 text-red-600 hover:text-red-800 hover:bg-red-50 px-2 py-1 rounded transition-colors" title="Remove">
-                          <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+                        <a href="<?= BASE_URL ?>/removecart?key=<?= $item['id'] ?>"
+                          class="inline-flex items-center gap-1 text-red-600 hover:text-red-800 hover:bg-red-50 px-2 py-1 rounded transition-colors"
+                          title="Remove">
+                          <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4" fill="none" viewBox="0 0 24 24"
+                            stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                              d="M6 18L18 6M6 6l12 12" />
                           </svg>
                           <span class="hidden lg:inline text-sm">Remove</span>
                         </a>
@@ -548,25 +556,30 @@ $total_cart_items = count($cart_items);
 
         <!-- Cart Items - Mobile Cards -->
         <div class="cart-table-mobile space-y-4">
-          <form action="../cart/update_cart.php" method="POST">
+          <form action="<?= BASE_URL ?>/updatecart" method="POST">
             <?php foreach ($cart_items as $item):
               $unit_price = floatval($item['price']);
               $quantity = intval($item['quantity']);
               $subtotal = $unit_price * $quantity;
-            ?>
+              ?>
               <div class="bg-gray-50 border border-gray-200 rounded-lg p-4 space-y-4">
                 <!-- Product Image and Basic Info -->
                 <div class="flex items-start gap-4">
                   <?php if (!empty($item['type_image'])): ?>
-                    <img src="../../<?= ($item['type_image']) ?>" class="w-20 h-20 object-cover rounded-lg shadow-sm shrink-0" alt="Product Image">
+                    <img src="<?= BASE_URL ?>/<?= ($item['type_image']) ?>" class="w-20 h-20 object-cover rounded-lg shadow-sm shrink-0"
+                      alt="Product Image">
                   <?php else: ?>
-                    <div class="w-20 h-20 bg-gray-200 flex items-center justify-center text-gray-500 text-xs rounded-lg shrink-0">No Image</div>
+                    <div
+                      class="w-20 h-20 bg-gray-200 flex items-center justify-center text-gray-500 text-xs rounded-lg shrink-0">
+                      No Image</div>
                   <?php endif; ?>
 
                   <div class="flex-1 min-w-0">
-                    <h3 class="font-semibold text-gray-800 uppercase text-sm mb-1"><?= htmlspecialchars($item['codename']) ?></h3>
+                    <h3 class="font-semibold text-gray-800 uppercase text-sm mb-1">
+                      <?= htmlspecialchars($item['codename']) ?></h3>
                     <div class="space-y-1 text-xs text-gray-600">
-                      <div><span class="font-medium">Variant:</span> <?= htmlspecialchars($item['variant_name'] ?: '—') ?></div>
+                      <div><span class="font-medium">Variant:</span> <?= htmlspecialchars($item['variant_name'] ?: '—') ?>
+                      </div>
                       <div><span class="font-medium">Type:</span> <?= htmlspecialchars($item['type_name'] ?: '—') ?></div>
                       <div><span class="font-medium">Size:</span> <?= htmlspecialchars($item['size'] ?: '—') ?></div>
                       <div><span class="font-medium">Color:</span> <?= htmlspecialchars($item['color_name'] ?: '—') ?></div>
@@ -580,9 +593,10 @@ $total_cart_items = count($cart_items);
                   </div>
 
                   <!-- Remove Button -->
-                  <a href="../cart/remove_from_cart.php?key=<?= $item['id'] ?>"
+                  <a href="<?= BASE_URL ?>/removecart?key=<?= $item['id'] ?>"
                     class="text-red-600 hover:text-red-800 p-2 hover:bg-red-50 rounded transition-colors" title="Remove">
-                    <svg xmlns="http://www.w3.org/2000/svg" class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="w-5 h-5" fill="none" viewBox="0 0 24 24"
+                      stroke="currentColor">
                       <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
                     </svg>
                   </a>
@@ -597,7 +611,8 @@ $total_cart_items = count($cart_items);
                       <?php elseif ($item['origin'] === 'international'): ?>
                         <span class="text-red-600 font-medium text-xs bg-red-50 px-2 py-1 rounded-full">International</span>
                       <?php else: ?>
-                        <span class="text-gray-600 font-medium text-xs bg-gray-50 px-2 py-1 rounded-full"><?= htmlspecialchars($item['origin']) ?></span>
+                        <span
+                          class="text-gray-600 font-medium text-xs bg-gray-50 px-2 py-1 rounded-full"><?= htmlspecialchars($item['origin']) ?></span>
                       <?php endif; ?>
                     <?php endif; ?>
                   </div>
@@ -612,7 +627,7 @@ $total_cart_items = count($cart_items);
                 );
 
                 if ($deliveryDates):
-                ?>
+                  ?>
                   <div class="bg-green-50 border border-green-200 rounded-lg p-3">
                     <div class="flex items-start gap-2">
                       <i class="fas fa-truck text-green-600 mt-0.5"></i>
@@ -630,27 +645,20 @@ $total_cart_items = count($cart_items);
                     <label class="block text-xs font-medium text-gray-600 mb-1">Quantity</label>
                     <div class="flex items-center gap-1">
                       <!-- Minus Button -->
-                      <button type="button"
-                        onclick="updateQuantity(<?= $item['id'] ?>, -1)"
+                      <button type="button" onclick="updateQuantity(<?= $item['id'] ?>, -1)"
                         class="quantity-btn w-8 h-8 bg-gray-200 hover:bg-gray-300 text-gray-700 rounded-l-lg flex items-center justify-center transition-colors border border-gray-300">
                         <i class="fas fa-minus text-xs"></i>
                       </button>
 
                       <!-- Editable Quantity Input -->
-                      <input type="number"
-                        id="qty_mobile_<?= $item['id'] ?>"
-                        name="quantities[<?= $item['id'] ?>]"
-                        value="<?= $quantity ?>"
-                        min="1"
-                        max="9999"
+                      <input type="number" id="qty_mobile_<?= $item['id'] ?>" name="quantities[<?= $item['id'] ?>]"
+                        value="<?= $quantity ?>" min="1" max="9999"
                         class="w-20 h-8 text-sm border-t border-b border-gray-300 text-center bg-white focus:outline-none focus:ring-2 focus:ring-orange-400 focus:border-orange-400"
                         onchange="handleManualQuantityChange(<?= $item['id'] ?>)"
-                        onkeypress="handleQuantityKeypress(event, <?= $item['id'] ?>)"
-                        onfocus="this.select()">
+                        onkeypress="handleQuantityKeypress(event, <?= $item['id'] ?>)" onfocus="this.select()">
 
                       <!-- Plus Button -->
-                      <button type="button"
-                        onclick="updateQuantity(<?= $item['id'] ?>, 1)"
+                      <button type="button" onclick="updateQuantity(<?= $item['id'] ?>, 1)"
                         class="quantity-btn w-8 h-8 bg-gray-200 hover:bg-gray-300 text-gray-700 rounded-r-lg flex items-center justify-center transition-colors border border-gray-300">
                         <i class="fas fa-plus text-xs"></i>
                       </button>
@@ -663,7 +671,8 @@ $total_cart_items = count($cart_items);
                     <div class="text-xs text-gray-600 mb-1">Unit Price</div>
                     <div class="text-sm font-medium text-orange-600">₱<?= number_format($unit_price, 2) ?></div>
                     <div class="text-xs text-gray-600 mt-1">Subtotal</div>
-                    <div class="text-lg font-bold text-green-600" id="subtotal_mobile_<?= $item['id'] ?>">₱<?= number_format($subtotal, 2) ?></div>
+                    <div class="text-lg font-bold text-green-600" id="subtotal_mobile_<?= $item['id'] ?>">
+                      ₱<?= number_format($subtotal, 2) ?></div>
                   </div>
                 </div>
               </div>
@@ -682,10 +691,12 @@ $total_cart_items = count($cart_items);
 
         <!-- Final Action Buttons -->
         <div class="mt-6 flex flex-col sm:flex-row gap-3 justify-end">
-          <a href="index-shop-page-2.php" class="w-full sm:w-auto text-center bg-gray-500 hover:bg-gray-600 text-white px-6 py-3 rounded-lg transition-colors font-medium">
+          <a href="<?= BASE_URL ?>/shop"
+            class="w-full sm:w-auto text-center bg-gray-500 hover:bg-gray-600 text-white px-6 py-3 rounded-lg transition-colors font-medium">
             <i class="fas fa-store mr-2"></i>Continue Shopping
           </a>
-          <a href="index-checkout-page-12.php" class="w-full sm:w-auto text-center bg-green-500 hover:bg-green-600 text-white px-6 py-3 rounded-lg transition-colors font-medium">
+          <a href="<?= BASE_URL ?>/checkout"
+            class="w-full sm:w-auto text-center bg-green-500 hover:bg-green-600 text-white px-6 py-3 rounded-lg transition-colors font-medium">
             <i class="fas fa-credit-card mr-2"></i>Proceed to Checkout
           </a>
         </div>
@@ -693,13 +704,13 @@ $total_cart_items = count($cart_items);
     </div>
   </div>
 
-  <?php include '../navbar/footer.php'; ?>
+  <?php include ROOT_PATH . '/user/navbar/footer.php'; ?>
 
 
   <!-- JavaScript for Quantity Controls -->
   <script>
     // Complete Enhanced JavaScript for Cart Quantity Controls with Manual Input
-
+    const BASE_URL = "<?= BASE_URL ?>";
     // Store unit prices for each item
     const unitPrices = {};
 
@@ -942,7 +953,7 @@ $total_cart_items = count($cart_items);
         formData.append('quantity', quantity);
 
         // Make the API call
-        const response = await fetch('../cart/update_cart.php', {
+        const response = await fetch(BASE_URL + '/updatecart', {
           method: 'POST',
           body: formData,
           headers: {
@@ -1011,14 +1022,16 @@ $total_cart_items = count($cart_items);
 
     // Batch update function (for manual update button if you want to keep it)
     function updateCartManually() {
-      const form = document.querySelector('form[action="../cart/update_cart.php"]');
-      if (form) {
-        form.submit();
-      }
-    }
+  const form = document.querySelector('form[action="' + BASE_URL + '/updatecart"]');
+  if (form) {
+    form.submit();
+  } else {
+    console.error('Form not found!');
+  }
+}
 
     // Initialize enhanced functionality on page load
-    document.addEventListener('DOMContentLoaded', function() {
+    document.addEventListener('DOMContentLoaded', function () {
       console.log('Initializing enhanced quantity controls...');
 
       // Add enhanced event listeners to all quantity inputs
@@ -1029,17 +1042,17 @@ $total_cart_items = count($cart_items);
         // Desktop input events
         if (desktopInput) {
           // Real-time input validation
-          desktopInput.addEventListener('input', function(e) {
+          desktopInput.addEventListener('input', function (e) {
             handleQuantityInput(e, itemId);
           });
 
           // Focus event - select all text for easy editing
-          desktopInput.addEventListener('focus', function() {
+          desktopInput.addEventListener('focus', function () {
             this.select();
           });
 
           // Blur event - validate final value
-          desktopInput.addEventListener('blur', function() {
+          desktopInput.addEventListener('blur', function () {
             if (this.value === '' || this.value < 1) {
               this.value = 1;
               handleManualQuantityChange(itemId);
@@ -1049,15 +1062,15 @@ $total_cart_items = count($cart_items);
 
         // Mobile input events (same as desktop)
         if (mobileInput) {
-          mobileInput.addEventListener('input', function(e) {
+          mobileInput.addEventListener('input', function (e) {
             handleQuantityInput(e, itemId);
           });
 
-          mobileInput.addEventListener('focus', function() {
+          mobileInput.addEventListener('focus', function () {
             this.select();
           });
 
-          mobileInput.addEventListener('blur', function() {
+          mobileInput.addEventListener('blur', function () {
             if (this.value === '' || this.value < 1) {
               this.value = 1;
               handleManualQuantityChange(itemId);
@@ -1067,7 +1080,7 @@ $total_cart_items = count($cart_items);
       });
 
       // Add keyboard shortcuts
-      document.addEventListener('keydown', function(event) {
+      document.addEventListener('keydown', function (event) {
         // Ctrl/Cmd + Enter to proceed to checkout (if on cart page)
         if ((event.ctrlKey || event.metaKey) && event.key === 'Enter') {
           const checkoutBtn = document.querySelector('a[href*="checkout"]');

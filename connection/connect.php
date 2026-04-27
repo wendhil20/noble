@@ -1,4 +1,5 @@
 <?php
+// connection/connect.php
 // Detect environment (local or production)
 $isLocal = in_array($_SERVER['HTTP_HOST'], ['localhost', 'localhost:8000', '127.0.0.1', '127.0.0.1:8000']);
 

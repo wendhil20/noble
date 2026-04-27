@@ -42,9 +42,9 @@ if ($promo_result) {
                             style="width: 340px; height: 280px;">
 
                             <!-- Background Image -->
-                            <img src="../../uploads/promotion_banners/<?= htmlspecialchars($promo['image']) ?>"
+                            <img src="<?= BASE_URL ?>/uploads/promotion_banners/<?= htmlspecialchars($promo['image']) ?>"
                                 alt="<?= htmlspecialchars($promo['title']) ?>" class="w-full h-full object-contain"
-                                loading="lazy" onerror="this.src='../../uploads/placeholder.jpg'">
+                                loading="lazy" onerror="this.src='<?= BASE_URL ?>/uploads/placeholder.jpg'">
 
                             <!-- Dark gradient overlay -->
                             <div class="absolute inset-0"
@@ -63,7 +63,7 @@ if ($promo_result) {
                                     <?= htmlspecialchars($promo['title']) ?>
                                 </h3>
                                 <div>
-                                    <a href="../otherpage/index-allproduct-page-3.php?filter=discounted&min_discount=<?= $discount ?>"
+                                    <a href="<?= BASE_URL ?>/product-normal-and-discounted?filter=discounted&min_discount=<?= $discount ?>"
                                         class="inline-flex items-center gap-2 bg-orange-500 hover:bg-orange-400 text-white text-sm font-bold px-4 py-2 rounded-full transition-all duration-200">
                                         Shop Now
                                         <i class="fa-solid fa-circle-arrow-right"></i>
@@ -76,7 +76,7 @@ if ($promo_result) {
                 </div>
 
                 <!-- Next Button -->
-                <button id="promoNext"
+                <button id="promoNext" 
                     class="absolute right-0 top-1/2 -translate-y-1/2 translate-x-4 z-10
                        bg-white border border-gray-200 shadow-md hover:bg-orange-500 hover:text-white hover:border-orange-500
                        text-gray-700 rounded-full w-10 h-10 flex items-center justify-center transition-all duration-200"

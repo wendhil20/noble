@@ -1,14 +1,10 @@
 <?php
+// allproduct-allproduct_get-page-3-A.php
 session_name("nobleuser");
 session_start();
-include '../../connection/connect.php';
+include ROOT_PATH . '/connection/connect.php';
 header('Content-Type: application/json');
 
-// Enable error logging
-error_reporting(E_ALL);
-ini_set('display_errors', 0);
-ini_set('log_errors', 1);
-ini_set('error_log', __DIR__ . '/api_error_log.txt');
 
 // Allow both authenticated users and guests
 $is_guest = !isset($_SESSION['user_id']);

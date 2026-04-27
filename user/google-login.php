@@ -4,9 +4,9 @@ session_name("nobleuser");
 session_start();
 
 // ✅ LOAD ENVIRONMENT VARIABLES
-require_once '../.env.php';
-require_once '../vendor/autoload.php';
-include '../connection/connect.php'; 
+require_once ROOT_PATH . '/.env.php';
+require_once ROOT_PATH . '/vendor/autoload.php';
+include ROOT_PATH . '/connection/connect.php'; 
 
 // ✅ GET OAUTH CREDENTIALS FROM ENVIRONMENT
 $clientId = getenv('GOOGLE_CLIENT_ID');
@@ -15,7 +15,8 @@ $clientSecret = getenv('GOOGLE_CLIENT_SECRET');
 if (empty($clientId) || empty($clientSecret)) {
     error_log('❌ Google OAuth credentials not configured in .env');
     $_SESSION['login_needed'] = 'OAuth service not configured. Please try again later.';
-    header("Location: otherpage/index-page-1-A-B-C-D-E.php");
+    $homeUrl = $protocol . $host . ($isLocalhost ? '/noble/home' : '/home');
+    header("Location: " . $homeUrl);
     exit;
 }
 
@@ -37,10 +38,10 @@ $isLocalhost = (strpos($host, 'localhost') !== false || strpos($host, '127.0.0.1
 
 if ($isLocalhost) {
     // Localhost path with 'noble' folder
-    $redirectUri = $protocol . $host . '/noble/user/google-callback.php';
+    $redirectUri = $protocol . $host . '/noble/googlecallback';
 } else {
     // Production domain - starts from 'user'
-    $redirectUri = $protocol . $host . '/user/google-callback.php';
+    $redirectUri = $protocol . $host . '/googlecallback';
 }
 
 $client = new Google_Client();

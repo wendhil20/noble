@@ -1,7 +1,7 @@
 <?php
 session_name("nobleuser");
 session_start();
-include '../../connection/connect.php';
+include ROOT_PATH . '/connection/connect.php';
 
 // ✅ Restore session from remember_token (normal account or Google)
 if (!isset($_SESSION['user_id']) && isset($_COOKIE['remember_token'])) {
@@ -29,7 +29,7 @@ if (!isset($_SESSION['user_id']) && isset($_COOKIE['remember_token'])) {
 // ✅ Final check if logged in (either normal or Google)
 if (!isset($_SESSION['user_id'])) {
     // Not logged in, redirect to login/Google callback
-    header('Location: ../google-callback.php');
+    header('Location: ' . BASE_URL . '/login');
     exit;
 }
 

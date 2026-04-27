@@ -2,7 +2,7 @@
 // index-profile-page-6.php
 session_name("nobleuser");
 session_start();
-include '../../connection/connect.php';
+include ROOT_PATH . '/connection/connect.php';
 
 // ✅ Restore session from remember_token (normal account or Google)
 if (!isset($_SESSION['user_id']) && isset($_COOKIE['remember_token'])) {
@@ -283,8 +283,8 @@ function getReplacementBadge($replacement_status)
 </head>
 
 <body class="min-h-screen bg-gray-50 " style="font-family: 'Montserrat', sans-serif; color: #2f1200">
-    <?php include '../navbar/top.php'; ?>
-    <?php include 'push-notification.php'; ?>
+    <?php include ROOT_PATH . '/user/navbar/top.php'; ?>
+    <?php include ROOT_PATH . '/user/otherpage/push-notification.php'; ?>
 
     <!-- Professional Header -->
     <div class="bg-black text-white shadow-lg">
@@ -320,7 +320,7 @@ function getReplacementBadge($replacement_status)
                                 </span>
                             <?php endif; ?>
 
-                            <a href="index-order_history-page-13.php"
+                            <a href="<?= BASE_URL ?>/history"
                                 class="flex items-center gap-2 px-4 py-2 bg-black text-white rounded-lg hover:bg-gray-900 transition-colors text-sm font-medium">
                                 <i class="fas fa-history"></i>
                                 View All
@@ -389,7 +389,7 @@ function getReplacementBadge($replacement_status)
                                     data-date="<?php echo strtolower(date('M j, Y g:i A', strtotime($order['created_at']))); ?>"
                                     data-payment-status="<?php echo strtolower($order['payment_status'] ?? 'pending'); ?>"
                                     data-has-replacement="<?php echo $has_replacement ? 'yes' : 'no'; ?>"
-                                    onclick="window.location.href='order_tracking.php?order_id=<?php echo $order['id']; ?>'">
+                                    onclick="window.location.href='<?= BASE_URL ?>/ordertrack?order_id=<?php echo $order['id']; ?>'">
 
                                     <div class="flex items-center w-20">
                                         <span class="font-bold text-gray-900">#<?php echo $order['id']; ?></span>
@@ -501,7 +501,7 @@ function getReplacementBadge($replacement_status)
                                     </div>
 
                                     <div class="flex items-center w-full">
-                                        <a href="order_tracking.php?order_id=<?php echo $order['id']; ?>"
+                                        <a href="<?= BASE_URL ?>/ordertrack?order_id=<?php echo $order['id']; ?>"
                                             class="text-center gap-1 px-2 py-1 bg-red-600 text-white rounded-lg hover:bg-red-500 transition-colors text-sm font-semibold"
                                             onclick="event.stopPropagation()">
                                             Quick View
@@ -610,7 +610,7 @@ function getReplacementBadge($replacement_status)
 
                                     </div>
 
-                                    <a href="order_tracking.php?order_id=<?php echo $order['id']; ?>"
+                                    <a href="<?= BASE_URL ?>/ordertrack?order_id=<?php echo $order['id']; ?>"
                                         class="w-full inline-flex items-center justify-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors text-sm font-semibold">
                                         View Details
                                     </a>
@@ -670,7 +670,7 @@ function getReplacementBadge($replacement_status)
                                 $payment_status = $order['payment_status'] ?? 'pending';
                                 ?>
                                 <div class="border border-orange-200 rounded-lg p-4 bg-orange-50/50 hover:bg-orange-50 transition-colors cursor-pointer"
-                                    onclick="window.location.href='order_tracking.php?order_id=<?php echo $order['id']; ?>'">
+                                    onclick="window.location.href='<?= BASE_URL ?>/ordertrack?order_id=<?php echo $order['id']; ?>'">
                                     <div class="flex items-center justify-between">
                                         <div>
                                             <p class="text-gray-900 mb-1">Order #<?php echo $order['id']; ?></p>
@@ -762,9 +762,10 @@ function getReplacementBadge($replacement_status)
         </div>
     </div>
 
-    <?php include '../navbar/footer.php'; ?>
+    <?php include ROOT_PATH . '/user/navbar/footer.php'; ?>
 
     <script>
+        const BASE_URL = "<?= BASE_URL ?>";
         function filterOrders() {
             const input = document.getElementById('orderSearch').value.toLowerCase();
             const items = document.querySelectorAll('.order-item');
@@ -817,7 +818,7 @@ function getReplacementBadge($replacement_status)
         }
 
         function viewOrder(orderId) {
-            window.location.href = 'order_tracking.php?order_id=' + orderId;
+            window.location.href = BASE_URL + '/ordertrack?order_id=' + orderId;
         }
 
         function toggleBillingDropdown() {

@@ -7,14 +7,15 @@ $hasError = isset($_GET['error']);
 <html>
 <head><title>Login Complete</title></head>
 <body>
-<p>Login successful! Closing...</p>
 <script>
-  // Try postMessage first (works even with COOP)
   try {
-    window.opener.postMessage('google-login-success', '*');
+    <?php if (!$hasError): ?>
+      window.opener.postMessage('google-login-success', '*');
+    <?php else: ?>
+      window.opener.postMessage('google-login-error', '*');
+    <?php endif; ?>
   } catch(e) {}
 
-  // Also try direct close after short delay
   setTimeout(function() {
     window.close();
   }, 500);

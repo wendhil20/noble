@@ -63,7 +63,7 @@
         this.errorMessage = '';
         this.successMessage = '';
 
-        fetch('../send_otp.php', {
+        fetch(BASE_URL + '/sendotp', {
             method: 'POST',
             body: JSON.stringify({
               email: this.loginInput
@@ -103,7 +103,7 @@
         this.errorMessage = '';
         this.successMessage = '';
 
-        fetch('../verify_otp.php', {
+        fetch(BASE_URL + '/verifyotp', {
             method: 'POST',
             headers: {
               'Content-Type': 'application/json'
@@ -165,7 +165,7 @@
         const formElement = event.target.closest('form');
         const formData = new FormData(formElement);
 
-        fetch('../login.php', {
+        fetch(BASE_URL + '/logins', {
             method: 'POST',
             body: formData
           })

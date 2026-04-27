@@ -3,8 +3,8 @@
 // Order will be created by webhook ONLY when payment.paid is received
 session_name("nobleuser");
 session_start();
-include '../../connection/connect.php';
-require_once '../../.env.php';
+include ROOT_PATH . '/connection/connect.php';
+require_once ROOT_PATH . '/.env.php';
 
 header('Content-Type: application/json');
 
@@ -35,30 +35,35 @@ try {
 
     error_log("QRPh Session Create: user=$user_id amount=₱$amount ref=$temp_ref");
 
-    // ✅ CREATE CHECKOUT SESSION - no order_id yet
-    $payload = json_encode([
-        'data' => [
-            'attributes' => [
-                'amount'               => $amount_in_centavos,
-                'currency'             => 'PHP',
-                'payment_method_types' => ['qrph'],
-                'line_items'           => [[
-                    'name'     => 'Noble Home Order ' . $temp_ref,
-                    'quantity' => 1,
-                    'amount'   => $amount_in_centavos,
-                    'currency' => 'PHP',
-                ]],
-                'success_url' => 'https://noblehomedepot.com/user/otherpage/checkout-paymongo-success-page-12-A.php?ref=' . $temp_ref . '&source=qrph',
-                'cancel_url'  => 'https://noblehomedepot.com/user/otherpage/index-checkout-page-12.php?payment_cancelled=1',
-                'description' => 'Noble Home Order ' . $temp_ref,
-                'metadata'    => [
-                    'user_id'  => strval($user_id),
-                    'temp_ref' => $temp_ref,
-                    'source'   => 'qrph_checkout'
-                ]
+    // ✅ BUILD DYNAMIC URLS (ilagay bago ang $payload)
+$protocol   = (!empty($_SERVER['HTTPS']) && $_SERVER['HTTPS'] !== 'off') ? 'https://' : 'http://';
+$host       = $_SERVER['HTTP_HOST'];
+$isLocalhost = (strpos($host, 'localhost') !== false || strpos($host, '127.0.0.1') !== false);
+$base       = $protocol . $host . ($isLocalhost ? '/noble' : '');
+
+$payload = json_encode([
+    'data' => [
+        'attributes' => [
+            'amount'               => $amount_in_centavos,
+            'currency'             => 'PHP',
+            'payment_method_types' => ['qrph'],
+            'line_items'           => [[
+                'name'     => 'Noble Home Order ' . $temp_ref,
+                'quantity' => 1,
+                'amount'   => $amount_in_centavos,
+                'currency' => 'PHP',
+            ]],
+            'success_url' => $base . '/payment2mongo?ref=' . $temp_ref . '&source=qrph',
+            'cancel_url'  => $base . '/checkout4',   // checkout4 = step 4 sa router
+            'description' => 'Noble Home Order ' . $temp_ref,
+            'metadata'    => [
+                'user_id'  => strval($user_id),
+                'temp_ref' => $temp_ref,
+                'source'   => 'qrph_checkout'
             ]
         ]
-    ]);
+    ]
+]);
 
     $ch = curl_init('https://api.paymongo.com/v1/checkout_sessions');
     curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);

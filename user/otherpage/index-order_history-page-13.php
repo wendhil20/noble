@@ -2,11 +2,11 @@
 // order_history.php
 session_name("nobleuser");
 session_start();
-include '../../connection/connect.php';
+include ROOT_PATH . '/connection/connect.php';
 
 // Check if user is logged in
 if (!isset($_SESSION['user_id'])) {
-    header('Location: ../google-callback.php');
+    header('Location: ' . BASE_URL . '/googlecallback');
     exit;
 }
 
@@ -83,13 +83,13 @@ function getStatusBadge($status)
 </head>
 
 <body class="bg-gray-100 min-h-screen">
-    <?php include '../navbar/top.php'; ?>
+    <?php include ROOT_PATH . '/user/navbar/top.php'; ?>
 
     <!-- Enhanced Breadcrumb -->
     <nav class="bg-white border-b border-gray-200 px-4 py-3">
-        <div class="">
+        <div class="mx-auto max-w-7xl">
             <div class="flex items-center space-x-2 text-sm">
-                <a href="index" class="text-orange-500 hover:text-orange-700 transition duration-200 flex items-center">
+                <a href="<?= BASE_URL ?>/" class="text-orange-500 hover:text-orange-700 transition duration-200 flex items-center">
                     <i class="fas fa-home mr-1"></i>Home
                 </a>
                 <i class="fas fa-chevron-right text-gray-400"></i>
@@ -149,7 +149,7 @@ function getStatusBadge($status)
                 </svg>
                 <h3 class="text-xl font-medium text-gray-900 mb-2">No Orders Yet</h3>
                 <p class="text-gray-500 mb-6">You haven't placed any orders yet. Start shopping to see your orders here.</p>
-                <a href="../products/" class="inline-flex items-center gap-2 bg-orange-600 text-white px-6 py-3 rounded-lg hover:bg-orange-700 transition">
+                <a href="<?= BASE_URL ?>/shop" class="inline-flex items-center gap-2 bg-orange-600 text-white px-6 py-3 rounded-lg hover:bg-orange-700 transition">
                     <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z"></path>
                     </svg>
@@ -212,7 +212,7 @@ function getStatusBadge($status)
                                     </div>
 
                                     <div class="flex flex-col gap-2">
-                                        <a href="checkout-order_receipt-page-12-A.php?order_id=<?= $order['id'] ?>"
+                                        <a href="<?= BASE_URL ?>/receipt?order_id=<?= $order['id'] ?>"
                                             class="inline-flex items-center gap-2 bg-orange-600 text-white px-4 py-2 rounded-lg hover:bg-orange-700 transition text-sm font-medium">
                                             <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path>
@@ -273,6 +273,8 @@ function getStatusBadge($status)
             </div>
         </div>
     </div>
+
+    <?php include ROOT_PATH . '/user/navbar/footer.php' ?>
 
     <script>
         // Search and Filter functionality

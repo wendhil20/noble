@@ -3,10 +3,10 @@
 ob_start();
 session_name("nobleuser");
 session_start();
-include '../../connection/connect.php';
 
-// ✅ Track referral visits FIRST (before anything else)
-require_once '../../includes/referral_tracker.php';
+// ✅ Bago
+include ROOT_PATH . '/connection/connect.php';
+require_once ROOT_PATH . '/includes/referral_tracker.php';
 trackReferralVisit($conn);
 
 // ✅ If user is already logged in, assign referral code if they don't have one
@@ -165,17 +165,11 @@ $bestsellerData = $bestsellerItems->fetch_all(MYSQLI_ASSOC);
 
 <!DOCTYPE html>
 <html lang="en">
-
-<!-- 🚀 PRODUCTION-READY HEAD (No Console Errors) -->
-
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <link rel="icon" type="image/png" sizes="96x96" href="../img/favicon.ico">
     <title>Noble Home - Modern Furnishing Supplies</title>
-    <!-- CSS Files -->
-    <link href="../css/promotionslide.css" rel="stylesheet">
-    <link href="../css/bannerPromo.css" rel="stylesheet">
     <style>
         footer * {
             font-family: 'Plus Jakarta Sans', sans-serif;
@@ -334,11 +328,11 @@ $bestsellerData = $bestsellerItems->fetch_all(MYSQLI_ASSOC);
 
 <body class="">
 
-    <?php include '../navbar/top.php'; ?>
+    <?php include ROOT_PATH . '/user/navbar/top.php'; ?>
 
-    <?php include 'push-notification.php'; ?>
+    <?php include ROOT_PATH . '/user/otherpage/push-notification.php'; ?>
 
-    <?php include 'index-flash_notification-D.php'; ?>
+    <?php include ROOT_PATH . '/user/otherpage/index-flash_notification-D.php'; ?>
 
     <?php if (isset($_SESSION['toast'])): ?>
         <div id="toast"
@@ -404,16 +398,16 @@ $bestsellerData = $bestsellerItems->fetch_all(MYSQLI_ASSOC);
                 <div class="swiper-wrapper">
                     <?php if (!empty($banners)): ?>
                         <?php foreach ($banners as $idx => $banner): ?>
-                            <a href="../otherpage/index-subcategory_grid_page-14.php?category_name=<?= urlencode(strtolower($banner['category_name'])) ?>"
+                            <a href="<?= BASE_URL ?>/subcategorygrid?category_name=<?= urlencode(strtolower($banner['category_name'])) ?>"
                                 class="swiper-slide block cursor-pointer hover:opacity-90 transition-opacity group">
                                 <div class="relative w-full overflow-hidden flex items-center justify-center bg-gray-100">
                                     <div
                                         class="skeleton-loader absolute inset-0 bg-linear-to-r from-neutral-200 via-neutral-300 to-neutral-200 bg-size-[200%_100%] animate-shimmer">
                                     </div>
-                                    <img src="../../uploads/<?= basename($banner['filename']) ?>"
+                                    <img src="<?= BASE_URL ?>/uploads/<?= basename($banner['filename']) ?>"
                                         alt="<?= htmlspecialchars($banner['category_name'] ?? 'Banner') ?>"
                                         class="banner-image w-full h-full object-cover opacity-0 z-10 rounded-lg"
-                                        onerror="this.src='../../uploads/placeholder.jpg'; this.style.opacity='1'; this.previousElementSibling.style.display='none';"
+                                        onerror="this.src='<?= BASE_URL ?>/uploads/placeholder.jpg'; this.style.opacity='1'; this.previousElementSibling.style.display='none';"
                                         onload="this.style.opacity='1'; this.previousElementSibling.style.display='none';" />
                                 </div>
                             </a>
@@ -446,7 +440,7 @@ $bestsellerData = $bestsellerItems->fetch_all(MYSQLI_ASSOC);
                 <?php foreach ($categories as $category): ?>
                     <?php
                     $categoryName = $category['name'];
-                    $imagePath = '../../uploads/categories/' . $category['image_pathtwo'];
+                    $imagePath = '<?= BASE_URL ?>/uploads/categories/' . $category['image_pathtwo'];
 
                     if ($categoryName === 'BathroomFixtures') {
                         $displayName = 'Bathroom';
@@ -464,13 +458,13 @@ $bestsellerData = $bestsellerItems->fetch_all(MYSQLI_ASSOC);
                         $displayName = ucfirst($categoryName);
                     }
                     ?>
-                    <a href="index-subcategory_grid_page-14.php?category_name=<?php echo urlencode($categoryName); ?>"
+                    <a href="<?= BASE_URL ?>/subcategorygrid?category_name=<?php echo urlencode($categoryName); ?>"
                         class="group flex flex-col items-center gap-2 w-16 sm:w-20 md:w-24">
 
                         <!-- Circle Icon -->
                         <div class="w-16 h-16 sm:w-20 sm:h-20 md:w-24 md:h-24 rounded-full border-2 border-yellow-400 flex items-center justify-center overflow-hidden group-hover:border-yellow-500 group-hover:shadow-md transition-all duration-300"
                             style="border-color: #eab308;">
-                            <img src="<?php echo htmlspecialchars($imagePath); ?>"
+                            <img src="<?= BASE_URL ?>/uploads/categories/<?php echo htmlspecialchars($category['image_pathtwo']); ?>"
                                 alt="<?php echo htmlspecialchars($displayName); ?>"
                                 class="w-10 h-10 sm:w-12 sm:h-12 md:w-14 md:h-14 object-contain group-hover:scale-110 transition-transform duration-300"
                                 loading="lazy">
@@ -545,12 +539,12 @@ $bestsellerData = $bestsellerItems->fetch_all(MYSQLI_ASSOC);
         ?>
 
         <div class="swiper-slide p-2">
-            <a href="index-product_view-page-4-AA?id=<?= $product_id ?>" class="block group rounded-xl p-2 transition-all duration-300 
+            <a href="<?= BASE_URL ?>/productview?id=<?= $product_id ?>" class="block group rounded-xl p-2 transition-all duration-300 
               hover:shadow-lg hover:-translate-y-1">
                 <!-- Image container -->
                 <div class="relative rounded-lg overflow-hidden mb-2 w-full" style="aspect-ratio: 1/1;">
                     <?php if (!empty($row['main_image'])): ?>
-                        <img src="../../<?= $row['main_image'] ?>" loading="lazy"
+                        <img src="<?= BASE_URL ?>/<?= $row['main_image'] ?>" loading="lazy"
                             alt="<?= htmlspecialchars($row['product_name']) ?>" class="w-full h-full object-contain p-1.5" />
                     <?php else: ?>
                         <div class="w-full h-full flex items-center justify-center">
@@ -687,13 +681,13 @@ $bestsellerData = $bestsellerItems->fetch_all(MYSQLI_ASSOC);
                 <div class="swiper-wrapper p-2">
                     <?php foreach ($bestsellerData as $item): ?>
                         <div class="swiper-slide hover:shadow-lg rounded-lg p-2">
-                            <a href="index-bestseller-detail-B.php?slug=<?= htmlspecialchars($item['slug']) ?>"
+                            <a href="<?= BASE_URL ?>/bestsellerview?slug=<?= htmlspecialchars($item['slug']) ?>"
                                 class="block group">
 
                                 <!-- Image -->
                                 <div class="relative bg-gray-50 rounded-lg overflow-hidden mb-2 w-full"
                                     style="aspect-ratio: 1/1;">
-                                    <img src="<?= htmlspecialchars($item['image'] ?: '../img/promo/default.png') ?>"
+                                    <img src="<?= BASE_URL ?>/user/img/<?= htmlspecialchars($item['image'] ?: '../img/promo/default.png') ?>"
                                         alt="<?= htmlspecialchars($item['title']) ?>" loading="lazy"
                                         class="w-full h-full object-contain p-1.5 transition-transform duration-300 group-hover:scale-105" />
                                 </div>
@@ -787,13 +781,13 @@ $bestsellerData = $bestsellerItems->fetch_all(MYSQLI_ASSOC);
                             ?>
                             <div
                                 class="swiper-slide rounded-lg transition-all duration-300 hover:shadow-lg hover:-translate-y-1 cursor-pointer p-2">
-                                <a href="index-product_view-page-4-AA?id=<?= (int) $row['product_id'] ?>" class="block group">
+                                <a href="<?= BASE_URL ?>/productview?id=<?= $row['product_id'] ?>" class="block group">
 
                                     <!-- Image - Square aspect ratio like New Arrival -->
                                     <div class="relative bg-gray-50 rounded-lg overflow-hidden mb-2 w-full"
                                         style="aspect-ratio: 1/1;">
                                         <?php if (!empty($row['type_image'])): ?>
-                                            <img src="../../<?= $row['type_image'] ?>" loading="lazy"
+                                            <img src="<?= BASE_URL ?>/<?= $row['type_image'] ?>" loading="lazy"
                                                 alt="<?= htmlspecialchars($row['product_name']) ?>"
                                                 class="w-full h-full object-contain p-1.5" />
                                         <?php else: ?>
@@ -935,13 +929,13 @@ $bestsellerData = $bestsellerItems->fetch_all(MYSQLI_ASSOC);
                             ?>
                             <div
                                 class="swiper-slide rounded-lg transition-all duration-300 hover:shadow-lg hover:-translate-y-1 cursor-pointer p-2">
-                                <a href="index-product_view-page-4-AA?id=<?= (int) $row['product_id'] ?>" class="block group">
+                                <a href="<?= BASE_URL ?>/productview?id=<?= $row['product_id'] ?>" class="block group">
 
                                     <!-- Image -->
                                     <div class="relative bg-gray-50 rounded-lg overflow-hidden mb-2 w-full"
                                         style="aspect-ratio: 1/1;">
                                         <?php if (!empty($row['type_image'])): ?>
-                                            <img src="../../<?= $row['type_image'] ?>" loading="lazy"
+                                            <img src="<?= BASE_URL ?>/<?= $row['type_image'] ?>" loading="lazy"
                                                 alt="<?= htmlspecialchars($row['product_name']) ?>"
                                                 class="w-full h-full object-contain p-1.5 " />
                                         <?php else: ?>
@@ -1113,7 +1107,7 @@ $bestsellerData = $bestsellerItems->fetch_all(MYSQLI_ASSOC);
         </div>
     </section>
 
-    <?php include '../navbar/footer.php'; ?>
+    <?php include ROOT_PATH . '/user/navbar/footer.php'; ?>
 
     <script>
         // 🚀 OPTIMIZED SWIPER INITIALIZATION
@@ -1311,54 +1305,6 @@ $bestsellerData = $bestsellerItems->fetch_all(MYSQLI_ASSOC);
             if (bubble) {
                 bubble.classList.toggle('hidden', count <= 0);
                 bubble.style.display = count > 0 ? 'inline' : 'none';
-            }
-        }
-
-        // Product form submit handler
-        async function handleProductFormSubmit(e) {
-            e.preventDefault();
-
-            const form = this;
-            const formData = new FormData(form);
-            const button = form.querySelector('button[type="submit"]');
-            const originalText = button.textContent;
-            const originalClasses = button.className;
-
-            button.disabled = true;
-            button.textContent = 'Adding...';
-            button.classList.add('opacity-60');
-
-            try {
-                formData.set('selected_color_id', formData.get('selected_color_id') || '1');
-                formData.set('selected_color_name', formData.get('selected_color_name') || 'Default');
-                formData.set('color_price', formData.get('color_price') || '0');
-
-                const response = await fetch('../cart/add_to_cart', {
-                    method: 'POST',
-                    body: formData
-                });
-
-                const data = await response.json();
-
-                if (data.success) {
-                    showNotification(data.message || 'Added to cart', 'success');
-                    updateCartCount(data.cart_count);
-                    button.textContent = 'Added';
-
-                    setTimeout(() => {
-                        button.textContent = originalText;
-                        button.className = originalClasses;
-                        button.disabled = false;
-                    }, 2000);
-                } else {
-                    throw new Error(data.message || 'Add to cart failed.');
-                }
-            } catch (error) {
-                showNotification(' ' + error.message, 'error');
-                console.error('Add to cart error:', error);
-                button.textContent = originalText;
-                button.className = originalClasses;
-                button.disabled = false;
             }
         }
 

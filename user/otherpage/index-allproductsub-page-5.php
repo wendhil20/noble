@@ -1,26 +1,11 @@
 <?php
-// Enable error reporting for debugging
-error_reporting(E_ALL);
-ini_set('display_errors', 0);
-ini_set('log_errors', 1);
-ini_set('error_log', __DIR__ . '/sale_page_error_log.txt');
 
 session_name("nobleuser");
 session_start();
 
-// Check connection file
-if (!file_exists('../../connection/connect.php')) {
-    die('Database connection file not found');
-}
+include ROOT_PATH . '/connection/connect.php';
 
-include '../../connection/connect.php';
 
-// Check database connection
-if (!isset($conn) || $conn->connect_error) {
-    die('Database connection failed');
-}
-
-// Session restoration from remember_token
 if (!isset($_SESSION['user_id']) && isset($_COOKIE['remember_token'])) {
     try {
         $stmt = $conn->prepare("SELECT * FROM users WHERE remember_token = ?");
@@ -28,7 +13,6 @@ if (!isset($_SESSION['user_id']) && isset($_COOKIE['remember_token'])) {
             $stmt->bind_param("s", $_COOKIE['remember_token']);
             $stmt->execute();
             $res = $stmt->get_result();
-
             if ($res->num_rows > 0) {
                 $user = $res->fetch_assoc();
                 $_SESSION = array_merge($_SESSION, [
@@ -37,7 +21,6 @@ if (!isset($_SESSION['user_id']) && isset($_COOKIE['remember_token'])) {
                     'user_email' => $user['email'] ?? '',
                     'user_mobile' => $user['mobile'] ?? ''
                 ]);
-
                 if (!empty($user['google_id'])) {
                     $_SESSION['google_logged_in'] = true;
                     $_SESSION['user_picture'] = $user['profile_picture'] ?? null;
@@ -46,622 +29,463 @@ if (!isset($_SESSION['user_id']) && isset($_COOKIE['remember_token'])) {
             $stmt->close();
         }
     } catch (Exception $e) {
-        error_log("Session restore error: " . $e->getMessage());
+        error_log($e->getMessage());
     }
 }
 
-// ✅ Allow guest access
 $is_guest = !isset($_SESSION['user_id']);
 
-// Fetch all categories with error handling
 try {
-    $categories_query = "SELECT * FROM categories ORDER BY name ASC";
-    $categories_result = $conn->query($categories_query);
-    
-    if (!$categories_result) {
-        throw new Exception("Categories query failed: " . $conn->error);
+    $categories_result = $conn->query("SELECT * FROM categories ORDER BY name ASC");
+    $categories_array = [];
+    if ($categories_result) {
+        while ($row = $categories_result->fetch_assoc()) {
+            $categories_array[] = $row;
+        }
     }
 } catch (Exception $e) {
-    error_log("Categories fetch error: " . $e->getMessage());
     $categories_result = null;
+    $categories_array = [];
 }
 
-// Fetch on sale banners with error handling
 try {
-    $onsale_query = "SELECT * FROM onsalebanner ORDER BY uploaded_at DESC";
-    $onsale_result = $conn->query($onsale_query);
-    
-    if (!$onsale_result) {
-        throw new Exception("Sale banners query failed: " . $conn->error);
-    }
+    $onsale_result = $conn->query("SELECT * FROM onsalebanner ORDER BY uploaded_at DESC");
 } catch (Exception $e) {
-    error_log("Sale banners fetch error: " . $e->getMessage());
     $onsale_result = null;
 }
 
-// Fetch discounted materials with view count, rating & sold count
 try {
     $material_query = "
-        SELECT 
-            pv.*,
-            pv.origin,
-            pt.type_name,
-            pt.type_image,
-            pt.product_id,
-            p.product_name,
-            p.codename,
-            p.main_image,
-            p.description,
-            p.view_count,
-            p.unique_view_count,
+        SELECT pv.*, pv.origin,
+            pt.type_name, pt.type_image, pt.product_id,
+            p.product_name, p.codename, p.main_image, p.description,
+            p.view_count, p.unique_view_count,
             AVG(r.rating) AS avg_rating,
             COUNT(DISTINCT r.id) AS rating_count,
             COALESCE(SUM(si.quantity), 0) AS total_sold,
-            pc.id AS color_id,
-            pc.color_name AS color,
-            pc.color_code,
-            pc.price AS color_price
+            pc.id AS color_id, pc.color_name AS color,
+            pc.color_code, pc.price AS color_price
         FROM product_variants pv
         INNER JOIN product_types pt ON pv.type_id = pt.id
         INNER JOIN products p ON pt.product_id = p.id
         LEFT JOIN product_ratings r ON r.product_id = p.id
         LEFT JOIN sold_items si ON si.product_id = p.id
-        LEFT JOIN product_colors pc 
+        LEFT JOIN product_colors pc
             ON pc.product_id = p.id
-           AND pc.id = (
-               SELECT MIN(pc2.id) 
-               FROM product_colors pc2 
-               WHERE pc2.product_id = p.id
-           )
-        WHERE pv.discount > 0
-        AND p.is_archived = 0
+           AND pc.id = (SELECT MIN(pc2.id) FROM product_colors pc2 WHERE pc2.product_id = p.id)
+        WHERE pv.discount > 0 AND p.is_archived = 0
         GROUP BY pv.id
         ORDER BY p.view_count DESC, RAND()
-        LIMIT 10
-    ";
-    
+        LIMIT 10";
     $material_results = mysqli_query($conn, $material_query);
-    
-    if (!$material_results) {
-        throw new Exception("Materials query failed: " . mysqli_error($conn));
-    }
-    
-    // Get max discount for header
     $maxDiscount = 0;
     if ($material_results && mysqli_num_rows($material_results) > 0) {
-        $tempResults = mysqli_query($conn, "SELECT MAX(discount) as max_discount FROM product_variants WHERE discount > 0");
-        if ($tempResults) {
-            $maxRow = mysqli_fetch_assoc($tempResults);
-            $maxDiscount = (float)($maxRow['max_discount'] ?? 0);
+        $tmpR = mysqli_query($conn, "SELECT MAX(discount) as md FROM product_variants WHERE discount > 0");
+        if ($tmpR) {
+            $maxDiscount = (float) (mysqli_fetch_assoc($tmpR)['md'] ?? 0);
         }
     }
 } catch (Exception $e) {
-    error_log("Materials fetch error: " . $e->getMessage());
     $material_results = null;
     $maxDiscount = 0;
 }
 ?>
-     
 <!DOCTYPE html>
 <html lang="en">
 
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Sale Items - Best Deals</title>
+    <title>Sale Collection — Noble Home</title>
     <style>
-        * {
-            font-family: 'Poppins', sans-serif;
-        }
-
-        @keyframes pulse {
-            0%, 100% { transform: scale(1); }
-            50% { transform: scale(1.05); }
-        }
-
-        .sale-badge {
-            animation: pulse 2s ease-in-out infinite;
-        }
-
-        .swiper-button-prev::after,
-        .swiper-button-next::after {
-            content: '' !important;
-        }
-
-        .swiper-button-prev,
-        .swiper-button-next {
-            background: rgba(255, 255, 255, 0.95) !important;
-            border-radius: 8px;
-            width: 40px !important;
-            height: 40px !important;
-            display: flex !important;
-            align-items: center !important;
-            justify-content: center !important;
-            transition: all 0.3s ease !important;
-            box-shadow: 0 2px 8px rgba(0,0,0,0.15) !important;
-            color: #000 !important;
-            top: 50% !important;
-            transform: translateY(-50%) !important;
-        }
-
-        .swiper-button-prev:hover,
-        .swiper-button-next:hover {
-            background: #000 !important;
-            color: white !important;
-            box-shadow: 0 4px 12px rgba(0,0,0,0.3) !important;
-        }
-
-        .swiper-button-prev {
-            left: 16px !important;
-            right: auto !important;
-        }
-
-        .swiper-button-next {
-            right: 16px !important;
-            left: auto !important;
-        }
-
-        @media (max-width: 768px) {
-            .swiper-button-prev,
-            .swiper-button-next {
-                width: 36px !important;
-                height: 36px !important;
+        /* Category grid: hide on mobile (use sidebar button instead) */
+        @media (max-width: 639px) {
+            .cat-grid-wrap {
+                display: none !important;
             }
+        }
 
-            .swiper-button-prev {
-                left: 12px !important;
-            }
-
-            .swiper-button-next {
-                right: 12px !important;
-            }
+        /* Sub-subcategory hover color fix */
+        .subsub-a:hover {
+            color: #b91c1c;
+            background: #fef2f2;
+            border-color: #b91c1c;
         }
     </style>
 </head>
 
-<body class="bg-gray-50">
-    
-    <?php 
-    $navbar_path = '../navbar/top.php';
-    if (file_exists($navbar_path)) {
+<body class="bg-stone-50 text-stone-900 antialiased">
+
+    <?php
+    $navbar_path = ROOT_PATH . '/user/navbar/top.php';
+    if (file_exists($navbar_path))
         include $navbar_path;
-    }
+    include ROOT_PATH . '/user/otherpage/push-notification.php';
     ?>
-<?php include 'push-notification.php'; ?>
-    <!-- Hero Banner -->
+
+    <!-- ── HERO ────────────────────────────────── -->
     <?php if ($onsale_result && $onsale_result->num_rows > 0): ?>
-        <div class="container mx-auto px-4 max-w-8xl mt-8 mb-16">
-            <div class="swiper banner-swiper relative rounded-2xl overflow-hidden bg-gray-900 h-96 md:h-[500px]">
-                <div class="swiper-wrapper">
-                    <?php while ($banner = $onsale_result->fetch_assoc()): ?>
-                        <div class="swiper-slide">
-                            <img src="../../uploads/<?= basename($banner['filename']) ?>"
-                                alt="Sale Banner"
-                                class="w-full h-full object-cover opacity-85"
-                                onerror="this.src='../../uploads/placeholder.jpg'">
-                        </div>
-                    <?php endwhile; ?>
-                </div>
-
-                <div class="absolute inset-0 flex flex-col items-center justify-center text-center bg-black/50 p-6 z-10">
-                    <div class="inline-block bg-red-500 text-white text-xs font-black px-4 py-2 rounded-full mb-4 uppercase tracking-wide shadow-lg sale-badge" style="font-family: 'Montserrat', sans-serif;">
-                        OFFER
+        <div class="relative w-full h-48 md:h-[320px] overflow-hidden bg-stone-900" id="heroWrap">
+            <!-- slides -->
+            <div class="relative w-full h-full" id="heroSlides">
+                <?php $first = true;
+                while ($banner = $onsale_result->fetch_assoc()): ?>
+                    <div
+                        class="hero-slide absolute inset-0 transition-opacity duration-1000 <?= $first ? 'opacity-100' : 'opacity-0' ?>">
+                        <img src="<?= BASE_URL ?>/uploads/<?= basename($banner['filename']) ?>" alt="Sale Banner"
+                            class="w-full h-full object-cover opacity-50" onerror="this.src='<?= BASE_URL ?>/uploads/placeholder.jpg'">
                     </div>
-                    <h1 class="text-white text-4xl md:text-5xl font-bold mb-2" style="font-family: 'Montserrat', sans-serif; ">
-                        SALE
-                    </h1>
-            
-                </div>
-
-                <button class="swiper-button-prev">
-                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M15 19l-7-7 7-7" />
-                    </svg>
-                </button>
-                <button class="swiper-button-next">
-                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M9 5l7 7-7 7" />
-                    </svg>
-                </button>
-                <div class="swiper-pagination"></div>
+                    <?php $first = false; endwhile; ?>
             </div>
+
+            <!-- overlay text -->
+            <div
+                class="absolute inset-0 flex flex-col items-center justify-center z-10 text-center pointer-events-none px-4">
+                <span
+                    class="inline-block bg-red-700 text-white text-[10px] font-bold tracking-[0.15em] uppercase px-3 py-1 rounded-sm mb-3">
+                    Limited Offers
+                </span>
+                <h1 class="font-serif text-5xl md:text-7xl text-white leading-none tracking-tight">
+                    Sale <em class="italic text-amber-400">Season</em>
+                </h1>
+                <p class="mt-2 text-xs text-white/70 tracking-[0.15em] uppercase">
+                    Up to <?= number_format($maxDiscount, 0) ?>% off selected items
+                </p>
+            </div>
+
+            <!-- nav arrows -->
+            <button onclick="saleHeroSlide(-1)"
+                class="absolute left-4 top-1/2 -translate-y-1/2 z-20 w-9 h-9 rounded-full bg-white/15 backdrop-blur border border-white/25 flex items-center justify-center hover:bg-white/30 transition-colors">
+                <svg class="w-3.5 h-3.5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M15 19l-7-7 7-7" />
+                </svg>
+            </button>
+            <button onclick="saleHeroSlide(1)"
+                class="absolute right-4 top-1/2 -translate-y-1/2 z-20 w-9 h-9 rounded-full bg-white/15 backdrop-blur border border-white/25 flex items-center justify-center hover:bg-white/30 transition-colors">
+                <svg class="w-3.5 h-3.5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M9 5l7 7-7 7" />
+                </svg>
+            </button>
         </div>
     <?php endif; ?>
 
-    <!-- Mobile Sidebar -->
-    <div id="sidebar-overlay" class="overlay fixed inset-0 bg-black/50 z-40 hidden md:hidden opacity-0 pointer-events-none transition-opacity duration-300" onclick="closeSidebar()"></div>
-    <div id="sidebar" class="fixed top-0 left-0 h-full w-80 bg-white shadow-xl z-50 md:hidden overflow-y-auto -translate-x-full transition-transform duration-300">
-        <div class="p-6">
-            <div class="flex items-center justify-between mb-6 pb-4 border-b border-gray-200">
-                <h2 class="text-xl font-bold">Categories</h2>
-                <button onclick="closeSidebar()" class="p-1.5 hover:bg-gray-100 rounded-lg transition-colors">
-                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
-                    </svg>
-                </button>
-            </div>
+    <!-- ── MOBILE SIDEBAR OVERLAY ──────────────── -->
+    <div id="mOverlay" onclick="salCloseMSidebar()" class="hidden fixed inset-0 bg-black/45 z-[100]"></div>
 
-            <div class="space-y-2">
-                <?php
-                if ($categories_result) {
-                    $categories_result->data_seek(0);
-                    while ($category = $categories_result->fetch_assoc()):
-                ?>
-                    <button onclick="loadSubcategories(<?= $category['id'] ?>, '<?= htmlspecialchars($category['name'], ENT_QUOTES) ?>'); closeSidebar();"
-                        class="category-btn-mobile w-full text-left p-3 rounded-lg hover:bg-gray-100 transition-colors border border-gray-200"
-                        data-category-id="<?= $category['id'] ?>">
-                        <p class="font-medium text-sm text-gray-900"><?= htmlspecialchars($category['name']) ?></p>
-                    </button>
-                <?php 
-                    endwhile;
-                }
-                ?>
-            </div>
-        </div>
-    </div>
-
-    <!-- Main Content -->
-    <div class="container mx-auto px-4 max-w-7xl pb-10">
-        <!-- Header -->
-        <div class="mb-12 text-center" style="font-family: 'Montserrat', sans-serif; color: #2f1200">
-            <h1 class="text-4xl md:text-5xl font-semibold mb-3">
-                Sale Collection
-            </h1>
-            <p class=" text-sm md:text-base mb-6">
-                Discover amazing discounts on your favorite products
-            </p>
-            <button onclick="openSidebar()" class="md:hidden bg-black text-white px-4 py-2.5 rounded-lg text-sm font-medium hover:bg-gray-900 transition-colors">
-                Browse Categories
+    <!-- ── MOBILE SIDEBAR ──────────────────────── -->
+    <div id="mSidebar"
+        class="fixed top-0 left-0 h-full w-72 bg-stone-50 z-[101] overflow-y-auto -translate-x-full transition-transform duration-300 ease-in-out px-5 py-6">
+        <div class="flex items-center justify-between pb-4 mb-5 border-b border-stone-200">
+            <h3 class="font-serif text-lg font-normal">Categories</h3>
+            <button onclick="salCloseMSidebar()" class="text-stone-500 hover:text-stone-900 text-lg">
+                <i class="fas fa-times"></i>
             </button>
         </div>
-
-        <div class="h-px bg-gradient-to-r from-transparent via-black to-transparent mb-16"></div>
-
-        <!-- Desktop Categories Grid -->
-        <div class="hidden md:block mb-16">
-            <h2 class="text-2xl font-bold  mb-8" style="font-family: 'Montserrat', sans-serif; color: #2f1200">Categories</h2>
-            <div class="grid grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
-                <?php
-                if ($categories_result) {
-                    $categories_result->data_seek(0);
-                    while ($category = $categories_result->fetch_assoc()):
-                ?>
-                    <button onclick="loadSubcategories(<?= $category['id'] ?>, '<?= htmlspecialchars($category['name'], ENT_QUOTES) ?>')"
-                        class="category-btn group bg-white border border-gray-200 rounded-2xl overflow-hidden hover:-translate-y-2 hover:shadow-lg hover:border-black transition-all duration-300"
-                        data-category-id="<?= $category['id'] ?>">
-                        
-                        <?php if (!empty($category['image_path'])): ?>
-                            <img src="../../uploads/categories/<?= htmlspecialchars($category['image_path']) ?>"
-                                alt="<?= htmlspecialchars($category['name']) ?>"
-                                class="w-full aspect-square object-contain p-5 bg-gray-50 group-hover:scale-110 transition-transform duration-300"
-                                onerror="this.style.display='none'">
-                        <?php endif; ?>
-                        
-                        <div class="p-4 text-center">
-                            <div class="inline-block bg-red-500  text-xs font-bold px-3 py-1 rounded-full mb-2 text-white" style="font-family: 'Montserrat', sans-serif;">SALE</div>
-                            <h3 class=" text-sm font-semibold uppercase tracking-wide" style="font-family: 'Montserrat', sans-serif; color: #2f1200"><?= htmlspecialchars($category['name']) ?></h3>
-                        </div>
-                    </button>
-                <?php 
-                    endwhile;
-                }
-                ?>
+        <?php foreach ($categories_array as $cat): ?>
+            <div onclick="salLoadSubs(<?= $cat['id'] ?>,'<?= addslashes(htmlspecialchars($cat['name'])) ?>');salCloseMSidebar();"
+                class="px-3 py-2.5 border border-stone-200 rounded-md cursor-pointer text-sm font-medium mb-1.5 hover:border-stone-900 hover:bg-stone-100 transition-colors">
+                <?= htmlspecialchars($cat['name']) ?>
             </div>
-        </div>
-
-        <!-- Subcategories Section -->
-        <div id="subcategories-section" class="hidden">
-            <div class="bg-white rounded-xl shadow-sm p-8 mb-8 border border-gray-200">
-                <div class="flex items-center justify-between mb-8 pb-6 border-b border-gray-200">
-                    <div>
-                        <h2 class="text-2xl font-bold text-black" style="font-family: 'Montserrat', sans-serif;"> 
-                            <span id="category-title">Subcategories</span>
-                        </h2>
-                    </div>
-                    <button onclick="hideSubcategories()" class="bg-black text-white px-4 py-2.5 rounded-lg text-sm font-medium hover:bg-gray-900 transition-colors">
-                        Close ✕
-                    </button>
-                </div>
-
-                <div id="subcategories-content" class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4">
-                    <!-- Subcategories will be loaded here -->
-                </div>
-            </div>
-        </div>
-
-        <!-- TOP SALES SECTION -->
-        <?php if (mysqli_num_rows($material_results) > 0): ?>
-            <section class="mt-20 mb-10">
-                <div class="p-6 rounded-lg">
-                    <!-- Header -->
-                    <div class="text-base mb-8">
-                        <h2 class="text-2xl sm:text-3xl mb-2 tracking-tight" style="font-family: 'Montserrat', sans-serif; color: #2f1200">
-                            Sales Up to <span class="text-red-500" style="font-family: 'Montserrat', sans-serif;"><?= number_format($maxDiscount, 0) ?>% OFF</span> <span class="text-2xl">➜</span>
-                        </h2>
-                        <p class="text-gray-600 text-sm">Trending products with amazing discounts</p>
-                    </div>
-
-                    <!-- Swiper Container -->
-                    <div class="swiper mySwiper-topsales w-full">
-                        <div class="swiper-wrapper">
-                            <?php
-                            mysqli_data_seek($material_results, 0);
-                            while ($row = mysqli_fetch_assoc($material_results)) :
-                                $variantPrice = (float)($row['price'] ?? 0);
-                                $colorPrice = (float)($row['color_price'] ?? 0);
-                                $discount = (float)($row['discount'] ?? 0);
-                                $finalPrice = $variantPrice + $colorPrice;
-                                $viewCount = (int)($row['view_count'] ?? 0);
-                                $soldCount = (int)($row['total_sold'] ?? 0);
-                                $avgRating = (float)($row['avg_rating'] ?? 0);
-                                $ratingCount = (int)($row['rating_count'] ?? 0);
-                            ?>
-                                <div class="swiper-slide p-1">
-                                    <div class="bg-white p-3 group hover:shadow-lg transition duration-300 flex flex-col justify-between h-[320px] text-center relative rounded-md border border-gray-200 hover:border-black">
-
-                                        <!-- Discount Badge -->
-                                        <?php if ($discount > 0): ?>
-                                            <div class="absolute top-2 right-2 bg-red-500 text-white text-xs font-bold px-2 py-1 rounded z-10" style="font-family: 'Montserrat', sans-serif;">
-                                                -<?= number_format($discount, 0) ?>%
-                                            </div>
-                                        <?php endif; ?>
-
-                                        <!-- Product Image -->
-                                        <div class="w-32 h-32 mx-auto rounded-lg overflow-hidden mb-2">
-                                            <?php if (!empty($row['type_image'])): ?>
-                                                <img src="../../<?= $row['type_image'] ?>" loading="lazy" alt="<?= htmlspecialchars($row['size']) ?>" class="w-full h-full object-cover transition-transform duration-300 group-hover:scale-110" />
-                                            <?php else: ?>
-                                                <div class="w-full h-full flex items-center justify-center text-gray-400 text-xs">No Image</div>
-                                            <?php endif; ?>
-                                        </div>
-
-                                        <!-- Product Info -->
-                                        <div>
-                                            <div class="px-1 text-left">
-                                                <p class="text-xs leading-relaxed text-left line-clamp-2">
-                                                    <span class="font-medium group-hover:text-orange-600 transition-colors duration-300" style="font-family: 'Montserrat', sans-serif; color: #2f1200"><?= htmlspecialchars($row['product_name']) ?></span>
-                                                    <span class="" style="font-family: 'Montserrat', sans-serif; color: #2f1200"><?= !empty($row['size']) ? ' ' . htmlspecialchars($row['size']) : '' ?></span>
-                                                    <?php if (!empty($row['color'])): ?>
-                                                        <span class="block text-xs mt-0.5">
-                                                            <?php if (!empty($row['color_code'])): ?>
-                                                                <span class="inline-block w-2.5 h-2.5 rounded-full border border-gray-300 mr-1 align-middle" style="background-color: <?= htmlspecialchars($row['color_code']) ?>"></span>
-                                                            <?php endif; ?>
-                                                            <span style="font-family: 'Montserrat', sans-serif; color: #2f1200"><?= htmlspecialchars($row['color']) ?></span>
-                                                        </span>
-                                                    <?php endif; ?>
-                                                </p>
-                                            </div>
-
-                                            <!-- Stats -->
-                                            <div class="flex items-center justify-start gap-1 mt-2 text-xs px-1 flex-wrap" style="font-family: 'Montserrat', sans-serif; color: #2f1200">
-                                                <span class="text-gray-600"><?= number_format($viewCount) ?> views</span>
-                                                <span class="text-gray-400">•</span>
-                                                <span class="text-gray-600"><?= number_format($soldCount) ?> sold</span>
-                                                <?php if ($ratingCount > 0): ?>
-                                                    <span class="text-gray-400">•</span>
-                                                    <div class="flex items-center gap-0.5">
-                                                        <i class="fa-solid fa-star text-yellow-500 text-xs"></i>
-                                                        <span class="text-gray-600"><?= number_format($avgRating, 1) ?></span>
-                                                    </div>
-                                                <?php endif; ?>
-                                            </div>
-
-                                            <!-- Price -->
-                                            <div class="my-2 text-left px-1" style="font-family: 'Montserrat', sans-serif; color: #2f1200">
-                                                <p class="text-sm font-bold text-gray-900">
-                                                    ₱<?= number_format($finalPrice, 2) ?>
-                                                </p>
-                                                <?php if ($discount > 0): ?>
-                                                    <p class="text-xs text-green-600 font-semibold">Save <?= number_format($discount, 0) ?>%</p>
-                                                <?php endif; ?>
-                                            </div>
-
-                                            <!-- Buttons -->
-                                            <div class="mt-2 px-1">
-                                                <form action="index-product_view-page-4-AA" method="GET" class="w-full">
-                                                    <input type="hidden" name="id" value="<?= (int)$row['product_id'] ?>">
-                                                    <button type="submit" class="w-full text-black hover:text-orange-500 hover:border-orange-500 transition font-medium text-xs py-2 border border-gray-300 rounded bg-white hover:bg-gray-50" style="font-family: 'Montserrat', sans-serif; color: #2f1200">
-                                                        View
-                                                    </button>
-                                                </form>
-                                            </div>
-                                        </div>
-                                    </div>
-                                </div>
-                            <?php endwhile; ?>
-                        </div>
-                    </div>
-                </div>
-            </section>
-        <?php endif; ?>
+        <?php endforeach; ?>
     </div>
 
-    <?php 
-    $footer_path = '../navbar/footer.php';
-    if (file_exists($footer_path)) {
-        include $footer_path;
-    }
-    ?>
+    <!-- ── MAIN PAGE ────────────────────────────── -->
+    <div class="max-w-screen-xl mx-auto px-4 sm:px-6 pb-20 md:pb-6">
+        <div class="flex items-center gap-4 mt-12 mb-6">
+            <div class="flex-1 h-px bg-stone-200"></div>
+            <h2 class="font-serif text-2xl font-normal whitespace-nowrap">
+                Shop by <em class="italic text-red-700">Category</em>
+            </h2>
+            <div class="flex-1 h-px bg-stone-200"></div>
+        </div>
 
-    <script src="https://cdn.jsdelivr.net/npm/swiper@11/swiper-bundle.min.js"></link>
-    <script>
-        const swiperEl = document.querySelector('.banner-swiper');
-        if (swiperEl) {
-            new Swiper('.banner-swiper', {
-                loop: true,
-                autoplay: { delay: 5000, disableOnInteraction: false },
-                pagination: { el: '.swiper-pagination', clickable: true },
-                navigation: {
-                    nextEl: '.swiper-button-next',
-                    prevEl: '.swiper-button-prev',
-                },
-                effect: 'fade',
-                fadeEffect: { crossFade: true },
-                speed: 800,
-            });
-        }
+        <!-- Desktop Category Grid -->
+        <div class="cat-grid-wrap flex flex-wrap justify-center gap-3" id="catGrid">
+            <?php foreach ($categories_array as $cat): ?>
+                <div id="cat-<?= $cat['id'] ?>"
+                    onclick="salLoadSubs(<?= $cat['id'] ?>,'<?= addslashes(htmlspecialchars($cat['name'])) ?>')"
+                    class="cat-card w-[130px] bg-white shadow-lg rounded-lg overflow-hidden cursor-pointer text-center hover:-translate-y-0.5 hover:shadow-lg hover:border-stone-900 transition-all duration-200">
+                    <?php if (!empty($cat['image_path'])): ?>
+                        <div class="w-full h-28 bg-stone-100 flex items-center justify-center p-3">
+                            <img src="<?= BASE_URL ?>/uploads/categories/<?= htmlspecialchars($cat['image_path']) ?>"
+                                alt="<?= htmlspecialchars($cat['name']) ?>" class="w-20 h-20 object-contain"
+                                onerror="this.parentElement.style.display='none'">
+                        </div>
+                    <?php else: ?>
+                        <div class="w-full h-28 bg-stone-100 flex items-center justify-center">
+                            <div class="w-8 h-8 rounded-full bg-stone-200"></div>
+                        </div>
+                    <?php endif; ?>
+                    <div class="px-1.5 py-2 border-t border-stone-100">
+                        <div class="w-1.5 h-1.5 rounded-full bg-red-600 mx-auto mb-1"></div>
+                        <p class="text-[10px] font-semibold uppercase tracking-wider text-stone-900 leading-tight">
+                            <?= htmlspecialchars($cat['name']) ?>
+                        </p>
+                    </div>
+                </div>
+            <?php endforeach; ?>
+        </div>
 
-        // Top Sales Swiper
-        document.addEventListener('DOMContentLoaded', function() {
-            const commonBreakpoints = {
-                320: {
-                    slidesPerView: 2,
-                    spaceBetween: 8
-                },
-                480: {
-                    slidesPerView: 2,
-                    spaceBetween: 8
-                },
-                640: {
-                    slidesPerView: 2,
-                    spaceBetween: 8
-                },
-                768: {
-                    slidesPerView: 3,
-                    spaceBetween: 12
-                },
-                820: {
-                    slidesPerView: 4,
-                    spaceBetween: 12
-                },
-                1024: {
-                    slidesPerView: 5,
-                    spaceBetween: 15
-                },
-                1280: {
-                    slidesPerView: 6,
-                    spaceBetween: 15
-                },
-                1536: {
-                    slidesPerView: 6,
-                    spaceBetween: 20
-                }
-            };
+        <!-- Subcategory Drawer -->
+        <div id="subDrawer" class="hidden mt-4 mb-2 rounded-xl p-5 animate-[fadeDown_0.2s_ease]">
+            <div class="flex items-center justify-between mb-4">
+                <span id="drawerTitle" class="font-serif text-lg font-normal uppercase">—</span>
+                <button onclick="salCloseDrawer()"
+                    class="text-stone-500 hover:bg-gray-200 text-[11px] font-semibold uppercase tracking-wider p-2">
+                    Close ✕
+                </button>
+            </div>
+            <!-- Sub cards -->
+            <div id="subGrid" class="flex flex-row flex-wrap gap-2">
+                <div class="flex gap-1 p-5">
+                    <span class="w-1.5 h-1.5 rounded-full bg-stone-400 animate-bounce"></span>
+                    <span class="w-1.5 h-1.5 rounded-full bg-stone-400 animate-bounce [animation-delay:150ms]"></span>
+                    <span class="w-1.5 h-1.5 rounded-full bg-stone-400 animate-bounce [animation-delay:300ms]"></span>
+                </div>
+            </div>
+            <!-- Sub-sub list -->
+            <div id="subSubWrap"></div>
+        </div>
 
-            new Swiper('.mySwiper-topsales', {
-                slidesPerView: 1,
-                spaceBetween: 10,
-                loop: true,
-                autoplay: {
-                    delay: 3000,
-                    disableOnInteraction: false,
-                },
-                breakpoints: commonBreakpoints
-            });
-        });
+        <!-- Divider -->
+        <div class="w-full h-px bg-gradient-to-r from-transparent via-stone-200 to-transparent my-10"></div>
 
-        function openSidebar() {
-            const sidebar = document.getElementById('sidebar');
-            const overlay = document.getElementById('sidebar-overlay');
-            sidebar.classList.remove('-translate-x-full');
-            overlay.classList.remove('opacity-0', 'pointer-events-none');
-            document.body.style.overflow = 'hidden';
-        }
+        <!-- ── TOP SALES ──────────────────────────── -->
+        <?php if ($material_results && mysqli_num_rows($material_results) > 0): ?>
+            <div class="flex items-center gap-4 mb-6 mt-4">
+                <h2 class="font-serif text-2xl font-normal whitespace-nowrap">
+                    Top <em class="italic text-red-700">Sales</em>
+                </h2>
+                <div class="flex-1 h-px bg-stone-200"></div>
+            </div>
 
-        function closeSidebar() {
-            const sidebar = document.getElementById('sidebar');
-            const overlay = document.getElementById('sidebar-overlay');
-            sidebar.classList.add('-translate-x-full');
-            overlay.classList.add('opacity-0', 'pointer-events-none');
-            document.body.style.overflow = '';
-        }
+            <!-- Sale cards swiper wrapper -->
+            <div class="relative">
+                <!-- Prev/Next arrows -->
+                <button id="salePrev"
+                    class="absolute -left-3 top-1/2 -translate-y-1/2 z-10 w-8 h-8 rounded-full bg-white border border-stone-200 flex items-center justify-center shadow hover:bg-stone-900 hover:border-stone-900 hover:text-white transition-colors">
+                    <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M15 19l-7-7 7-7" />
+                    </svg>
+                </button>
+                <button id="saleNext"
+                    class="absolute -right-3 top-1/2 -translate-y-1/2 z-10 w-8 h-8 rounded-full bg-white border border-stone-200 flex items-center justify-center shadow hover:bg-stone-900 hover:border-stone-900 hover:text-white transition-colors">
+                    <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M9 5l7 7-7 7" />
+                    </svg>
+                </button>
 
-        function loadSubcategories(categoryId, categoryName) {
-            document.querySelectorAll('.category-btn').forEach(btn => {
-                btn.classList.remove('border-black');
-                btn.classList.add('border-gray-200');
-            });
-
-            const section = document.getElementById('subcategories-section');
-            document.getElementById('category-title').textContent = categoryName;
-
-            setTimeout(() => section.scrollIntoView({ behavior: 'smooth', block: 'start' }), 100);
-            section.classList.remove('hidden');
-
-            const contentEl = document.getElementById('subcategories-content');
-            contentEl.innerHTML = '<div class="col-span-full text-center py-12"><svg class="animate-spin h-8 w-8 text-gray-400 mx-auto" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle></svg><p class="text-gray-500 mt-3 text-sm">Loading...</p></div>';
-
-            fetch(`allproduct-allproduct_get-page-3-A.php?category_id=${categoryId}`)
-                .then(r => r.json())
-                .then(data => {
-                    if (data.success && data.subcategories?.length > 0) {
-                        let html = '';
-                        data.subcategories.forEach(sub => {
-                            const img = sub.image_path ? `../../uploads/${sub.subcategory_slug}/${sub.image_path}` : null;
-                            html += `
-                                <div class="subcategory-wrapper" data-subcategory-id="${sub.id}">
-                                    <div class="bg-white border border-gray-200 rounded-lg overflow-hidden hover:-translate-y-1.5 hover:shadow-md hover:border-black transition-all duration-300 cursor-pointer group" onclick="toggleSubSubcategories(${sub.id}, '${sub.subcategory_name}', '${sub.subcategory_slug}')">
-                                        ${img ? `<img src="${img}" alt="${sub.subcategory_name}" class="w-full aspect-square object-contain p-4 bg-gray-50 " onerror="this.style.display='none'">` : '<div class="w-full aspect-square bg-gray-100 flex items-center justify-center"><svg class="w-8 h-8 text-gray-300" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"/></svg></div>'}
-                                        <div class="p-3 text-center border-t border-gray-100">
-                                            <p class="text-xs font-semibold text-gray-900 uppercase tracking-wide">${sub.subcategory_name}</p>
-                                        </div>
+                <div class="swiper sale-swiper overflow-hidden px-0.5 py-1">
+                    <div class="swiper-wrapper">
+                        <?php mysqli_data_seek($material_results, 0);
+                        while ($row = mysqli_fetch_assoc($material_results)):
+                            $fp = (float) ($row['price'] ?? 0) + (float) ($row['color_price'] ?? 0);
+                            $disc = (float) ($row['discount'] ?? 0);
+                            // Use main_image as fallback if type_image is empty
+                            $imgSrc = !empty($row['type_image']) ? $row['type_image'] : $row['main_image'];
+                            ?>
+                            <div class="swiper-slide p-3">
+                                <div
+                                    class="group bg-white rounded-xl overflow-hidden hover:-translate-y-1 hover:shadow-xl transition-all duration-200 cursor-pointer shadow-lg">
+                                    <!-- Image -->
+                                    <div class="relative h-36 bg-stone-100 flex items-center justify-center p-3 overflow-hidden">
+                                        <?php if (!empty($imgSrc)): ?>
+                                            <img src="<?= BASE_URL ?>/<?= ltrim(htmlspecialchars($imgSrc), '/') ?>"
+                                                alt="<?= htmlspecialchars($row['product_name']) ?>"
+                                                class="w-full h-full object-contain group-hover:scale-105 transition-transform duration-300"
+                                                loading="lazy"
+                                                onerror="this.style.display='none'">
+                                        <?php else: ?>
+                                            <span class="text-stone-400 text-xs">No image</span>
+                                        <?php endif; ?>
+                                        <?php if ($disc > 0): ?>
+                                            <span
+                                                class="absolute top-2 right-2 bg-red-700 text-white text-[9px] font-bold px-1.5 py-0.5 rounded-sm tracking-wide">
+                                                −<?= number_format($disc, 0) ?>%
+                                            </span>
+                                        <?php endif; ?>
                                     </div>
-                                    <div id="subsub-${sub.id}" class="hidden mt-3 p-4 bg-gray-50 rounded-lg border border-gray-200">
-                                        <div class="space-y-2" id="subsub-list-${sub.id}">
-                                            <div class="text-center py-3"><svg class="animate-spin h-6 w-6 text-gray-400 mx-auto" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle></svg></div>
-                                        </div>
+                                    <!-- Body -->
+                                    <div class="p-3">
+                                        <p class="text-[11px] font-medium text-stone-900 leading-snug line-clamp-2 mb-1.5">
+                                            <?= htmlspecialchars($row['product_name']) ?>
+                                            <?= !empty($row['size']) ? ' · ' . htmlspecialchars($row['size']) : '' ?>
+                                        </p>
+                                        <p class="font-serif text-base text-stone-900">₱<?= number_format($fp, 2) ?></p>
+                                        <?php if ($disc > 0): ?>
+                                            <p class="text-[10px] text-red-700 font-semibold uppercase tracking-wide mt-0.5">
+                                                Save <?= number_format($disc, 0) ?>%
+                                            </p>
+                                        <?php endif; ?>
+                                        <p class="text-[9px] text-stone-400 mt-1.5">
+                                            <?= number_format((int) ($row['view_count'] ?? 0)) ?> views ·
+                                            <?= number_format((int) ($row['total_sold'] ?? 0)) ?> sold
+                                        </p>
+                                        <form action="<?= BASE_URL ?>/productview" method="GET">
+                                            <input type="hidden" name="id" value="<?= (int) $row['product_id'] ?>">
+                                            <button type="submit"
+                                                class="mt-2.5 w-full py-1.5 bg-red-500 text-white text-[10px] font-bold uppercase tracking-widest rounded hover:bg-red-700 transition-colors">
+                                                View Product
+                                            </button>
+                                        </form>
                                     </div>
                                 </div>
-                            `;
+                            </div>
+                        <?php endwhile; ?>
+                    </div>
+                </div>
+            </div>
+        <?php endif; ?>
+
+    </div><!-- /main -->
+
+    <!-- ── MOBILE BROWSE BUTTON ────────────────── -->
+    <button onclick="salOpenMSidebar()"
+        class="md:hidden fixed bottom-5 left-1/2 -translate-x-1/2 z-50 flex items-center gap-2 bg-stone-900 text-white text-[11px] font-bold uppercase tracking-widest px-6 py-3 rounded-full shadow-xl hover:bg-red-700 transition-colors">
+        <i class="fas fa-th-large"></i> Browse Categories
+    </button>
+
+    <?php
+    $footer_path = ROOT_PATH . '/user/navbar/footer.php';
+    if (file_exists($footer_path))
+        include $footer_path;
+    ?>
+
+    <script>
+        // ── HERO SLIDESHOW ────────────────────────────
+        // Using unique function name to avoid conflict with navbar's heroSlide
+        (function () {
+            const slides = document.querySelectorAll('.hero-slide');
+            if (!slides.length) return;
+            let cur = 0;
+            function go(dir) {
+                slides[cur].classList.replace('opacity-100', 'opacity-0');
+                cur = (cur + dir + slides.length) % slides.length;
+                slides[cur].classList.replace('opacity-0', 'opacity-100');
+            }
+            window.saleHeroSlide = go;
+            if (slides.length > 1) setInterval(() => go(1), 5000);
+        })();
+
+        // ── SALE SWIPER ───────────────────────────────
+        const saleSwiper = new Swiper('.sale-swiper', {
+            loop: false,
+            spaceBetween: 12,
+            navigation: { nextEl: '#saleNext', prevEl: '#salePrev' },
+            breakpoints: {
+                320: { slidesPerView: 2 },
+                640: { slidesPerView: 3 },
+                768: { slidesPerView: 4 },
+                1024: { slidesPerView: 5 },
+                1280: { slidesPerView: 6 },
+            }
+        });
+
+        // ── CATEGORY / SUBCATEGORY LOGIC ──────────────
+        // Using unique variable name to avoid conflict with navbar's BASE const
+        var SALE_BASE_URL = '<?= BASE_URL ?>';
+
+        function salLoadSubs(catId, catName) {
+            var drawer = document.getElementById('subDrawer');
+            var prevActive = document.querySelector('.cat-card.active');
+            document.querySelectorAll('.cat-card').forEach(function(c) {
+                c.classList.remove('active', 'border-red-600', 'shadow-[0_0_0_2px_#fde8e6]');
+            });
+            document.getElementById('subSubWrap').innerHTML = '';
+
+            if (prevActive && prevActive.id === ('cat-' + catId) && !drawer.classList.contains('hidden')) {
+                salCloseDrawer(); return;
+            }
+
+            var activeCard = document.getElementById('cat-' + catId);
+            if (activeCard) {
+                activeCard.classList.add('active', '!border-red-600', 'shadow-[0_0_0_2px_#fde8e6]');
+            }
+            document.getElementById('drawerTitle').textContent = catName;
+            document.getElementById('subGrid').innerHTML = '<div class="flex gap-1 p-5"><span class="w-1.5 h-1.5 rounded-full bg-stone-400 animate-bounce"></span><span class="w-1.5 h-1.5 rounded-full bg-stone-400 animate-bounce [animation-delay:150ms]"></span><span class="w-1.5 h-1.5 rounded-full bg-stone-400 animate-bounce [animation-delay:300ms]"></span></div>';
+            drawer.classList.remove('hidden');
+            drawer.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+
+            fetch(SALE_BASE_URL + '/productsubview?category_id=' + catId)
+                .then(function(r) {
+                    if (!r.ok) throw new Error('HTTP ' + r.status);
+                    return r.text();
+                })
+                .then(function(text) {
+                    var data;
+                    try { data = JSON.parse(text); }
+                    catch (e) {
+                        document.getElementById('subGrid').innerHTML =
+                            '<p class="text-red-600 text-xs p-3">JSON error: ' + text.substring(0, 200) + '</p>';
+                        return;
+                    }
+                    if (data.success && data.subcategories && data.subcategories.length) {
+                        var html = '';
+                        data.subcategories.forEach(function(sub) {
+                            var img = sub.image_path
+                                ? SALE_BASE_URL + '/uploads/' + sub.subcategory_slug + '/' + sub.image_path
+                                : null;
+                            html += '<div onclick="salLoadSubSubs(' + sub.id + ',\'' + sub.subcategory_slug + '\')" class="w-[130px] bg-white rounded-lg p-3 text-center cursor-pointer hover:shadow-lg hover:bg-gray-50 transition-colors">';
+                            if (img) {
+                                html += '<img src="' + img + '" alt="' + sub.subcategory_name + '" class="w-20 h-20 object-contain mx-auto mb-2" onerror="this.style.display=\'none\'">';
+                            }
+                            html += '<p class="text-[11px] font-semibold uppercase tracking-wide text-stone-900 leading-tight">' + sub.subcategory_name + '</p></div>';
                         });
-                        contentEl.innerHTML = html;
+                        document.getElementById('subGrid').innerHTML = html;
                     } else {
-                        contentEl.innerHTML = '<div class="col-span-full text-center py-12 text-gray-500"><p class="text-sm">No products available</p></div>';
+                        document.getElementById('subGrid').innerHTML =
+                            '<p class="text-stone-400 text-xs p-3">No subcategories found.</p>';
                     }
                 })
-                .catch(e => {
-                    console.error(e);
-                    contentEl.innerHTML = '<div class="col-span-full text-center py-12 text-red-500"><p class="text-sm">Failed to load</p></div>';
+                .catch(function(err) {
+                    document.getElementById('subGrid').innerHTML =
+                        '<p class="text-red-600 text-xs p-3">Error: ' + err.message + '</p>';
                 });
         }
 
-        function hideSubcategories() {
-            document.getElementById('subcategories-section').classList.add('hidden');
-            window.scrollTo({ top: 0, behavior: 'smooth' });
-        }
+        function salLoadSubSubs(subId, slug) {
+            var wrap = document.getElementById('subSubWrap');
+            wrap.innerHTML = '<div class="flex gap-1 mt-3 pt-3 border-t border-stone-200"><span class="w-1.5 h-1.5 rounded-full bg-stone-400 animate-bounce"></span><span class="w-1.5 h-1.5 rounded-full bg-stone-400 animate-bounce [animation-delay:150ms]"></span><span class="w-1.5 h-1.5 rounded-full bg-stone-400 animate-bounce [animation-delay:300ms]"></span></div>';
 
-        function toggleSubSubcategories(id, name, slug) {
-            const el = document.getElementById(`subsub-${id}`);
-            if (el.classList.contains('hidden')) {
-                el.classList.remove('hidden');
-                const list = document.getElementById(`subsub-list-${id}`);
-                if (list.querySelector('.animate-spin')) {
-                    fetchSubSubcategories(id, slug);
-                }
-            } else {
-                el.classList.add('hidden');
-            }
-        }
-
-        function fetchSubSubcategories(id, slug) {
-            const list = document.getElementById(`subsub-list-${id}`);
-            list.innerHTML = '<div class="text-center py-3"><svg class="animate-spin h-6 w-6 text-gray-400 mx-auto" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle></svg></div>';
-
-            fetch(`allproduct-allproduct_get-page-3-A.php?subcategory_id=${id}`)
-                .then(r => r.json())
-                .then(data => {
-                    if (data.success && data.subsubcategories?.length > 0) {
-                        let html = '';
-                        data.subsubcategories.forEach(subsub => {
-                            html += `<a href="allproduct-allproductsub_variant-page-3-A.php?sub_subcategory_id=${subsub.id}&sale=1" class="block p-2 bg-white border border-gray-200 rounded hover:border-black hover:bg-gray-100 transition-all"><p class="font-medium text-xs text-gray-900 uppercase">${subsub.sub_subcategory_name}</p></a>`;
+            fetch(SALE_BASE_URL + '/productsubview?subcategory_id=' + subId)
+                .then(function(r) { return r.json(); })
+                .then(function(data) {
+                    if (data.success && data.subsubcategories && data.subsubcategories.length) {
+                        var html = '<div class="grid grid-cols-[repeat(auto-fill,minmax(120px,1fr))] gap-1.5 mt-3 pt-3 border-t border-stone-200">';
+                        data.subsubcategories.forEach(function(ss) {
+                            html += '<a href="' + SALE_BASE_URL + '/productsubviews?sub_subcategory_id=' + ss.id + '&sale=1" class="block px-2.5 py-1.5 bg-white rounded text-[10px] font-semibold uppercase tracking-wider text-stone-900 hover:bg-red-50 hover:border-red-600 hover:text-red-700 transition-colors">' + ss.sub_subcategory_name + '</a>';
                         });
-                        list.innerHTML = html;
+                        html += '</div>';
+                        wrap.innerHTML = html;
                     } else {
-                        list.innerHTML = '<div class="text-center py-3 text-gray-500 text-xs">No options</div>';
+                        wrap.innerHTML = '<p class="text-stone-400 text-[11px] mt-3">No collections found.</p>';
                     }
                 })
-                .catch(e => {
-                    list.innerHTML = '<div class="text-center py-3 text-red-500 text-xs">Error loading</div>';
+                .catch(function() {
+                    wrap.innerHTML = '<p class="text-red-600 text-[11px] mt-3">Error loading.</p>';
                 });
         }
 
-        document.addEventListener('keydown', e => {
-            if (e.key === 'Escape') {
-                closeSidebar();
-                if (!document.getElementById('subcategories-section').classList.contains('hidden')) {
-                    hideSubcategories();
-                }
-            }
+        function salCloseDrawer() {
+            document.getElementById('subDrawer').classList.add('hidden');
+            document.querySelectorAll('.cat-card').forEach(function(c) {
+                c.classList.remove('active', '!border-red-600', 'shadow-[0_0_0_2px_#fde8e6]');
+            });
+            document.getElementById('subSubWrap').innerHTML = '';
+        }
+
+        function salOpenMSidebar() {
+            document.getElementById('mSidebar').classList.remove('-translate-x-full');
+            document.getElementById('mOverlay').classList.remove('hidden');
+        }
+
+        function salCloseMSidebar() {
+            document.getElementById('mSidebar').classList.add('-translate-x-full');
+            document.getElementById('mOverlay').classList.add('hidden');
+        }
+
+        document.addEventListener('keydown', function(e) {
+            if (e.key === 'Escape') { salCloseMSidebar(); salCloseDrawer(); }
         });
     </script>
 </body>

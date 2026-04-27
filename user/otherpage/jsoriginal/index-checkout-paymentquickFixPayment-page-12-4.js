@@ -1,6 +1,4 @@
 // index-checkout-paymentquickFixPayment-page-12-4.js - FIXED (Correct order of API calls)
-console.log('Loading Payment System with QRPh Support...');
-
 // ============================================================
 // NOTIFICATION SYSTEM
 // ============================================================
@@ -8,7 +6,7 @@ function showNotification(message, type = 'info', duration = 5000) {
     console.log(`${type.toUpperCase()}: ${message}`);
     const notification = document.createElement('div');
     notification.style.cssText = `
-        position: fixed; top: 20px; right: 20px; z-index: 9999;
+        position: fixed; bottom: 20px; right: 20px; z-index: 9999;
         padding: 12px 20px; border-radius: 8px; color: white;
         font-weight: bold; max-width: 300px; word-wrap: break-word;
     `;
@@ -61,7 +59,7 @@ async function generateQRPh() {
         console.log('🚀 Creating QRPh Checkout Session...');
         const deliveryFee = parseFloat(window.deliveryFee) || 0;
 
-        const qrRes  = await fetch('checkout-qrph-create.php', {
+        const qrRes  = await fetch(window.BASE_URL + '/payment1qrph', {
             method:  'POST',
             headers: { 'Content-Type': 'application/json' },
             body:    JSON.stringify({
@@ -267,7 +265,7 @@ class PaymentSystem {
                 }
             };
 
-            const response = await fetch('checkout-paymongo-create-sessions-page-12-A.php', {
+            const response = await fetch(window.BASE_URL + '/payment1mongo', {
                 method:  'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body:    JSON.stringify(requestData)

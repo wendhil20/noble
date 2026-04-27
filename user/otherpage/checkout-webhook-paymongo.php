@@ -16,8 +16,8 @@ header('Content-Type: application/json');
 ob_start();
 
 try {
-    require_once '../../connection/connect.php';
-    require_once '../../.env.php';
+    require_once ROOT_PATH . '/connection/connect.php';
+    require_once ROOT_PATH . '/.env.php';
 
     $payload = file_get_contents('php://input');
 

@@ -1,11 +1,11 @@
 <?php
 session_name("nobleuser");
 session_start();
-include '../../connection/connect.php';
+require_once(ROOT_PATH . '/connection/connect.php');
 
 // Check if user is logged in
 if (!isset($_SESSION['user_id'])) {
-    header('Location: ../google-callback.php');
+    header('Location: ' . BASE_URL . '/googlecallback');
     exit;
 }
 
@@ -524,13 +524,13 @@ $show_map = $delivery_settings &&
 </head>
 
 <body class=" min-h-screen">
-    <?php include '../navbar/top.php'; ?>
+    <?php include ROOT_PATH . '/user/navbar/top.php'; ?>
 
     <div class="container mx-auto px-3 sm:px-4 py-4 sm:py-8 max-w-6xl">
         <!-- Header -->
         <div class="mb-6 sm:mb-8">
             <div class="flex items-center gap-3 sm:gap-4 mb-4">
-                <a href="index-profile-page-6"
+                <a href="<?= BASE_URL ?>/order"
                     class="flex items-center justify-center w-10 h-10 sm:w-12 sm:h-12 bg-white rounded-lg shadow-md hover:shadow-lg transition-shadow">
                     <svg class="w-4 h-4 sm:w-5 sm:h-5 text-gray-600" fill="none" stroke="currentColor"
                         viewBox="0 0 24 24">
@@ -1409,18 +1409,18 @@ $show_map = $delivery_settings &&
                                         // Priority 1: Check replacement_requests.status for delivered/picked_up
                                         if ($replacement_status === 'delivered') {
                                             $status_color = 'bg-green-100 text-green-800';
-                                            $status_text = '✅ Replacement Delivered';
+                                            $status_text = ' Replacement Delivered';
                                         } elseif ($replacement_status === 'picked_up') {
                                             $status_color = 'bg-green-100 text-green-800';
-                                            $status_text = '✅ Replacement Picked Up';
+                                            $status_text = ' Replacement Picked Up';
                                         }
                                         // Priority 2: Check delivery_schedules.delivery_status (backup)
                                         elseif ($replacement_delivery_status === 'delivered') {
                                             $status_color = 'bg-green-100 text-green-800';
-                                            $status_text = '✅ Replacement Delivered';
+                                            $status_text = ' Replacement Delivered';
                                         } elseif ($replacement_delivery_status === 'picked_up') {
                                             $status_color = 'bg-green-100 text-green-800';
-                                            $status_text = '✅ Replacement Picked Up';
+                                            $status_text = ' Replacement Picked Up';
                                         }
                                         // Priority 3: Out for delivery/pickup
                                         elseif ($replacement_delivery_status === 'item_is_loaded' || $replacement_delivery_status === 'out_for_del ivery') {
@@ -1430,30 +1430,30 @@ $show_map = $delivery_settings &&
                                         // Priority 4: Ready for pickup
                                         elseif ($replacement_delivery_status === 'ready_for_pickup') {
                                             $status_color = 'bg-purple-100 text-purple-800';
-                                            $status_text = '📦 Ready for ' . ($delivery_type === 'pickup' ? 'Pickup' : 'Delivery');
+                                            $status_text = ' Ready for ' . ($delivery_type === 'pickup' ? 'Pickup' : 'Delivery');
                                         }
                                         // Priority 5: Other statuses from replacement_requests
                                         elseif ($replacement_status === 'scheduled') {
                                             $status_color = 'bg-indigo-100 text-indigo-800';
-                                            $status_text = '📅 Delivery Scheduled';
+                                            $status_text = ' Delivery Scheduled';
                                         } elseif ($replacement_status === 'in_warehouse' || $replacement_status === 'in warehouse') {
                                             $status_color = 'bg-purple-100 text-purple-800';
-                                            $status_text = '🏭 In Warehouse';
+                                            $status_text = ' In Warehouse';
                                         } elseif ($replacement_status === 'processing') {
                                             $status_color = 'bg-yellow-100 text-yellow-800';
-                                            $status_text = '⚙️ Processing';
+                                            $status_text = ' Processing';
                                         } elseif ($replacement_status === 'approved') {
                                             $status_color = 'bg-green-100 text-green-800';
-                                            $status_text = '✅ Approved';
+                                            $status_text = ' Approved';
                                         } elseif ($replacement_status === 'rejected') {
                                             $status_color = 'bg-red-100 text-red-800';
-                                            $status_text = '❌ Rejected';
+                                            $status_text = ' Rejected';
                                         } elseif ($replacement_status === 'pending') {
                                             $status_color = 'bg-orange-500 text-white';
                                             $status_text = 'Pending Review';
                                         } else {
                                             $status_color = 'bg-gray-100 text-gray-800';
-                                            $status_text = '📋 ' . ucfirst(str_replace('_', ' ', $replacement_status));
+                                            $status_text = ' ' . ucfirst(str_replace('_', ' ', $replacement_status));
                                         }
                                         ?>
                                         <span
@@ -1466,7 +1466,7 @@ $show_map = $delivery_settings &&
                                             Replacement Requested
                                         </span>
                                     <?php elseif ($is_eligible_for_replacement): ?>
-                                        <a href="replacement_request.php?order_id=<?= $order_id ?>&item_id=<?= $item['id'] ?>"
+                                        <a href="<?= BASE_URL?>/replacement?order_id=<?= $order_id ?>&item_id=<?= $item['id'] ?>"
                                             class="inline-flex items-center px-2 py-1 text-xs font-medium rounded-full bg-blue-100 text-blue-800 hover:bg-blue-200 transition-colors cursor-pointer w-fit">
                                             Request Replacement
                                         </a>
@@ -1852,7 +1852,7 @@ $show_map = $delivery_settings &&
         <div class="pb-6 sm:pb-0"></div>
     </div>
 
-    <?php include '../navbar/footer.php' ?>
+    <?php include ROOT_PATH . '/user/navbar/footer.php' ?>
 
     <!-- Leaflet JavaScript -->
     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"

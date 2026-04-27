@@ -2,30 +2,30 @@
 // checkout-step4.php - Payment Method & Final Order Review (CLEANED - PayMongo & QRPh ONLY)
 session_name("nobleuser");
 session_start();
-include '../../connection/connect.php';
+include ROOT_PATH . '/connection/connect.php';
 
-require_once '../../.env.php';
+require_once ROOT_PATH . '/.env.php';
 
 
 // Check if user is logged in
 if (!isset($_SESSION['user_id'])) {
-    header('Location: ../google-callback.php');
+    header('Location: ' . BASE_URL . '/googlecallback');
     exit;
 }
 
 // Check if all previous steps are completed
 if (!isset($_SESSION['checkout_step1']) || !$_SESSION['checkout_step1']['completed']) {
-    header('Location: index-checkout-page-12.php');
+    header('Location: ' . BASE_URL . '/checkout');
     exit;
 }
 
 if (!isset($_SESSION['checkout_step2']) || !$_SESSION['checkout_step2']['completed']) {
-    header('Location: index-checkout-page-12-2.php');
+    header('Location: ' . BASE_URL . '/checkout2');
     exit;
 }
 
 if (!isset($_SESSION['checkout_step3']) || !$_SESSION['checkout_step3']['completed']) {
-    header('Location: index-checkout-page-12-3.php');
+    header('Location: ' . BASE_URL . '/checkout3');
     exit;
 }
 
@@ -52,8 +52,9 @@ if ($isLocalhost) {
 }
 
 // Dynamic PayMongo URLs
-$paymongo_success_url = $protocol . $host . $basePath . '/checkout-paymongo-succes-page-12-A.php';
-$paymongo_cancel_url = $protocol . $host . $basePath . '/index-checkout-page-12-3.php';
+$paymongo_success_url = $protocol . $host . ($isLocalhost ? '/noble' : '') . '/payment2mongo';
+$paymongo_cancel_url  = $protocol . $host . ($isLocalhost ? '/noble' : '') . '/checkout3';
+
 
 
 $paymongo_config = [
@@ -373,7 +374,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                     delivery_type: "' . $delivery_data['delivery_type'] . '"
                 }
             };
-            fetch("checkout-paymongo-create-sessions-page-12-A.php", {
+            fetch("<?= BASE_URL ?>/payment1mongo", {
                 method: "POST",
                 headers: {"Content-Type": "application/json"},
                 body: JSON.stringify(vehicleData)
@@ -426,8 +427,9 @@ foreach ($cart_items as $item) {
  
 </head>
 
-<body class="bg-gray-100 font-sans">
-    <?php include '../navbar/top.php'; ?>
+<div class="bg-gray-100 ">
+    <?php include ROOT_PATH . '/user/navbar/top.php'; ?>
+<div class="p-4">
     <div class="bg-white p-6 rounded shadow mt-3 max-w-7xl mx-auto">
         <h2 class="text-3xl text-orange-700 mb-8">Checkout Process</h2>
 
@@ -525,33 +527,33 @@ foreach ($cart_items as $item) {
                     <h4 class="text-gray-800 mb-4 font-bold">Select Payment Method *</h4>
 
                     <div class="space-y-4">
-                        <!-- PayMongo -->
-                        <label class="flex items-center p-4 border-2 rounded-lg cursor-pointer hover:bg-gray-50 hover:border-green-300 transition">
-                            <input type="radio" name="payment_method" value="PayMongo" required class="mr-4" />
-                            <div class="flex items-center">
-                                <div class="text-green-600 mr-3">
-                                    <svg class="w-8 h-8" fill="currentColor" viewBox="0 0 24 24">
-                                        <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 15l-5-5 1.41-1.41L10 14.17l7.59-7.59L19 8l-9 9z" />
-                                    </svg>
-                                </div>
-                                <div>
-                                    <div class="font-medium">PayMongo</div>
-                                    <div class="text-sm text-gray-600">GCash, Maya, Credit Card, GrabPay</div>
-                                </div>
-                            </div>
-                        </label>
+                   <!-- PayMongo -->
+<label class="flex items-center p-4 rounded-lg cursor-pointer hover:bg-gray-50 hover:border-green-300 transition">
+    <input type="radio" name="payment_method" value="PayMongo" required class="mr-4" />
+    <div class="flex items-center">
+        <div class="mr-3">
+            <img src="https://cdn.brandfetch.io/id6ufs89ty/w/200/h/200/theme/dark/icon.jpeg?c=1bxid64Mup7aczewSAYMX&t=1743658983062" 
+     alt="PayMongo" 
+     class="h-10 w-auto"
+     style="max-width: 100px;"
+     onerror="this.style.display='none'">
+        </div>
+        <div>
+            <div class="font-medium">PayMongo</div>
+            <div class="text-sm text-gray-600">GCash, Maya, Credit Card, GrabPay</div>
+        </div>
+    </div>
+</label>
 
                         <!-- QR Ph Payment -->
-                        <label class="flex items-center p-4 border-2 rounded-lg cursor-pointer hover:bg-gray-50 hover:border-blue-300 transition">
+                        <label class="flex items-center p-4  rounded-lg cursor-pointer hover:bg-gray-50 hover:border-blue-300 transition">
                             <input type="radio" name="payment_method" value="QRPh" required class="mr-4" />
                             <div class="flex items-center">
-                                <div class="text-blue-600 mr-3">
-                                    <svg class="w-6 h-6" fill="currentColor" viewBox="0 0 20 20">
-                                        <path fill-rule="evenodd" d="M3 4a1 1 0 011-1h3a1 1 0 011 1v3a1 1 0 01-1 1H4a1 1 0 01-1-1V4zm2 2V5h1v1H5zM3 13a1 1 0 011-1h3a1 1 0 011 1v3a1 1 0 01-1 1H4a1 1 0 01-1-1v-3zm2 2v-1h1v1H5zM13 3a1 1 0 00-1 1v3a1 1 0 001 1h3a1 1 0 001-1V4a1 1 0 00-1-1h-3zm1 2v1h1V5h-1z" clip-rule="evenodd" />
-                                    </svg>
+                                <div class="text-black mr-3">
+                                   <img src="https://upload.wikimedia.org/wikipedia/commons/3/35/QR_Ph_Logo.svg" width="100" />
                                 </div>
                                 <div>
-                                    <div class="font-medium">QR Ph</div>
+                                
                                     <div class="text-sm text-gray-600">Scan QR code via any PH bank app (InstaPay/PESONet)</div>
                                 </div>
                             </div>
@@ -800,13 +802,13 @@ foreach ($cart_items as $item) {
             <div class="mt-8 text-center">
                 <div class="text-sm text-gray-600 mb-6">
                     By placing your order, you agree to our
-                    <a href="../rules/terms.php" class="text-blue-600 underline hover:text-blue-800">Terms</a>
+                    <a href="<?= BASE_URL ?>/terms" class="text-blue-600 underline hover:text-blue-800">Terms</a>
                     and
-                    <a href="../rules/policy.php" class="text-blue-600 underline hover:text-blue-800">Privacy Policy</a>.
+                    <a href="<?= BASE_URL ?>/policy" class="text-blue-600 underline hover:text-blue-800">Privacy Policy</a>.
                 </div>
 
                 <div class="flex justify-between">
-                    <a href="index-checkout-page-12-3.php" class="text-gray-600 hover:text-gray-800 flex items-center">
+                    <a href="<?= BASE_URL ?>/checkout3" class="text-gray-600 hover:text-gray-800 flex items-center">
                         <svg class="w-5 h-5 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"></path>
                         </svg>
@@ -820,10 +822,10 @@ foreach ($cart_items as $item) {
             </div>
         </form>
     </div>
+</div>
+    <?php include ROOT_PATH . '/user/navbar/footer.php'; ?>
 
-    <?php include '../navbar/footer.php'; ?>
-
-    <script src="js/index-checkout-paymentquickFixPayment-page-12-4.obfuscated.js?v=<?= filemtime('js/index-checkout-paymentquickFixPayment-page-12-4.obfuscated.js') ?>"></link>
+    <script src="<?= BASE_URL ?>/user/otherpage/js/index-checkout-paymentquickFixPayment-page-12-4.obfuscated.js?v=<?= filemtime(ROOT_PATH . '/user/otherpage/js/index-checkout-paymentquickFixPayment-page-12-4.obfuscated.js') ?>"></script>
     <script>
         // Pass data to JavaScript
         window.grandTotal = <?= $grand_total ?>;
@@ -833,6 +835,7 @@ foreach ($cart_items as $item) {
         window.subtotalWithVat = <?= $subtotal_with_vat ?>;
         window.itemsSubtotal = <?= $items_subtotal ?>;
         window.tieredDiscount = <?= $tiered_discount_amount ?>;
+        window.BASE_URL = '<?= BASE_URL ?>';
     </script>
 </body>
 

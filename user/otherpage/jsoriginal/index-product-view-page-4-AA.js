@@ -865,16 +865,25 @@ class ProductSelector {
       this.elements.selectedColor.value = colorName;
     }
 
-    if (image) {
-      let imagePath = image.startsWith("../../") ? image : `../../${image}`;
-      if (this.elements.mainImage) {
-        this.elements.mainImage.src = imagePath;
-      }
-      const sidebarImage = document.getElementById("sidebar-product-image");
-      if (sidebarImage) {
-        sidebarImage.src = imagePath;
-      }
-    }
+if (image && image.trim() !== '') {
+  // image from DB = "uploads/img_xxx.webp"
+  // BASE_URL = "/noble"
+  let imagePath = `${BASE_URL}/${image}`;
+  
+  if (this.elements.mainImage) {
+    this.elements.mainImage.src = imagePath;
+  }
+  const sidebarImage = document.getElementById("sidebar-product-image");
+  if (sidebarImage) {
+    sidebarImage.src = imagePath;
+  }
+} else {
+  // No color image - restore original type/product image
+  const originalSrc = this.elements.mainImage?.dataset.originalImage;
+  if (originalSrc && this.elements.mainImage) {
+    this.elements.mainImage.src = originalSrc;
+  }
+}
 
     // ✅ If variant is already selected, update the price display
     if (this.selectedVariantData) {
@@ -1336,7 +1345,7 @@ this.selectedVariantData = {
       }
 
       const formData = this.buildFormData();
-      const response = await fetch("../cart/add_to_cart.php", {
+      const response = await fetch(`${BASE_URL}/addcart`, {
         method: "POST",
         body: formData,
       });
@@ -1344,6 +1353,9 @@ this.selectedVariantData = {
       const data = await response.json();
 
       if (data.success) {
+              if (typeof refreshCart === 'function') {
+            refreshCart();
+        }
         this.showNotification(
           data.message || "Product added to cart!",
           "success"

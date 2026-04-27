@@ -12,7 +12,7 @@ header('Content-Type: application/json');
 ob_start();
 
 try {
-    require_once '../../connection/connect.php';
+    require_once ROOT_PATH . '/connection/connect.php';
 
     if (!isset($_SESSION['user_id'])) {
         throw new Exception('User not logged in');

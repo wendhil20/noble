@@ -2,22 +2,22 @@
 // checkout-step3.php - Delivery Fee Calculation & Options
 session_name("nobleuser");
 session_start();
-include '../../connection/connect.php';
+include ROOT_PATH . '/connection/connect.php';
 
 // Check if user is logged in
 if (!isset($_SESSION['user_id'])) {
-    header('Location: ../google-callback.php');
+    header('Location: ' . BASE_URL . '/googlecallback');
     exit;
 }
 
 // Check if previous steps are completed
 if (!isset($_SESSION['checkout_step1']) || !$_SESSION['checkout_step1']['completed']) {
-    header('Location: index-checkout-page-12.php');
+    header('Location: ' . BASE_URL . '/checkout');
     exit;
 }
 
 if (!isset($_SESSION['checkout_step2']) || !$_SESSION['checkout_step2']['completed']) {
-    header('Location: index-checkout-page-12-2.php');
+    header('Location: ' . BASE_URL . '/checkout2');
     exit;
 }
 
@@ -48,7 +48,7 @@ while ($row = $result->fetch_assoc()) {
 $stmt->close();
 
 if (empty($cart_items)) {
-    header('Location: ../cart.php');
+    header('Location: ' . BASE_URL . '/cartview');
     exit;
 }
 
@@ -269,7 +269,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         'completed' => true
     ];
 
-    header('Location: index-checkout-page-12-4.php');
+    header('Location: ' . BASE_URL . '/checkout4');
     exit;
 }
 ?>
@@ -283,326 +283,333 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     <meta name="referrer" content="no-referrer-when-downgrade">
     <link rel="icon" type="image/png" sizes="96x96" href="../img/favicon.ico">
     <title>Step 3: Delivery Options - Noble Home</title>
+
 </head>
 
 <body class="bg-gray-100 font-sans">
-    <?php include '../navbar/top.php'; ?>
+    <?php include ROOT_PATH . '/user/navbar/top.php'; ?>
+    <div class="p-4">
+        <div class="bg-white p-6 rounded shadow mt-3 max-w-7xl mx-auto">
+            <h2 class="text-3xl  text-orange-700 mb-8">Checkout Process</h2>
 
-    <div class="bg-white p-6 rounded shadow mt-3 max-w-7xl mx-auto">
-        <h2 class="text-3xl  text-orange-700 mb-8">Checkout Process</h2>
+            <!-- Progress Steps -->
+            <div class="mb-8">
+                <div class="flex items-center justify-between">
 
-        <!-- Progress Steps -->
-        <div class="mb-8">
-            <div class="flex items-center justify-between">
-                <!-- Step 1 - Completed -->
-                <div class="flex items-center flex-1">
-                    <div class="w-10 h-10 bg-green-500 text-white rounded-full flex items-center justify-center">
-                        <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7">
-                            </path>
-                        </svg>
-                    </div>
-                    <div class="ml-3">
-                        <div class="font-medium text-green-600">Customer Info</div>
-                        <div class="text-xs text-gray-500">Completed</div>
-                    </div>
-                </div>
-
-                <div class="flex-1 h-px bg-green-500 mx-4"></div>
-
-                <!-- Step 2 - Completed -->
-                <div class="flex items-center flex-1">
-                    <div class="w-10 h-10 bg-green-500 text-white rounded-full flex items-center justify-center">
-                        <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7">
-                            </path>
-                        </svg>
-                    </div>
-                    <div class="ml-3">
-                        <div class="font-medium text-green-600">Delivery Address</div>
-                        <div class="text-xs text-gray-500">Completed</div>
-                    </div>
-                </div>
-
-                <div class="flex-1 h-px bg-green-500 mx-4"></div>
-
-                <!-- Step 3 - Active -->
-                <div class="flex items-center flex-1">
-                    <div
-                        class="w-10 h-10 bg-orange-600 text-white rounded-full flex items-center justify-center font-bold">
-                        3</div>
-                    <div class="ml-3">
-                        <div class="font-medium text-orange-600">Delivery Options</div>
-                        <div class="text-xs text-gray-500">Current step</div>
-                    </div>
-                </div>
-
-                <div class="flex-1 h-px bg-gray-300 mx-4"></div>
-
-                <!-- Step 4 -->
-                <div class="flex items-center flex-1">
-                    <div
-                        class="w-10 h-10 bg-gray-300 text-gray-600 rounded-full flex items-center justify-center font-bold">
-                        4</div>
-                    <div class="ml-3">
-                        <div class="font-medium text-gray-400">Payment</div>
-                        <div class="text-xs text-gray-400">Complete order</div>
-                    </div>
-                </div>
-            </div>
-        </div>
-
-        <form method="POST" id="deliveryForm" class="space-y-6">
-            <div class="bg-green-50 p-4 rounded-lg mb-6">
-                <div class="flex items-center">
-                    <svg class="w-8 h-8 text-green-600 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                            d="M5 8h14M5 8a2 2 0 110-4h14a2 2 0 110 4M5 8v10a2 2 0 002 2h10a2 2 0 002-2V8m-9 4h4">
-                        </path>
-                    </svg>
-                    <div>
-                        <h3 class="text-lg  text-green-800">Step 3: Delivery Options</h3>
-                        <p class="text-green-700 text-sm">Choose how you want to receive your order</p>
-                    </div>
-                </div>
-            </div>
-
-            <!-- Delivery Type Selection -->
-            <div class="bg-white border rounded-lg p-6">
-                <h4 class=" text-gray-800 mb-4">Select Delivery Method *</h4>
-
-                <div class="grid md:grid-cols-2 gap-4">
-                    <!-- Delivery Option -->
-                    <label
-                        class="flex items-start p-4 cursor-pointer hover:bg-orange-50 hover:border-orange-300 transition delivery-type-option">
-                        <input type="radio" name="delivery_type" value="delivery" class="mt-2 mr-4" required />
-                        <div class="flex-1">
-                            <div class="flex items-center mb-2">
-                                <svg class="w-6 h-6 text-orange-600 mr-2" fill="none" stroke="currentColor"
-                                    viewBox="0 0 24 24">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                        d="M5 8h14M5 8a2 2 0 110-4h14a2 2 0 110 4M5 8v10a2 2 0 002 2h10a2 2 0 002-2V8m-9 4h4">
-                                    </path>
-                                </svg>
-                                <div class=" text-lg">Delivery</div>
-                            </div>
-                            <div class="text-sm text-gray-600">
-                                We'll deliver to your address using our courier service
-                            </div>
-                            <div class="mt-2 text-xs text-orange-600 font-medium">
-                                Delivery fee applies based on distance
-                            </div>
+                    <!-- Step 1 - Completed -->
+                    <div class="flex items-center flex-1">
+                        <div
+                            class="w-10 h-10 bg-green-500 text-white rounded-full flex items-center justify-center shrink-0">
+                            <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                    d="M5 13l4 4L19 7"></path>
+                            </svg>
                         </div>
-                    </label>
-
-                    <!-- Pickup Option -->
-                    <label
-                        class="flex items-start p-4  cursor-pointer hover:bg-green-50 hover:border-green-300 transition delivery-type-option">
-                        <input type="radio" name="delivery_type" value="pickup" class="mt-2 mr-4" required />
-                        <div class="flex-1">
-                            <div class="flex items-center mb-2">
-                                <svg class="w-6 h-6 text-green-600 mr-2" fill="none" stroke="currentColor"
-                                    viewBox="0 0 24 24">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                        d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z">
-                                    </path>
-                                </svg>
-                                <div class=" text-lg">Pick-up</div>
-                            </div>
-                            <div class="text-sm text-gray-600">
-                                You'll pick up your order from our store
-                            </div>
-                            <div class="mt-2 text-xs text-green-600 font-medium">
-                                FREE - No delivery fee
-                            </div>
+                        <div class="ml-3 hidden sm:block">
+                            <div class="font-medium text-green-600 text-sm">Customer Info</div>
+                            <div class="text-xs text-gray-500">Completed</div>
                         </div>
-                    </label>
+                    </div>
+
+                    <div class="flex-1 h-px bg-green-500 mx-2"></div>
+
+                    <!-- Step 2 - Completed -->
+                    <div class="flex items-center flex-1">
+                        <div
+                            class="w-10 h-10 bg-green-500 text-white rounded-full flex items-center justify-center shrink-0">
+                            <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                    d="M5 13l4 4L19 7"></path>
+                            </svg>
+                        </div>
+                        <div class="ml-3 hidden sm:block">
+                            <div class="font-medium text-green-600 text-sm">Delivery Address</div>
+                            <div class="text-xs text-gray-500">Completed</div>
+                        </div>
+                    </div>
+
+                    <div class="flex-1 h-px bg-green-500 mx-2"></div>
+
+                    <!-- Step 3 - Active -->
+                    <div class="flex items-center flex-1">
+                        <div
+                            class="w-10 h-10 bg-orange-600 text-white rounded-full flex items-center justify-center font-bold shrink-0">
+                            3</div>
+                        <div class="ml-3 hidden sm:block">
+                            <div class="font-medium text-orange-600 text-sm">Delivery Options</div>
+                            <div class="text-xs text-gray-500">Current step</div>
+                        </div>
+                    </div>
+
+                    <div class="flex-1 h-px bg-gray-300 mx-2"></div>
+
+                    <!-- Step 4 -->
+                    <div class="flex items-center flex-1">
+                        <div
+                            class="w-10 h-10 bg-gray-200 text-gray-500 rounded-full flex items-center justify-center font-bold shrink-0">
+                            4</div>
+                        <div class="ml-3 hidden sm:block">
+                            <div class="font-medium text-gray-400 text-sm">Payment</div>
+                            <div class="text-xs text-gray-400">Complete order</div>
+                        </div>
+                    </div>
+
                 </div>
             </div>
 
-            <!-- Delivery Calculation Section -->
-            <div id="deliveryCalculationSection" class="bg-white rounded-lg p-6 border">
-                <h4 class=" text-gray-800 mb-4">Delivery </h4>
-                <!-- Courier Selection - HIDDEN (Auto-selected) -->
-                <div class="p-6 mb-6 hidden">
-                    <label for="courierSelection" class="block text-sm font-semibold text-gray-700 mb-3">
-                        <span
-                            class="bg-orange-600 text-white rounded-full w-6 h-6 inline-flex items-center justify-center text-xs mr-2">1</span>
-                        Select Your Courier *
-                    </label>
-
-                    <select id="courierSelection" name="courier_selection"
-                        class="w-full px-4 py-3 border-2 border-gray-300 bg-white rounded" required>
-                        <?php foreach ($unique_couriers as $index => $courier): ?>
-                            <option value="<?= htmlspecialchars($courier) ?>" <?= $index === 0 ? 'selected' : '' ?>>
-                                <?= htmlspecialchars($courier) ?> • <?= count($couriers_list[$courier]) ?> vehicle(s)
-                            </option>
-                        <?php endforeach; ?>
-                    </select>
+            <form method="POST" id="deliveryForm" class="space-y-6">
+                <div class=" p-4 rounded-lg mb-6">
+                    <div class="flex items-center">
+                        <i class="fa-solid fa-truck-fast mr-4 text-2xl"></i>
+                        <div>
+                            <h3 class="text-lg  text-black">Step 3: Delivery Options</h3>
+                            <p class="text-black text-sm">Choose how you want to receive your order</p>
+                        </div>
+                    </div>
                 </div>
 
-                <!-- Store Information -->
-                <?php if ($delivery_settings): ?>
-                    <div class="bg-gray-50 p-4 rounded-lg mb-4">
-                        <h5 class="font-bold text-gray-700 mb-2">Store Location</h5>
-                        <p class="text-sm text-gray-600"><?= htmlspecialchars($delivery_settings['location_name']) ?></p>
-                    </div>
-                <?php endif; ?>
+                <!-- Delivery Type Selection -->
+                <div class="bg-white border rounded-lg p-6">
+                    <h4 class=" text-gray-800 mb-4">Select Delivery Method *</h4>
 
-                <!-- Vehicle Assignment Display -->
-                <div id="assignedVehicleDetails" class="hidden  p-4 mb-4">
-                    <h5 class=" text-green-800 mb-3 flex items-center">
-                        <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <div class="grid md:grid-cols-2 gap-4">
+                        <!-- Delivery Option -->
+                        <label
+                            class="flex items-start p-4 cursor-pointer hover:bg-orange-50 hover:border-orange-300 transition delivery-type-option">
+                            <input type="radio" name="delivery_type" value="delivery" class="mt-2 mr-4" required />
+                            <div class="flex-1">
+                                <div class="flex items-center mb-2">
+                                    <svg class="w-6 h-6 text-orange-600 mr-2" fill="none" stroke="currentColor"
+                                        viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                            d="M5 8h14M5 8a2 2 0 110-4h14a2 2 0 110 4M5 8v10a2 2 0 002 2h10a2 2 0 002-2V8m-9 4h4">
+                                        </path>
+                                    </svg>
+                                    <div class=" text-lg">Delivery</div>
+                                </div>
+                                <div class="text-sm text-gray-600">
+                                    We'll deliver to your address using our courier service
+                                </div>
+                                <div class="mt-2 text-xs text-orange-600 font-medium">
+                                    Delivery fee applies based on distance
+                                </div>
+                            </div>
+                        </label>
+
+                        <!-- Pickup Option -->
+                        <label
+                            class="flex items-start p-4  cursor-pointer hover:bg-green-50 hover:border-green-300 transition delivery-type-option">
+                            <input type="radio" name="delivery_type" value="pickup" class="mt-2 mr-4" required />
+                            <div class="flex-1">
+                                <div class="flex items-center mb-2">
+                                    <svg class="w-6 h-6 text-green-600 mr-2" fill="none" stroke="currentColor"
+                                        viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                            d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z">
+                                        </path>
+                                    </svg>
+                                    <div class=" text-lg">Pick-up</div>
+                                </div>
+                                <div class="text-sm text-gray-600">
+                                    You'll pick up your order from our store
+                                </div>
+                                <div class="mt-2 text-xs text-green-600 font-medium">
+                                    FREE - No delivery fee
+                                </div>
+                            </div>
+                        </label>
+                    </div>
+                </div>
+
+                <!-- Delivery Calculation Section -->
+                <div id="deliveryCalculationSection" class="bg-white rounded-lg p-6 border">
+                    <h4 class=" text-gray-800 mb-4">Delivery </h4>
+                    <!-- Courier Selection - HIDDEN (Auto-selected) -->
+                    <div class="p-6 mb-6 hidden">
+                        <label for="courierSelection" class="block text-sm font-semibold text-gray-700 mb-3">
+                            <span
+                                class="bg-orange-600 text-white rounded-full w-6 h-6 inline-flex items-center justify-center text-xs mr-2">1</span>
+                            Select Your Courier *
+                        </label>
+
+                        <select id="courierSelection" name="courier_selection"
+                            class="w-full px-4 py-3 border-2 border-gray-300 bg-white rounded" required>
+                            <?php foreach ($unique_couriers as $index => $courier): ?>
+                                <option value="<?= htmlspecialchars($courier) ?>" <?= $index === 0 ? 'selected' : '' ?>>
+                                    <?= htmlspecialchars($courier) ?> • <?= count($couriers_list[$courier]) ?> vehicle(s)
+                                </option>
+                            <?php endforeach; ?>
+                        </select>
+                    </div>
+
+                    <!-- Store Information -->
+                    <?php if ($delivery_settings): ?>
+                        <div class="bg-gray-50 p-4 rounded-lg mb-4">
+                            <h5 class="font-bold text-gray-700 mb-2">Store Location</h5>
+                            <p class="text-sm text-gray-600"><?= htmlspecialchars($delivery_settings['location_name']) ?>
+                            </p>
+                        </div>
+                    <?php endif; ?>
+
+                    <!-- Vehicle Assignment Display -->
+                    <div id="assignedVehicleDetails" class="hidden  p-4 mb-4">
+                        <h5 class=" text-green-800 mb-3 flex items-center">
+                            <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                    d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                            </svg>
+                            Assigned Delivery Vehicle
+                        </h5>
+                        <div id="vehicleDetailsContent" class="text-sm"></div>
+                    </div>
+
+                    <!-- Distance Calculation Button - Hidden (Auto-triggered) -->
+                    <button type="button" id="calculateDistance"
+                        class="hidden w-full bg-orange-600 text-white px-4 py-3 rounded-lg hover:bg-orange-700 transition font-medium disabled:bg-gray-400  items-center justify-center gap-2"
+                        disabled>
+                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                                d="M9 7h6m0 10v-3m-3 3h.01M9 17h.01M9 14h.01M12 14h.01M15 11h.01M12 11h.01M9 11h.01M7 21h10a2 2 0 002-2V5a2 2 0 00-2-2H7a2 2 0 00-2 2v14a2 2 0 002 2z">
+                            </path>
                         </svg>
-                        Assigned Delivery Vehicle
-                    </h5>
-                    <div id="vehicleDetailsContent" class="text-sm"></div>
+                        Calculate Distance & Fee
+                    </button>
+
+                    <div id="distanceResult" class="mt-4 text-sm"></div>
+
+                    <!-- Hidden inputs for form submission -->
+                    <input type="hidden" name="delivery_distance" id="deliveryDistance" value="0">
+                    <input type="hidden" name="delivery_fee" id="deliveryFee" value="0">
+                    <input type="hidden" name="assigned_vehicle_id" id="assignedVehicleId" value="0">
+                    <input type="hidden" name="assigned_vehicle_type" id="assignedVehicleType" value="">
+                    <input type="hidden" name="total_cubic_meters" id="totalCubicMeters" value="0">
+                    <input type="hidden" name="total_weight_kg" id="totalWeightKg" value="0">
+                    <input type="hidden" name="total_width" id="totalWidth" value="0">
+                    <input type="hidden" name="total_height" id="totalHeight" value="0">
+                    <input type="hidden" name="total_length" id="totalLength" value="0">
                 </div>
 
-                <!-- Distance Calculation Button - Hidden (Auto-triggered) -->
-                <button type="button" id="calculateDistance"
-                    class="hidden w-full bg-orange-600 text-white px-4 py-3 rounded-lg hover:bg-orange-700 transition font-medium disabled:bg-gray-400  items-center justify-center gap-2"
-                    disabled>
-                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                            d="M9 7h6m0 10v-3m-3 3h.01M9 17h.01M9 14h.01M12 14h.01M15 11h.01M12 11h.01M9 11h.01M7 21h10a2 2 0 002-2V5a2 2 0 00-2-2H7a2 2 0 00-2 2v14a2 2 0 002 2z">
-                        </path>
-                    </svg>
-                    Calculate Distance & Fee
-                </button>
-
-                <div id="distanceResult" class="mt-4 text-sm"></div>
-
-                <!-- Hidden inputs for form submission -->
-                <input type="hidden" name="delivery_distance" id="deliveryDistance" value="0">
-                <input type="hidden" name="delivery_fee" id="deliveryFee" value="0">
-                <input type="hidden" name="assigned_vehicle_id" id="assignedVehicleId" value="0">
-                <input type="hidden" name="assigned_vehicle_type" id="assignedVehicleType" value="">
-                <input type="hidden" name="total_cubic_meters" id="totalCubicMeters" value="0">
-                <input type="hidden" name="total_weight_kg" id="totalWeightKg" value="0">
-                <input type="hidden" name="total_width" id="totalWidth" value="0">
-                <input type="hidden" name="total_height" id="totalHeight" value="0">
-                <input type="hidden" name="total_length" id="totalLength" value="0">
-            </div>
-
-            <!-- Pickup Information Section -->
-            <div id="pickupInformationSection" class="hidden bg-green-50 border border-green-200 rounded-lg p-6">
-                <h4 class="font-bold text-green-800 mb-4 flex items-center">
-                    <svg class="w-6 h-6 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                            d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z">
-                        </path>
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                            d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"></path>
-                    </svg>
-                    Store Pick-up Location
-                </h4>
-                <?php if ($delivery_settings): ?>
-                    <div class="space-y-3">
-                        <div class="bg-white rounded-lg p-4">
-                            <div class="font-medium text-gray-700 mb-2">Store Address:</div>
-                            <div class="text-gray-600"><?= htmlspecialchars($delivery_settings['location_name']) ?></div>
-                        </div>
-                        <div class="bg-white rounded-lg p-4">
-                            <div class="font-medium text-gray-700 mb-2">Pick-up Hours:</div>
-                            <div class="text-gray-600">Monday - Saturday: 9:00 AM - 6:00 PM</div>
-                            <div class="text-gray-600">Sunday: Closed</div>
-                        </div>
-                    </div>
-                <?php endif; ?>
-            </div>
-
-            <!-- Cart Summary -->
-            <div class="bg-white border rounded-lg p-6">
-                <h4 class="font-bold text-gray-800 mb-4">Your Cart Items</h4>
-                <div class="space-y-3 max-h-80 overflow-y-auto">
-                    <?php foreach ($cart_items as $item): ?>
-                        <div class="border-b pb-3">
-                            <div class="flex justify-between items-start">
-                                <div class="flex-1">
-                                    <h5 class="font-semibold text-gray-800"><?= htmlspecialchars($item['variant_name']) ?>
-                                    </h5>
-                                    <div class="text-xs text-gray-600 mt-1">
-                                        <?php if (!empty($item['type_name'])): ?>
-                                            <span class="mr-2">Type: <?= htmlspecialchars($item['type_name']) ?></span>
-                                        <?php endif; ?>
-                                        <?php if (!empty($item['size'])): ?>
-                                            <span class="mr-2">Size: <?= htmlspecialchars($item['size']) ?></span>
-                                        <?php endif; ?>
-                                    </div>
-                                    <?php
-                                    $leadTimeRange = calculateLeadTimeRange(
-                                        $item['lead_count'] ?? null,
-                                        $item['lead_interval'] ?? null,
-                                        $item['lead_gap'] ?? null
-                                    );
-                                    // Hidden to avoid confusion - customer can see expected delivery in next step
-                                    ?>
-                                </div>
-                                <div class="text-right ml-4">
-                                    <div class="font-bold text-green-600">
-                                        ₱<?= number_format($item['price'] * $item['quantity'], 2) ?></div>
-                                    <div class="text-xs text-gray-500">Qty: <?= $item['quantity'] ?></div>
+                <!-- Pickup Information Section -->
+                <div id="pickupInformationSection" class="hidden bg-green-50 border border-green-200 rounded-lg p-6">
+                    <h4 class="font-bold text-green-800 mb-4 flex items-center">
+                        <svg class="w-6 h-6 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z">
+                            </path>
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"></path>
+                        </svg>
+                        Store Pick-up Location
+                    </h4>
+                    <?php if ($delivery_settings): ?>
+                        <div class="space-y-3">
+                            <div class="bg-white rounded-lg p-4">
+                                <div class="font-medium text-gray-700 mb-2">Store Address:</div>
+                                <div class="text-gray-600"><?= htmlspecialchars($delivery_settings['location_name']) ?>
                                 </div>
                             </div>
+                            <div class="bg-white rounded-lg p-4">
+                                <div class="font-medium text-gray-700 mb-2">Pick-up Hours:</div>
+                                <div class="text-gray-600">Monday 7:00 AM - 5:00 PM - Saturday: 8:00 AM - 12:00 PM</div>
+                                <div class="text-gray-600">Sunday: Closed</div>
+                            </div>
                         </div>
-                    <?php endforeach; ?>
+                    <?php endif; ?>
                 </div>
-                <div class="mt-4 pt-4 border-t">
-                    <div class="flex justify-between font-bold text-lg">
-                        <span>Items Subtotal:</span>
-                        <span class="text-orange-600">₱<?= number_format($total_price, 2) ?></span>
+
+                <!-- Cart Summary -->
+                <div class="bg-white border rounded-lg p-6">
+                    <h4 class="font-bold text-gray-800 mb-4">Your Cart Items</h4>
+                    <div class="space-y-3 max-h-80 overflow-y-auto">
+                        <?php foreach ($cart_items as $item): ?>
+                            <div class="border-b pb-3">
+                                <div class="flex justify-between items-start">
+                                    <div class="flex-1">
+                                        <h5 class="font-semibold text-gray-800">
+                                            <?= htmlspecialchars($item['variant_name']) ?>
+                                        </h5>
+                                        <div class="text-xs text-gray-600 mt-1">
+                                            <?php if (!empty($item['type_name'])): ?>
+                                                <span class="mr-2">Type: <?= htmlspecialchars($item['type_name']) ?></span>
+                                            <?php endif; ?>
+                                            <?php if (!empty($item['size'])): ?>
+                                                <span class="mr-2">Size: <?= htmlspecialchars($item['size']) ?></span>
+                                            <?php endif; ?>
+                                        </div>
+                                        <?php
+                                        $leadTimeRange = calculateLeadTimeRange(
+                                            $item['lead_count'] ?? null,
+                                            $item['lead_interval'] ?? null,
+                                            $item['lead_gap'] ?? null
+                                        );
+                                        // Hidden to avoid confusion - customer can see expected delivery in next step
+                                        ?>
+                                    </div>
+                                    <div class="text-right ml-4">
+                                        <div class="font-bold text-green-600">
+                                            ₱<?= number_format($item['price'] * $item['quantity'], 2) ?></div>
+                                        <div class="text-xs text-gray-500">Qty: <?= $item['quantity'] ?></div>
+                                    </div>
+                                </div>
+                            </div>
+                        <?php endforeach; ?>
+                    </div>
+                    <div class="mt-4 pt-4 border-t">
+                        <div class="flex justify-between font-bold text-lg">
+                            <span>Items Subtotal:</span>
+                            <span class="text-orange-600">₱<?= number_format($total_price, 2) ?></span>
+                        </div>
                     </div>
                 </div>
-            </div>
 
-            <!-- Navigation Buttons -->
-            <div class="flex justify-between items-center pt-4">
-                <a href="index-checkout-page-12-2.php" class="text-gray-600 hover:text-gray-800 flex items-center">
-                    <svg class="w-5 h-5 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7">
-                        </path>
-                    </svg>
-                    Back to Address
-                </a>
+                <!-- Navigation Buttons -->
+                <div class="flex justify-between items-center pt-4">
+                    <a href="<?= BASE_URL ?>/checkout2" class="text-gray-600 hover:text-gray-800 flex items-center">
+                        <svg class="w-5 h-5 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7">
+                            </path>
+                        </svg>
+                        Back to Address
+                    </a>
 
-                <button type="submit" id="continueToPayment"
-                    class="bg-orange-600 text-white px-8 py-3 rounded-lg hover:bg-orange-700 transition font-medium flex items-center disabled:bg-gray-400 disabled:cursor-not-allowed"
-                    disabled>
-                    Continue to Payment
-                    <svg class="w-5 h-5 ml-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path>
-                    </svg>
-                </button>
-            </div>
-        </form>
-    </div>
+                    <button type="submit" id="continueToPayment"
+                        class="bg-orange-600 text-white px-8 py-3 rounded-lg hover:bg-orange-700 transition font-medium flex items-center disabled:bg-gray-400 disabled:cursor-not-allowed"
+                        disabled>
+                        Continue to Payment
+                        <svg class="w-5 h-5 ml-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7">
+                            </path>
+                        </svg>
+                    </button>
+                </div>
+            </form>
+        </div>
 
-    <!-- Map Modal -->
-    <div id="mapModal" class="hidden fixed inset-0 bg-black bg-opacity-50 z-50  items-center justify-center">
-        <div class="bg-white rounded-lg w-full max-w-4xl mx-4 max-h-[90vh] overflow-hidden">
-            <div class="p-4 border-b flex justify-between items-center">
-                <h3 class="text-xl font-bold text-gray-800">Delivery Route Map</h3>
-                <button type="button" id="closeMapModal" class="text-gray-500 hover:text-gray-700">
-                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12">
-                        </path>
-                    </svg>
-                </button>
-            </div>
-            <div id="map" class="w-full h-96"></div>
-            <div class="p-4 bg-gray-50">
-                <div id="mapRouteInfo" class="text-sm text-gray-600"></div>
+        <!-- Map Modal -->
+        <!-- TAMA - idagdag ang flex -->
+<div id="mapModal" class="hidden fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center">
+            <div class="bg-white rounded-lg w-full max-w-4xl mx-4 max-h-[90vh] overflow-hidden">
+                <div class="p-4 border-b flex justify-between items-center">
+                    <h3 class="text-xl font-bold text-gray-800">Delivery Route Map</h3>
+                    <button type="button" id="closeMapModal" class="text-gray-500 hover:text-gray-700">
+                        <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                d="M6 18L18 6M6 6l12 12">
+                            </path>
+                        </svg>
+                    </button>
+                </div>
+                <div id="map" class="w-full h-96"></div>
+                <div class="p-4 bg-gray-50">
+                    <div id="mapRouteInfo" class="text-sm text-gray-600"></div>
+                </div>
             </div>
         </div>
     </div>
-
-    <?php include '../navbar/footer.php'; ?>
+    <?php include ROOT_PATH . '/user/navbar/footer.php'; ?>
 
     <script>
-        console.log('🚀 Loading Step 3 configuration...');
+        window.BASE_URL = "<?= BASE_URL ?>";
 
         // Pass PHP data to JavaScript
         window.checkoutConfig = {
@@ -660,7 +667,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                     <div class="font-bold text-lg">Invalid Delivery Address</div>
                     <div class="text-sm mt-1">Please return to Step 2 and select a valid address.</div>
                 </div>
-                <a href="index-checkout-page-12-2.php" 
+                <a href="<?= BASE_URL ?>/checkout2"
                     class="bg-white text-red-600 px-6 py-3 rounded-lg font-bold hover:bg-red-50 transition">
                     Fix Address
                 </a>
@@ -733,15 +740,13 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     </script>
 
     <!-- Core Scripts (Order Matters!) -->
-    <script
-        src="js/index-checkout-main-page-12-3.obfuscated.obfuscated.js?v=<?= filemtime('js/index-checkout-main-page-12-3.obfuscated.js') ?>"></script>
-    <script
-        src="js/index-checkout-stepNavigation-page-12-3.obfuscated.js?v=<?= filemtime('js/index-stepNavigation-page-12-3.obfuscated.js') ?>"></script>
-    <script
-        src="js/index-checkout-distanceCalculation-page-12-3.obfuscated.js?v=<?= filemtime('js/index-checkout-distanceCalculation-page-12-3.obfuscated.js') ?>"></script>
-    <script
-        src="js/index-checkout-mapModal-page-12-3.obfuscated.js?v=<?= filemtime('js/index-checkout-mapModal-page-12-3.obfuscated.js') ?>"></script>
+<script src="<?= BASE_URL ?>/user/otherpage/js/index-checkout-main-page-12-3.obfuscated.js?v=<?= filemtime(ROOT_PATH . '/user/otherpage/js/index-checkout-main-page-12-3.obfuscated.js') ?>"></script>
 
+<script src="<?= BASE_URL ?>/user/otherpage/js/index-checkout-stepNavigation-page-12-3.obfuscated.js?v=<?= filemtime(ROOT_PATH . '/user/otherpage/js/index-checkout-stepNavigation-page-12-3.obfuscated.js') ?>"></script>
+
+<script src="<?= BASE_URL ?>/user/otherpage/js/index-checkout-distanceCalculation-page-12-3.obfuscated.js?v=<?= filemtime(ROOT_PATH . '/user/otherpage/js/index-checkout-distanceCalculation-page-12-3.obfuscated.js') ?>"></script>
+
+<script src="<?= BASE_URL ?>/user/otherpage/js/index-checkout-mapModal-page-12-3.obfuscated.js?v=<?= filemtime(ROOT_PATH . '/user/otherpage/js/index-checkout-mapModal-page-12-3.obfuscated.js') ?>"></script>
     <!-- Initialize Step 3 -->
     <script>
         document.addEventListener('DOMContentLoaded', function () {

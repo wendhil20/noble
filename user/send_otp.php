@@ -6,8 +6,8 @@ session_start();
 use PHPMailer\PHPMailer\PHPMailer;
 use PHPMailer\PHPMailer\Exception;
 
-require '../vendor/autoload.php';
-include '../connection/connect.php';
+require ROOT_PATH . '/vendor/autoload.php';
+include ROOT_PATH . '/connection/connect.php';
 
 header('Content-Type: application/json');
 

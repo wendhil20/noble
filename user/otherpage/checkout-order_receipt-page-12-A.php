@@ -3,14 +3,14 @@
 // Main order receipt display page with product rating functionality
 session_name("nobleuser");
 session_start();
-include '../../connection/connect.php';
+include ROOT_PATH . '/connection/connect.php';
 
 // ============================================================================
 // SESSION & AUTHENTICATION CHECK
 // ============================================================================
 // Verify user is logged in, redirect to login if not
 if (!isset($_SESSION['user_id'])) {
-    header('Location: ../google-callback.php');
+    header('Location: ' . BASE_URL . '/googlecallback');
     exit;
 }
 
@@ -249,25 +249,24 @@ $category_names = [
 </head>
 
 <body class="bg-gray-100 min-h-screen">
-    <?php include '../navbar/top.php'; ?>
+    <?php include ROOT_PATH . '/user/navbar/top.php'; ?>
 
     <!-- ============================================================================
          BREADCRUMB NAVIGATION
          ============================================================================ -->
     <nav class="bg-white border-b border-gray-200 px-4 py-3">
-        <div class="">
-            <div class="flex items-center space-x-2 text-sm">
-                <a href="index" class="text-orange-500 hover:text-orange-700 transition duration-200 flex items-center">
+       
+            <div class="flex items-center space-x-2 text-sm mx-auto max-w-7xl">
+                <a href="<?= BASE_URL ?>/" class="text-orange-500 hover:text-orange-700 transition duration-200 flex items-center">
                     <i class="fas fa-home mr-1"></i>Home
                 </a>
                 <i class="fas fa-chevron-right text-gray-400"></i>
-                <a href="order_history" class="text-orange-500 hover:text-orange-700 transition duration-200 flex items-center">
+                <a href="<?= BASE_URL ?>/orderhistory" class="text-orange-500 hover:text-orange-700 transition duration-200 flex items-center">
                     Order History
                 </a>
                 <i class="fas fa-chevron-right text-gray-400"></i>
                 <span class="text-gray-600 font-medium">Receipt</span>
             </div>
-        </div>
     </nav>
 
     <div class="max-w-4xl mx-auto px-4 py-8">
@@ -715,7 +714,7 @@ $category_names = [
             <!--    Export to Excel-->
             <!--</a>-->
 
-            <a href="order_history" 
+            <a href="<?= BASE_URL ?>/history" 
                class="px-6 py-3 bg-gray-600 text-white rounded-lg hover:bg-gray-700 transition flex items-center gap-2">
                 <i class="fas fa-arrow-left"></i>
                 Back to Orders
@@ -733,7 +732,7 @@ $category_names = [
             <span id="notification-message"></span>
         </div>
     </div>
-    <?php include '../navbar/footer.php'; ?>
+    <?php include  ROOT_PATH . '/user/navbar/footer.php'; ?>
     <!-- ============================================================================
          JAVASCRIPT - Rating system and notification handling
          ============================================================================ -->

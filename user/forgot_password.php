@@ -21,7 +21,7 @@ function generateResetToken() {
 function sendResetEmail($email, $token, $name, $isLocalhost) {
     $protocol = (!empty($_SERVER['HTTPS']) && $_SERVER['HTTPS'] !== 'off') ? 'https://' : 'http://';
     $host = $_SERVER['HTTP_HOST'];
-    $reset_link = $protocol . $host . ROOT_PATH . '/user/resetpass?token=' . $token;
+    $reset_link = $protocol . $host . BASE_URL . '/resetpass?token=' . $token;
 
     $mail = new PHPMailer(true);
 

@@ -3,7 +3,12 @@ ini_set('display_errors', 1);
 error_reporting(E_ALL);
 
 define('ROOT_PATH', __DIR__);
-define('BASE_URL', '/noble');
+
+$isLocalhost = (strpos($_SERVER['HTTP_HOST'], 'localhost') !== false || 
+                strpos($_SERVER['HTTP_HOST'], '127.0.0.1') !== false);
+
+define('BASE_URL', $isLocalhost ? '/noble' : '');
+
 
 // Get clean path, strip /noble/ prefix
 $request = parse_url($_SERVER['REQUEST_URI'], PHP_URL_PATH);

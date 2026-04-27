@@ -149,13 +149,18 @@ function generateSlug($string)
 $display_categories = getNavigationData($conn);
 $current_page = basename($_SERVER['PHP_SELF']);
 $hidden_pages = ['help.php', 'about.php'];
+
+
+$uri = trim(parse_url($_SERVER['REQUEST_URI'], PHP_URL_PATH), '/');
+$uri = preg_replace('#^noble/?#', '', $uri);
+$uri = trim($uri, '/');
 ?>
 
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/swiper@11/swiper-bundle.min.css" />
 <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap"
   rel="stylesheet" />
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-<link href="<?= BASE_URL ?>/output.css" rel="stylesheet">
+<link href="<?=BASE_URL?>/output.css" rel="stylesheet">
 <link href="https://api.mapbox.com/mapbox-gl-js/v3.3.0/mapbox-gl.css" rel="stylesheet" />
 <script src="https://cdn.jsdelivr.net/npm/@studio-freight/lenis@1.0.42/dist/lenis.min.js"></script>
 <script src="https://unpkg.com/aos@2.3.4/dist/aos.js"></script>
@@ -766,13 +771,13 @@ $hidden_pages = ['help.php', 'about.php'];
 
         </a>
 
-        <a href="<?= BASE_URL ?>/15" onclick="navigateWithLoading('<?= BASE_URL ?>/15')"
-          class="hidden xl:block text-lg text-black font-semibold hover:bg-gray-100 rounded-lg px-2 py-1">
+        <a href="<?= BASE_URL ?>/findprofessional" onclick="navigateWithLoading('<?= BASE_URL ?>/findprofessional')"
+          class="hidden xl:block text-lg text-black font-semibold hover:bg-gray-100 rounded-lg px-2 py-1 <?= $uri === 'findprofessional' ? 'text-orange-600 underline' : 'text-black' ?>">
           Find Professional
         </a>
 
-        <a href="<?= BASE_URL ?>/18" onclick="navigateWithLoading('<?= BASE_URL ?>/18')"
-          class="hidden xl:block text-lg text-black font-semibold hover:bg-gray-100 rounded-lg px-2 py-1">
+        <a href="<?= BASE_URL ?>/inspiration" onclick="navigateWithLoading('<?= BASE_URL ?>/inspiration')"
+          class="hidden xl:block text-lg text-black font-semibold hover:bg-gray-100 rounded-lg px-2 py-1 <?= $uri === 'inspiration' ? 'text-orange-600 underline' : 'text-black' ?>">
           Inspiration
         </a>
 
@@ -895,7 +900,7 @@ $hidden_pages = ['help.php', 'about.php'];
       selectedSubcategory = null;
       searchTerm = '';
     }, 200);
-  " class="hover:bg-gray-100 rounded-lg px-2 py-1 font-semibold flex items-center gap-2 <?= basename($_SERVER['PHP_SELF']) == '<?= BASE_URL ?>/shop' ? 'text-orange-600 underline ' : 'text-black' ?> hover:text-orange-500 transition text-lg relative">
+  " class="hover:bg-gray-100 rounded-lg px-2 py-1 font-semibold flex items-center gap-2 <?= $uri === 'shop' ? 'text-orange-600 underline' : 'text-black' ?> hover:text-orange-500 transition text-lg relative">
 
             Products
             <svg class="w-4 h-4 transition-transform" :class="productsOpen ? 'rotate-180' : ''" fill="none"

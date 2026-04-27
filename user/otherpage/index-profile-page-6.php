@@ -764,134 +764,132 @@ function getReplacementBadge($replacement_status)
 
     <?php include ROOT_PATH . '/user/navbar/footer.php'; ?>
 
-    <script>
-        const BASE_URL = "<?= BASE_URL ?>";
-        function filterOrders() {
-            const input = document.getElementById('orderSearch').value.toLowerCase();
-            const items = document.querySelectorAll('.order-item');
+   <script>
 
-            // Reset active on replacement button if searching
-            document.getElementById('replacementFilterBtn').classList.remove('active');
+    window.filterOrders = function() {
+        const input = document.getElementById('orderSearch').value.toLowerCase();
+        const items = document.querySelectorAll('.order-item');
 
-            items.forEach(item => {
-                const id = item.getAttribute('data-id');
-                const date = item.getAttribute('data-date');
-                const paymentStatus = item.getAttribute('data-payment-status') || '';
+        document.getElementById('replacementFilterBtn').classList.remove('active');
 
-                const match = id.includes(input) ||
-                    date.includes(input) ||
-                    paymentStatus.includes(input);
-                item.style.display = match ? '' : 'none';
-            });
-        }
+        items.forEach(item => {
+            const id = item.getAttribute('data-id');
+            const date = item.getAttribute('data-date');
+            const paymentStatus = item.getAttribute('data-payment-status') || '';
 
-        function filterByPaymentStatus(status) {
-            const items = document.querySelectorAll('.order-item');
-            const buttons = document.querySelectorAll('.payment-filter');
+            const match = id.includes(input) ||
+                date.includes(input) ||
+                paymentStatus.includes(input);
+            item.style.display = match ? '' : 'none';
+        });
+    }
 
-            // Update active button
-            buttons.forEach(btn => btn.classList.remove('active'));
-            event.target.classList.add('active');
+    window.filterByPaymentStatus = function(status) {
+        const items = document.querySelectorAll('.order-item');
+        const buttons = document.querySelectorAll('.payment-filter');
 
-            items.forEach(item => {
-                if (status === 'all') {
-                    item.style.display = '';
-                } else {
-                    const paymentStatus = item.getAttribute('data-payment-status') || 'pending';
-                    item.style.display = paymentStatus === status ? '' : 'none';
-                }
-            });
-        }
+        buttons.forEach(btn => btn.classList.remove('active'));
+        event.target.classList.add('active');
 
-        // ✅ Dedicated replacement filter function
-        function filterByReplacement() {
-            const items = document.querySelectorAll('.order-item');
-            const buttons = document.querySelectorAll('.payment-filter');
-
-            buttons.forEach(btn => btn.classList.remove('active'));
-            document.getElementById('replacementFilterBtn').classList.add('active');
-
-            items.forEach(item => {
-                const hasReplacement = item.getAttribute('data-has-replacement');
-                item.style.display = hasReplacement === 'yes' ? '' : 'none';
-            });
-        }
-
-        function viewOrder(orderId) {
-            window.location.href = BASE_URL + '/ordertrack?order_id=' + orderId;
-        }
-
-        function toggleBillingDropdown() {
-            const dropdown = document.getElementById('billingDropdown');
-            const icon = document.getElementById('dropdownIcon');
-
-            if (dropdown.classList.contains('hidden')) {
-                dropdown.classList.remove('hidden');
-                icon.style.transform = 'rotate(180deg)';
+        items.forEach(item => {
+            if (status === 'all') {
+                item.style.display = '';
             } else {
-                dropdown.classList.add('hidden');
-                icon.style.transform = 'rotate(0deg)';
-            }
-        }
-
-        function showNotification(message, type = 'info') {
-            const notification = document.createElement('div');
-            notification.className = `fixed top-4 right-4 z-50 p-4 rounded-lg shadow-lg transition-all duration-300 transform translate-x-full`;
-
-            switch (type) {
-                case 'success': notification.className += ' bg-green-500 text-white'; break;
-                case 'error': notification.className += ' bg-red-500 text-white'; break;
-                default: notification.className += ' bg-blue-500 text-white'; break;
-            }
-
-            notification.innerHTML = `
-                <div class="flex items-center gap-3">
-                    <div class="flex-shrink-0">
-                        ${type === 'success'
-                    ? '<svg class="w-5 h-5" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"></path></svg>'
-                    : '<svg class="w-5 h-5" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7 4a1 1 0 11-2 0 1 1 0 012 0zm-1-9a1 1 0 00-1 1v4a1 1 0 102 0V6a1 1 0 00-1-1z" clip-rule="evenodd"></path></svg>'
-                }
-                    </div>
-                    <span class="">${message}</span>
-                </div>
-            `;
-
-            document.body.appendChild(notification);
-            setTimeout(() => { notification.classList.remove('translate-x-full'); }, 100);
-            setTimeout(() => {
-                notification.classList.add('translate-x-full');
-                setTimeout(() => { document.body.removeChild(notification); }, 300);
-            }, 3000);
-        }
-
-        function openBillingModal() {
-            document.getElementById('billingModal').classList.remove('hidden');
-            document.body.style.overflow = 'hidden';
-        }
-
-        function closeBillingModal() {
-            document.getElementById('billingModal').classList.add('hidden');
-            document.body.style.overflow = 'auto';
-        }
-
-        const billingModal = document.getElementById('billingModal');
-        if (billingModal) {
-            billingModal.addEventListener('click', function (e) {
-                if (e.target === this) { closeBillingModal(); }
-            });
-        }
-
-        document.addEventListener('keydown', function (e) {
-            if (e.key === 'Escape') {
-                const modal = document.getElementById('billingModal');
-                if (modal && !modal.classList.contains('hidden')) { closeBillingModal(); }
+                const paymentStatus = item.getAttribute('data-payment-status') || 'pending';
+                item.style.display = paymentStatus === status ? '' : 'none';
             }
         });
+    }
 
-        function updatePayment(orderId) {
-            window.location.href = `update_payment.php?order_id=${orderId}`;
+    window.filterByReplacement = function() {
+        const items = document.querySelectorAll('.order-item');
+        const buttons = document.querySelectorAll('.payment-filter');
+
+        buttons.forEach(btn => btn.classList.remove('active'));
+        document.getElementById('replacementFilterBtn').classList.add('active');
+
+        items.forEach(item => {
+            const hasReplacement = item.getAttribute('data-has-replacement');
+            item.style.display = hasReplacement === 'yes' ? '' : 'none';
+        });
+    }
+
+    window.viewOrder = function(orderId) {
+        window.location.href = BASE_URL + '/ordertrack?order_id=' + orderId;
+    }
+
+    window.toggleBillingDropdown = function() {
+        const dropdown = document.getElementById('billingDropdown');
+        const icon = document.getElementById('dropdownIcon');
+
+        if (dropdown.classList.contains('hidden')) {
+            dropdown.classList.remove('hidden');
+            icon.style.transform = 'rotate(180deg)';
+        } else {
+            dropdown.classList.add('hidden');
+            icon.style.transform = 'rotate(0deg)';
         }
-    </script>
+    }
+
+    window.showNotification = function(message, type = 'info') {
+        const notification = document.createElement('div');
+        notification.className = `fixed top-4 right-4 z-50 p-4 rounded-lg shadow-lg transition-all duration-300 transform translate-x-full`;
+
+        switch (type) {
+            case 'success': notification.className += ' bg-green-500 text-white'; break;
+            case 'error':   notification.className += ' bg-red-500 text-white'; break;
+            default:        notification.className += ' bg-blue-500 text-white'; break;
+        }
+
+        notification.innerHTML = `
+            <div class="flex items-center gap-3">
+                <div class="flex-shrink-0">
+                    ${type === 'success'
+                        ? '<svg class="w-5 h-5" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"></path></svg>'
+                        : '<svg class="w-5 h-5" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7 4a1 1 0 11-2 0 1 1 0 012 0zm-1-9a1 1 0 00-1 1v4a1 1 0 102 0V6a1 1 0 00-1-1z" clip-rule="evenodd"></path></svg>'
+                    }
+                </div>
+                <span>${message}</span>
+            </div>
+        `;
+
+        document.body.appendChild(notification);
+        setTimeout(() => { notification.classList.remove('translate-x-full'); }, 100);
+        setTimeout(() => {
+            notification.classList.add('translate-x-full');
+            setTimeout(() => { document.body.removeChild(notification); }, 300);
+        }, 3000);
+    }
+
+    window.openBillingModal = function() {
+        document.getElementById('billingModal').classList.remove('hidden');
+        document.body.style.overflow = 'hidden';
+    }
+
+    window.closeBillingModal = function() {
+        document.getElementById('billingModal').classList.add('hidden');
+        document.body.style.overflow = 'auto';
+    }
+
+    window.updatePayment = function(orderId) {
+        window.location.href = BASE_URL + '/45?order_id=' + orderId;
+    }
+
+    // Event listeners (no onclick needed)
+    const billingModal = document.getElementById('billingModal');
+    if (billingModal) {
+        billingModal.addEventListener('click', function(e) {
+            if (e.target === this) { window.closeBillingModal(); }
+        });
+    }
+
+    document.addEventListener('keydown', function(e) {
+        if (e.key === 'Escape') {
+            const modal = document.getElementById('billingModal');
+            if (modal && !modal.classList.contains('hidden')) { window.closeBillingModal(); }
+        }
+    });
+</script>
 
 </body>
 

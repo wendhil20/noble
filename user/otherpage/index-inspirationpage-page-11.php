@@ -189,7 +189,7 @@ if (!$viewing_inspiration) {
                     <div class="mb-12">
                         <!-- Image with Overlay -->
                         <div class="relative h-96 md:h-[600px] image-container rounded-2xl overflow-hidden shadow-2xl hero-title">
-                            <img src="../../uploads/<?php echo htmlspecialchars($inspiration['main_image']); ?>"
+                            <img src="<?= BASE_URL ?>/<?php echo htmlspecialchars($inspiration['main_image']); ?>"
                                 alt="<?php echo htmlspecialchars($inspiration['name']); ?>"
                                 class="w-full h-full object-cover">
                             <div class="absolute inset-0 bg-black/40"></div>
@@ -257,7 +257,7 @@ if (!$viewing_inspiration) {
                             <div>
                                 <div class="relative image-container rounded-xl overflow-hidden shadow-lg" id="gallery_1">
                                     <?php foreach ($image_1_array as $idx => $img): ?>
-                                        <img src="../../uploads/<?php echo htmlspecialchars($img['filename']); ?>"
+                                        <img src="<?= BASE_URL ?>/<?php echo htmlspecialchars($img['filename']); ?>"
                                             class="swiper-image <?php echo $idx === 0 ? 'active' : ''; ?> w-full h-96 lg:h-[500px] object-cover">
                                     <?php endforeach; ?>
                                 </div>
@@ -286,7 +286,7 @@ if (!$viewing_inspiration) {
                             <div class="order-2 lg:order-1">
                                 <div class="relative image-container rounded-xl overflow-hidden shadow-lg" id="gallery_2">
                                     <?php foreach ($image_2_array as $idx => $img): ?>
-                                        <img src="../../uploads/<?php echo htmlspecialchars($img['filename']); ?>"
+                                        <img src="<?= BASE_URL ?>/<?php echo htmlspecialchars($img['filename']); ?>"
                                             class="swiper-image <?php echo $idx === 0 ? 'active' : ''; ?> w-full h-96 lg:h-[500px] object-cover">
                                     <?php endforeach; ?>
                                 </div>
@@ -329,7 +329,7 @@ if (!$viewing_inspiration) {
                             <div>
                                 <div class="relative image-container rounded-xl overflow-hidden shadow-lg" id="gallery_3">
                                     <?php foreach ($image_3_array as $idx => $img): ?>
-                                        <img src="../../uploads/<?php echo htmlspecialchars($img['filename']); ?>"
+                                        <img src="<?= BASE_URL ?>/<?php echo htmlspecialchars($img['filename']); ?>"
                                             class="swiper-image <?php echo $idx === 0 ? 'active' : ''; ?> w-full h-96 lg:h-[500px] object-cover">
                                     <?php endforeach; ?>
                                 </div>
@@ -383,7 +383,7 @@ if (!$viewing_inspiration) {
                                         <!-- Image Container -->
                                         <div class="relative h-96 md:h-[500px] image-container overflow-hidden">
                                             <?php if ($featured['main_image']): ?>
-                                                <img src="../../uploads/<?php echo htmlspecialchars($featured['main_image']); ?>"
+                                                <img src="<?= BASE_URL ?>/<?php echo htmlspecialchars($featured['main_image']); ?>"
                                                     alt="<?php echo htmlspecialchars($featured['name']); ?>"
                                                     class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500">
                                                 <div class="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex items-end">
@@ -434,7 +434,7 @@ if (!$viewing_inspiration) {
                                     <!-- Image -->
                                     <div class="relative h-72 image-container overflow-hidden">
                                         <?php if ($insp['main_image']): ?>
-                                            <img src="../../uploads/<?php echo htmlspecialchars($insp['main_image']); ?>"
+                                            <img src="<?= BASE_URL ?>/<?php echo htmlspecialchars($insp['main_image']); ?>"
                                                 alt="<?php echo htmlspecialchars($insp['name']); ?>"
                                                 class="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500">
                                             <div class="absolute inset-0 bg-black/30 opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex items-center justify-center">
@@ -464,7 +464,7 @@ if (!$viewing_inspiration) {
         </div>
     <?php endif; ?>
 
-    <?php include '../navbar/footer.php' ?>
+    <?php include ROOT_PATH . '/user/navbar/footer.php' ?>
 
     <script>
         function swiperNext(galleryId) {

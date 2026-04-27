@@ -1,8 +1,11 @@
 RewriteEngine On
-RewriteBase /noble/
 
-# Redirect /noble/home to /noble/
-RewriteRule ^home/?$ / [R=301,L]
+# Auto-detect: localhost uses /noble base, production uses /
+RewriteCond %{HTTP_HOST} ^(localhost|127\.0\.0\.1)
+RewriteRule ^ - [E=APP_BASE:/noble]
+
+RewriteCond %{HTTP_HOST} !^(localhost|127\.0\.0\.1)
+RewriteRule ^ - [E=APP_BASE:/]
 
 # Allow direct access to real files and folders
 RewriteCond %{REQUEST_FILENAME} -f [OR]
@@ -10,6 +13,6 @@ RewriteCond %{REQUEST_FILENAME} -d
 RewriteRule ^ - [L]
 
 # Exclude admin from routing
-RewriteCond %{REQUEST_URI} !^/noble/loginpage/admin/
+RewriteCond %{REQUEST_URI} !^/loginpage/admin/
 # Route everything else to index.php
 RewriteRule ^(.*)$ index.php [QSA,L]

@@ -157,7 +157,7 @@ $uri = trim($uri, '/');
 ?>
 
 
-<link rel="icon" type="image/png" href="/noble/user/img/favicon.png">
+<link rel="icon" type="image/png" href="<?= BASE_URL ?>/user/img/favicon.png">
 
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/swiper@11/swiper-bundle.min.css" />
 

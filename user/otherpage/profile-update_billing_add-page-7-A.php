@@ -33,27 +33,27 @@ if ($stmt_phone) {
 // ── HANDLE DELETE REQUEST ──
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $input = json_decode(file_get_contents('php://input'), true);
-    
+
     if (isset($input['address_id'])) {
         header('Content-Type: application/json');
-        
-        $delete_id = (int)$input['address_id'];
-        
+
+        $delete_id = (int) $input['address_id'];
+
         // Verify ownership
         $verify = $conn->prepare("SELECT id FROM billing_addresses WHERE id = ? AND user_id = ?");
         $verify->bind_param("ii", $delete_id, $user_id);
         $verify->execute();
         $verify->store_result();
-        
+
         if ($verify->num_rows === 0) {
             echo json_encode(['success' => false, 'message' => 'Unauthorized.']);
             exit;
         }
         $verify->close();
-        
+
         $stmt = $conn->prepare("DELETE FROM billing_addresses WHERE id = ? AND user_id = ?");
         $stmt->bind_param("ii", $delete_id, $user_id);
-        
+
         if ($stmt->execute()) {
             echo json_encode(['success' => true]);
         } else {
@@ -249,7 +249,8 @@ if ($_POST && isset($_POST['add_address'])) {
     <meta name="viewport" content="width=device-width,initial-scale=1.0" />
     <title><?= $is_edit_mode ? 'Edit Billing Address' : 'Add Billing Address' ?></title>
     <link href="https://api.mapbox.com/mapbox-gl-js/v3.3.0/mapbox-gl.css" rel="stylesheet" />
-<script src="https://api.mapbox.com/mapbox-gl-js/v3.3.0/mapbox-gl.js"></script>
+    <script src="https://api.mapbox.com/mapbox-gl-js/v3.3.0/mapbox-gl.js"></script>
+    <?php include ROOT_PATH . '/user/navbar/top.php'; ?>
     <style>
         * {
             font-family: 'Plus Jakarta Sans', sans-serif;
@@ -299,21 +300,22 @@ if ($_POST && isset($_POST['add_address'])) {
 </head>
 
 <body class="bg-gray-50 min-h-screen">
-    <?php include ROOT_PATH . '/user/navbar/top.php'; ?>
+
     <?php if (isset($redirect_script))
         echo $redirect_script; ?>
 
     <div class="max-w-2xl mx-auto p-3">
 
-      <div class="mb-8 mt-5">
-    <!-- Back Button -->
-    <button onclick="history.back()" 
-        class="flex items-center gap-2 text-sm text-gray-500 hover:text-gray-800 mb-4 transition-colors group">
-        <svg class="w-4 h-4 transition-transform group-hover:-translate-x-1" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
-            <path stroke-linecap="round" stroke-linejoin="round" d="M15 19l-7-7 7-7" />
-        </svg>
-        Back
-    </button>
+        <div class="mb-8 mt-5">
+            <!-- Back Button -->
+            <button onclick="history.back()"
+                class="flex items-center gap-2 text-sm text-gray-500 hover:text-gray-800 mb-4 transition-colors group">
+                <svg class="w-4 h-4 transition-transform group-hover:-translate-x-1" fill="none" stroke="currentColor"
+                    stroke-width="2" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M15 19l-7-7 7-7" />
+                </svg>
+                Back
+            </button>
             <div class="flex items-center gap-3 mb-1">
                 <div class="w-9 h-9 rounded-xl bg-green-600 flex items-center justify-center">
                     <svg class="w-5 h-5 text-white" fill="none" stroke="currentColor" stroke-width="2"

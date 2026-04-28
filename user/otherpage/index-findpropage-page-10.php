@@ -34,9 +34,9 @@ $is_guest = !isset($_SESSION['user_id']);
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Document</title>
+    <?php include ROOT_PATH . '/user/navbar/top.php' ?>
 </head>
 <body class="bg-gray-50">
-    <?php include ROOT_PATH . '/user/navbar/top.php' ?>
     
     <!-- Not Available Message -->
     <div class="flex items-center justify-center min-h-[calc(100vh-64px)] p-4">

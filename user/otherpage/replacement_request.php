@@ -320,7 +320,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && !$existing_request && $is_eligible)
         <!-- Header -->
         <div class="mb-6 sm:mb-8">
             <div class="flex items-center gap-3 sm:gap-4 mb-4">
-                <a href="order_tracking.php?order_id=<?= $order_id ?>" class="flex items-center justify-center w-10 h-10 sm:w-12 sm:h-12 bg-white rounded-lg shadow-md hover:shadow-lg transition-shadow">
+                <a href="<?= BASE_URL ?>/ordertrack?order_id=<?= $order_id ?>" class="flex items-center justify-center w-10 h-10 sm:w-12 sm:h-12 bg-white rounded-lg shadow-md hover:shadow-lg transition-shadow">
                     <svg class="w-4 h-4 sm:w-5 sm:h-5 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"/>
                     </svg>

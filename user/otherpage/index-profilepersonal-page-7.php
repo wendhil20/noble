@@ -231,7 +231,7 @@ $recent_count = $recent_products->num_rows;
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <link rel="icon" type="image/png" sizes="96x96" href="../img/favicon.ico">
+    <?php include ROOT_PATH . '/user/navbar/top.php'; ?>
     <title>Order History - Noble Admin</title>
     <style>
         .card {
@@ -265,7 +265,7 @@ $recent_count = $recent_products->num_rows;
 </head>
 
 <body class="bg-gray-50 min-h-screen " style="font-family: 'Montserrat', sans-serif; color: #2f1200">
-    <?php include ROOT_PATH . '/user/navbar/top.php'; ?>
+   
 
     <div class="max-w-7xl mx-auto px-4 py-6">
         <div class="professional-card rounded-xl p-4 sm:p-6 lg:p-8 mb-4 sm:mb-6 lg:mb-8 animate-fade-in">

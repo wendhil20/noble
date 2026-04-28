@@ -207,6 +207,7 @@ MIN(pv.color) as color,
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title><?= htmlspecialchars($displayName) ?> - Categories</title>
+     <?php include ROOT_PATH . '/user/navbar/top.php'; ?>
     <style>
         .product-card {
             transition: transform 0.3s, box-shadow 0.3s;
@@ -229,8 +230,6 @@ MIN(pv.color) as color,
 
 <body class="bg-gray-50" style="font-family: 'Montserrat', sans-serif; color: #2f1200">
     <?php
-    include ROOT_PATH . '/user/navbar/top.php';
-
     // Helper functions
     function formatViewCount($count)
     {
@@ -241,7 +240,7 @@ MIN(pv.color) as color,
     }
     ?>
 
-    <?php include ROOT_PATH . '/user/otherpage/push-notification.php'; ?>
+  
     <!-- Breadcrumb -->
     <div class="bg-white border-b">
         <div class="container mx-auto px-6 py-4">

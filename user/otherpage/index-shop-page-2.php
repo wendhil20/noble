@@ -129,8 +129,8 @@ $is_guest = !isset($_SESSION['user_id']);
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <link rel="icon" type="image/png" sizes="96x96" href="../img/favicon.ico">
     <title>Shop Products - Noble Home</title>
+    <?php include ROOT_PATH . '/user/navbar/top.php'; ?>
     <meta name="description" content="Explore our premium collection of furniture, materials, and home décor items.">
     <style>
         .line-clamp-2 {
@@ -436,8 +436,8 @@ $is_guest = !isset($_SESSION['user_id']);
 </head>
 
 <body class="font-roboto">
-    <?php include ROOT_PATH . '/user/navbar/top.php'; ?>
-    <?php include ROOT_PATH . '/user/otherpage/push-notification.php'; ?>
+    
+    
     <section class="bg-white relative mb-12">
         <div class="w-full px-4 sm:px-6 lg:px-8 py-2">
             <!-- Two Container Buttons with Background Images -->

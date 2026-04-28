@@ -91,11 +91,11 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <link rel="icon" type="image/png" sizes="96x96" href="../img/favicon.ico">
     <title>Step 1: Customer Information - Noble Home</title>
-
+    <?php include ROOT_PATH . '/user/navbar/top.php'; ?>
 </head>
 
 <body class="bg-gray-100 font-sans">
-    <?php include ROOT_PATH . '/user/navbar/top.php'; ?>
+
     <div class="p-4">
         <div class="bg-white p-5 shadow mt-3 max-w-4xl mx-auto">
             <h2 class="text-3xl text-orange-700 mb-8">Checkout Process</h2>

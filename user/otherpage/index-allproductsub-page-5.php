@@ -97,6 +97,7 @@ try {
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Sale Collection — Noble Home</title>
+    <?php include ROOT_PATH . '/user/navbar/top.php'; ?>
     <style>
         /* Category grid: hide on mobile (use sidebar button instead) */
         @media (max-width: 639px) {
@@ -115,13 +116,6 @@ try {
 </head>
 
 <body class="bg-stone-50 text-stone-900 antialiased">
-
-    <?php
-    $navbar_path = ROOT_PATH . '/user/navbar/top.php';
-    if (file_exists($navbar_path))
-        include $navbar_path;
-    include ROOT_PATH . '/user/otherpage/push-notification.php';
-    ?>
 
     <!-- ── HERO ────────────────────────────────── -->
     <?php if ($onsale_result && $onsale_result->num_rows > 0): ?>

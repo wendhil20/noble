@@ -103,8 +103,8 @@ function calculate_price($variant_price, $color_price, $percent = 0, $discount =
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <link rel="icon" type="image/png" href="../img/favicon.ico">
     <title>Products - Noble Store</title>
+    <?php include ROOT_PATH . '/user/navbar/top.php'; ?>
     <style>
         :root {
             --primary-color: #f97316;
@@ -307,8 +307,6 @@ function calculate_price($variant_price, $color_price, $percent = 0, $discount =
 </head>
 
 <body class="bg-gray-50">
-    <?php include ROOT_PATH . '/user/navbar/top.php'; ?>
-    <?php include ROOT_PATH . '/user/otherpage/push-notification.php'; ?>
 
     <!-- Hero Banner - Desktop only -->
     <div class="hidden md:block mb-4">

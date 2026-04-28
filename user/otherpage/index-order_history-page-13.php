@@ -77,14 +77,12 @@ function getStatusBadge($status)
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-       <link rel="icon" type="image/png" sizes="96x96" href="../img/favicon.ico">
+    <?php include ROOT_PATH . '/user/navbar/top.php'; ?>
     <title>Order History</title>
    
 </head>
 
 <body class="bg-gray-100 min-h-screen">
-    <?php include ROOT_PATH . '/user/navbar/top.php'; ?>
-
     <!-- Enhanced Breadcrumb -->
     <nav class="bg-white border-b border-gray-200 px-4 py-3">
         <div class="mx-auto max-w-7xl">

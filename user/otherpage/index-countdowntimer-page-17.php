@@ -71,9 +71,7 @@ $now = time();
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Limited Time Offers - Noble Home</title>
     <meta name="server-time" content="<?php echo time(); ?>">
-    <link rel="icon" type="image/png" sizes="96x96" href="../img/favicon.ico">
-    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
-    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <?php include ROOT_PATH . '/user/navbar/top.php'; ?>
     <style>
         body {
             background-color: #f8f9fa;
@@ -262,8 +260,6 @@ $now = time();
 </head>
 
 <body class="font-roboto">
-    <?php include '../navbar/top.php'; ?>
-
     <!-- Breadcrumb -->
     <nav class="bg-white border-b border-gray-200 px-4 py-3">
         <div class="max-w-7xl mx-auto">

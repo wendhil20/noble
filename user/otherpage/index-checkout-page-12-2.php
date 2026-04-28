@@ -86,12 +86,11 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <link rel="icon" type="image/png" sizes="96x96" href="../img/favicon.ico">
     <title>Step 2: Delivery Address - Noble Home</title>
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Montserrat:wght@300;400;600;700&display=swap">
+    <?php include ROOT_PATH . '/user/navbar/top.php'; ?>
 </head>
 
 <div class="bg-gray-100 font-sans">
-    <?php include ROOT_PATH . '/user/navbar/top.php'; ?>
+
     <div class="p-4">
         <div class="bg-white p-6 rounded shadow mt-3 max-w-6xl mx-auto">
             <h2 class="text-3xl font-bold text-orange-700 mb-8">Checkout Process</h2>

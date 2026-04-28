@@ -156,6 +156,9 @@ $uri = preg_replace('#^noble/?#', '', $uri);
 $uri = trim($uri, '/');
 ?>
 
+
+<link rel="icon" type="image/png" href="/noble/user/img/favicon.png">
+
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/swiper@11/swiper-bundle.min.css" />
 
 <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap"

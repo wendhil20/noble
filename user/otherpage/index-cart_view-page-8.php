@@ -199,11 +199,11 @@ $total_cart_items = count($cart_items);
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <link rel="icon" type="image/png" sizes="96x96" href="../img/favicon.ico">
   <title>Your Cart</title>
+  <?php include ROOT_PATH . '/user/navbar/top.php'; ?>
 </head>
 
 <body class="bg-gray-100 font-roboto">
-  <?php include ROOT_PATH . '/user/navbar/top.php'; ?>
-  <?php include ROOT_PATH . '/user/otherpage/push-notification.php'; ?>
+
   <!-- Hero Section -->
   <div class="gradient-bg text-white relative overflow-hidden">
     <div class="absolute inset-0 pointer-events-none z-0">

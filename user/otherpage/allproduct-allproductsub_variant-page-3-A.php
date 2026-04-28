@@ -333,6 +333,7 @@ $filter_description = ($show_sale == 1) ? 'discounted' : '';
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title><?php echo htmlspecialchars($sub_subcategory_name ?: $subcategory_name); ?> - <?php echo $page_label; ?></title>
+    <?php include ROOT_PATH . '/user/navbar/top.php'; ?>
     <style>
         .line-clamp-1 {
             display: -webkit-box;
@@ -375,13 +376,7 @@ $filter_description = ($show_sale == 1) ? 'discounted' : '';
 </head>
 
 <body class="min-h-screen " style="font-family: 'Montserrat', sans-serif; color: #2f1200">
-    <?php 
-    // Safe include with error handling
-    $navbar_path = ROOT_PATH . '/user/navbar/top.php';
-    if (file_exists($navbar_path)) {
-        include $navbar_path;
-    }
-    ?>
+ 
 <?php include ROOT_PATH . '/user/otherpage/push-notification.php'; ?>
     <!-- Header Section -->
     <div class="bg-black text-white">

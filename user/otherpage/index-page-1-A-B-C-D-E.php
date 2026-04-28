@@ -170,8 +170,8 @@ $bestsellerData = $bestsellerItems->fetch_all(MYSQLI_ASSOC);
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <link rel="icon" type="image/png" sizes="96x96" href="../img/favicon.ico">
     <title>Noble Home - Modern Furnishing Supplies</title>
+    <?php include ROOT_PATH . '/user/navbar/top.php'; ?>
     <style>
         footer * {
             font-family: 'Plus Jakarta Sans', sans-serif;
@@ -329,8 +329,6 @@ $bestsellerData = $bestsellerItems->fetch_all(MYSQLI_ASSOC);
 </head>
 
 <body class="">
-
-    <?php include ROOT_PATH . '/user/navbar/top.php'; ?>
 
     <?php include ROOT_PATH . '/user/otherpage/index-flash_notification-D.php'; ?>
 

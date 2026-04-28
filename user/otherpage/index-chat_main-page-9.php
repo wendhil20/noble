@@ -39,6 +39,7 @@ $user_picture = $_SESSION['user_picture'] ?? null;
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Support — Noble Home Depot</title>
   <script src="https://cdn.socket.io/4.7.2/socket.io.min.js"></script>
+  <?php include ROOT_PATH.'/user/navbar/top.php' ?>
   <style>
     :root {
       --navy:    #0d1b2e;
@@ -427,7 +428,7 @@ $user_picture = $_SESSION['user_picture'] ?? null;
   </style>
 </head>
 <body class="font-roboto"> 
-<?php include ROOT_PATH.'/user/navbar/top.php' ?>
+
 
 <div class="app">
 

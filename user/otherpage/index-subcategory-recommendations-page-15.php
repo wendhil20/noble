@@ -286,11 +286,12 @@ function formatViewCount($count)
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Recommended <?= htmlspecialchars($subcategory_name) ?> Collections</title>
+    <?php include ROOT_PATH . '/user/navbar/top.php'; ?>
 </head>
 
 <body class="min-h-screen bg-gray-50" style="font-family: 'Montserrat', sans-serif; color: #2f1200">
-    <?php include ROOT_PATH . '/user/navbar/top.php'; ?>
-    <?php include ROOT_PATH . '/user/otherpage/push-notification.php'; ?>
+    
+
     <!-- Header Section -->
     <div class="bg-black text-white">
         <div class="container mx-auto px-6 py-8">

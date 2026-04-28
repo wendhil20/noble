@@ -407,14 +407,10 @@ $show_map = $delivery_settings &&
     <link rel="icon" type="image/png" sizes="96x96" href="../img/favicon.ico">
     <title>Order Tracking - Order #<?= $order['id'] ?></title>
 
+    <?php include ROOT_PATH . '/user/navbar/top.php'; ?>
 
-    <!-- Leaflet CSS -->
-    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"
-        integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin="" />
-
-    <!-- Leaflet Routing Machine CSS -->
-    <link rel="stylesheet" href="https://unpkg.com/leaflet-routing-machine@3.2.12/dist/leaflet-routing-machine.css" />
-
+    <link href="https://api.mapbox.com/mapbox-gl-js/v3.3.0/mapbox-gl.css" rel="stylesheet" />
+    <script src="https://api.mapbox.com/mapbox-gl-js/v3.3.0/mapbox-gl.js"></script>
     <style>
         .animate-pulse-slow {
             animation: pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
@@ -451,10 +447,10 @@ $show_map = $delivery_settings &&
         }
 
         /* Map styles */
-      #deliveryMap {
-    height: 400px;
-    border-radius: 12px;
-}
+        #deliveryMap {
+            height: 400px;
+            border-radius: 12px;
+        }
 
         /* Hide leaflet routing machine instructions by default */
         .leaflet-routing-container {
@@ -524,7 +520,7 @@ $show_map = $delivery_settings &&
 </head>
 
 <body class=" min-h-screen">
-    <?php include ROOT_PATH . '/user/navbar/top.php'; ?>
+
 
     <div class="container mx-auto px-3 sm:px-4 py-4 sm:py-8 max-w-6xl">
         <!-- Header -->
@@ -1466,7 +1462,7 @@ $show_map = $delivery_settings &&
                                             Replacement Requested
                                         </span>
                                     <?php elseif ($is_eligible_for_replacement): ?>
-                                        <a href="<?= BASE_URL?>/replacement?order_id=<?= $order_id ?>&item_id=<?= $item['id'] ?>"
+                                        <a href="<?= BASE_URL ?>/replacement?order_id=<?= $order_id ?>&item_id=<?= $item['id'] ?>"
                                             class="inline-flex items-center px-2 py-1 text-xs font-medium rounded-full bg-blue-100 text-blue-800 hover:bg-blue-200 transition-colors cursor-pointer w-fit">
                                             Request Replacement
                                         </a>
@@ -1863,91 +1859,91 @@ $show_map = $delivery_settings &&
 
     <script>
         // Map initialization
-       <?php if ($show_map): ?>
-    document.addEventListener('DOMContentLoaded', function () {
-        const MAPBOX_TOKEN = 'pk.eyJ1Ijoid2VuZGhpbCIsImEiOiJjbWx1NmIzMDgwM25kM2RyMnVuOTNuMzhrIn0.45jN2HjKO_iRMlF-8gWcwQ';
-        mapboxgl.accessToken = MAPBOX_TOKEN;
+        <?php if ($show_map): ?>
+            document.addEventListener('DOMContentLoaded', function () {
+                const MAPBOX_TOKEN = 'pk.eyJ1Ijoid2VuZGhpbCIsImEiOiJjbWx1NmIzMDgwM25kM2RyMnVuOTNuMzhrIn0.45jN2HjKO_iRMlF-8gWcwQ';
+                mapboxgl.accessToken = MAPBOX_TOKEN;
 
-        const warehouseLng = <?= $delivery_settings['longitude'] ?>;
-        const warehouseLat = <?= $delivery_settings['latitude'] ?>;
-        const deliveryLng  = <?= $order['delivery_lng'] ?>;
-        const deliveryLat  = <?= $order['delivery_lat'] ?>;
+                const warehouseLng = <?= $delivery_settings['longitude'] ?>;
+                const warehouseLat = <?= $delivery_settings['latitude'] ?>;
+                const deliveryLng = <?= $order['delivery_lng'] ?>;
+                const deliveryLat = <?= $order['delivery_lat'] ?>;
 
-        const map = new mapboxgl.Map({
-            container: 'deliveryMap',
-            style: 'mapbox://styles/mapbox/streets-v12',
-            center: [deliveryLng, deliveryLat],
-            zoom: 12
-        });
+                const map = new mapboxgl.Map({
+                    container: 'deliveryMap',
+                    style: 'mapbox://styles/mapbox/streets-v12',
+                    center: [deliveryLng, deliveryLat],
+                    zoom: 12
+                });
 
-        map.addControl(new mapboxgl.NavigationControl(), 'top-right');
+                map.addControl(new mapboxgl.NavigationControl(), 'top-right');
 
-        // Warehouse marker (green)
-        const warehouseEl = document.createElement('div');
-        warehouseEl.innerHTML = `
+                // Warehouse marker (green)
+                const warehouseEl = document.createElement('div');
+                warehouseEl.innerHTML = `
             <div style="background:#10B981;width:34px;height:34px;border-radius:50%;display:flex;align-items:center;justify-content:center;border:3px solid white;box-shadow:0 2px 10px rgba(0,0,0,0.3);">
                 <i class="fa-solid fa-location-arrow text-xl text-white"></i>
             </div>`;
 
-        new mapboxgl.Marker({ element: warehouseEl })
-            .setLngLat([warehouseLng, warehouseLat])
-            .setPopup(new mapboxgl.Popup({ offset: 25 }).setHTML(`
+                new mapboxgl.Marker({ element: warehouseEl })
+                    .setLngLat([warehouseLng, warehouseLat])
+                    .setPopup(new mapboxgl.Popup({ offset: 25 }).setHTML(`
                 <div style="min-width:180px;">
                     <p style="font-weight:700;color:#10B981;margin:0 0 4px;">Warehouse</p>
                     <p style="font-size:12px;color:#666;margin:0;"><?= htmlspecialchars($delivery_settings['location_name']) ?></p>
                 </div>`))
-            .addTo(map);
+                    .addTo(map);
 
-        // Delivery marker (blue)
-        const deliveryEl = document.createElement('div');
-        deliveryEl.innerHTML = `
+                // Delivery marker (blue)
+                const deliveryEl = document.createElement('div');
+                deliveryEl.innerHTML = `
             <div style="background:#3B82F6;width:34px;height:34px;border-radius:50%;display:flex;align-items:center;justify-content:center;border:3px solid white;box-shadow:0 2px 10px rgba(0,0,0,0.3);">
                 <i class="fa-solid fa-location-crosshairs text-xl text-white"></i>
             </div>`;
 
-        new mapboxgl.Marker({ element: deliveryEl })
-            .setLngLat([deliveryLng, deliveryLat])
-            .setPopup(new mapboxgl.Popup({ offset: 25 }).setHTML(`
+                new mapboxgl.Marker({ element: deliveryEl })
+                    .setLngLat([deliveryLng, deliveryLat])
+                    .setPopup(new mapboxgl.Popup({ offset: 25 }).setHTML(`
                 <div style="min-width:180px;">
                     <p style="font-weight:700;color:#3B82F6;margin:0 0 4px;">Delivery Address</p>
                     <p style="font-weight:600;font-size:13px;margin:0 0 2px;"><?= htmlspecialchars($order['customer_name']) ?></p>
                     <p style="font-size:12px;color:#666;margin:0;"><?= htmlspecialchars($order['delivery_address']) ?>, <?= htmlspecialchars($order['delivery_city']) ?></p>
                 </div>`))
-            .addTo(map);
+                    .addTo(map);
 
-        // Draw route line via Directions API
-        map.on('load', async () => {
-            try {
-                const res = await fetch(
-                    `https://api.mapbox.com/directions/v5/mapbox/driving/${warehouseLng},${warehouseLat};${deliveryLng},${deliveryLat}?geometries=geojson&access_token=${MAPBOX_TOKEN}`
-                );
-                const data = await res.json();
-                const route = data.routes[0].geometry;
+                // Draw route line via Directions API
+                map.on('load', async () => {
+                    try {
+                        const res = await fetch(
+                            `https://api.mapbox.com/directions/v5/mapbox/driving/${warehouseLng},${warehouseLat};${deliveryLng},${deliveryLat}?geometries=geojson&access_token=${MAPBOX_TOKEN}`
+                        );
+                        const data = await res.json();
+                        const route = data.routes[0].geometry;
 
-                map.addSource('route', { type: 'geojson', data: { type: 'Feature', geometry: route } });
-                map.addLayer({
-                    id: 'route',
-                    type: 'line',
-                    source: 'route',
-                    layout: { 'line-join': 'round', 'line-cap': 'round' },
-                    paint: { 'line-color': '#FF6B35', 'line-width': 5, 'line-opacity': 0.8 }
+                        map.addSource('route', { type: 'geojson', data: { type: 'Feature', geometry: route } });
+                        map.addLayer({
+                            id: 'route',
+                            type: 'line',
+                            source: 'route',
+                            layout: { 'line-join': 'round', 'line-cap': 'round' },
+                            paint: { 'line-color': '#FF6B35', 'line-width': 5, 'line-opacity': 0.8 }
+                        });
+
+                        // Fit map to show both markers + route
+                        const bounds = new mapboxgl.LngLatBounds();
+                        route.coordinates.forEach(c => bounds.extend(c));
+                        map.fitBounds(bounds, { padding: 60 });
+                    } catch (e) {
+                        console.error('Route error:', e);
+                        // Fallback: just fit markers
+                        const bounds = new mapboxgl.LngLatBounds()
+                            .extend([warehouseLng, warehouseLat])
+                            .extend([deliveryLng, deliveryLat]);
+                        map.fitBounds(bounds, { padding: 60 });
+                    }
                 });
-
-                // Fit map to show both markers + route
-                const bounds = new mapboxgl.LngLatBounds();
-                route.coordinates.forEach(c => bounds.extend(c));
-                map.fitBounds(bounds, { padding: 60 });
-            } catch (e) {
-                console.error('Route error:', e);
-                // Fallback: just fit markers
-                const bounds = new mapboxgl.LngLatBounds()
-                    .extend([warehouseLng, warehouseLat])
-                    .extend([deliveryLng, deliveryLat]);
-                map.fitBounds(bounds, { padding: 60 });
-            }
-        });
-    });
-<?php endif; ?>
+            });
+        <?php endif; ?>
 
         // Add smooth scroll animation for page load
         document.addEventListener('DOMContentLoaded', function () {

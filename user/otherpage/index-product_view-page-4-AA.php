@@ -401,7 +401,7 @@ $is_guest = !isset($_SESSION['user_id']);
     <meta name="user-email" content="<?= htmlspecialchars($_SESSION['user_email'] ?? '') ?>">
     <meta name="user-name" content="<?= htmlspecialchars($_SESSION['user_name'] ?? '') ?>">
   <?php endif; ?>
-  <link rel="icon" type="image/png" sizes="96x96" href="../img/favicon.ico">
+  <?php include ROOT_PATH . '/user/navbar/top.php'; ?>
   <style>
     footer * {
       font-family: 'Plus Jakarta Sans', sans-serif;
@@ -1019,7 +1019,7 @@ $is_guest = !isset($_SESSION['user_id']);
 </head>
 
 <body class="">
-  <?php include ROOT_PATH . '/user/navbar/top.php'; ?>
+ 
   <!-- Breadcrumb -->
   <nav class="bg-white border-b border-gray-200 px-4 py-3">
     <div class="container mx-auto">

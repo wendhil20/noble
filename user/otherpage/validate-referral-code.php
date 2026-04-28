@@ -3,7 +3,7 @@ session_name("nobleuser");
 session_start();
 header('Content-Type: application/json');
 
-include '../../connection/connect.php';
+include ROOT_PATH . '/connection/connect.php';
 
 $response = ['valid' => false, 'message' => 'Invalid code'];
 

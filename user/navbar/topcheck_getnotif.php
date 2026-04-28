@@ -2,7 +2,7 @@
 //topcheck_getnotif.php
 session_name("nobleuser");
 session_start();
-include '../../connection/connect.php';
+include ROOT_PATH . '/connection/connect.php';
 
 // Kung walang session, wag mag error – return empty data lang
 if (!isset($_SESSION['user_id'])) {

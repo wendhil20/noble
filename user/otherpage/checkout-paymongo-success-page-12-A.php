@@ -392,7 +392,7 @@ if ($order && !empty($order['reference_no'])) {
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <link rel="icon" type="image/png" sizes="96x96" href="../img/favicon.ico">
+    <?php include ROOT_PATH . '/user/navbar/top.php'; ?>
     <title>Payment <?= isset($show_waiting) ? 'Processing' : ($payment_success ? 'Successful' : 'Failed') ?> - Noble Home</title>
     <style>
         body { font-family: 'Montserrat', sans-serif; }
@@ -404,7 +404,7 @@ if ($order && !empty($order['reference_no'])) {
 </head>
 <body class="bg-white min-h-screen">
 
-<?php include ROOT_PATH . '/user/navbar/top.php'; ?>
+
 
 <div class="max-w-4xl mx-auto py-12 px-4">
 

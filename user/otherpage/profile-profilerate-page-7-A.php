@@ -73,5 +73,5 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     }
 }
 
-header("Location: index-profilepersonal-page-7.php?user_id=" . $user_id);
+header("Location: " . BASE_URL . "/profile?user_id=" . $user_id);
 exit;

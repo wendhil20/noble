@@ -2,7 +2,7 @@
 // topcheck_getmarked.php
 session_name("nobleuser");
 session_start();
-include '../../connection/connect.php';
+include ROOT_PATH . '/connection/connect.php';
 
 if (!isset($_SESSION['user_id'])) {
     http_response_code(403);

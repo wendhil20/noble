@@ -66,8 +66,8 @@ if (!empty($product_ids)) {
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <link rel="icon" type="image/png" sizes="96x96" href="../img/favicon.ico">
     <title>Product Comparison</title>
+    <?php include ROOT_PATH . '/user/navbar/top.php'; ?>
     <style>
         * {
             font-family: 'Roboto', sans-serif;
@@ -103,7 +103,7 @@ if (!empty($product_ids)) {
     </style>
 </head>
 <body class="bg-gray-50">
-    <?php include '../navbar/top.php'; ?>
+
 
     <!-- Hero Section -->
     <div class="bg-black text-white py-6">

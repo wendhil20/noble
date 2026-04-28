@@ -213,6 +213,7 @@ function getReplacementBadge($replacement_status)
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <link rel="icon" type="image/png" sizes="96x96" href="../img/favicon.ico">
     <title>User Profile</title>
+    <?php include ROOT_PATH . '/user/navbar/top.php'; ?>
     <style>
         @keyframes fadeIn {
             from {
@@ -283,8 +284,7 @@ function getReplacementBadge($replacement_status)
 </head>
 
 <body class="min-h-screen bg-gray-50 " style="font-family: 'Montserrat', sans-serif; color: #2f1200">
-    <?php include ROOT_PATH . '/user/navbar/top.php'; ?>
-    <?php include ROOT_PATH . '/user/otherpage/push-notification.php'; ?>
+    
 
     <!-- Professional Header -->
     <div class="bg-black text-white shadow-lg">

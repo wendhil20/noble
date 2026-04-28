@@ -342,11 +342,12 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Complete Your Profile</title>
+     <?php include ROOT_PATH . '/user/navbar/top.php'; ?>
    <script src="https://www.google.com/recaptcha/api.js" async defer></script>
 </head>
 
 <body style="font-family: 'Montserrat', sans-serif;">
-    <?php include ROOT_PATH . '/user/navbar/top.php'; ?>
+   
   <!-- Breadcrumb -->
   <nav class="bg-white border-b border-gray-200 px-4 py-3">
     <div class="container mx-auto">

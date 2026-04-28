@@ -72,6 +72,7 @@ if (!$viewing_inspiration) {
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title><?php echo $viewing_inspiration ? htmlspecialchars($inspiration['name']) : 'Inspirations'; ?></title>
+     <?php include ROOT_PATH . '/user/navbar/top.php' ?>
     <style>
         .swiper-image {
             display: none;
@@ -172,7 +173,7 @@ if (!$viewing_inspiration) {
 </head>
 
 <body class="bg-white min-h-screen" style="color: #3d2f26">
-    <?php include ROOT_PATH . '/user/navbar/top.php' ?>
+   
 
     <?php if ($viewing_inspiration && $inspiration): ?>
         <!-- DETAIL VIEW -->

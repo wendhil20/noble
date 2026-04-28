@@ -61,6 +61,8 @@ try {
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Verification Pending</title>
+    
+    <?php include ROOT_PATH . '/user/navbar/top.php'; ?>
     <style>
         @keyframes spin-slow {
             from { transform: rotate(0deg); }
@@ -87,7 +89,6 @@ try {
 </head>
 <body class="bg-slate-50 min-h-screen font-sans antialiased">
 
-    <?php include ROOT_PATH . '/user/navbar/top.php'; ?>
 
     <div class="min-h-screen flex items-center justify-center px-4 py-16">
         <div class="w-full max-w-lg">

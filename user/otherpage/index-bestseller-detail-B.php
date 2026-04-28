@@ -57,6 +57,7 @@ function formatViewCount($count) {
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title><?= htmlspecialchars($bestseller['title']) ?> - Noble Hardware</title>
+    <?php include ROOT_PATH . '/user/navbar/top.php'; ?>
     <style>
 
         .animate-float {
@@ -111,7 +112,6 @@ function formatViewCount($count) {
 
 <body class="">
 
-    <?php include ROOT_PATH . '/user/navbar/top.php'; ?>
 
     <?php
     // Fetch product data with stats

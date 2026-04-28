@@ -15,10 +15,12 @@ if (isset($_SESSION['user_id']) && !empty($_SESSION['user_id'])) {
 }
 
 // Include the banner promotion
-include 'index-promotion-banner-front.php';
+include ROOT_PATH . '/user/otherpage/index-promotion-banner-front.php';
+
 
 // Include the handler
-include 'index-recent_views_handler-page-14.php';
+include ROOT_PATH . '/user/otherpage/index-recent_views_handler-page-14.php';
+
 
 // Fetch recent views
 $recent_views = getRecentViews($conn, 10);
@@ -329,8 +331,6 @@ $bestsellerData = $bestsellerItems->fetch_all(MYSQLI_ASSOC);
 <body class="">
 
     <?php include ROOT_PATH . '/user/navbar/top.php'; ?>
-
-    <?php include ROOT_PATH . '/user/otherpage/push-notification.php'; ?>
 
     <?php include ROOT_PATH . '/user/otherpage/index-flash_notification-D.php'; ?>
 
@@ -881,7 +881,7 @@ $bestsellerData = $bestsellerItems->fetch_all(MYSQLI_ASSOC);
         });
     </script>
 
-    <?php include 'index-promotion-discount-front.php'; ?>
+    <?php include ROOT_PATH . '/user/otherpage/index-promotion-discount-front.php'; ?>
 
     <?php $row_count = mysqli_num_rows($material_resultstwo); ?>
     <section class="px-4 sm:px-5 lg:px-7 py-4 bg-white">

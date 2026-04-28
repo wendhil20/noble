@@ -248,6 +248,8 @@ if ($_POST && isset($_POST['add_address'])) {
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width,initial-scale=1.0" />
     <title><?= $is_edit_mode ? 'Edit Billing Address' : 'Add Billing Address' ?></title>
+    <link href="https://api.mapbox.com/mapbox-gl-js/v3.3.0/mapbox-gl.css" rel="stylesheet" />
+<script src="https://api.mapbox.com/mapbox-gl-js/v3.3.0/mapbox-gl.js"></script>
     <style>
         * {
             font-family: 'Plus Jakarta Sans', sans-serif;

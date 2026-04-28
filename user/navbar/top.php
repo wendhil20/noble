@@ -157,20 +157,22 @@ $uri = trim($uri, '/');
 ?>
 
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/swiper@11/swiper-bundle.min.css" />
+
 <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap"
   rel="stylesheet" />
+
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-<link href="<?=BASE_URL?>/output.css" rel="stylesheet">
-<link href="https://api.mapbox.com/mapbox-gl-js/v3.3.0/mapbox-gl.css" rel="stylesheet" />
-<script src="https://cdn.jsdelivr.net/npm/@studio-freight/lenis@1.0.42/dist/lenis.min.js"></script>
+
+<link href="<?= BASE_URL ?>/output.css" rel="stylesheet">
+
 <script src="https://unpkg.com/aos@2.3.4/dist/aos.js"></script>
+
 <script src="https://cdn.jsdelivr.net/npm/dompurify@3.0.6/dist/purify.min.js"></script>
-<script src="https://www.google.com/recaptcha/api.js" async defer></script>
-<script src="https://api.mapbox.com/mapbox-gl-js/v3.3.0/mapbox-gl.js"></script>
+
 <script src="https://cdn.jsdelivr.net/npm/swiper@11/swiper-bundle.min.js"></script>
+
 <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js"></script>
-<script src="https://cdn.socket.io/4.7.2/socket.io.min.js"></script>
-<script src="https://unpkg.com/lucide@latest"></script>
+
 <script>
   // Load AOS only if elements need it
   window.addEventListener('load', () => {
@@ -771,13 +773,13 @@ $uri = trim($uri, '/');
 
         </a>
 
-        <a href="<?= BASE_URL ?>/findprofessional" onclick="navigateWithLoading('<?= BASE_URL ?>/findprofessional')"
-          class="hidden xl:block text-lg text-black font-semibold hover:bg-gray-100 rounded-lg px-2 py-1 <?= $uri === 'findprofessional' ? 'text-orange-600 underline' : 'text-black' ?>">
+        <a href="<?= BASE_URL ?>/15" onclick="navigateWithLoading('<?= BASE_URL ?>/15')"
+          class="hidden xl:block text-lg text-black font-semibold hover:bg-gray-100 rounded-lg px-2 py-1">
           Find Professional
         </a>
 
-        <a href="<?= BASE_URL ?>/inspiration" onclick="navigateWithLoading('<?= BASE_URL ?>/inspiration')"
-          class="hidden xl:block text-lg text-black font-semibold hover:bg-gray-100 rounded-lg px-2 py-1 <?= $uri === 'inspiration' ? 'text-orange-600 underline' : 'text-black' ?>">
+        <a href="<?= BASE_URL ?>/18" onclick="navigateWithLoading('<?= BASE_URL ?>/18')"
+          class="hidden xl:block text-lg text-black font-semibold hover:bg-gray-100 rounded-lg px-2 py-1">
           Inspiration
         </a>
 
@@ -900,7 +902,7 @@ $uri = trim($uri, '/');
       selectedSubcategory = null;
       searchTerm = '';
     }, 200);
-  " class="hover:bg-gray-100 rounded-lg px-2 py-1 font-semibold flex items-center gap-2 <?= $uri === 'shop' ? 'text-orange-600 underline' : 'text-black' ?> hover:text-orange-500 transition text-lg relative">
+  " class="hover:bg-gray-100 rounded-lg px-2 py-1 font-semibold flex items-center gap-2 <?= basename($_SERVER['PHP_SELF']) == 'index-shop-page-2.php' ? 'text-orange-600 underline ' : 'text-black' ?> hover:text-orange-500 transition text-lg relative">
 
             Products
             <svg class="w-4 h-4 transition-transform" :class="productsOpen ? 'rotate-180' : ''" fill="none"
@@ -1549,7 +1551,7 @@ $uri = trim($uri, '/');
       this.saveSearch(query);
       this.showHistory = false;
       this.showDropdown = false;
-      window.location.href = '<?= BASE_URL ?>/shop?search=' + encodeURIComponent(query);
+      window.location.href = 'index-shop-page-2.php?search=' + encodeURIComponent(query);
   }
  }" @click.away="showHistory = false; showDropdown = false"
           class="relative w-64 md:w-96 font-mont hidden xl:block flex-1 max-w-2xl">
@@ -1927,8 +1929,7 @@ $uri = trim($uri, '/');
 
                 <!-- Additional Links -->
                 <div class="text-center text-xs mb-2">
-                  <a href="<?= BASE_URL ?>/forgotpass" class="text-orange-500 hover:underline">Forgot
-                    password?</a>
+                  <a href="../forgot_password" class="text-orange-500 hover:underline">Forgot password?</a>
                 </div>
 
                 <div class="text-center text-xs mb-4">
@@ -2651,7 +2652,7 @@ $uri = trim($uri, '/');
 
             <div class="text-center space-y-3 pt-4 border-t border-gray-200">
               <div>
-                <a href="<?= BASE_URL ?>/forgotpass" class="text-orange-500 hover:underline text-sm font-medium">Forgot
+                <a href="../forgot_password.php" class="text-orange-500 hover:underline text-sm font-medium">Forgot
                   password?</a>
               </div>
               <div>
@@ -2697,7 +2698,7 @@ $uri = trim($uri, '/');
 
         <!-- Modal Content -->
         <div class="p-6">
-          <form action="<?= BASE_URL ?>/register" method="POST" class="space-y-4">
+          <form action="../register.php" method="POST" class="space-y-4">
             <div>
               <label for="name" class="block text-sm font-medium text-gray-700 mb-2">Full Name</label>
               <input type="text" name="name" id="name" required
@@ -2956,8 +2957,6 @@ $uri = trim($uri, '/');
 
 <script
   src="<?= BASE_URL ?>/user/navbar/js/top-obf.js?v=<?= file_exists(ROOT_PATH . '/user/navbar/js/top-obf.js') ? md5_file(ROOT_PATH . '/user/navbar/js/top-obf.js') : '1' ?>"></script>
-<script
-  src="<?= BASE_URL ?>/user/navbar/js/noble-fcm.js?v=<?= file_exists(ROOT_PATH . '/user/navbar/js/noble-fcm.js') ? filemtime(ROOT_PATH . '/user/navbar/js/noble-fcm.js') : '1' ?>"></script>
 
 <script>
   // Wait para ready na lahat bago mag-initFCM
@@ -2978,8 +2977,6 @@ $uri = trim($uri, '/');
 
 <script>
 
-  const BASE_URL = "<?= BASE_URL ?>";
-
   function showGuestLoginAlert() {
     showNotification('Please login to proceed', 'info');
 
@@ -2989,10 +2986,6 @@ $uri = trim($uri, '/');
     }, 500);
   }
 
-  lucide.createIcons(); // initialize icons
-
-  // ✅ SIMPLE FIX - Only fetch when there's data
-  // Replace existing notification system with this
 
   document.addEventListener("alpine:init", () => {
     Alpine.data("notificationSystem", () => ({
@@ -3012,7 +3005,7 @@ $uri = trim($uri, '/');
 
         this.isFetching = true;
 
-        fetch(BASE_URL + "/getnotif", {
+        fetch("<?= BASE_URL ?>/getnotif", {
           credentials: 'include',
           signal: AbortSignal.timeout(10000)
         })
@@ -3059,7 +3052,7 @@ $uri = trim($uri, '/');
       },
 
       markAsRead() {
-        fetch(BASE_URL + "/getmark", {
+        fetch("<?= BASE_URL ?>/getmark", {
           method: "POST",
           credentials: 'include'
         })
@@ -3074,7 +3067,7 @@ $uri = trim($uri, '/');
       clearNotifications() {
         if (!confirm('Clear all notifications?')) return;
 
-        fetch(BASE_URL + "/clearall", {
+        fetch("<?= BASE_URL ?>/clearall", {
           method: "POST",
           credentials: 'include'
         })

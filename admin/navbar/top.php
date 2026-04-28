@@ -472,7 +472,7 @@ if (!isset($_SESSION['noble_name']) || !isset($_SESSION['noble_lvl']) || !isset(
                                             Banner Discount
                                         </a>
 
-                                        <a href="../supplier_management/suppliers_list"
+                                        <a href="../supplier_management/suppliers_list.php"
                                             class="qa-item flex items-center gap-2.5 px-2.5 py-2 rounded-[10px] text-[13px] text-gray-600 hover:bg-orange-50 hover:text-orange-600 transition-all duration-150 group">
                                             <div
                                                 class="w-[30px] h-[30px] rounded-lg bg-gray-100 group-hover:bg-orange-100 flex items-center justify-center text-sm text-gray-500 group-hover:text-orange-500 transition-colors shrink-0">
@@ -499,7 +499,7 @@ if (!isset($_SESSION['noble_name']) || !isset($_SESSION['noble_lvl']) || !isset(
                                             Bestseller Management
                                         </a>
 
-                                        <a href="../qrcodeperproduct/qrcodeitem"
+                                        <a href="../qrcodeperproduct/qrcodeitem.php"
                                             class="qa-item flex items-center gap-2.5 px-2.5 py-2 rounded-[10px] text-[13px] text-gray-600 hover:bg-orange-50 hover:text-orange-600 transition-all duration-150 group">
                                             <div
                                                 class="w-[30px] h-[30px] rounded-lg bg-gray-100 group-hover:bg-orange-100 flex items-center justify-center text-sm text-gray-500 group-hover:text-orange-500 transition-colors shrink-0">
@@ -508,7 +508,7 @@ if (!isset($_SESSION['noble_name']) || !isset($_SESSION['noble_lvl']) || !isset(
                                             Product QR Codes
                                         </a>
 
-                                        <a href="../shop/quantity-management"
+                                        <a href="../shop/quantity-management.php"
                                             class="qa-item flex items-center gap-2.5 px-2.5 py-2 rounded-[10px] text-[13px] text-gray-600 hover:bg-orange-50 hover:text-orange-600 transition-all duration-150 group">
                                             <div
                                                 class="w-[30px] h-[30px] rounded-lg bg-gray-100 group-hover:bg-orange-100 flex items-center justify-center text-sm text-gray-500 group-hover:text-orange-500 transition-colors shrink-0">
@@ -517,7 +517,7 @@ if (!isset($_SESSION['noble_name']) || !isset($_SESSION['noble_lvl']) || !isset(
                                             Minimum Order Quantity
                                         </a>
 
-                                        <a href="../shop/promotion-discount"
+                                        <a href="../shop/promotion-discount.php"
                                             class="qa-item flex items-center gap-2.5 px-2.5 py-2 rounded-[10px] text-[13px] text-gray-600 hover:bg-orange-50 hover:text-orange-600 transition-all duration-150 group">
                                             <div
                                                 class="w-[30px] h-[30px] rounded-lg bg-gray-100 group-hover:bg-orange-100 flex items-center justify-center text-sm text-gray-500 group-hover:text-orange-500 transition-colors shrink-0">
@@ -753,7 +753,7 @@ if (!isset($_SESSION['noble_name']) || !isset($_SESSION['noble_lvl']) || !isset(
                                     <?php endif; ?>
 
                                     <?php if (hasAnyRole(['']) || !hasSubrole([''])): ?>
-                                        <a href="../accountant/accountant_view_orders"
+                                        <a href="../accountant/accountant_view_orders.php"
                                             class="quick-action-item flex items-center space-x-3 px-3 py-2.5 text-sm text-gray-700 hover:bg-orange-50 hover:text-orange-600 rounded-lg transition-all duration-150">
                                             <i class="ri-folder-shield-2-line text-lg"></i>
                                             <span>Dashboard Document Controller</span>
@@ -761,7 +761,7 @@ if (!isset($_SESSION['noble_name']) || !isset($_SESSION['noble_lvl']) || !isset(
                                     <?php endif; ?>
 
                                     <?php if (hasAnyRole(['']) || !hasSubrole(['document_controller'])): ?>
-                                        <a href="../accountant/approve_purchase_orders_accountant"
+                                        <a href="../accountant/approve_purchase_orders_accountant.php"
                                             class="quick-action-item flex items-center space-x-3 px-3 py-2.5 text-sm text-gray-700 hover:bg-orange-50 hover:text-orange-600 rounded-lg transition-all duration-150">
                                             <i class="ri-checkbox-circle-line text-lg"></i>
                                             <span>Project Approval</span>
@@ -777,14 +777,14 @@ if (!isset($_SESSION['noble_name']) || !isset($_SESSION['noble_lvl']) || !isset(
                                     <?php endif; ?>
 
                                     <?php if (hasAnyRole([''])): ?>
-                                        <a href="../accountant/accountant_view_orders"
+                                        <a href="../accountant/accountant_view_orders.php"
                                             class="quick-action-item flex items-center space-x-3 px-3 py-2.5 text-sm text-gray-700 hover:bg-orange-50 hover:text-orange-600 rounded-lg transition-all duration-150">
                                             <i class="ri-money-dollar-circle-line text-lg"></i>
                                             <span>Dashboard</span>
                                         </a>
                                     <?php endif; ?>
 
-                                    <a href="../accountant/document_controller_view_orders"
+                                    <a href="../accountant/document_controller_view_orders.php"
                                         class="quick-action-item flex items-center space-x-3 px-3 py-2.5 text-sm text-gray-700 hover:bg-orange-50 hover:text-orange-600 rounded-lg transition-all duration-150">
                                         <i class="ri-file-text-line text-lg"></i>
                                         <span>Project Document</span>
@@ -997,7 +997,7 @@ if (!isset($_SESSION['noble_name']) || !isset($_SESSION['noble_lvl']) || !isset(
 
                         <!-- Menu Items -->
                         <div class="p-2">
-                            <a href="../../loginpage/profile"
+                            <a href="../../loginpage/profile.php"
                                 class="flex items-center gap-2.5 px-3 py-2.5 rounded-xl text-[13.5px] text-gray-600 hover:bg-orange-50 hover:text-orange-600 transition-all duration-150 group">
                                 <span
                                     class="w-8 h-8 rounded-lg bg-gray-100 group-hover:bg-orange-100 flex items-center justify-center transition-colors">
@@ -1006,7 +1006,7 @@ if (!isset($_SESSION['noble_name']) || !isset($_SESSION['noble_lvl']) || !isset(
                                 Profile Settings
                             </a>
 
-                            <a href="../../loginpage/security"
+                            <a href="../../loginpage/security.php"
                                 class="flex items-center gap-2.5 px-3 py-2.5 rounded-xl text-[13.5px] text-gray-600 hover:bg-orange-50 hover:text-orange-600 transition-all duration-150 group">
                                 <span
                                     class="w-8 h-8 rounded-lg bg-gray-100 group-hover:bg-orange-100 flex items-center justify-center transition-colors">

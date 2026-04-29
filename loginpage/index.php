@@ -250,8 +250,8 @@ $conn->close();
     </style>
 </head>
 
-<body class="min-h-screen flex items-center justify-center p-4 relative ">
-
+<body class="min-h-screen flex items-center justify-center p-4 relative"
+      style="background-image: url('../uploads/building2.png'); background-size: cover; background-position: center; background-repeat: no-repeat; background-attachment: fixed;">
     <!-- Toast Notifications -->
     <div id="toast" class="toast hidden">
         <div class="bg-white border border-red-200 rounded-lg shadow-lg p-4 max-w-sm">
@@ -270,6 +270,8 @@ $conn->close();
             </div>
         </div>
     </div>
+
+    
 
     <!-- ✅ Force Login Modal -->
     <div id="forceLoginModal" class="fixed inset-0 z-50 hidden">
@@ -306,30 +308,33 @@ $conn->close();
             </div>
         </div>
     </div>
+    <!-- Dark Overlay -->
+<div class="absolute inset-0" style="background: rgba(0, 0, 0, 0.55); "></div>
 
-    <!-- Subtle Background Pattern -->
-    <div class="absolute inset-0 grid-pattern opacity-30"></div>
+<!-- Subtle Grid Pattern on top of overlay -->
+<div class="absolute inset-0 grid-pattern" style="opacity: 0.08;"></div>
+
 
     <!-- Main Container -->
     <div class="relative z-10 w-full max-w-md">
 
         <!-- Logo and Company Section -->
         <div class="text-center mb-8 fade-in-up">
-            <div class="inline-flex items-center justify-center w-[130px] h-[60px] logo-animation bg-white p-1" >
-                <img src="../user/img/logo.png" alt="Logo" class="w-full h-full object-contain border" />
+            <div class="inline-flex items-center justify-center w-[130px] h-[60px] logo-animation  p-1" >
+                <img src="../user/img/logo.png" alt="Logo" class="w-full h-full object-contain " />
             </div>
 
-            <h1 class="text-2xl font-semibold text-black mb-1">Admin panel</h1>
-            <p class="text-black">Secure access to your dashboard</p>
+            <h1 class="text-2xl font-semibold text-white mb-1">Admin panel</h1>
+            <p class="text-white">Secure access to your dashboard</p>
         </div>
 
         <!-- Login Card -->
-        <div class="bg-white p-8 fade-in-up" style="animation-delay: 0.1s">
+        <div class=" p-8 fade-in-up" style="animation-delay: 0.1s">
 
             <!-- Form Header -->
             <div class="mb-6">
-                <h2 class="text-xl font-bold text-orange-400 mb-1 ">Sign in to your account</h2>
-                <p class="text-sm text-gray-600 ">Please enter your credentials to continue</p>
+                <h2 class="text-xl font-semibold text-white mb-1 ">Sign in to your account</h2>
+                <p class="text-sm text-white ">Please enter your credentials to continue</p>
             </div>
 
             <!-- Error Message -->
@@ -345,7 +350,7 @@ $conn->close();
 
                 <!-- Email Field -->
                 <div>
-                    <label for="email" class="block text-sm font-medium text-gray-700 mb-1">
+                    <label for="email" class="block text-sm font-medium text-white mb-1">
                         Email Address
                     </label>
                     <div class="relative">
@@ -364,7 +369,7 @@ $conn->close();
 
                 <!-- Password Field -->
                 <div>
-                    <label for="password" class="block text-sm font-medium text-gray-700 mb-1">
+                    <label for="password" class="block text-sm font-medium text-white mb-1">
                         Password
                     </label>
                     <div class="relative">
@@ -394,7 +399,7 @@ $conn->close();
                                type="checkbox" 
                                value="1"
                                class="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded">
-                        <label for="remember_me" class="ml-2 block text-sm text-gray-700">
+                        <label for="remember_me" class="ml-2 block text-sm text-white">
                             Remember me for 30 days
                         </label>
                     </div>
@@ -419,7 +424,7 @@ $conn->close();
 
                 <!-- Security Notice -->
                 <div class="pt-4 border-t border-gray-200">
-                    <div class="flex items-center justify-center text-xs text-gray-500">
+                    <div class="flex items-center justify-center text-xs text-white">
                         <i class="ri-shield-check-line mr-1"></i>
                         <span>Secured with 256-bit SSL encryption</span>
                     </div>
@@ -428,8 +433,8 @@ $conn->close();
         </div>
 
         <!-- Footer -->
-        <div class="text-center mt-6 text-sm text-gray-500 fade-in-up" style="animation-delay: 0.2s">
-            <p>© 2025 Your Company. All rights reserved.</p>
+        <div class="text-center mt-6 text-sm text-white fade-in-up" style="animation-delay: 0.2s">
+            <p>©<?php echo date('Y'); ?>  Your Company. All rights reserved.</p>
         </div>
     </div>
 

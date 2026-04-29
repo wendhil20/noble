@@ -75,6 +75,20 @@ if (isset($_GET['fetch'])) {
             </div>
         </div>
 
+        <!-- Search Bar -->
+        <div class="mb-4">
+            <div class="relative max-w-sm">
+                <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                    <svg class="w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                            d="M21 21l-4.35-4.35M17 11A6 6 0 1 1 5 11a6 6 0 0 1 12 0z" />
+                    </svg>
+                </div>
+                <input type="text" id="search-input" placeholder="Search by name, email, company..."
+                    class="w-full pl-9 pr-4 py-2 text-sm border border-gray-200 rounded-lg bg-white focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition" />
+            </div>
+        </div>
+
         <!-- Table -->
         <div class="bg-white border border-gray-200 rounded-xl shadow-sm">
             <div class="overflow-x-auto">
@@ -104,20 +118,13 @@ if (isset($_GET['fetch'])) {
         </div>
 
     </div>
-
     <script>
+        let allData = [];
+
         function formatDate(dateStr) {
             if (!dateStr) return '—';
             const d = new Date(dateStr);
             return d.toLocaleDateString('en-US', { month: 'short', day: '2-digit', year: 'numeric' });
-        }
-
-        function formatTime(timeStr) {
-            if (!timeStr) return '—';
-            const [h, m] = timeStr.split(':');
-            const date = new Date();
-            date.setHours(h, m);
-            return date.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' });
         }
 
         function escapeHtml(str) {
@@ -125,16 +132,68 @@ if (isset($_GET['fetch'])) {
             return str.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
         }
 
+        function renderTable(data) {
+            const tbody = document.getElementById('inquiry-tbody');
+            const countEl = document.getElementById('record-count');
+            countEl.textContent = data.length + ' record' + (data.length !== 1 ? 's' : '');
+
+            if (data.length === 0) {
+                tbody.innerHTML = `<tr><td colspan="9" class="px-4 py-8 text-center text-gray-400 text-sm">No inquiries found.</td></tr>`;
+                return;
+            }
+
+            tbody.innerHTML = data.map((row) => `
+            <tr
+                class="hover:bg-blue-50 cursor-pointer transition"
+                onclick="window.location.href='backtracking_view.php?id=${encodeURIComponent(row.id)}'"
+                title="View profile"
+            >
+                <td class="px-4 py-3">
+                    <span class="inline-block bg-blue-50 text-blue-700 text-xs font-mono font-medium px-2 py-1 rounded">
+                        ${escapeHtml(row.reference_no)}
+                    </span>
+                </td>
+                <td class="px-4 py-3">
+                    <span class="inline-flex items-center justify-center w-7 h-7 rounded-full text-xs font-bold
+                        ${row.inquiry_number === 1 ? 'bg-gray-100 text-gray-500' : 'bg-red-500 text-white'}">
+                        ${row.inquiry_number}
+                    </span>
+                </td>
+                <td class="px-4 py-3 font-medium text-blue-600 hover:underline">${escapeHtml(row.name)}</td>
+                <td class="px-4 py-3 text-gray-600">${escapeHtml(row.email)}</td>
+                <td class="px-4 py-3 text-gray-600">${escapeHtml(row.contact)}</td>
+                <td class="px-4 py-3 text-gray-600">${escapeHtml(row.company_name)}</td>
+                <td class="px-4 py-3 text-gray-600">${escapeHtml(row.company_address)}</td>
+                <td class="px-4 py-3 text-gray-600 whitespace-nowrap">${formatDate(row.inquiry_date)}</td>
+            </tr>
+        `).join('');
+        }
+
+        function applySearch() {
+            const query = document.getElementById('search-input').value.trim().toLowerCase();
+            if (!query) {
+                renderTable(allData);
+                return;
+            }
+            const filtered = allData.filter(row =>
+                (row.name || '').toLowerCase().includes(query) ||
+                (row.email || '').toLowerCase().includes(query) ||
+                (row.contact || '').toLowerCase().includes(query) ||
+                (row.company_name || '').toLowerCase().includes(query) ||
+                (row.company_address || '').toLowerCase().includes(query) ||
+                (row.reference_no || '').toLowerCase().includes(query)
+            );
+            renderTable(filtered);
+        }
+
         function fetchInquiries() {
             fetch('?fetch=1')
                 .then(res => res.json())
                 .then(data => {
-                    const tbody = document.getElementById('inquiry-tbody');
-                    const countEl = document.getElementById('record-count');
                     const updatedEl = document.getElementById('last-updated');
                     const pulse = document.getElementById('pulse');
 
-                    countEl.textContent = data.length + ' record' + (data.length !== 1 ? 's' : '');
+                    allData = data;
 
                     const now = new Date();
                     updatedEl.textContent = 'Updated ' + now.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', second: '2-digit' });
@@ -142,36 +201,7 @@ if (isset($_GET['fetch'])) {
                     pulse.classList.remove('bg-red-400');
                     pulse.classList.add('bg-green-400');
 
-                    if (data.length === 0) {
-                        tbody.innerHTML = `<tr><td colspan="9" class="px-4 py-8 text-center text-gray-400 text-sm">No inquiries found.</td></tr>`;
-                        return;
-                    }
-
-                    tbody.innerHTML = data.map((row, i) => `
-                        <tr
-                            class="hover:bg-blue-50 cursor-pointer transition"
-                            onclick="window.location.href='backtracking_view.php?id=${encodeURIComponent(row.id)}'"
-                            title="View profile"
-                        >
-                            <td class="px-4 py-3">
-                                <span class="inline-block bg-blue-50 text-blue-700 text-xs font-mono font-medium px-2 py-1 rounded">
-                                    ${escapeHtml(row.reference_no)}
-                                </span>
-                            </td>
-                            <td class="px-4 py-3">
-                                <span class="inline-flex items-center justify-center w-7 h-7 rounded-full text-xs font-bold
-                                    ${row.inquiry_number === 1 ? 'bg-gray-100 text-gray-500' : 'bg-red-500 text-white'}">
-                                    ${row.inquiry_number}
-                                </span>
-                            </td>
-                            <td class="px-4 py-3 font-medium text-blue-600 hover:underline">${escapeHtml(row.name)}</td>
-                            <td class="px-4 py-3 text-gray-600">${escapeHtml(row.email)}</td>
-                            <td class="px-4 py-3 text-gray-600">${escapeHtml(row.contact)}</td>
-                            <td class="px-4 py-3 text-gray-600">${escapeHtml(row.company_name)}</td>
-                            <td class="px-4 py-3 text-gray-600">${escapeHtml(row.company_address)}</td>
-                            <td class="px-4 py-3 text-gray-600 whitespace-nowrap">${formatDate(row.inquiry_date)}</td>
-                        </tr>
-                    `).join('');
+                    applySearch();
                 })
                 .catch(() => {
                     document.getElementById('pulse').classList.replace('bg-green-400', 'bg-red-400');
@@ -179,10 +209,11 @@ if (isset($_GET['fetch'])) {
                 });
         }
 
+        document.getElementById('search-input').addEventListener('input', applySearch);
+
         fetchInquiries();
         setInterval(fetchInquiries, 5000);
     </script>
-
 </body>
 
 </html>

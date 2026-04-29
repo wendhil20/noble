@@ -537,6 +537,7 @@ while ($row = $display_result->fetch_assoc()) {
             cursor: pointer;
             outline: none;
             transition: box-shadow .15s;
+            color: black;
         }
 
         .tag-select:focus {

@@ -8,7 +8,7 @@ if (!defined('ROOT_PATH')) {
 }
 
 include ROOT_PATH . '/connection/connect.php';
-
+include ROOT_PATH . '/user/navbar/main-tag-helpers.php';
 $total_cart_items = 0;
 $user_id = $_SESSION['user_id'] ?? null;
 
@@ -797,6 +797,9 @@ $uri = trim($uri, '/');
     ps.id as subcategory_id,
     ps.subcategory_name,
     ps.subcategory_slug,
+    c.tag as category_tag,
+ps.tag as subcategory_tag,
+pss.tag as sub_subcategory_tag,
     ps.image_path as sub_image_path,
     pss.id as sub_subcategory_id,
     pss.sub_subcategory_name,
@@ -857,6 +860,7 @@ $uri = trim($uri, '/');
               'name' => $row['category_name'],
               'image_path' => $row['category_image'],
               'product_count' => (int) $row['category_product_count'],
+              'tag' => $row['category_tag'] ?? 'normal',
               'subcategories' => []
             ];
           }
@@ -868,6 +872,7 @@ $uri = trim($uri, '/');
               'slug' => $row['subcategory_slug'],
               'image_path' => $row['sub_image_path'],
               'product_count' => (int) $row['subcategory_product_count'],
+              'tag' => $row['subcategory_tag'] ?? 'normal',
               'sub_subcategories' => []
             ];
           }
@@ -878,6 +883,7 @@ $uri = trim($uri, '/');
               'name' => $row['sub_subcategory_name'],
               'slug' => $row['sub_subcategory_slug'],
               'image_path' => $row['sub_sub_image_path'],
+              'tag' => $row['sub_subcategory_tag'] ?? 'normal',
               'parent_slug' => $row['subcategory_slug'],
               'product_count' => (int) $row['sub_subcategory_product_count']
             ];
@@ -974,7 +980,7 @@ $uri = trim($uri, '/');
                             :class="selectedCategory === 'cat_<?= $category['id'] ?>' ? 'text-orange-500 font-medium' : 'text-gray-800'">
                             <?= htmlspecialchars($category['name']) ?>
                           </div>
-
+                        <?= nav_tag_badge($category['tag'], $conn) ?>
                         </div>
 
                         <svg class="w-3 h-3 shrink-0 transition-colors"
@@ -1051,7 +1057,7 @@ $uri = trim($uri, '/');
                                 :class="selectedSubcategory === 'sub_<?= $sub['id'] ?>' ? 'text-orange-500 font-medium' : 'text-gray-800'">
                                 <?= htmlspecialchars($sub['name']) ?>
                               </div>
-
+<?= nav_tag_badge($category['tag'], $conn) ?>
                             </div>
 
                             <svg class="w-3 h-3 text-gray-400 group-hover:text-orange-500 transition shrink-0"
@@ -1123,7 +1129,7 @@ $uri = trim($uri, '/');
                                     class="text-sm group-hover:text-orange-600 transition font-medium text-gray-800 truncate uppercase">
                                     <?= htmlspecialchars($subsub['name']) ?>
                                   </div>
-
+<?= nav_tag_badge($subsub['tag'], $conn) ?>
                                 </div>
 
                                 <svg class="w-3 h-3 text-gray-400 group-hover:text-orange-600 transition shrink-0" fill="none"

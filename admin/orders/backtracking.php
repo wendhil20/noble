@@ -28,26 +28,67 @@ if (!isset($_SESSION['noble_user'])) {
     exit();
 }
 
+// Generate unique reference number: NH{YEAR}-{10 random digits}
+// Loops until no collision found in DB
+function generate_reference($conn) {
+    $year = date('Y'); // auto-updates every year (2026 → 2027 → etc.)
+    do {
+        $random = str_pad(mt_rand(0, 9999999999), 10, '0', STR_PAD_LEFT);
+        $ref = "NH{$year}-{$random}";
+        $chk = $conn->prepare("SELECT id FROM backtrack WHERE reference_no = ? LIMIT 1");
+        $chk->bind_param("s", $ref);
+        $chk->execute();
+        $chk->store_result();
+        $exists = $chk->num_rows > 0;
+        $chk->close();
+    } while ($exists);
+    return $ref;
+
+}
+
 // Handle form submission (PRG pattern - prevents resubmit on refresh)
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['submit_inquiry'])) {
-    $name         = trim($_POST['name']);
-    $email        = trim($_POST['email']);
-    $contact      = trim($_POST['contact']);
-    $company      = trim($_POST['company_name']);
-    $message      = trim($_POST['message']);
-    $inquiry_date = trim($_POST['inquiry_date']);
-    $inquiry_time = trim($_POST['inquiry_time']);
-    $submitted_by = $_SESSION['noble_user'];
+    $name            = trim($_POST['name']);
+    $email           = trim($_POST['email']);
+    $contact         = trim($_POST['contact']);
+    $company         = trim($_POST['company_name']);
+    $company_address = trim($_POST['company_address']);
+    $message         = trim($_POST['message']);
+    $inquiry_date    = trim($_POST['inquiry_date']);
+    $inquiry_time    = trim($_POST['inquiry_time']);
+    $submitted_by    = $_SESSION['noble_user'];
 
     if (empty($name) || empty($email) || empty($contact) || empty($company) || empty($inquiry_date) || empty($inquiry_time)) {
         $_SESSION['flash_error'] = "Please fill in all required fields.";
     } elseif (!filter_var($email, FILTER_VALIDATE_EMAIL)) {
         $_SESSION['flash_error'] = "Invalid email address.";
     } else {
-        $stmt = $conn->prepare("INSERT INTO backtrack (name, email, contact, company_name, message, inquiry_date, inquiry_time, submitted_by) VALUES (?, ?, ?, ?, ?, ?, ?, ?)");
-        $stmt->bind_param("ssssssss", $name, $email, $contact, $company, $message, $inquiry_date, $inquiry_time, $submitted_by);
+        // Check if same name + email already has an existing reference (returning customer)
+        $existing_ref = null;
+        $chk = $conn->prepare("SELECT reference_no FROM backtrack WHERE name = ? AND email = ? ORDER BY created_at DESC LIMIT 1");
+        $chk->bind_param("ss", $name, $email);
+        $chk->execute();
+        $chk->bind_result($existing_ref);
+        $chk->fetch();
+        $chk->close();
+
+// Always generate a new unique reference number
+$reference_no = generate_reference($conn);
+
+// Count existing inquiries matching same name OR email, then +1
+$count_stmt = $conn->prepare("SELECT COUNT(*) FROM backtrack WHERE name = ? OR email = ?");
+$count_stmt->bind_param("ss", $name, $email);
+$count_stmt->execute();
+$count_stmt->bind_result($existing_count);
+$count_stmt->fetch();
+$count_stmt->close();
+
+$inquiry_number = $existing_count + 1;
+
+$stmt = $conn->prepare("INSERT INTO backtrack (reference_no, name, email, contact, company_name, company_address, message, inquiry_date, inquiry_time, submitted_by, inquiry_number) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)");
+$stmt->bind_param("ssssssssssi", $reference_no, $name, $email, $contact, $company, $company_address, $message, $inquiry_date, $inquiry_time, $submitted_by, $inquiry_number);
         if ($stmt->execute()) {
-            $_SESSION['flash_success'] = "Inquiry submitted successfully!";
+            $_SESSION['flash_success'] = "Inquiry submitted successfully! Reference No: <strong>{$reference_no}</strong>";
         } else {
             $_SESSION['flash_error'] = "Something went wrong. Please try again.";
         }
@@ -85,9 +126,14 @@ if ($result) {
 <div class="max-w-6xl mx-auto px-4 py-8">
 
     <!-- Page Header -->
-    <div class="mb-6">
-        <h1 class="text-2xl font-semibold text-gray-800">Backtrack Inquiry</h1>
-        <p class="text-sm text-gray-500 mt-1">Submit and manage client inquiries</p>
+    <div class="mb-6 flex items-center justify-between">
+        <div>
+            <h1 class="text-2xl font-semibold text-gray-800">Backtrack Inquiry</h1>
+            <p class="text-sm text-gray-500 mt-1">Submit and manage client inquiries</p>
+        </div>
+        <a href="backtrackingboard.php" class="inline-flex items-center gap-2 px-4 py-2 bg-white border border-gray-300 hover:bg-gray-50 active:bg-gray-100 text-gray-700 text-sm font-medium rounded-lg transition shadow-sm">
+            Dashboard
+        </a>
     </div>
 
     <!-- Alert Messages -->
@@ -96,7 +142,7 @@ if ($result) {
         <svg class="w-4 h-4 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/>
         </svg>
-        <?= htmlspecialchars($success_msg) ?>
+        <span><?= $success_msg ?></span>
     </div>
     <?php endif; ?>
     <?php if ($error_msg): ?>
@@ -177,6 +223,20 @@ if ($result) {
                         >
                     </div>
 
+                    <!-- Company Address -->
+                    <div class="md:col-span-2">
+                        <label class="block text-sm font-medium text-gray-600 mb-1">
+                            Company Address
+                        </label>
+                        <input
+                            type="text"
+                            name="company_address"
+                            placeholder="123 Rizal St., Makati City, Metro Manila"
+                            value="<?= isset($_POST['company_address']) ? htmlspecialchars($_POST['company_address']) : '' ?>"
+                            class="w-full px-3 py-2 text-sm border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition"
+                        >
+                    </div>
+
                     <!-- Date -->
                     <div>
                         <label class="block text-sm font-medium text-gray-600 mb-1">
@@ -229,71 +289,6 @@ if ($result) {
                     </button>
                 </div>
             </form>
-        </div>
-    </div>
-
-    <!-- Inquiries Table -->
-    <div class="bg-white border border-gray-200 rounded-xl shadow-sm">
-        <div class="px-6 py-4 border-b border-gray-100 flex items-center justify-between">
-            <h2 class="text-base font-medium text-gray-700">Inquiry Records</h2>
-            <span class="text-xs text-gray-400"><?= count($inquiries) ?> total</span>
-        </div>
-        <div class="overflow-x-auto">
-            <table class="w-full text-sm text-left">
-                <thead class="bg-gray-50 text-xs text-gray-500 uppercase tracking-wide border-b border-gray-100">
-                    <tr>
-                        <th class="px-4 py-3">#</th>
-                        <th class="px-4 py-3">Name</th>
-                        <th class="px-4 py-3">Email</th>
-                        <th class="px-4 py-3">Contact</th>
-                        <th class="px-4 py-3">Company</th>
-                        <th class="px-4 py-3">Message</th>
-                        <th class="px-4 py-3">Inquiry Date</th>
-                        <th class="px-4 py-3">Inquiry Time</th>
-                        <th class="px-4 py-3">Status</th>
-                        <th class="px-4 py-3">Submitted By</th>
-                        <th class="px-4 py-3">Created At</th>
-                    </tr>
-                </thead>
-                <tbody class="divide-y divide-gray-100">
-                    <?php if (empty($inquiries)): ?>
-                    <tr>
-                        <td colspan="11" class="px-4 py-8 text-center text-gray-400 text-sm">No inquiries found.</td>
-                    </tr>
-                    <?php else: ?>
-                    <?php foreach ($inquiries as $i => $row): ?>
-                    <tr class="hover:bg-gray-50 transition">
-                        <td class="px-4 py-3 text-gray-400"><?= $i + 1 ?></td>
-                        <td class="px-4 py-3 font-medium text-gray-800"><?= htmlspecialchars($row['name']) ?></td>
-                        <td class="px-4 py-3 text-gray-600"><?= htmlspecialchars($row['email']) ?></td>
-                        <td class="px-4 py-3 text-gray-600"><?= htmlspecialchars($row['contact']) ?></td>
-                        <td class="px-4 py-3 text-gray-600"><?= htmlspecialchars($row['company_name']) ?></td>
-                        <td class="px-4 py-3 text-gray-500 max-w-xs truncate"><?= htmlspecialchars($row['message'] ?: '—') ?></td>
-                        <td class="px-4 py-3 text-gray-600 whitespace-nowrap"><?= htmlspecialchars(isset($row['inquiry_date']) ? date('M d, Y', strtotime($row['inquiry_date'])) : '—') ?></td>
-                        <td class="px-4 py-3 text-gray-600 whitespace-nowrap"><?= htmlspecialchars(isset($row['inquiry_time']) ? date('h:i A', strtotime($row['inquiry_time'])) : '—') ?></td>
-                        <td class="px-4 py-3">
-                            <?php
-                                $status = $row['status'];
-                                $badge = match($status) {
-                                    'pending'   => 'bg-yellow-50 text-yellow-700 border border-yellow-200',
-                                    'contacted' => 'bg-blue-50 text-blue-700 border border-blue-200',
-                                    'resolved'  => 'bg-green-50 text-green-700 border border-green-200',
-                                    default     => 'bg-gray-100 text-gray-600 border border-gray-200',
-                                };
-                            ?>
-                            <span class="px-2 py-0.5 text-xs font-medium rounded-full <?= $badge ?>">
-                                <?= ucfirst($status) ?>
-                            </span>
-                        </td>
-                        <td class="px-4 py-3 text-gray-500 text-xs"><?= htmlspecialchars($row['submitted_by']) ?></td>
-                        <td class="px-4 py-3 text-gray-400 text-xs whitespace-nowrap">
-                            <?= date('M d, Y h:i A', strtotime($row['created_at'])) ?>
-                        </td>
-                    </tr>
-                    <?php endforeach; ?>
-                    <?php endif; ?>
-                </tbody>
-            </table>
         </div>
     </div>
 

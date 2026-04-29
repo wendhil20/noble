@@ -547,6 +547,14 @@ if (!isset($_SESSION['noble_name']) || !isset($_SESSION['noble_lvl']) || !isset(
                                         <span>Client List</span>
                                     </a>
 
+                                    <!-- Backtracking -->
+                                    <a href="../orders/backtracking.php" class="quick-action-item flex items-center space-x-3 px-3 py-2.5 text-sm text-gray-700 
+                  hover:bg-orange-50 hover:text-orange-600 rounded-lg transition-all duration-150">
+                                        <i class="ri-user-3-line text-lg"></i>
+                                        <span>Backtracking Board</span>
+                                    </a>
+
+
                                     <!-- Orders -->
                                     <a href="../orders/ordering" class="quick-action-item flex items-center space-x-3 px-3 py-2.5 text-sm text-gray-700 
                   hover:bg-orange-50 hover:text-orange-600 rounded-lg transition-all duration-150">

@@ -1,7 +1,6 @@
 <?php
-session_name("nobleuser");
-session_start();
-include '../../connection/connect.php';
+
+include ROOT_PATH . '/connection/connect.php';
 
 // ✅ Restore session from remember_token (normal account or Google)
 if (!isset($_SESSION['user_id']) && isset($_COOKIE['remember_token'])) {
@@ -36,11 +35,7 @@ if (!isset($_SESSION['user_id']) && isset($_COOKIE['remember_token'])) {
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Noble Home Corp - About Us</title>
-    <script src="https://cdn.tailwindcss.com"></script>
-    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600;700&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
-    <link href="https://fonts.googleapis.com/css2?family=Roboto&display=swap" rel="stylesheet">
-    <link href="https://unpkg.com/aos@2.3.1/dist/aos.css" rel="stylesheet">
+  
     <style>
         .slide-section {
             position: fixed;
@@ -147,8 +142,8 @@ if (!isset($_SESSION['user_id']) && isset($_COOKIE['remember_token'])) {
     </style>
 </head>
 
-<body class="overflow-x-hidden" style="font-family: 'Montserrat', sans-serif; color: #2f1200">
-    <?php include '../navbar/top.php'; ?>
+<body class="overflow-x-hidden">
+    <?php include ROOT_PATH . '/user/navbar/top.php'; ?>
     <!-- Navigation Buttons -->
     <button id="prevBtn" class="nav-button nav-button-left">
         <i class="fas fa-chevron-left text-2xl"></i>
@@ -163,7 +158,7 @@ if (!isset($_SESSION['user_id']) && isset($_COOKIE['remember_token'])) {
         <section class="slide-section active-slide flex items-center justify-center p-4 sm:p-6 md:p-8" data-slide="0">
             <!-- Background Image -->
             <div class="absolute inset-0 z-0">
-                <img src="../img/saleandexplore/a.png" alt="Hero Background" class="w-full h-full object-cover">
+                <img src="<?= BASE_URL; ?>/user/img/saleandexplore/a.png" alt="Hero Background" class="w-full h-full object-cover">
                 <div class="absolute inset-0 bg-black/50"></div>
             </div>
 
@@ -229,7 +224,7 @@ if (!isset($_SESSION['user_id']) && isset($_COOKIE['remember_token'])) {
                     <!-- Video Section - Hidden on Mobile, Visible on Desktop -->
                     <div class="hidden md:block md:col-span-2" data-aos="fade-up" data-aos-delay="200">
                         <video autoplay muted loop playsinline class="w-full rounded-2xl shadow-xl">
-                            <source src="../../video/g.mp4" type="video/mp4">
+                            <source src="<?= BASE_URL; ?>/video/g.mp4" type="video/mp4">
                             Your browser does not support the video tag.
                         </video>
                     </div>

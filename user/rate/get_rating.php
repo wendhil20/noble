@@ -1,7 +1,5 @@
 <?php
-session_name("nobleuser");
-session_start();
-include '../../connection/connect.php';
+
 header('Content-Type: application/json');
 
 $product_id = (int)($_GET['product_id'] ?? 0);

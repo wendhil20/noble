@@ -247,6 +247,8 @@ $routes = [
     'removetocart'                    => 'user/navbar/remove_from_cart_ajax.php',
     'search'                          => 'user/otherpage/backend-search_ajax-A.php',
     'cartreal'                        => 'user/navbar/cart-sidebar-data.php',
+    'feedback'                        => 'user/otherpage/submit_feedback.php',
+    'validatedreferal'                => 'user/otherpage/validate-referral-code.php',
 
     'terms'                           => 'user/rules/terms.php',
     'policy'                          => 'user/rules/policy.php',
@@ -335,7 +337,7 @@ $routes = [
     'warehousestaffgeneratereplacement'   => 'admin/ui-warehouse/backend/backend-warehousestaff/warehouse-staff-generate-replacement-po-C1.php',
     'warehousestaffassignreceiverreplace' => 'admin/ui-warehouse/backend/backend-warehousestaff/warehouse-staff-assign-replacement-receiver-C3.php',
     'warehousestaffreportdefect'          => 'admin/ui-warehouse/backend/backend-warehousestaff/warehouse-staff-report-defect-C-B.php',
-    'warehousestaffdeliveryschedule'      => 'admin/ui-warehouse/backend/backend-warehousestaff/warehouse-staff-delivery-schedule-C-A.php',
+    'warehousestaffdeliveryschedule'      => 'admin/ui-warehouse/warehouse-staff-delivery-schedule-C-A.php',
 
     //warehouse receiver
     'qrscanner'                          => 'admin/ui-warehouse/qr_scanner.php',

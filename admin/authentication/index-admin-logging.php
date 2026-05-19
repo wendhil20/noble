@@ -229,7 +229,7 @@ try {
         ROLE_PRODUCTSPECIALIST                                                  => BASE_URL . "/addnewproduct",
         ROLE_LOGISTIC => match (strtolower($user['subrole'] ?? '')) { 
             SUBROLE_DISPATCHER                                                  => BASE_URL . "/logisticdispatcherdashboard",
-            default                                                             => BASE_URL . "/logisticdashboard"
+            default                                                             => BASE_URL . "/logistic"
         },
         ROLE_WAREHOUSE => match (strtolower($user['subrole'] ?? '')) {
                 SUBROLE_WAREHOUSE_RECEIVER                                      => BASE_URL . "/qrscanner",

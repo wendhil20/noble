@@ -359,7 +359,7 @@ $selectableReplacementStatuses = ['approved', 'processing'];
                     <p class="text-xs text-green-700 mt-0.5">All items are in the warehouse. You can now schedule delivery.</p>
                 </div>
             </div>
-            <a href="warehouse_staff_delivery_schedule_C-A.php?order_id=<?php echo $order_id; ?>&schedule_all=true"
+            <a href="<?= BASE_URL ?>/warehousestaffdeliveryschedule?order_id=<?php echo $order_id; ?>&schedule_all=true"
                class="inline-flex items-center gap-2 px-4 py-2 bg-green-600 hover:bg-green-700 text-white text-xs font-semibold rounded-lg transition-colors shrink-0">
                 <i class="fas fa-calendar-check"></i> Schedule Delivery
             </a>

@@ -12,7 +12,7 @@ if (!isset($_SESSION['user_id'])) {
 $order_id = isset($_GET['order_id']) ? intval($_GET['order_id']) : 0;
 
 if (!$order_id) {
-    header('Location: profile.php');
+    header('Location: '. BASE_URL . '/profile');
     exit;
 }
 
@@ -2175,7 +2175,7 @@ $show_map = $delivery_settings &&
             const formData = new FormData(this);
 
             try {
-                const response = await fetch('submit_feedback.php', {
+                const response = await fetch('<?= BASE_URL ?>/feedback.php', {
                     method: 'POST',
                     body: formData
                 });

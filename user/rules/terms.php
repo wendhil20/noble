@@ -1,7 +1,6 @@
 <?php
-session_name("nobleuser");
-session_start();
-include '../../connection/connect.php';
+
+include ROOT_PATH . '/connection/connect.php';
 
 // ✅ Restore session from remember_token (email or mobile-based or Google)
 if (!isset($_SESSION['user_id']) && isset($_COOKIE['remember_token'])) {
@@ -40,25 +39,10 @@ if (!isset($_SESSION['user_id']) && isset($_COOKIE['remember_token'])) {
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Terms and Conditions - NobleHome Depot</title>
-  <script src="https://cdn.tailwindcss.com"></script>
-   <link rel="preconnect" href="https://fonts.googleapis.com/css2?family=Montserrat:wght@300;400;600;700&family=Poppins:wght@300;400;600;700&display=swap" rel="stylesheet">
-
-  <script>
-    tailwind.config = {
-      theme: {
-        extend: {
-          colors: {
-            'noble-orange': '#f97316',
-            'noble-orange-dark': '#ea580c',
-          }
-        }
-      }
-    }
-  </script>
 </head>
 
 <body class=" text-white min-h-screen" style="font-family: 'Montserrat', sans-serif;">
-  <?php include '../navbar/top.php'; ?>
+  <?php include ROOT_PATH .'/user/navbar/top.php'; ?>
   <!-- Header Section -->
   <div class="bg-black border-b border-noble-orange">
     <div class="max-w-6xl mx-auto px-6 py-8">

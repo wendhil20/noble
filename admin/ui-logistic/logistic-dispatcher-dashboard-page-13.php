@@ -246,7 +246,7 @@ foreach ($bookings as $booking) {
 
                                     <!-- Action Button -->
                                     <div class="w-full sm:w-auto sm:ml-4">
-                                        <a href="logistic-dispatcher-view-booking-page-12.php?booking_id=<?php echo $booking['id']; ?>"
+                                        <a href="<?= BASE_URL ?>/logisticdispatcherviewbooking?booking_id=<?php echo $booking['id']; ?>"
                                             class="bg-blue-500 text-white px-4 sm:px-6 py-2 rounded-lg hover:bg-blue-600 transition-colors font-semibold inline-flex items-center justify-center w-full sm:w-auto text-sm sm:text-base">
                                             <i class="fas fa-eye mr-2"></i>
                                             View Details

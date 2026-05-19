@@ -1,9 +1,5 @@
 <?php
 // paymongo-create-sessions.php - FIXED: Order inserted ONLY after payment confirmation
-// Flow: 1) Store order details in session → 2) Create PayMongo session → 3) User pays
-//       4) Success page receives webhook/redirect → 5) THEN insert order to DB
-
-
 
 header('Content-Type: application/json');
 header('Access-Control-Allow-Origin: *');

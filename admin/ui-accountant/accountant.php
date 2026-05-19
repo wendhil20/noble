@@ -113,7 +113,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action'])) {
                 $s->execute();
                 $s->close();
                 if (!empty($od['user_id'])) {
-                    $msg = "Your payment for Order #$order_id has been verified and confirmed by {$current_user['name']}. Amount: ₱" . number_format($total, 2);
+                    $msg = "Your payment for Order #$order_id has been verified Amount: ₱" . number_format($total, 2);
                     $n = $conn->prepare("INSERT INTO notifications (user_id, actor_id, type, message, created_at) VALUES (?,?,'payment_verified',?,NOW())");
                     if ($n) {
                         $n->bind_param("iis", $od['user_id'], $current_user_id, $msg);

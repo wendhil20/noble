@@ -1,7 +1,6 @@
 <?php
-session_name("nobleuser");
-session_start();
-include '../../connection/connect.php';
+
+include ROOT_PATH . '/connection/connect.php';
 
 // ✅ Restore session from remember_token (email or mobile-based or Google)
 if (!isset($_SESSION['user_id']) && isset($_COOKIE['remember_token'])) {
@@ -98,7 +97,7 @@ if (!isset($_SESSION['user_id']) && isset($_COOKIE['remember_token'])) {
   </div>
 
   <!-- Footer -->
-  <?php include '../navbar/footer.php'; ?>
+  <?php include ROOT_PATH . '/user/navbar/footer.php'; ?>
 </body>
 
 </html>

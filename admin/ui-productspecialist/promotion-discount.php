@@ -48,7 +48,7 @@ if ($action_type === 'toggle_status') {
                 $message = 'Image size must not exceed 5MB.';
                 $message_type = 'error';
             } else {
-                $upload_dir = '../../uploads/promotion_banners/';
+                $upload_dir = ROOT_PATH . '/uploads/promotion_banners/';
                 if (!is_dir($upload_dir)) {
                     mkdir($upload_dir, 0755, true);
                 }

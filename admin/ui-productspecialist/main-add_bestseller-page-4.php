@@ -13,7 +13,7 @@ $tables = ['bestseller', 'bestsellertwo'];
 foreach ($tables as $table) {
   $result = $conn->query("SELECT MAX(id) AS max_id FROM $table");
   $row = $result->fetch_assoc();
-  $max_id = (int)$row['max_id'];
+  $max_id = (int) $row['max_id'];
   $next_id = $max_id > 0 ? $max_id + 1 : 1;
   $conn->query("ALTER TABLE $table AUTO_INCREMENT = $next_id");
 }
@@ -28,11 +28,11 @@ if (isset($_POST['add_bestseller'])) {
 
   $image = null;
   if (!empty($_FILES['image']['name'])) {
-    $targetDir = "../../uploads/";
+    $targetDir = ROOT_PATH . "/uploads/";
     $filename = time() . "_" . basename($_FILES["image"]["name"]);
     $targetFile = $targetDir . $filename;
     if (move_uploaded_file($_FILES["image"]["tmp_name"], $targetFile)) {
-      $image = "../../uploads/" . $filename;
+      $image = "uploads/" . $filename;
     }
   }
 
@@ -46,7 +46,7 @@ if (isset($_POST['add_bestseller'])) {
 }
 
 if (isset($_GET['delete_bestseller'])) {
-  $id = (int)$_GET['delete_bestseller'];
+  $id = (int) $_GET['delete_bestseller'];
   $old = $conn->query("SELECT image FROM bestseller WHERE id=$id")->fetch_assoc();
   if ($old && $old['image'] && file_exists($old['image'])) {
     unlink($old['image']);
@@ -70,7 +70,7 @@ if (isset($_POST['add_section'])) {
   $images = [];
 
   if (!empty($_FILES['section_images']['name'][0])) {
-    $targetDir = "../../uploads/";
+    $targetDir = ROOT_PATH . "/uploads/";
     foreach ($_FILES['section_images']['name'] as $key => $name) {
       if (!empty($name)) {
         $filename = time() . "_" . basename($name);
@@ -104,14 +104,14 @@ if (isset($_POST['add_section'])) {
     $_SESSION['msg'] = "✅ Section added!";
   }
 
-   header("Location: " . BASE_URL . "/addbestseller");
+  header("Location: " . BASE_URL . "/addbestseller");
   exit();
 }
 
 // Update section (bestsellertwo)
 if (isset($_POST['update_section'])) {
-  $section_id = (int)$_POST['section_id'];
-  $bestseller_id = (int)$_POST['bestseller_id'];
+  $section_id = (int) $_POST['section_id'];
+  $bestseller_id = (int) $_POST['bestseller_id'];
   $subtitle = $_POST['subtitle'];
   $content = $_POST['content'];
 
@@ -127,17 +127,17 @@ if (isset($_POST['update_section'])) {
 
 // Add more images to existing section
 if (isset($_POST['add_more_images'])) {
-  $section_id = (int)$_POST['section_id'];
+  $section_id = (int) $_POST['section_id'];
 
   $newImages = [];
   if (!empty($_FILES['more_images']['name'][0])) {
-    $targetDir = "../../uploads/";
+    $targetDir = ROOT_PATH . "/uploads/";
     foreach ($_FILES['more_images']['name'] as $key => $name) {
       if (!empty($name)) {
         $filename = time() . "_" . basename($name);
         $targetFile = $targetDir . $filename;
         if (move_uploaded_file($_FILES['more_images']['tmp_name'][$key], $targetFile)) {
-          $newImages[] = "../../uploads/" . $filename;
+          $newImages[] = ROOT_PATH . "/uploads/" . $filename;
         }
       }
     }
@@ -155,28 +155,28 @@ if (isset($_POST['add_more_images'])) {
     $_SESSION['msg'] = "✅ Images added!";
   }
 
-   header("Location: " . BASE_URL . "/addbestseller");
+  header("Location: " . BASE_URL . "/addbestseller");
   exit();
 }
 
 // Update product link
 if (isset($_POST['update_products'])) {
-  $bestseller_id = (int)$_POST['bestseller_id'];
-  $product_id = isset($_POST['product_id']) && $_POST['product_id'] != '' ? (int)$_POST['product_id'] : NULL;
+  $bestseller_id = (int) $_POST['bestseller_id'];
+  $product_id = isset($_POST['product_id']) && $_POST['product_id'] != '' ? (int) $_POST['product_id'] : NULL;
 
   $stmt = $conn->prepare("UPDATE bestseller SET product_id=? WHERE id=?");
   $stmt->bind_param("ii", $product_id, $bestseller_id);
   $stmt->execute();
 
   $_SESSION['msg'] = "✅ Product updated!";
-    header("Location: " . BASE_URL . "/addbestseller");
+  header("Location: " . BASE_URL . "/addbestseller");
   exit();
 }
 
 
 // Update bestseller
 if (isset($_POST['update_bestseller'])) {
-  $id = (int)$_POST['bestseller_id'];
+  $id = (int) $_POST['bestseller_id'];
   $title = $_POST['title'];
   $slug = strtolower(trim(preg_replace('/[^A-Za-z0-9-]+/', '-', $title)));
   $description = $_POST['description'];
@@ -185,7 +185,7 @@ if (isset($_POST['update_bestseller'])) {
   $image = $old_image;
 
   if (!empty($_FILES['image']['name'])) {
-    $targetDir = "../../uploads/";
+    $targetDir = ROOT_PATH . "/uploads/";
     $filename = time() . "_" . basename($_FILES["image"]["name"]);
     $targetFile = $targetDir . $filename;
 
@@ -193,7 +193,7 @@ if (isset($_POST['update_bestseller'])) {
       if ($old_image && file_exists($old_image)) {
         unlink($old_image);
       }
-      $image = "../../uploads/" . $filename;
+      $image = ROOT_PATH . "/uploads/" . $filename;
     }
   }
 
@@ -208,7 +208,7 @@ if (isset($_POST['update_bestseller'])) {
 
 // Update product links
 if (isset($_POST['update_products'])) {
-  $bestseller_id = (int)$_POST['bestseller_id'];
+  $bestseller_id = (int) $_POST['bestseller_id'];
   $product_ids = isset($_POST['product_id']) ? json_encode($_POST['product_id']) : json_encode([]);
 
   $stmt = $conn->prepare("UPDATE bestseller SET product_id=? WHERE id=?");
@@ -222,8 +222,8 @@ if (isset($_POST['update_products'])) {
 
 // Delete individual image from section
 if (isset($_GET['delete_image'])) {
-  $section_id = (int)$_GET['section_id'];
-  $image_index = (int)$_GET['delete_image'];
+  $section_id = (int) $_GET['section_id'];
+  $image_index = (int) $_GET['delete_image'];
 
   $old = $conn->query("SELECT image FROM bestsellertwo WHERE id=$section_id")->fetch_assoc();
   if ($old && $old['image']) {
@@ -242,25 +242,26 @@ if (isset($_GET['delete_image'])) {
     }
   }
 
-    header("Location: " . BASE_URL . "/addbestseller");
+  header("Location: " . BASE_URL . "/addbestseller");
   exit();
 }
 
 if (isset($_GET['delete_section'])) {
-  $id = (int)$_GET['delete_section'];
+  $id = (int) $_GET['delete_section'];
   $old = $conn->query("SELECT image FROM bestsellertwo WHERE id=$id")->fetch_assoc();
   if ($old && $old['image']) {
     $imgs = json_decode($old['image'], true);
     if (is_array($imgs)) {
       foreach ($imgs as $img) {
-        if (file_exists($img)) unlink($img);
+        if (file_exists($img))
+          unlink($img);
       }
     }
   }
   $conn->query("DELETE FROM bestsellertwo WHERE id=$id");
 
   $_SESSION['msg'] = "🗑️ Section deleted!";
-    header("Location: " . BASE_URL . "/addbestseller");
+  header("Location: " . BASE_URL . "/addbestseller");
   exit();
 }
 
@@ -285,8 +286,9 @@ $sections = $conn->query("SELECT bt.*, b.title as bestseller_title
 
 <head>
   <meta charset="UTF-8">
+   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Manage Bestsellers</title>
-    
+
 </head>
 
 <body class="bg-gray-100">
@@ -295,7 +297,7 @@ $sections = $conn->query("SELECT bt.*, b.title as bestseller_title
 
   <div class="max-w-6xl mx-auto mt-8 mb-12">
 
-    <?php if (!empty($msg)) : ?>
+    <?php if (!empty($msg)): ?>
       <div class="mb-4 p-3 bg-green-100 text-green-700 rounded"><?= $msg ?></div>
     <?php endif; ?>
 
@@ -330,8 +332,8 @@ $sections = $conn->query("SELECT bt.*, b.title as bestseller_title
       <div class="space-y-4">
         <?php
         $bestsellers_edit = $conn->query("SELECT * FROM bestseller ORDER BY id DESC");
-        while ($row = $bestsellers_edit->fetch_assoc()) :
-        ?>
+        while ($row = $bestsellers_edit->fetch_assoc()):
+          ?>
           <div class="border rounded-lg p-4 bg-gray-50">
             <div class="flex justify-between items-start mb-3">
               <div class="flex-1">
@@ -340,7 +342,7 @@ $sections = $conn->query("SELECT bt.*, b.title as bestseller_title
                 <p class="text-sm text-gray-600 mt-1"><?= substr($row['description'], 0, 100) ?>...</p>
               </div>
               <div class="flex gap-2 ml-4">
-                <?php if ($row['image']) : ?>
+                <?php if ($row['image']): ?>
                   <img src="<?= $row['image'] ?>" class="w-16 h-16 object-contain rounded">
                 <?php endif; ?>
               </div>
@@ -375,7 +377,7 @@ $sections = $conn->query("SELECT bt.*, b.title as bestseller_title
                     <option value="">-- Select Product --</option>
                     <?php
                     $all_products = $conn->query("SELECT id, product_name, main_image FROM products ORDER BY product_name ASC");
-                    while ($prod = $all_products->fetch_assoc()) : ?>
+                    while ($prod = $all_products->fetch_assoc()): ?>
                       <option value="<?= $prod['id'] ?>" <?= $row['product_id'] == $prod['id'] ? 'selected' : '' ?>>
                         <?= $prod['product_name'] ?>
                       </option>
@@ -387,7 +389,8 @@ $sections = $conn->query("SELECT bt.*, b.title as bestseller_title
                   <button type="submit" class="bg-green-500 text-white px-4 py-2 rounded hover:bg-green-600">
                     Save Product
                   </button>
-                  <button type="button" onclick="document.getElementById('products-<?= $row['id'] ?>').classList.add('hidden')"
+                  <button type="button"
+                    onclick="document.getElementById('products-<?= $row['id'] ?>').classList.add('hidden')"
                     class="bg-gray-400 text-white px-4 py-2 rounded hover:bg-gray-500">
                     Cancel
                   </button>
@@ -411,7 +414,8 @@ $sections = $conn->query("SELECT bt.*, b.title as bestseller_title
 
                 <div>
                   <label class="block text-sm font-medium mb-1">Description</label>
-                  <textarea name="description" rows="3" class="w-full border p-2 rounded"><?= htmlspecialchars($row['description']) ?></textarea>
+                  <textarea name="description" rows="3"
+                    class="w-full border p-2 rounded"><?= htmlspecialchars($row['description']) ?></textarea>
                 </div>
 
                 <div>
@@ -425,7 +429,8 @@ $sections = $conn->query("SELECT bt.*, b.title as bestseller_title
                   <button type="submit" class="bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600">
                     Update
                   </button>
-                  <button type="button" onclick="document.getElementById('edit-bestseller-<?= $row['id'] ?>').classList.add('hidden')"
+                  <button type="button"
+                    onclick="document.getElementById('edit-bestseller-<?= $row['id'] ?>').classList.add('hidden')"
                     class="bg-gray-400 text-white px-4 py-2 rounded hover:bg-gray-500">
                     Cancel
                   </button>
@@ -449,7 +454,7 @@ $sections = $conn->query("SELECT bt.*, b.title as bestseller_title
             <option value="">-- Select --</option>
             <?php
             $bs = $conn->query("SELECT id, title FROM bestseller ORDER BY title ASC");
-            while ($r = $bs->fetch_assoc()) : ?>
+            while ($r = $bs->fetch_assoc()): ?>
               <option value="<?= $r['id'] ?>"><?= $r['title'] ?></option>
             <?php endwhile; ?>
           </select>
@@ -478,7 +483,7 @@ $sections = $conn->query("SELECT bt.*, b.title as bestseller_title
     <div class="bg-white p-6 rounded shadow">
       <h2 class="text-xl font-bold mb-4">Sections List</h2>
       <div class="space-y-6">
-        <?php while ($row = $sections->fetch_assoc()) : ?>
+        <?php while ($row = $sections->fetch_assoc()): ?>
           <div class="border rounded-lg p-4 bg-gray-50">
 
             <!-- Section Info & Actions -->
@@ -516,7 +521,7 @@ $sections = $conn->query("SELECT bt.*, b.title as bestseller_title
                   <select name="bestseller_id" class="w-full border p-2 rounded" required>
                     <?php
                     $bs2 = $conn->query("SELECT id, title FROM bestseller ORDER BY title ASC");
-                    while ($r2 = $bs2->fetch_assoc()) : ?>
+                    while ($r2 = $bs2->fetch_assoc()): ?>
                       <option value="<?= $r2['id'] ?>" <?= $r2['id'] == $row['bestseller_id'] ? 'selected' : '' ?>>
                         <?= $r2['title'] ?>
                       </option>
@@ -532,14 +537,16 @@ $sections = $conn->query("SELECT bt.*, b.title as bestseller_title
 
                 <div>
                   <label class="block text-sm font-medium mb-1">Content</label>
-                  <textarea name="content" rows="4" class="w-full border p-2 rounded"><?= htmlspecialchars($row['content']) ?></textarea>
+                  <textarea name="content" rows="4"
+                    class="w-full border p-2 rounded"><?= htmlspecialchars($row['content']) ?></textarea>
                 </div>
 
                 <div class="flex gap-2">
                   <button type="submit" class="bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600">
                     Update
                   </button>
-                  <button type="button" onclick="document.getElementById('edit-<?= $row['id'] ?>').classList.add('hidden')"
+                  <button type="button"
+                    onclick="document.getElementById('edit-<?= $row['id'] ?>').classList.add('hidden')"
                     class="bg-gray-400 text-white px-4 py-2 rounded hover:bg-gray-500">
                     Cancel
                   </button>
@@ -564,7 +571,7 @@ $sections = $conn->query("SELECT bt.*, b.title as bestseller_title
             </div>
 
             <!-- Images Grid -->
-            <?php if ($row['image']) :
+            <?php if ($row['image']):
               $imgs = json_decode($row['image'], true);
               if (is_array($imgs) && !empty($imgs)): ?>
                 <div class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-2">
@@ -583,14 +590,14 @@ $sections = $conn->query("SELECT bt.*, b.title as bestseller_title
                 </div>
               <?php else: ?>
                 <p class="text-gray-400 text-sm italic">No images yet</p>
-            <?php endif;
+              <?php endif;
             endif; ?>
           </div>
         <?php endwhile; ?>
       </div>
     </div>
   </div>
-  
+
 </body>
 
 </html>

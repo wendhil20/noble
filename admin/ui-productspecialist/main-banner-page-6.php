@@ -4,8 +4,8 @@ include ROOT_PATH . "/admin/authentication/index-admin-role.php";
 
 require_role(['productspecialist', 'superadmin']);
 
-$absoluteUploadPath = "../../uploads/";
-$relativeUploadPath = "../uploads/";
+$absoluteUploadPath = ROOT_PATH . "/uploads/";
+$relativeUploadPath = "uploads/";
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
   // ✅ Upload Main Area images with category
@@ -84,7 +84,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
       // Delete old file only if new one uploaded successfully
       $res = $conn->query("SELECT filename FROM discount_images WHERE id=$id");
       if ($row = $res->fetch_assoc()) {
-        $oldPath = str_replace("../uploads/", "../../uploads/", $row['filename']);
+        $oldPath = ROOT_PATH . "/" . $row['filename'];
         if (file_exists($oldPath))
           unlink($oldPath);
       }
@@ -107,7 +107,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $id = intval($_POST['delete_id']);
     $res = $conn->query("SELECT filename FROM discount_images WHERE id=$id");
     if ($row = $res->fetch_assoc()) {
-      $filePath = str_replace("../uploads/", "../../uploads/", $row['filename']);
+$filePath = ROOT_PATH . "/" . $row['filename'];
       if (file_exists($filePath))
         unlink($filePath);
     }
@@ -267,7 +267,7 @@ $categories_result = $conn->query("SELECT id, name FROM categories ORDER BY name
         ?>
         <div
           class="bg-white rounded-lg shadow hover:shadow-md p-4 relative border <?= (isset($row['is_active']) && $row['is_active']) ? 'border-green-300' : 'border-gray-300' ?>">
-          <img src="<?= BASE_URL ?>/<?= basename($row['filename']) ?>" alt="discount"
+          <img src="<?= BASE_URL ?>/<?= htmlspecialchars($row['filename']) ?>" alt="discount"
             class="w-full h-40 object-contain mb-4 rounded-md border" />
 
           <!-- Banner Info -->

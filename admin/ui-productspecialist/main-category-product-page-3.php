@@ -115,7 +115,7 @@ if (in_array($tag, $valid_tags)) {
     if (isset($_POST['add_category'])) {
         $category_name = trim($_POST['category_name']);
         if (!empty($category_name)) {
-            $category_dir = "../../uploads/categories/";
+          $category_dir = ROOT_PATH . "/uploads/categories/";
             createDirectory($category_dir);
             $image_path = null;
             if (isset($_FILES['category_image']) && $_FILES['category_image']['error'] == 0) {
@@ -179,7 +179,7 @@ if (in_array($tag, $valid_tags)) {
             }
             $chk2->close();
 
-            $upload_dir = "../../uploads/" . $final_slug . "/";
+            $upload_dir = ROOT_PATH . "/uploads/" . $final_slug . "/";
             createDirectory($upload_dir);
             $image_path = null;
             if (isset($_FILES['subcategory_image']) && $_FILES['subcategory_image']['error'] == 0) {
@@ -241,7 +241,7 @@ if (in_array($tag, $valid_tags)) {
             $parent_slug = $get->get_result()->fetch_assoc()['subcategory_slug'];
             $get->close();
 
-            $upload_dir = "../../uploads/" . $parent_slug . "/" . $sub_subcategory_slug . "/";
+            $upload_dir = ROOT_PATH . "/uploads/" . $parent_slug . "/" . $sub_subcategory_slug . "/";
             createDirectory($upload_dir);
             $image_path = null;
             if (isset($_FILES['sub_subcategory_image']) && $_FILES['sub_subcategory_image']['error'] == 0) {
@@ -281,7 +281,7 @@ if (in_array($tag, $valid_tags)) {
         $stmt->bind_param("i", $id);
         if ($stmt->execute()) {
             if ($data)
-                deleteDirectory("../../uploads/" . $data['subcategory_slug'] . "/" . $data['sub_subcategory_slug'] . "/");
+                deleteDirectory(ROOT_PATH . "/uploads/" . $data['subcategory_slug'] . "/" . $data['sub_subcategory_slug'] . "/");
             $_SESSION['message'] = "Sub-subcategory deleted!";
         } else {
             $_SESSION['error'] = "Error: " . $conn->error;
@@ -333,13 +333,13 @@ if (in_array($tag, $valid_tags)) {
         $stmt->bind_param("i", $id);
         if ($stmt->execute()) {
             if ($cat) {
-                if ($cat['image_path'] && file_exists("../../uploads/categories/" . $cat['image_path']))
-                    unlink("../../uploads/categories/" . $cat['image_path']);
-                if ($cat['image_pathtwo'] && file_exists("../../uploads/categories/" . $cat['image_pathtwo']))
-                    unlink("../../uploads/categories/" . $cat['image_pathtwo']);
+                if ($cat['image_path'] && file_exists(ROOT_PATH . "/uploads/categories/" . $cat['image_path']))
+                    unlink(ROOT_PATH . "/uploads/categories/" . $cat['image_path']);
+                if ($cat['image_pathtwo'] && file_exists(ROOT_PATH . "/uploads/categories/" . $cat['image_pathtwo']))
+                    unlink(ROOT_PATH . "/uploads/categories/" . $cat['image_pathtwo']);
             }
             foreach ($slugs as $slug)
-                deleteDirectory("../../uploads/" . $slug . "/");
+                deleteDirectory(ROOT_PATH . "/uploads/" . $slug . "/");
             $_SESSION['message'] = "Category deleted!";
         } else {
             $_SESSION['error'] = "Error: " . $conn->error;
@@ -360,7 +360,8 @@ if (in_array($tag, $valid_tags)) {
         if ($data && isset($_FILES['new_image']) && $_FILES['new_image']['error'] == 0) {
             $allowed = ['image/jpeg', 'image/png', 'image/gif', 'image/webp'];
             if (in_array($_FILES['new_image']['type'], $allowed)) {
-                $upload_dir = "../../uploads/" . $data['subcategory_slug'] . "/";
+                $upload_dir = ROOT_PATH . "/uploads/" . $final_slug . "/";
+
                 createDirectory($upload_dir);
                 if ($data['image_path'] && file_exists($upload_dir . $data['image_path']))
                     unlink($upload_dir . $data['image_path']);
@@ -390,7 +391,7 @@ if (in_array($tag, $valid_tags)) {
         if ($data && isset($_FILES['new_sub_sub_image']) && $_FILES['new_sub_sub_image']['error'] == 0) {
             $allowed = ['image/jpeg', 'image/png', 'image/gif', 'image/webp'];
             if (in_array($_FILES['new_sub_sub_image']['type'], $allowed)) {
-                $upload_dir = "../../uploads/" . $data['subcategory_slug'] . "/" . $data['sub_subcategory_slug'] . "/";
+                $upload_dir = ROOT_PATH . "/uploads/" . $data['subcategory_slug'] . "/" . $data['sub_subcategory_slug'] . "/";
                 createDirectory($upload_dir);
                 if ($data['image_path'] && file_exists($upload_dir . $data['image_path']))
                     unlink($upload_dir . $data['image_path']);
@@ -715,17 +716,17 @@ while ($row = $display_result->fetch_assoc()) {
                                         <?php if ($category['image_path'] || $category['image_pathtwo']): ?>
                                             <div class="flex space-x-2">
                                                 <?php if ($category['image_path']): ?>
-                                                    <img src="../../uploads/categories/<?= htmlspecialchars($category['image_path']) ?>"
+                                                    <img src="<?= BASE_URL ?>/uploads/categories/<?= htmlspecialchars($category['image_path']) ?>"
                                                         class="w-12 h-12 object-cover rounded">
                                                 <?php endif; ?>
                                                 <?php if ($category['image_pathtwo']): ?>
-                                                    <img src="../../uploads/categories/<?= htmlspecialchars($category['image_pathtwo']) ?>"
+                                                    <img src="<?= BASE_URL ?>/uploads/categories/<?= htmlspecialchars($category['image_pathtwo']) ?>"
                                                         class="w-12 h-12 object-cover rounded">
                                                 <?php endif; ?>
                                             </div>
                                         <?php endif; ?>
                                         <div>
-                                            <h3 class="text-lg font-semibold text-black"><?= htmlspecialchars($category['name']) ?>
+                                            <h3 class="text-lg font-semib   old text-black"><?= htmlspecialchars($category['name']) ?>
                                             </h3>
                                             <!-- Tag selector for Category -->
                                             <form method="POST" class="inline mt-1">
@@ -798,7 +799,7 @@ while ($row = $display_result->fetch_assoc()) {
                                                     <div class="flex items-center space-x-4 flex-1">
                                                         <div class="w-16 h-16 bg-gray-200 rounded-lg overflow-hidden flex-shrink-0">
                                                             <?php if ($sub['image_path']): ?>
-                                                                <img src="../../uploads/<?= htmlspecialchars($sub['slug']) ?>/<?= htmlspecialchars($sub['image_path']) ?>"
+                                                                <img src="<?= BASE_URL ?>/uploads/<?= htmlspecialchars($sub['slug']) ?>/<?= htmlspecialchars($sub['image_path']) ?>"
                                                                     class="w-full h-full object-cover">
                                                             <?php else: ?>
                                                                 <div class="w-full h-full flex items-center justify-center text-gray-400">
@@ -877,7 +878,7 @@ while ($row = $display_result->fetch_assoc()) {
                                                                 <div class="flex items-center space-x-3 flex-1">
                                                                     <div class="w-12 h-12 bg-gray-200 rounded overflow-hidden flex-shrink-0">
                                                                         <?php if ($subsub['image_path']): ?>
-                                                                            <img src="../../uploads/<?= htmlspecialchars($subsub['parent_slug']) ?>/<?= htmlspecialchars($subsub['slug']) ?>/<?= htmlspecialchars($subsub['image_path']) ?>"
+                                                                            <img src="<?= BASE_URL ?>/uploads/<?= htmlspecialchars($subsub['parent_slug']) ?>/<?= htmlspecialchars($subsub['slug']) ?>/<?= htmlspecialchars($subsub['image_path']) ?>"
                                                                                 class="w-full h-full object-cover">
                                                                         <?php else: ?>
                                                                             <div

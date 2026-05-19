@@ -324,7 +324,7 @@ $variant_count = (int) $variant_count_row['cnt'];
               <div class="flex flex-col gap-1 w-32">
                 <p class="text-xs font-medium text-gray-500">Main image</p>
                 <?php if (!empty($color['image'])): ?>
-                  <img src="<?=BASE_URL?>/<?= htmlspecialchars($color['image']) ?>"
+                  <img src="<?= BASE_URL ?>/<?= htmlspecialchars($color['image']) ?>"
                     class="w-12 h-12 object-contain rounded-lg border border-gray-200 bg-gray-50 mb-1" alt="Main" />
                 <?php endif; ?>
                 <input type="file" name="color_image[]" accept="image/*"
@@ -335,7 +335,7 @@ $variant_count = (int) $variant_count_row['cnt'];
               <div class="flex flex-col gap-1 w-32">
                 <p class="text-xs font-medium text-gray-500">Secondary image</p>
                 <?php if (!empty($color['image2'])): ?>
-                  <img src="<?=BASE_URL?>/<?= htmlspecialchars($color['image2']) ?>"
+                  <img src="<?= BASE_URL ?>/<?= htmlspecialchars($color['image2']) ?>"
                     class="w-12 h-12 object-contain rounded-lg border border-gray-200 bg-gray-50 mb-1" alt="Secondary" />
                 <?php endif; ?>
                 <input type="file" name="color_image2[]" accept="image/*"

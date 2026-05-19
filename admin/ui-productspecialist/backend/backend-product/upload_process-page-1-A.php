@@ -63,7 +63,7 @@ function saveImageToFolder($file, $targetDir = '../../uploads/')
     return null;
 }
 
-function saveSubImages($subImagesFiles, $targetDir = '../../sub_images/')
+function saveSubImages($subImagesFiles, $targetDir = ROOT_PATH . '/sub_images/')
 {
     if (!file_exists($targetDir)) {
         mkdir($targetDir, 0777, true);
@@ -362,23 +362,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         }
 
         $conn->commit();
+        header("Location: " . BASE_URL . "/addnewproduct?id=$product_id&success=1");
+        exit();
 
-        // Notification
-        $notification_title   = "New Product Added";
-        $notification_message = "'" . htmlspecialchars($product_name) . "' has been added by '$added_by' (ID: #$product_id)";
-        $style = getNotificationStyle('product_upload');
-        createNotification($conn, 'product_upload', $notification_title, $notification_message, $style['icon'], $style['color']);
-
-        $sub_images_count = count($sub_images);
-        $success_message  = "Product uploaded successfully! ID: $product_id";
-        if ($sub_images_count > 0) {
-            $success_message .= " ($sub_images_count sub images)";
-        }
-
-        echo "<script>
-            alert('$success_message'); 
-            window.location.href='" . BASE_URL . "/addnewproduct';
-        </script>";
 
     } catch (Exception $e) {
         $conn->rollback();

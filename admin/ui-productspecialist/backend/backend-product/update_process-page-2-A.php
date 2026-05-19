@@ -128,13 +128,15 @@ try {
       $oldMainRow = $oldMainImageResult->fetch_assoc();
       $oldMainImagePath = $oldMainRow['main_image'] ?? null;
       if (!empty($oldMainImagePath)) {
-        $fullOldPath = '../../' . $oldMainImagePath;
+        $fullOldPath = ROOT_PATH . '/' . $oldMainImagePath;
+
         if (file_exists($fullOldPath))
           unlink($fullOldPath);
       }
     }
     $mainImageName = time() . '_main_' . basename($_FILES['main_image']['name']);
-    $uploadDir = '../../uploads/';
+    $uploadDir = ROOT_PATH . '/uploads/';
+
     if (!is_dir($uploadDir))
       mkdir($uploadDir, 0755, true);
     $mainImagePath = $uploadDir . $mainImageName;
@@ -180,7 +182,7 @@ try {
     foreach ($_FILES['new_sub_images']['name'] as $fileIndex => $fileName) {
       if (!empty($fileName)) {
         $subImageName = time() . '_' . $fileIndex . '_' . basename($fileName);
-        $uploadDir = '../../sub_images/';
+        $uploadDir = ROOT_PATH . '/sub_images/';
         if (!is_dir($uploadDir))
           mkdir($uploadDir, 0755, true);
         $uploadPath = $uploadDir . $subImageName;
@@ -204,11 +206,11 @@ try {
     $colorStocks = $_POST['color_stock'] ?? [];
     $fileIndex = 0;
 
-  foreach ($colorIds as $index => $colorId) {
-  $colorName  = $conn->real_escape_string($colorNames[$index] ?? '');
-  $colorCode  = $conn->real_escape_string($colorCodes[$index] ?? '');
-  $colorPrice = (float)($colorPrices[$index] ?? 0);
-  $colorStock = (int)($colorStocks[$index] ?? 0);
+    foreach ($colorIds as $index => $colorId) {
+      $colorName = $conn->real_escape_string($colorNames[$index] ?? '');
+      $colorCode = $conn->real_escape_string($colorCodes[$index] ?? '');
+      $colorPrice = (float) ($colorPrices[$index] ?? 0);
+      $colorStock = (int) ($colorStocks[$index] ?? 0);
 
       if (isset($_POST['delete_color']) && in_array($colorId, $_POST['delete_color'])) {
         $getColorImagesResult = $conn->query("SELECT image, image2 FROM product_colors WHERE id = $colorId");
@@ -237,7 +239,8 @@ try {
       if ($colorId === 'new') {
         if (!empty($_FILES['color_image']['name'][$fileIndex])) {
           $colorImageName = time() . '_' . basename($_FILES['color_image']['name'][$fileIndex]);
-          $uploadDir = '../../uploads/';
+          $uploadDir = ROOT_PATH . '/uploads/';
+
           if (!is_dir($uploadDir))
             mkdir($uploadDir, 0755, true);
           $colorImagePath = $uploadDir . $colorImageName;
@@ -249,7 +252,8 @@ try {
         }
         if (!empty($_FILES['color_image2']['name'][$fileIndex])) {
           $colorImage2Name = time() . '_secondary_' . basename($_FILES['color_image2']['name'][$fileIndex]);
-          $uploadDir = '../../uploads/';
+          $uploadDir = ROOT_PATH . '/uploads/';
+
           if (!is_dir($uploadDir))
             mkdir($uploadDir, 0755, true);
           $colorImage2Path = $uploadDir . $colorImage2Name;
@@ -272,7 +276,8 @@ try {
               unlink($fp);
           }
           $colorImageName = time() . '_' . basename($_FILES['color_image']['name'][$fileIndex]);
-          $uploadDir = '../../uploads/';
+          $uploadDir = ROOT_PATH . '/uploads/';
+
           if (!is_dir($uploadDir))
             mkdir($uploadDir, 0755, true);
           $colorImagePath = $uploadDir . $colorImageName;
@@ -289,7 +294,8 @@ try {
               unlink($fp);
           }
           $colorImage2Name = time() . '_secondary_' . basename($_FILES['color_image2']['name'][$fileIndex]);
-          $uploadDir = '../../uploads/';
+          $uploadDir = ROOT_PATH . '/uploads/';
+
           if (!is_dir($uploadDir))
             mkdir($uploadDir, 0755, true);
           $colorImage2Path = $uploadDir . $colorImage2Name;
@@ -338,7 +344,7 @@ try {
       if ($typeId === 'new') {
         if (!empty($_FILES['type_image']['name'][$typeIndex])) {
           $typeImageName = time() . '_' . basename($_FILES['type_image']['name'][$typeIndex]);
-          $uploadDir = '../../uploads/type_images/';
+          $uploadDir = ROOT_PATH . '/uploads/type_images/';
           if (!is_dir($uploadDir))
             mkdir($uploadDir, 0755, true);
           $uploadPath = $uploadDir . $typeImageName;
@@ -540,7 +546,7 @@ try {
     }
   }
 
-$conn->commit();
+  $conn->commit();
   header("Location: " . BASE_URL . "/updateproducts?id=$product_id&success=1");
   exit();
 

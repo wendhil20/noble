@@ -29,7 +29,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['stage'])) {
     if (!empty($_FILES[$file_key]['name'])) {
         $ext = strtolower(pathinfo($_FILES[$file_key]['name'], PATHINFO_EXTENSION));
         $filename = 'banner_stage' . $stage . '_' . time() . '.' . $ext;
-        $upload_dir = '../../uploads/';
+        $upload_dir = ROOT_PATH . '/uploads/';
         if (move_uploaded_file($_FILES[$file_key]['tmp_name'], $upload_dir . $filename)) {
             if (!empty($existing['image_path']) && file_exists($upload_dir . $existing['image_path'])) {
                 @unlink($upload_dir . $existing['image_path']);

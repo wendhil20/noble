@@ -1,10 +1,7 @@
 <?php
 //backtracking_view.php
-session_name("nobleadmin");
-session_start();
-include '../../connection/connect.php';
-include '../role/roleaccount.php';
-
+include ROOT_PATH . "/connection/connect.php";
+require_once ROOT_PATH . "/admin/authentication/index-admin-role.php";
 require_role(['sales', 'superadmin']);
 
 if (!isset($_SESSION['noble_name']) || !isset($_SESSION['noble_lvl'])) {
@@ -24,7 +21,7 @@ if (!isset($_SESSION['noble_name']) || !isset($_SESSION['noble_lvl'])) {
 }
 
 if (!isset($_SESSION['noble_user'])) {
-    header("Location: ../../loginpage/index.php");
+    header("Location: " . BASE_URL . "/main");
     exit();
 }
 
@@ -43,7 +40,7 @@ define('UPLOAD_DIR', __DIR__ . '/../../uploads/backtrack/');
 
 $id = isset($_GET['id']) ? (int) $_GET['id'] : 0;
 if (!$id) {
-    header("Location: backtracking_board.php");
+    header("Location: " . BASE_URL . "/backtrackingview");
     exit();
 }
 
@@ -57,7 +54,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['update_progress'])) {
         $upd->close();
         $_SESSION['flash_success'] = "Progress updated to: " . $steps[$new_step];
     }
-    header("Location: backtracking_view.php?id=" . $id);
+    header("Location: " . BASE_URL . "/backtrackingview?id=" . $id);
     exit();
 }
 
@@ -90,7 +87,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['upload_file'])) {
         $_SESSION['flash_error'] = "Invalid file or step.";
     }
 
-    header("Location: backtracking_view.php?id=" . $id);
+    header("Location: " . BASE_URL . "/backtrackingview?id=" . $id);
     exit();
 }
 
@@ -121,7 +118,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['delete_file'])) {
         $_SESSION['flash_success'] = "File deleted.";
     }
 
-    header("Location: backtracking_view.php?id=" . $id);
+    header("Location: " . BASE_URL . "/backtrackingview?id=" . $id);
     exit();
 }
 
@@ -142,7 +139,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['add_note'])) {
         $_SESSION['flash_error'] = "Note cannot be empty.";
     }
 
-    header("Location: backtracking_view.php?id=" . $id);
+    header("Location: " . BASE_URL . "/backtrackingview?id=" . $id);
     exit();
 }
 
@@ -243,7 +240,7 @@ function file_icon(string $name): string
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>View Profile — <?= htmlspecialchars($record['name']) ?></title>
-    <?php include '../navbar/top.php'; ?>
+    <?php include ROOT_PATH . '/admin/navbar/top.php'; ?>
     <style>
         .step-connector {
             flex: 1;
@@ -284,8 +281,7 @@ function file_icon(string $name): string
                 <h1 class="text-2xl font-semibold text-gray-800">Client Profile</h1>
                 <p class="text-sm text-gray-500 mt-1">Inquiry details and history</p>
             </div>
-            <a href="backtrackingboard.php"
-                class="inline-flex items-center gap-2 px-4 py-2 bg-white border border-gray-300 hover:bg-gray-50 text-gray-700 text-sm font-medium rounded-lg transition shadow-sm">
+            <a href="<?= BASE_URL ?>/backtrackingdashboard" class="inline-flex items-center gap-2 px-4 py-2 bg-white border border-gray-300 hover:bg-gray-50 text-gray-700 text-sm font-medium rounded-lg transition shadow-sm">
                 <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7" />
                 </svg>
@@ -665,7 +661,7 @@ function file_icon(string $name): string
         <div class="bg-white border border-gray-200 rounded-xl shadow-sm">
             <div class="px-6 py-4 border-b border-gray-100 flex items-center justify-between">
                 <h2 class="text-base font-medium text-gray-700">Inquiry History</h2>
-                <span class="text-xs text-gray-400"><?= count($history) ?> inquiry/ies under this reference</span>
+                <span class="text-xs text-gray-400"><?= count($history) ?> inquiries under this reference</span>
             </div>
             <div class="overflow-x-auto">
                 <table class="w-full text-sm text-left">

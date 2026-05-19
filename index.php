@@ -299,6 +299,7 @@ $routes = [
 
     'backtracking'                    => 'admin/ui-sales/index-backtracking-main.php',
     'backtrackingdashboard'           => 'admin/ui-sales/index-backtracking-dashboard.php',
+    'backtrackingview'                => 'admin/ui-sales/index-backtracking-view.php',
 
     //admin accountant
     'accountant'                      => 'admin/ui-accountant/accountant.php',

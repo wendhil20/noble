@@ -1,8 +1,7 @@
 <?php
 // paypal-success.php - Handle PayPal payment completion
-session_name("nobleuser");
-session_start();
-include '../../connection/connect.php';
+
+include ROOT_PATH . '/connection/connect.php';
 
 // ✅ Restore session from remember_token (normal account or Google)
 if (!isset($_SESSION['user_id']) && isset($_COOKIE['remember_token'])) {

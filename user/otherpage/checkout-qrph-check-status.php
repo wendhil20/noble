@@ -1,7 +1,5 @@
 <?php
 // checkout-qrph-check-status.php - Checks if QRPh payment received via PayMongo API
-session_name("nobleuser");
-session_start();
 include ROOT_PATH . '/connection/connect.php';
 
 header('Content-Type: application/json');

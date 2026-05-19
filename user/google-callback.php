@@ -1,7 +1,6 @@
 <?php
 //google-callback.php - FIXED: Absolute URL redirects to prevent .htaccess rewrite interference
-session_name("nobleuser");
-session_start();
+
 
 // ✅ LOAD ENVIRONMENT VARIABLES
 require_once ROOT_PATH . '/.env.php';

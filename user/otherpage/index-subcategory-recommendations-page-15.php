@@ -1,7 +1,6 @@
 <?php
 // index-subcategory-recommendations-page-15.php
-session_name("nobleuser");
-session_start();
+
 include ROOT_PATH . '/connection/connect.php';
 
 // Session restoration from remember_token

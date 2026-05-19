@@ -1,7 +1,6 @@
 <?php
 // reset_password.php - Password reset form with debugging
-session_name("nobleuser");
-session_start();
+
 include ROOT_PATH . '/connection/connect.php';
 
 $token = $_GET['token'] ?? '';

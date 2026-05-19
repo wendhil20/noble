@@ -1,7 +1,5 @@
 <?php
 // verification-pending.php
-session_name("nobleuser");
-session_start();
 include ROOT_PATH . "/connection/connect.php";
 
 // Check authentication

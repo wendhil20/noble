@@ -1,10 +1,9 @@
 <?php
-session_name("nobleuser");
-session_start();
+
 include ROOT_PATH . '/connection/connect.php';
 
 if (!isset($_SESSION['user_id'])) {
-    header('Location: ../google-callback.php');
+    header('Location: ' . BASE_URL . '/googlecallback');
     exit;
 }
 

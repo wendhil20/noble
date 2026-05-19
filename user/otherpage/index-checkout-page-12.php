@@ -1,7 +1,6 @@
 <?php
 // checkout-step1.php - Customer Information Only
-session_name("nobleuser");
-session_start();
+
 include ROOT_PATH . '/connection/connect.php';
 
 // Restore session from remember_token

@@ -1,7 +1,6 @@
 <?php
 //google-login.php - FIXED: Using .env for OAuth credentials
-session_name("nobleuser");
-session_start();
+
 
 // ✅ LOAD ENVIRONMENT VARIABLES
 require_once ROOT_PATH . '/.env.php';

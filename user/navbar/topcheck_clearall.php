@@ -1,7 +1,6 @@
 <?php
 // topcheck_clearall.php
-session_name("nobleuser");
-session_start();
+
 include ROOT_PATH . '/connection/connect.php';
 
 header('Content-Type: application/json');

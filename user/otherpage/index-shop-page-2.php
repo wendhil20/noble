@@ -1,7 +1,4 @@
 <?php
-session_name("nobleuser");
-session_start();
-
 include ROOT_PATH . '/connection/connect.php';
 
 // Session restoration from remember_token (KEEP THIS)
@@ -27,9 +24,6 @@ if (!isset($_SESSION['user_id']) && isset($_COOKIE['remember_token'])) {
     }
     $stmt->close();
 }
-
-// ===== NO REDIRECT - Just let guests continue =====
-// Removed the redirect check that was here
 
 // Input validation
 $selected_categories = $_GET['category'] ?? [];
@@ -132,6 +126,7 @@ $is_guest = !isset($_SESSION['user_id']);
     <title>Shop Products - Noble Home</title>
     <?php include ROOT_PATH . '/user/navbar/top.php'; ?>
     <meta name="description" content="Explore our premium collection of furniture, materials, and home décor items.">
+    <script src="https://cdn.jsdelivr.net/gh/studio-freight/lenis@1.0.19/bundled/lenis.min.js"></script>
     <style>
         .line-clamp-2 {
             display: -webkit-box;
@@ -616,7 +611,7 @@ $is_guest = !isset($_SESSION['user_id']);
         <div class="sidebar-footer">
             <div class="space-y-3">
                 <button type="submit" form="mobileFilterForm"
-                    class="w-full bg-primary text-white px-6 py-3.5 rounded-lg hover:bg-primary-dark font-semibold shadow-lg transition-all"
+                    class="w-full bg-black text-white px-6 py-3.5 rounded-lg hover:bg-black font-semibold shadow-lg transition-all"
                     style="font-family: 'Montserrat', sans-serif; ">
                     <i class="fas fa-check mr-2"></i>Apply Filters
                 </button>

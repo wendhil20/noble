@@ -1,5 +1,5 @@
 <?php
-include '../../connection/connect.php';
+include ROOT_PATH . '/connection/connect.php';
 
 if (!isset($_GET['id'])) {
   die("Product ID not provided.");

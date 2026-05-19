@@ -1,7 +1,6 @@
 <?php
 // forgot_password.php - Main forgot password page with PHPMailer
-session_name("nobleuser");
-session_start();
+
 include ROOT_PATH.'/connection/connect.php';
 
 // Include PHPMailer

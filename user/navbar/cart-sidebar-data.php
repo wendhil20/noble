@@ -1,8 +1,4 @@
 <?php
-session_name("nobleuser");
-if (session_status() === PHP_SESSION_NONE) session_start();
-
-if (!defined('ROOT_PATH')) define('ROOT_PATH', dirname(__DIR__, 2));
 include ROOT_PATH . '/connection/connect.php';
 
 header('Content-Type: application/json');

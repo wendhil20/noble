@@ -1,8 +1,6 @@
 <?php
 //index-page-1-A-B-C-D-E.php
 ob_start();
-session_name("nobleuser");
-session_start();
 
 // ✅ Bago
 include ROOT_PATH . '/connection/connect.php';

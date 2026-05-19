@@ -1,8 +1,7 @@
 <?php
 // index-countdowntimer-page-17.php
-session_name("nobleuser");
-session_start();
-include '../../connection/connect.php';
+
+include ROOT_PATH . '/connection/connect.php';
 
 // ✅ FETCH ALL PRODUCTS WITH ACTIVE TIMERS - CORRECT PRICE (SIZE + COLOR SEPARATE)
 $query = "

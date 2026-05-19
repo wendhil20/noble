@@ -1,21 +1,6 @@
 <?php
 // allproduct-allproductsub_variant-page-3-A.php
-// Enable error reporting for debugging
-error_reporting(E_ALL);
-ini_set('display_errors', 0); // Don't display errors to users
-ini_set('log_errors', 1);
-ini_set('error_log', __DIR__ . '/error_log.txt');
-
-session_name("nobleuser");
-session_start();
-
-
 include ROOT_PATH . '/connection/connect.php';
-
-// Check database connection
-if (!isset($conn) || $conn->connect_error) {
-    die('Database connection failed: ' . ($conn->connect_error ?? 'Unknown error'));
-}
 
 // ✅ Restore session from remember_token 
 if (!isset($_SESSION['user_id']) && isset($_COOKIE['remember_token'])) {

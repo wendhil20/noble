@@ -1,7 +1,6 @@
 <?php
 // index-profilepersonal-page-7.php
-session_name("nobleuser");
-session_start();
+
 include ROOT_PATH . '/connection/connect.php';
 
 // Check if user is logged in

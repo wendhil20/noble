@@ -1,7 +1,6 @@
 <?php
 //topcheck_getnotif.php
-session_name("nobleuser");
-session_start();
+
 include ROOT_PATH . '/connection/connect.php';
 
 // Kung walang session, wag mag error – return empty data lang

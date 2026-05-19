@@ -1,8 +1,6 @@
 <?php
 // checkout-paymongo-success-page-12-A.php
 // Handles both PayMongo (session-based order creation) and QRPh (webhook creates order)
-session_name("nobleuser");
-session_start();
 include ROOT_PATH . '/connection/connect.php';
 
 // ✅ Restore session from remember_token

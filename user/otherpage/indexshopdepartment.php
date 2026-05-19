@@ -1,6 +1,6 @@
 <?php
 // fetch_categories.php
-include '../../connection/connect.php';
+include ROOT_PATH . '/connection/connect.php';
 
 // Fetch categories from database
 $query = "SELECT id, name, image_pathtwo FROM categories ORDER BY id";

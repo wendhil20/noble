@@ -1,6 +1,5 @@
 <?php
-session_name("nobleuser");
-session_start();
+
 include ROOT_PATH . '/connection/connect.php';
 
 $user_id = $_SESSION['user_id'] ?? null;

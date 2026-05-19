@@ -1,12 +1,4 @@
 <?php
-if (session_status() === PHP_SESSION_NONE) {
-  session_start();
-}
-// ✅ Bago
-if (!defined('ROOT_PATH')) {
-  define('ROOT_PATH', dirname(__DIR__, 2)); // fallback kung hindi pa defined
-}
-
 include ROOT_PATH . '/connection/connect.php';
 include ROOT_PATH . '/user/navbar/main-tag-helpers.php';
 $total_cart_items = 0;
@@ -191,7 +183,7 @@ $uri = trim($uri, '/');
 
     // Load Lenis for smooth scroll
     const lenisScript = document.createElement('script');
-    lenisScript.src = 'https://cdn.jsdelivr.net/gh/studio-freight/lenis@1.0.19/bundled/lenis.min.js';
+    lenisScript.src = '';
     lenisScript.async = true;
     lenisScript.onload = () => {
       if (window.Lenis) {

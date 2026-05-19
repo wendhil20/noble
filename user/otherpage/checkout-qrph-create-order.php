@@ -1,13 +1,6 @@
 <?php
 // checkout-qrph-create-order.php - Creates order with ALL data (payment_status = pending)
 
-error_reporting(E_ALL);
-ini_set('display_errors', 0);
-ini_set('log_errors', 1);
-
-session_name("nobleuser");
-session_start();
-
 header('Content-Type: application/json');
 ob_start();
 

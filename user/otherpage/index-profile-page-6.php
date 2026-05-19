@@ -1,7 +1,6 @@
 <?php
 // index-profile-page-6.php
-session_name("nobleuser");
-session_start();
+
 include ROOT_PATH . '/connection/connect.php';
 
 // ✅ Restore session from remember_token (normal account or Google)

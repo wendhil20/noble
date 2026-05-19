@@ -1,8 +1,7 @@
 <?php
 // order_receipt.php
 // Main order receipt display page with product rating functionality
-session_name("nobleuser");
-session_start();
+
 include ROOT_PATH . '/connection/connect.php';
 
 // ============================================================================

@@ -1,16 +1,6 @@
 <?php
 // checkout-webhook-paymongo.php
-// =====================================================================
-// ROOT CAUSE FIX:
-// PayMongo Checkout Sessions fire "checkout_session.payment.paid"
-// NOT "payment.paid" — so stock deduction was NEVER triggered before!
-// Also fixed: bind_param type strings for order_items
-// =====================================================================
 
-error_reporting(E_ALL);
-ini_set('display_errors', 0);
-ini_set('log_errors', 1);
-ini_set('log_errors_max_len', 0);
 
 header('Content-Type: application/json');
 ob_start();

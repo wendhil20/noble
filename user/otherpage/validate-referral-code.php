@@ -1,6 +1,5 @@
 <?php
-session_name("nobleuser");
-session_start();
+
 header('Content-Type: application/json');
 
 include ROOT_PATH . '/connection/connect.php';

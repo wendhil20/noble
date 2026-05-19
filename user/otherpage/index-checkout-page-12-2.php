@@ -1,7 +1,6 @@
 <?php
 // checkout-step2.php - Delivery Address Selection
-session_name("nobleuser");
-session_start();
+
 include ROOT_PATH . '/connection/connect.php';
 
 // Check if user is logged in

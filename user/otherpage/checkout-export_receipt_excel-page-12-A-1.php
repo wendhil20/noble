@@ -1,9 +1,7 @@
 <?php
 // export_receipt_excel.php
-session_name("nobleuser");
-session_start();
-require '../../connection/connect.php';
-require '../../vendor/autoload.php'; // PhpSpreadsheet autoloader
+require ROOT_PATH . 'connection/connect.php';
+require ROOT_PATH . 'vendor/autoload.php'; // PhpSpreadsheet autoloader
 
 use PhpOffice\PhpSpreadsheet\Spreadsheet;
 use PhpOffice\PhpSpreadsheet\Writer\Xlsx;
@@ -15,7 +13,7 @@ use PhpOffice\PhpSpreadsheet\Worksheet\Drawing;
 
 // Check if user is logged in
 if (!isset($_SESSION['user_id'])) {
-    header('Location: ../google-callback.php');
+    header('Location: ' . BASE_URL . '/googlecallback');
     exit;
 }
 

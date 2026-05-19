@@ -1,7 +1,6 @@
 <?php
 // ../api/get_stock.php
 header('Content-Type: application/json');
-include '../../connection/connect.php';
 
 // Get POST data
 $data = json_decode(file_get_contents('php://input'), true);

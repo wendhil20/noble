@@ -1,23 +1,9 @@
 <?php
 // index-customize_quote_handler-page-4-AA.php
 header('Content-Type: application/json');
-session_name("nobleuser");
-session_start();
 
-// Log all POST data
-error_log("POST data received: " . print_r($_POST, true));
 
 try {
-    // Include database connection - SAME PATH AS PRODUCT PAGE
-    if (!file_exists('../../connection/connect.php')) {
-        throw new Exception("Connection file not found at ../../connection/connect.php");
-    }
-    include '../../connection/connect.php';
-    
-    // Check if connection exists
-    if (!isset($conn)) {
-        throw new Exception("Database connection not established");
-    }
 
     // Validate request
     if ($_SERVER['REQUEST_METHOD'] !== 'POST') {

@@ -1,7 +1,6 @@
 <?php
 // checkout-step4.php - Payment Method & Final Order Review (CLEANED - PayMongo & QRPh ONLY)
-session_name("nobleuser");
-session_start();
+
 include ROOT_PATH . '/connection/connect.php';
 
 require_once ROOT_PATH . '/.env.php';

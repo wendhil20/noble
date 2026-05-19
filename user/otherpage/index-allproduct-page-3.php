@@ -1,8 +1,5 @@
 <?php
 // index-allproduct-page-3.php
-session_name("nobleuser");
-session_start();
-
 include ROOT_PATH . '/connection/connect.php';
 
 mysqli_query($conn, "SET SESSION group_concat_max_len = 10000;");

@@ -1,8 +1,6 @@
 <?php
 // checkout-qrph-create.php - CREATE CHECKOUT SESSION ONLY (no order yet!)
 // Order will be created by webhook ONLY when payment.paid is received
-session_name("nobleuser");
-session_start();
 include ROOT_PATH . '/connection/connect.php';
 require_once ROOT_PATH . '/.env.php';
 

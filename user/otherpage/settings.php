@@ -1,7 +1,5 @@
 <?php
 // complete-profile.php
-session_name("nobleuser");
-session_start();
 include ROOT_PATH . "/connection/connect.php";
 
 // Restore session from remember_token if needed

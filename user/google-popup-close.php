@@ -1,6 +1,5 @@
 <?php
-session_name("nobleuser");
-session_start();
+
 $hasError = isset($_GET['error']);
 ?>
 <!DOCTYPE html>

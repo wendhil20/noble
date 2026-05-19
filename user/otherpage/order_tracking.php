@@ -1,6 +1,5 @@
 <?php
-session_name("nobleuser");
-session_start();
+
 require_once(ROOT_PATH . '/connection/connect.php');
 
 // Check if user is logged in

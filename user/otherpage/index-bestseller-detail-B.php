@@ -1,6 +1,5 @@
 <?php
-session_name("nobleuser");
-session_start();
+
 include ROOT_PATH . '/connection/connect.php';
 
 if (!isset($_SESSION['user_id']) && isset($_COOKIE['remember_token'])) {

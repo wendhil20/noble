@@ -1,7 +1,6 @@
 <?php
 // send_otp.php
-session_name("nobleuser");
-session_start();
+
 
 use PHPMailer\PHPMailer\PHPMailer;
 use PHPMailer\PHPMailer\Exception;

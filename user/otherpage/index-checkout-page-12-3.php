@@ -1,7 +1,6 @@
 <?php
 // checkout-step3.php - Delivery Fee Calculation & Options
-session_name("nobleuser");
-session_start();
+
 include ROOT_PATH . '/connection/connect.php';
 
 // Check if user is logged in

@@ -23,14 +23,14 @@ if ($emp_id === null || $emp_id == '') {
     $update = $conn->prepare("UPDATE orders SET emp_id = ? WHERE id = ?");
     $update->bind_param("ii", $employee_id, $order_id);
     if ($update->execute()) {
-        header("Location: " . BASE_URL . "/unassignedorderaccept?accepted=true");
+        header("Location: " . BASE_URL . "/unassignedorder?accepted=true");
     } else {
-        header("Location: " . BASE_URL . "/unassignedorderaccept?error=update_failed");
+        header("Location: " . BASE_URL . "/unassignedorder?error=update_failed");
     }
     $update->close();
 } else {
     // Order already assigned
-    header("Location: " . BASE_URL . "/unassignedorderaccept?error=already_accepted");
+    header("Location: " . BASE_URL . "/unassignedorder?error=already_accepted");
 }
 
 $conn->close();

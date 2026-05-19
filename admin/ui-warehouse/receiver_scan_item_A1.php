@@ -1,4 +1,5 @@
 <?php
+//receiverscanitem
 include ROOT_PATH . "/connection/connect.php";
 include ROOT_PATH . "/admin/authentication/index-admin-role.php";
 require_role(['productspecialist', 'superadmin', 'sales', 'warehouse', 'logistic']);

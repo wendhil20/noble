@@ -95,6 +95,7 @@ $adminRoutes = [
     'receiverscanreplacement',
     'receiverupdatelocation',
     'receiverupdatetrackingstatus',
+    'receiverupdatereplacement',
 
     // logistic
     'logistic',
@@ -297,7 +298,7 @@ $routes = [
     'getcustomizereply'               => 'admin/ui-sales/backend/backend-customize/main-get-quote-replies-page-1-A.php',
 
     'unassignedorder'                 => 'admin/ui-sales/index-unassignedorder-main.php',
-    'unassignedorderaccept'           => 'admin/ui-sales/backend/backend-unassigned/index-unassigned-accept.php',
+    'unassignedorderaccept'           => 'admin/ui-sales/backend/backend-unassigned/index-unassigned-acceptorder.php',
 
     'backtracking'                    => 'admin/ui-sales/index-backtracking-main.php',
     'backtrackingdashboard'           => 'admin/ui-sales/index-backtracking-dashboard.php',
@@ -335,7 +336,7 @@ $routes = [
     'warehousestaffgeneratepoexcel'       => 'admin/ui-warehouse/warehouse_staff_generate_po_excel_A-B1.php',
     'warehousestaffresolvedefect'         => 'admin/ui-warehouse/backend/backend-warehousestaff/warehouse-staff-resolve-defect-C2.php',
     'warehousestaffgeneratereplacement'   => 'admin/ui-warehouse/backend/backend-warehousestaff/warehouse-staff-generate-replacement-po-C1.php',
-    'warehousestaffassignreceiverreplace' => 'admin/ui-warehouse/backend/backend-warehousestaff/warehouse-staff-assign-replacement-receiver-C3.php',
+    'warehousestaffassignreceiverreplace' => 'admin/ui-warehouse/backend/backend-warehousestaff/warehouse_staff_assign_replacement_receiver_C3.php',
     'warehousestaffreportdefect'          => 'admin/ui-warehouse/backend/backend-warehousestaff/warehouse-staff-report-defect-C-B.php',
     'warehousestaffdeliveryschedule'      => 'admin/ui-warehouse/warehouse-staff-delivery-schedule-C-A.php',
 
@@ -350,6 +351,7 @@ $routes = [
     'receiverscanreplacement'            => 'admin/ui-warehouse/receiver_scan_replacement_A1.php',
     'receiverupdatelocation'             => 'admin/ui-warehouse/backend/backend-warehousereceiver/receiver_update_location_A3.php',
     'receiverupdatetrackingstatus'       => 'admin/ui-warehouse/backend/backend-warehousereceiver/receiver_update_tracking_status_A1-1.php',
+    'receiverupdatereplacement'          => 'admin/ui-warehouse/backend/backend-warehousereceiver/receiver_update_replacement_A1-1.php',
 
     //logistic
     'logistic'                           => 'admin/ui-logistic/logistic-main-dashboard-page-1.php',

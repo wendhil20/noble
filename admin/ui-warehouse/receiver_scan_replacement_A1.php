@@ -197,7 +197,8 @@ $isReceived = ($currentStatus === 'In Warehouse');
                     <div>
                         <p class="text-xs text-gray-500 mb-0.5">Product Name</p>
                         <p class="text-xl font-bold text-gray-900">
-                            <?php echo htmlspecialchars($itemInfo['product_name']); ?></p>
+                            <?php echo htmlspecialchars($itemInfo['product_name']); ?>
+                        </p>
                     </div>
 
                     <!-- Grid -->
@@ -210,7 +211,8 @@ $isReceived = ($currentStatus === 'In Warehouse');
                         <div>
                             <p class="text-xs text-gray-500 mb-0.5">Size & Color</p>
                             <p class="font-semibold text-gray-800"><?php echo htmlspecialchars($itemInfo['size']); ?> ·
-                                <?php echo htmlspecialchars($itemInfo['variant_color']); ?></p>
+                                <?php echo htmlspecialchars($itemInfo['variant_color']); ?>
+                            </p>
                         </div>
                         <div>
                             <p class="text-xs text-gray-500 mb-0.5">Replacement Qty</p>
@@ -246,7 +248,8 @@ $isReceived = ($currentStatus === 'In Warehouse');
                             <div>
                                 <p class="text-xs text-gray-500 font-medium uppercase tracking-wide">Status</p>
                                 <p class="font-bold text-gray-900 text-base">
-                                    <?php echo htmlspecialchars(ucfirst($currentStatus)); ?></p>
+                                    <?php echo htmlspecialchars(ucfirst($currentStatus)); ?>
+                                </p>
                                 <p class="text-xs text-gray-500 mt-0.5">
                                     <?php if ($isReceived): ?>
                                         <i class="fas fa-check-circle text-green-500 mr-1"></i>Received and stored in warehouse
@@ -290,7 +293,8 @@ $isReceived = ($currentStatus === 'In Warehouse');
                                 <div>
                                     <p class="text-xs text-blue-600 font-medium uppercase tracking-wide">Warehouse Location</p>
                                     <p class="font-bold text-blue-900 text-lg">
-                                        <?php echo htmlspecialchars($itemInfo['warehouse_location']); ?></p>
+                                        <?php echo htmlspecialchars($itemInfo['warehouse_location']); ?>
+                                    </p>
                                 </div>
                             </div>
                             <button onclick="openEditLocationModal()"
@@ -330,17 +334,20 @@ $isReceived = ($currentStatus === 'In Warehouse');
                         <div>
                             <p class="text-xs text-gray-500 mb-0.5">Customer Name</p>
                             <p class="font-semibold text-gray-800">
-                                <?php echo htmlspecialchars($orderInfo['customer_name']); ?></p>
+                                <?php echo htmlspecialchars($orderInfo['customer_name']); ?>
+                            </p>
                         </div>
                         <div>
                             <p class="text-xs text-gray-500 mb-0.5">Email</p>
                             <p class="font-semibold text-gray-800 break-all">
-                                <?php echo htmlspecialchars($orderInfo['customer_email']); ?></p>
+                                <?php echo htmlspecialchars($orderInfo['customer_email']); ?>
+                            </p>
                         </div>
                         <div>
                             <p class="text-xs text-gray-500 mb-0.5">Order Date</p>
                             <p class="font-semibold text-gray-800">
-                                <?php echo date('M j, Y g:i A', strtotime($orderInfo['order_date'])); ?></p>
+                                <?php echo date('M j, Y g:i A', strtotime($orderInfo['order_date'])); ?>
+                            </p>
                         </div>
                         <div>
                             <p class="text-xs text-gray-500 mb-0.5">Order Status</p>
@@ -379,7 +386,8 @@ $isReceived = ($currentStatus === 'In Warehouse');
                         <div>
                             <p class="text-xs text-gray-500 mb-0.5">Email</p>
                             <p class="font-semibold text-gray-800 break-all">
-                                <?php echo htmlspecialchars($supplierInfo['email']); ?></p>
+                                <?php echo htmlspecialchars($supplierInfo['email']); ?>
+                            </p>
                         </div>
                         <div>
                             <p class="text-xs text-gray-500 mb-0.5">Phone</p>
@@ -436,7 +444,7 @@ $isReceived = ($currentStatus === 'In Warehouse');
 
     <script>
         const replacementId = <?php echo $replacement_id; ?>;
-
+        const BASE_URL = "<?php echo BASE_URL; ?>";
         function updateReplacementStatus(newStatus) {
             const messages = {
                 'In Warehouse': 'This will confirm that the replacement item has been received and stored in the warehouse.',
@@ -449,10 +457,10 @@ $isReceived = ($currentStatus === 'In Warehouse');
             btn.disabled = true;
             btn.innerHTML = '<i class="fas fa-spinner fa-spin mr-2"></i>Updating…';
 
-            fetch('<?= BASE_URL; ?>/receiverupdatetrackingstatus', {
+            fetch('<?= BASE_URL; ?>/receiverupdatereplacement', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ replacement_id: replacementId, status: newStatus })
+                body: JSON.stringify({ item_id: replacementId, tracking_status: newStatus })
             })
                 .then(r => r.json())
                 .then(data => {
@@ -494,7 +502,7 @@ $isReceived = ($currentStatus === 'In Warehouse');
             const location = document.getElementById('warehouseLocationInput').value.trim();
             if (!location) { alert('Please enter a warehouse location.'); return; }
 
-            fetch('<?= BASE_URL; ?>/receiverupdatelocation', {
+            fetch(BASE_URL + '/receiverupdatelocation', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ item_id: replacementId, warehouse_location: location, item_type: 'replacement' })

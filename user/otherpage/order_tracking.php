@@ -2175,7 +2175,7 @@ $show_map = $delivery_settings &&
             const formData = new FormData(this);
 
             try {
-                const response = await fetch('<?= BASE_URL ?>/feedback.php', {
+                const response = await fetch('<?= BASE_URL ?>/feedback', {
                     method: 'POST',
                     body: formData
                 });

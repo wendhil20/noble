@@ -253,9 +253,9 @@ if (!isset($_SESSION['noble_name']) || !isset($_SESSION['noble_lvl']) || !isset(
             <?php endif; ?>
 
             <?php if (hasAnyRole(['sales', 'superadmin'])): ?>
-                <a href="../chatadmin/admin_chatmain" @click="sidebar = false"
+                <a href="<?= BASE_URL ?>/adminchatmain" @click="sidebar = false"
                     class="sidebar-link flex items-center gap-3 px-4 py-2.5 rounded-xl text-sm font-medium
-                  <?= $cur == 'admin_chatmain' ? 'bg-orange-50 text-orange-600 font-semibold' : 'text-gray-600 hover:text-orange-600 hover:bg-orange-50' ?> transition-all">
+                  <?= $cur == 'adminchatmain' ? 'bg-orange-50 text-orange-600 font-semibold' : 'text-gray-600 hover:text-orange-600 hover:bg-orange-50' ?> transition-all">
                     <i class="ri-message-3-line text-base w-4 text-center"></i>
                     <span>Inquiries</span>
                 </a>
@@ -314,9 +314,9 @@ if (!isset($_SESSION['noble_name']) || !isset($_SESSION['noble_lvl']) || !isset(
                 <?php endif; ?>
 
                 <?php if (hasAnyRole(['sales', 'superadmin'])): ?>
-                    <a href="../chatadmin/admin_chatmain"
+                    <a href="<?= BASE_URL ?>/adminchatmain"
                         class="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-sm font-medium transition-all
-                      <?= $cur == 'admin_chatmain' ? 'nav-active' : 'text-gray-500 hover:bg-orange-50 hover:text-orange-600' ?>">
+                      <?= $cur == 'adminchatmain' ? 'nav-active' : 'text-gray-500 hover:bg-orange-50 hover:text-orange-600' ?>">
                         <i class="ri-message-3-line text-sm"></i> Inquiries
                     </a>
                 <?php endif; ?>

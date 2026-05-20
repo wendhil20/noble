@@ -47,6 +47,7 @@ $adminRoutes = [
     'unassignedorderaccept',
     'backtracking',
     'backtrackingdashboard',
+    'adminchatmain',
 
     //accountant
     'accountant',
@@ -280,6 +281,7 @@ $routes = [
     'updateorder'                     => 'admin/ui-sales/backend/backend-order/index-order-update.php',
     'generatereferral'                => 'admin/ui-sales/index-generate-main.php',
     'savereferral'                    => 'admin/ui-sales/backend/backend-generate/save_referral_qr.php',
+    'adminchatmain'                   => 'admin/ui-sales/admin_chatmain.php',
 
     'targetpricemanagement'           => 'admin/ui-sales/target-price-management.php',
     'targetpricemanagementsave'       => 'admin/ui-sales/backend/backend-targetprice/target-price-management-save.php',

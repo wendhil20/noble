@@ -417,7 +417,7 @@ $selectableReplacementStatuses = ['approved', 'processing'];
                     <p class="text-xs text-red-700 mt-0.5"><?php echo $totalReplacements; ?> replacement item(s) are in the warehouse.</p>
                 </div>
             </div>
-            <a href="warehouse_staff_delivery_schedule_C-A.php?order_id=<?php echo $order_id; ?>&schedule_replacements=true"
+            <a href="<?= BASE_URL ?>/warehousestaffdeliveryschedule?order_id=<?php echo $order_id; ?>&schedule_replacements=true"
                class="inline-flex items-center gap-2 px-4 py-2 bg-red-600 hover:bg-red-700 text-white text-xs font-semibold rounded-lg transition-colors shrink-0">
                 <i class="fas fa-calendar-check"></i> Schedule Replacement Delivery
             </a>

@@ -351,7 +351,7 @@ $routes = [
     'receiverscanreplacement'            => 'admin/ui-warehouse/receiver_scan_replacement_A1.php',
     'receiverupdatelocation'             => 'admin/ui-warehouse/backend/backend-warehousereceiver/receiver_update_location_A3.php',
     'receiverupdatetrackingstatus'       => 'admin/ui-warehouse/backend/backend-warehousereceiver/receiver_update_tracking_status_A1-1.php',
-    'receiverupdatereplacement'          => 'admin/ui-warehouse/backend/backend-warehousereceiver/receiver_update_replacement_A1-1.php',
+    'receiverupdatereplacement'          => 'admin/ui-warehouse/backend/backend-warehousereceiver/receiver_update_replacement_status_A1-1.php',
 
     //logistic
     'logistic'                           => 'admin/ui-logistic/logistic-main-dashboard-page-1.php',

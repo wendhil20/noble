@@ -457,12 +457,17 @@ $isReceived = ($currentStatus === 'In Warehouse');
             btn.disabled = true;
             btn.innerHTML = '<i class="fas fa-spinner fa-spin mr-2"></i>Updating…';
 
-            fetch('<?= BASE_URL; ?>/receiverupdatereplacement', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ item_id: replacementId, tracking_status: newStatus })
-            })
-                .then(r => r.json())
+             fetch(BASE_URL + '/receiverupdatereplacement', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({
+                        replacement_id: replacementId,
+                        status: newStatus
+                    })
+                })
+                .then(response => response.json())
                 .then(data => {
                     if (data.success) {
                         alert('Status updated to: ' + newStatus);

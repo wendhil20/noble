@@ -141,14 +141,14 @@ $variant_count = (int) $variant_count_row['cnt'];
   <div class="bg-white p-6 rounded-lg shadow mt-5 max-w-7xl mx-auto">
     <div class="flex items-center justify-between mb-4">
       <h2 class="text-2xl font-bold text-orange-600">Update Product</h2>
-      <a href="set_sku-page-5-A.php?product_id=<?= $product_id ?>"
+      <a href="<?= BASE_URL ?>/setsku?product_id=<?= $product_id ?>"
         class="inline-flex items-center gap-2 bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg text-sm font-semibold transition">
         <i class="fas fa-barcode"></i>
         SKU (<?= $variant_count ?>)
       </a>
     </div>
 
-    <form action="<?= BASE_URL; ?>/updateprocess" method="POST" enctype="multipart/form-data">
+    <form action="<?= BASE_URL ?>/updateprocess" method="POST" enctype="multipart/form-data">
       <input type="hidden" name="product_id" value="<?php echo $product_id; ?>" />
 
       <!-- Product Name -->

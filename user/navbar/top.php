@@ -972,7 +972,7 @@ pss.tag as sub_subcategory_tag,
                             :class="selectedCategory === 'cat_<?= $category['id'] ?>' ? 'text-orange-500 font-medium' : 'text-gray-800'">
                             <?= htmlspecialchars($category['name']) ?>
                           </div>
-                        <?= nav_tag_badge($category['tag'], $conn) ?>
+                          <?= nav_tag_badge($category['tag'], $conn) ?>
                         </div>
 
                         <svg class="w-3 h-3 shrink-0 transition-colors"
@@ -1049,7 +1049,7 @@ pss.tag as sub_subcategory_tag,
                                 :class="selectedSubcategory === 'sub_<?= $sub['id'] ?>' ? 'text-orange-500 font-medium' : 'text-gray-800'">
                                 <?= htmlspecialchars($sub['name']) ?>
                               </div>
-<?= nav_tag_badge($category['tag'], $conn) ?>
+                              <?= nav_tag_badge($category['tag'], $conn) ?>
                             </div>
 
                             <svg class="w-3 h-3 text-gray-400 group-hover:text-orange-500 transition shrink-0"
@@ -1121,7 +1121,7 @@ pss.tag as sub_subcategory_tag,
                                     class="text-sm group-hover:text-orange-600 transition font-medium text-gray-800 truncate uppercase">
                                     <?= htmlspecialchars($subsub['name']) ?>
                                   </div>
-<?= nav_tag_badge($subsub['tag'], $conn) ?>
+                                  <?= nav_tag_badge($subsub['tag'], $conn) ?>
                                 </div>
 
                                 <svg class="w-3 h-3 text-gray-400 group-hover:text-orange-600 transition shrink-0" fill="none"
@@ -1216,7 +1216,8 @@ pss.tag as sub_subcategory_tag,
                 class="block w-full text-left px-4 py-2 text-sm text-red-600 hover:bg-red-50">
                 Profile
               </a>
-              <a href="<?= BASE_URL ?>/logout" class="block w-full text-left px-4 py-2 text-sm text-red-600 hover:bg-red-50">
+              <a href="<?= BASE_URL ?>/logout"
+                class="block w-full text-left px-4 py-2 text-sm text-red-600 hover:bg-red-50">
                 Logout
               </a>
             </div>
@@ -1723,13 +1724,12 @@ pss.tag as sub_subcategory_tag,
 
         </div>
 
-
         <!-- User Authentication -->
         <?php if (isset($_SESSION['user_name'])): ?>
           <div class="relative">
             <div class="relative group">
               <button @click="profileOpen = !profileOpen" class="flex items-center gap-2 focus:outline-none">
-                <div class="w-8 h-8 rounded-full overflow-hidden border border-gray-300 bg-gray-100">
+                <div class="w-8 h-8 rounded-full overflow-hidden bg-gray-100">
                   <?php if (!empty($_SESSION['user_picture'])): ?>
                     <img src="<?= htmlspecialchars($_SESSION['user_picture']) ?>" alt="Profile"
                       class="w-full h-full object-contain">
@@ -1751,6 +1751,15 @@ pss.tag as sub_subcategory_tag,
                 <div class="absolute -top-1 left-1/2 -translate-x-1/2 w-2 h-2 bg-gray-800 rotate-45"></div>
               </div>
             </div>
+
+            <!-- ADD THIS: Backdrop overlay -->
+            <div x-show="profileOpen" @click="profileOpen = false" x-transition:enter="transition ease-out duration-200"
+              x-transition:enter-start="opacity-0" x-transition:enter-end="opacity-100"
+              x-transition:leave="transition ease-in duration-150" x-transition:leave-start="opacity-100"
+              x-transition:leave-end="opacity-0" x-cloak class="fixed inset-0 bg-black/40 z-40" style="top: 80px;">
+            </div>
+
+
             <div x-show="profileOpen" x-cloak @click.outside="profileOpen = false" x-transition
               class="absolute right-0 mt-2 w-45 bg-white border border-gray-200 rounded-md shadow-lg z-50">
 
@@ -1787,6 +1796,7 @@ pss.tag as sub_subcategory_tag,
             </div>
           </div>
         <?php else: ?>
+
           <!-- ===== GUEST MODE ===== -->
           <div class="relative">
             <!-- Guest Badge + Login Button Group -->
@@ -2974,9 +2984,6 @@ pss.tag as sub_subcategory_tag,
       }, 2000); // 2 segundo para ready na ang socket
     <?php endif; ?>
   });
-</script>
-
-<script>
 
   function showGuestLoginAlert() {
     showNotification('Please login to proceed', 'info');

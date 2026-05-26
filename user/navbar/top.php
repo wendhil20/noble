@@ -2063,8 +2063,11 @@ pss.tag as sub_subcategory_tag,
   <?php include ROOT_PATH . '/user/navbar/partials/login-modal.php'; ?>
 </nav>
 
-<script
-  src="<?= BASE_URL ?>/user/navbar/js/top-obf.js?v=<?= file_exists(ROOT_PATH . '/user/navbar/js/top-obf.js') ? md5_file(ROOT_PATH . '/user/navbar/js/top-obf.js') : '1' ?>"></script>
+<script>
+  const BASE_URL = "<?= BASE_URL ?>";
+</script>
+
+<script src="<?= BASE_URL ?>/user/navbar/js/top-obf.js?v=<?= file_exists(ROOT_PATH . '/user/navbar/js/top-obf.js') ? md5_file(ROOT_PATH . '/user/navbar/js/top-obf.js') : '1' ?>"></script>
 
 <script>
   // Wait para ready na lahat bago mag-initFCM

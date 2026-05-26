@@ -7,6 +7,18 @@ RewriteRule ^ - [E=APP_BASE:/noble]
 RewriteCond %{HTTP_HOST} !^(localhost|127\.0\.0\.1)
 RewriteRule ^ - [E=APP_BASE:/]
 
+# ─── Block .env access ───────────────────────────────────
+<Files ".env">
+    Order allow,deny
+    Deny from all
+</Files>
+
+# ─── Block direct PHP access sa admin/user folders ───────
+<FilesMatch "^(vendor|admin|user)/.*\.php$">
+    Order allow,deny
+    Deny from all
+</FilesMatch>
+
 # Allow direct access to real files and folders
 RewriteCond %{REQUEST_FILENAME} -f [OR]
 RewriteCond %{REQUEST_FILENAME} -d

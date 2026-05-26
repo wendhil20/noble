@@ -343,405 +343,7 @@ $uri = trim($uri, '/');
   </div>
 </div>
 
-<!-- Loader CSS -->
-<style>
-  .loader {
-    width: fit-content;
-    height: fit-content;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-  }
 
-  .truckWrapper {
-    width: 200px;
-    height: 100px;
-    display: flex;
-    flex-direction: column;
-    position: relative;
-    align-items: center;
-    justify-content: flex-end;
-    overflow-x: hidden;
-  }
-
-  /* truck body bounce */
-  .truckBody {
-    width: 130px;
-    height: fit-content;
-    margin-bottom: 6px;
-    animation: motion 1s linear infinite;
-  }
-
-  @keyframes motion {
-    0% {
-      transform: translateY(0px);
-    }
-
-    50% {
-      transform: translateY(3px);
-    }
-
-    100% {
-      transform: translateY(0px);
-    }
-  }
-
-  /* truck tires */
-  .truckTires {
-    width: 130px;
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    padding: 0 10px 0 15px;
-    position: absolute;
-    bottom: 0;
-  }
-
-  .truckTires svg {
-    width: 24px;
-  }
-
-  .road {
-    width: 100%;
-    height: 1.5px;
-    background-color: #282828;
-    position: relative;
-    bottom: 0;
-    align-self: flex-end;
-    border-radius: 3px;
-  }
-
-  .road::before {
-    content: "";
-    position: absolute;
-    width: 20px;
-    height: 100%;
-    background-color: #282828;
-    right: -50%;
-    border-radius: 3px;
-    animation: roadAnimation 1.4s linear infinite;
-    border-left: 10px solid white;
-  }
-
-  .road::after {
-    content: "";
-    position: absolute;
-    width: 10px;
-    height: 100%;
-    background-color: #282828;
-    right: -65%;
-    border-radius: 3px;
-    animation: roadAnimation 1.4s linear infinite;
-    border-left: 4px solid white;
-  }
-
-  .lampPost {
-    position: absolute;
-    bottom: 0;
-    right: -90%;
-    height: 90px;
-    animation: roadAnimation 1.4s linear infinite;
-  }
-
-  @keyframes roadAnimation {
-    0% {
-      transform: translateX(0px);
-    }
-
-    100% {
-      transform: translateX(-350px);
-    }
-  }
-
-  /* Smooth scrollbar for modal */
-  .overflow-y-auto::-webkit-scrollbar {
-    width: 6px;
-  }
-
-  .overflow-y-auto::-webkit-scrollbar-track {
-    background: #f9fafb;
-  }
-
-  .overflow-y-auto::-webkit-scrollbar-thumb {
-    background: #d1d5db;
-    border-radius: 3px;
-  }
-
-  .overflow-y-auto::-webkit-scrollbar-thumb:hover {
-    background: #9ca3af;
-  }
-
-  /* Line clamp utilities */
-  .line-clamp-2 {
-    display: -webkit-box;
-    -webkit-line-clamp: 2;
-    line-clamp: 2;
-    -webkit-box-orient: vertical;
-    overflow: hidden;
-  }
-
-  /* Loading Spinner */
-  .loading-spinner {
-    border: 3px solid #f3f4f6;
-    border-top: 3px solid #f97316;
-    border-radius: 50%;
-    width: 40px;
-    height: 40px;
-    animation: spin 0.8s linear infinite;
-  }
-
-  @keyframes spin {
-    0% {
-      transform: rotate(0deg);
-    }
-
-    100% {
-      transform: rotate(360deg);
-    }
-  }
-
-  /* Keyboard shortcut styling */
-  kbd {
-    font-family: monospace;
-    font-size: 0.75rem;
-    font-weight: 600;
-  }
-
-  /* Smooth scrolling */
-  .overflow-y-auto {
-    scrollbar-width: thin;
-    scrollbar-color: rgba(249, 115, 22, 0.3) transparent;
-  }
-
-  .overflow-y-auto::-webkit-scrollbar {
-    width: 8px;
-  }
-
-  .overflow-y-auto::-webkit-scrollbar-track {
-    background: transparent;
-  }
-
-  .overflow-y-auto::-webkit-scrollbar-thumb {
-    background-color: rgba(249, 115, 22, 0.3);
-    border-radius: 4px;
-  }
-
-  .overflow-y-auto::-webkit-scrollbar-thumb:hover {
-    background-color: rgba(249, 115, 22, 0.5);
-  }
-
-  .cart-modal {
-    opacity: 0 !important;
-    visibility: hidden !important;
-    transform: translateY(-10px);
-    transition: all 0.3s ease-in-out;
-    z-index: 9999 !important;
-    display: none;
-  }
-
-  .cart-modal.show {
-    opacity: 1 !important;
-    visibility: visible !important;
-    transform: translateY(0);
-    display: block;
-  }
-
-  .cart-item-slide {
-    animation: slideInRight 0.3s ease-out forwards;
-  }
-
-  @keyframes slideInRight {
-    from {
-      opacity: 0;
-      transform: translateX(20px);
-    }
-
-    to {
-      opacity: 1;
-      transform: translateX(0);
-    }
-  }
-
-  #cart-items-container {
-    max-height: 400px;
-    /* Increase from 240px/256px */
-    overflow-y: auto;
-    scroll-behavior: smooth;
-    scrollbar-width: thin;
-    scrollbar-color: #d1d5db #f3f4f6;
-  }
-
-  /* WebKit browsers scrollbar */
-  #cart-items-container::-webkit-scrollbar {
-    width: 6px;
-  }
-
-  #cart-items-container::-webkit-scrollbar-track {
-    background: #f3f4f6;
-    border-radius: 10px;
-  }
-
-  #cart-items-container::-webkit-scrollbar-thumb {
-    background: #d1d5db;
-    border-radius: 10px;
-  }
-
-  #cart-items-container::-webkit-scrollbar-thumb:hover {
-    background: #9ca3af;
-  }
-
-  /* Mobile responsive */
-  @media (max-width: 640px) {
-    #cart-items-container {
-      max-height: 350px;
-    }
-  }
-
-  @media (max-width: 480px) {
-    #cart-items-container {
-      max-height: 300px;
-    }
-  }
-
-  @media (max-width: 375px) {
-    #cart-items-container {
-      max-height: 250px;
-    }
-  }
-
-  /* Responsive positioning */
-  @media (max-width: 640px) {
-    .cart-modal {
-      right: 0.5rem !important;
-      left: 0.5rem !important;
-      width: auto !important;
-      max-width: none !important;
-      top: 4rem !important;
-    }
-  }
-
-  @media (max-width: 480px) {
-    .cart-modal {
-      right: 0.25rem !important;
-      left: 0.25rem !important;
-      top: 3.5rem !important;
-      max-height: 85vh !important;
-    }
-
-    /* Adjust padding for mobile */
-    .cart-modal .p-4 {
-      padding: 0.75rem !important;
-    }
-
-    .cart-modal .p-3 {
-      padding: 0.5rem !important;
-    }
-
-    /* Make cart items more compact on mobile */
-    .cart-modal .space-y-3 {
-      gap: 0.5rem;
-    }
-
-    .cart-modal .space-y-3>*+* {
-      margin-top: 0.5rem;
-    }
-  }
-
-  @media (max-width: 375px) {
-    .cart-modal {
-      right: 0.125rem !important;
-      left: 0.125rem !important;
-      max-height: 80vh !important;
-    }
-
-    /* Further reduce spacing for very small screens */
-    #cart-items-container {
-      max-height: 12rem !important;
-      /* Reduce max height */
-    }
-  }
-
-  /* Ensure modal appears above all other elements */
-  .cart-modal {
-    position: fixed !important;
-  }
-
-  /* Button hover effects */
-  #refresh-cart-btn:hover i {
-    transform: rotate(180deg);
-    transition: transform 0.3s ease;
-  }
-
-  #refresh-cart-btn:disabled {
-    opacity: 0.6;
-    cursor: not-allowed;
-  }
-
-  /* Smooth scrolling for cart items */
-  #cart-items-container {
-    scroll-behavior: smooth;
-  }
-
-  /* Add subtle gradient fade at bottom when scrolling */
-  #cart-items-container::after {
-    content: '';
-    position: absolute;
-    bottom: 0;
-    left: 0;
-    right: 0;
-    height: 20px;
-    background: linear-gradient(transparent, rgba(255, 255, 255, 0.8));
-    pointer-events: none;
-    opacity: 0;
-    transition: opacity 0.3s ease;
-  }
-
-  #cart-items-container.has-scroll::after {
-    opacity: 1;
-  }
-
-  /* Responsive text sizes */
-  @media (max-width: 640px) {
-    .cart-modal h3 {
-      font-size: 1rem !important;
-    }
-
-    .cart-modal .text-lg {
-      font-size: 1rem !important;
-    }
-
-    .cart-modal .text-base {
-      font-size: 0.875rem !important;
-    }
-  }
-
-  @media (max-width: 480px) {
-    .cart-modal h3 {
-      font-size: 0.875rem !important;
-    }
-
-    .cart-modal .font-bold.text-lg {
-      font-size: 0.875rem !important;
-    }
-  }
-
-  /* Improve touch targets for mobile */
-  @media (max-width: 640px) {
-
-    .cart-modal a,
-    .cart-modal button {
-      min-height: 44px;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-    }
-
-    /* Remove item button */
-    .cart-modal .fa-times {
-      padding: 0.5rem;
-    }
-  }
-</style>
 
 <nav x-data="{ 
     mobileOpen: false, 
@@ -1797,178 +1399,29 @@ pss.tag as sub_subcategory_tag,
           </div>
         <?php else: ?>
 
-          <!-- ===== GUEST MODE ===== -->
-          <div class="relative">
-            <!-- Guest Badge + Login Button Group -->
-            <div class="flex items-center gap-2">
-              <!-- Guest Badge -->
-              <div class="hidden sm:flex items-center gap-2 px-2.5 py-1 bg-gray-100 rounded-full border border-gray-300">
-                <svg class="w-4 h-4 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                    d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-                </svg>
-                <span class="text-xs text-gray-600 font-medium">Guest</span>
-              </div>
 
-              <!-- Login Button -->
-              <button @click="loginOpen = !loginOpen"
-                class="flex items-center gap-1 px-3 py-1.5 bg-orange-500 hover:bg-orange-600 text-white text-sm rounded-lg transition font-medium">
-                <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4" fill="none" viewBox="0 0 24 24"
-                  stroke="currentColor">
-                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                    d="M5.121 17.804A10.95 10.95 0 0112 15c2.385 0 4.579.832 6.314 2.204M15 10a3 3 0 11-6 0 3 3 0 016 0z" />
-                </svg>
-                <span class="hidden sm:inline">Login</span>
-              </button>
+          <!-- ========== LOGIN BUTTON (shows in navbar) ========== -->
+          <div class="flex items-center gap-2">
+            <div class="hidden sm:flex items-center gap-2 px-2.5 py-1 bg-gray-100 rounded-full border border-gray-300">
+              <svg class="w-4 h-4 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                  d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+              </svg>
+              <span class="text-xs text-gray-600 font-medium">Guest</span>
             </div>
 
-            <!-- Backdrop overlay - sa loob ng nav, bago ang Desktop Login Dropdown -->
-            <div x-show="loginOpen" @click="loginOpen = false" x-transition:enter="transition ease-out duration-200"
-              x-transition:enter-start="opacity-0" x-transition:enter-end="opacity-100"
-              x-transition:leave="transition ease-in duration-150" x-transition:leave-start="opacity-100"
-              x-transition:leave-end="opacity-0" x-cloak class="fixed inset-0 bg-black/40 bg-opacity-10 z-20"
-              style="top: 80px;">
-            </div>
-
-            <!-- Desktop Login Dropdown -->
-            <div x-show="loginOpen" @click.away="loginOpen = false" x-transition x-cloak
-              class="absolute right-0 mt-2 w-80 bg-white border border-gray-200 rounded-lg shadow-lg p-6 z-50  ">
-
-              <h2 class="text-xl font-bold text-gray-800 mb-4">Login</h2>
-
-              <form x-data="loginForm()" @submit.prevent="handleLogin($event)">
-                <!-- Email/Mobile Input -->
-                <div class="mb-4">
-                  <label for="login_input" class="block text-sm font-medium text-gray-600 mb-2">Email or Mobile</label>
-                  <input type="text" id="login_input" name="login" x-model="loginInput" @input="checkLoginType"
-                    autocomplete="username" placeholder="you@example.com or 09123456789" required
-                    class="w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-orange-500">
-                </div>
-
-                <!-- Password field (shown for mobile or after OTP verified for email) -->
-                <div x-show="(isMobile) || (isEmail && otpVerified)" x-transition class="mb-4">
-                  <label for="password" class="block text-sm font-medium text-gray-600 mb-2">Password</label>
-                  <input type="password" id="password" name="password" x-model="password" autocomplete="current-password"
-                    class="w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-orange-500">
-                </div>
-
-                <!-- OTP Send Button (shown for email before OTP is sent) -->
-                <div x-show="isEmail && !otpSent && !otpVerified" x-transition>
-                  <label class="block text-sm font-medium text-gray-600 mb-2">OTP Verification</label>
-                  <button type="button" @click="sendOTP" :disabled="otpLoading || resendCooldown > 0"
-                    class="w-full bg-black hover:bg-red-700 disabled:bg-black text-white px-4 py-3 rounded mb-2 flex items-center justify-center space-x-2">
-
-                    <!-- Show "Send OTP" -->
-                    <template x-if="!otpLoading && resendCooldown === 0">
-                      <span>Send OTP</span>
-                    </template>
-
-                    <!-- Show animated spinner + "Loading..." -->
-                    <template x-if="otpLoading">
-                      <div class="flex items-center space-x-2">
-                        <svg class="animate-spin h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none"
-                          viewBox="0 0 24 24">
-                          <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4">
-                          </circle>
-                          <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v4a4 4 0 00-4 4H4z"></path>
-                        </svg>
-                        <span>Verifying...</span>
-                      </div>
-                    </template>
-
-                    <!-- Show "Resend in Xs" -->
-                    <template x-if="!otpLoading && resendCooldown > 0">
-                      <span>Resend in <span x-text="resendCooldown"></span>s</span>
-                    </template>
-                  </button>
-                </div>
-
-                <!-- OTP Input Section (shown after OTP is sent but not verified) -->
-                <div x-show="otpSent && !otpVerified" x-transition class="mb-4">
-                  <label class="block text-sm font-medium text-gray-600 mb-2">Enter OTP</label>
-                  <p class="text-xs text-gray-500 mb-2">We sent a verification code to your email</p>
-
-                  <input type="text" x-model="otp" maxlength="6"
-                    class="w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-orange-500 mb-3 text-center text-lg tracking-widest"
-                    placeholder="000000">
-
-                  <div class="flex gap-2">
-                    <button type="button" @click="cancelOTP"
-                      class="flex-1 py-2 bg-gray-300 rounded hover:bg-gray-400 text-sm">Cancel</button>
-                    <button type="button" @click="verifyOTP" :disabled="!otp || otp.length < 4"
-                      class="flex-1 py-2 bg-orange-500 text-white rounded hover:bg-orange-600 disabled:bg-orange-300 text-sm">
-                      Verify
-                    </button>
-                  </div>
-
-                  <!-- Resend OTP section -->
-                  <div class="mt-3 text-center">
-                    <template x-if="resendCooldown > 0">
-                      <p class="text-sm text-gray-500">Resend in <span x-text="resendCooldown"></span>s</p>
-                    </template>
-                    <template x-if="resendCooldown === 0">
-                      <button @click="sendOTP" class="text-blue-500 hover:underline text-sm" type="button">
-                        Resend OTP
-                      </button>
-                    </template>
-                  </div>
-                </div>
-
-                <!-- Remember Me (for mobile only) -->
-                <div class="flex items-center gap-2 mb-4" x-show="isMobile">
-                  <input type="checkbox" id="remember" name="remember" class="h-4 w-4">
-                  <label for="remember" class="text-sm text-gray-600">Remember me</label>
-                </div>
-
-                <!-- Login Button (shown for mobile or after OTP verified for email) -->
-                <button type="submit" :disabled="submitLoading" x-show="(isMobile || (isEmail && otpVerified))"
-                  class="w-full mb-4 bg-orange-500 hover:bg-orange-600 disabled:bg-orange-300 text-white font-semibold py-2 px-4 rounded-lg">
-                  <span x-show="!submitLoading">Log In</span>
-                  <span x-show="submitLoading">Logging in...</span>
-                </button>
-
-                <!-- Error/Success Messages -->
-                <div x-show="errorMessage" x-transition
-                  class="mb-4 p-3 bg-red-100 border border-red-400 text-red-700 rounded">
-                  <span x-text="errorMessage"></span>
-                </div>
-
-                <div x-show="successMessage" x-transition
-                  class="mb-4 p-3 bg-green-100 border border-green-400 text-green-700 rounded">
-                  <span x-text="successMessage"></span>
-                </div>
-
-                <!-- Additional Links -->
-                <div class="text-center text-xs mb-2">
-                  <a href="../forgot_password" class="text-orange-500 hover:underline">Forgot password?</a>
-                </div>
-
-                <div class="text-center text-xs mb-4">
-                  <span>Don't have an account?</span>
-                  <a href="#" @click.prevent="registerOpen = true; loginOpen = false"
-                    class="text-orange-500 hover:underline font-medium">Register</a>
-                </div>
-
-                <!-- Google Login -->
-                <div class="text-center">
-                  <a href="javascript:void(0)" onclick="openGooglePopup('<?= BASE_URL ?>/login')"
-                    class="inline-flex items-center justify-center w-full gap-3 bg-red-500 hover:bg-red-600 text-white font-semibold py-2 px-4 rounded-lg">
-                    <svg class="w-5 h-5 bg-white rounded-full p-[2px]" viewBox="0 0 48 48">
-                      <path fill="#EA4335"
-                        d="M24 9.5c3.5 0 6.3 1.2 8.3 3.2l6.2-6.2C34.8 2.6 29.7 0 24 0 14.8 0 6.8 5.9 3.2 14.1l7.3 5.7C12.7 13.2 17.9 9.5 24 9.5z" />
-                      <path fill="#34A853"
-                        d="M24 48c6.5 0 12-2.1 16.1-5.7l-7.4-6.1C30.5 38.7 27.5 40 24 40c-6 0-11.2-3.7-13.4-8.8l-7.2 5.5C6.3 43.8 14.6 48 24 48z" />
-                      <path fill="#FBBC05"
-                        d="M43.6 20H24v8.4h11.3c-1.1 3.2-3.4 5.8-6.5 7.6l7.4 6.1c4.3-4 6.8-9.9 6.8-17.1 0-1.2-.1-2.3-.3-3.4z" />
-                      <path fill="#4285F4"
-                        d="M10.6 29.6C9.7 27.2 9.2 24.7 9.2 22s.5-5.2 1.4-7.6l-7.4-5.7C1.1 13.6 0 17.7 0 22c0 4.2 1.1 8.3 3.2 11.8l7.4-4.2z" />
-                    </svg>
-                    Login with Google
-                  </a>
-                </div>
-              </form>
-            </div>
+            <button @click="loginOpen = true"
+              class="flex items-center gap-1 px-3 py-1.5 bg-orange-500 hover:bg-orange-600 text-white text-sm rounded-lg transition font-medium">
+              <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4" fill="none" viewBox="0 0 24 24"
+                stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                  d="M5.121 17.804A10.95 10.95 0 0112 15c2.385 0 4.579.832 6.314 2.204M15 10a3 3 0 11-6 0 3 3 0 016 0z" />
+              </svg>
+              <span class="hidden sm:inline">Login</span>
+            </button>
           </div>
+
+
         <?php endif; ?>
       </div>
     </div>
@@ -2397,302 +1850,146 @@ pss.tag as sub_subcategory_tag,
     </div>
 
 
-    <!-- New Products Sidebar for Mobile -->
     <?php if (count($newProducts) > 0): ?>
-      <!-- Overlay -->
-      <div x-show="newProductsSidebarMobile" x-cloak @click="newProductsSidebarMobile = false"
-        x-transition:enter="transition ease-out duration-300" x-transition:enter-start="opacity-0"
-        x-transition:enter-end="opacity-100" x-transition:leave="transition ease-in duration-200"
-        x-transition:leave-start="opacity-100" x-transition:leave-end="opacity-0"
-        class="lg:hidden fixed inset-0 z-9999 bg-black bg-opacity-50">
+
+<!-- Mobile New Products Sidebar -->
+
+<!-- Overlay -->
+<div
+  x-show="newProductsSidebarMobile"
+  x-cloak
+  @click="newProductsSidebarMobile = false"
+  x-transition:enter="transition ease-out duration-200"
+  x-transition:enter-start="opacity-0"
+  x-transition:enter-end="opacity-100"
+  x-transition:leave="transition ease-in duration-150"
+  x-transition:leave-start="opacity-100"
+  x-transition:leave-end="opacity-0"
+  class="lg:hidden fixed inset-0 z-[99998] bg-black/50">
+</div>
+
+<!-- Drawer Panel -->
+<div
+  x-show="newProductsSidebarMobile"
+  x-cloak
+  x-transition:enter="transition ease-out duration-300 transform"
+  x-transition:enter-start="translate-x-full"
+  x-transition:enter-end="translate-x-0"
+  x-transition:leave="transition ease-in duration-200 transform"
+  x-transition:leave-start="translate-x-0"
+  x-transition:leave-end="translate-x-full"
+  class="lg:hidden fixed right-0 top-0 h-full w-[92vw] max-w-md bg-white z-[99999] flex flex-col shadow-2xl">
+
+  <!-- Header -->
+  <div class="flex items-center justify-between px-4 py-3.5 bg-black shrink-0">
+    <div class="flex items-center gap-2.5">
+      <div class="w-8 h-8 rounded-lg flex items-center justify-center"
+        style="background: rgba(249,115,22,0.15); border: 1px solid rgba(249,115,22,0.25);">
+        <i class="fa-solid fa-box-open text-orange-500 text-xs"></i>
       </div>
-
-      <!-- Sidebar Panel -->
-      <div x-show="newProductsSidebarMobile" x-cloak x-transition:enter="transition ease-out duration-300 transform"
-        x-transition:enter-start="-translate-x-full" x-transition:enter-end="translate-x-0"
-        x-transition:leave="transition ease-in duration-200 transform" x-transition:leave-start="translate-x-0"
-        x-transition:leave-end="-translate-x-full"
-        class="lg:hidden fixed left-0 top-0 h-full w-80 max-w-[85vw] bg-white shadow-2xl z-10000 flex flex-col">
-
-        <!-- Sidebar Header -->
-        <div class="flex justify-between items-center p-4 border-b bg-black text-white shrink-0">
-          <div class="flex items-center gap-2">
-            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                d="M12 8v13m0-13V6a2 2 0 112 2h-2zm0 0V5.5A2.5 2.5 0 109.5 8H12zm-7 4h14M5 12a2 2 0 110-4h14a2 2 0 110 4M5 12v7a2 2 0 002 2h10a2 2 0 002-2v-7" />
-            </svg>
-            <h2 class="text-base font-semibold">New Products</h2>
-            <span class="bg-red-600 text-white rounded-full px-2 py-0.5 text-xs font-bold ml-2">
-              <?php echo count($newProducts); ?>
-            </span>
-          </div>
-          <button @click="newProductsSidebarMobile = false"
-            class="text-white hover:text-orange-400 text-2xl font-bold w-8 h-8 flex items-center justify-center rounded-full hover:bg-white/20 transition-all">
-            ×
-          </button>
-        </div>
-
-        <!-- Sidebar Content - Scrollable -->
-        <div class="flex-1 overflow-y-auto p-4" style="-webkit-overflow-scrolling: touch;">
-          <div class="space-y-4">
-            <?php foreach ($newProducts as $product): ?>
-              <div
-                class="border border-gray-200 rounded-lg p-3 hover:shadow-md transition-all duration-300 hover:border-orange-400">
-                <div class="flex gap-3">
-                  <!-- Product Image -->
-                  <div class="relative shrink-0">
-                    <?php if (!empty($product['main_image'])): ?>
-                      <img src="<?= BASE_URL ?>/<?php echo htmlspecialchars($product['main_image']); ?>"
-                        alt="<?php echo htmlspecialchars($product['name']); ?>" class="w-20 h-20 object-contain rounded"
-                        onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';">
-                      <div class="w-20 h-20 bg-gray-200 rounded hidden items-center justify-center">
-                        <svg class="w-8 h-8 text-gray-400" fill="currentColor" viewBox="0 0 20 20">
-                          <path fill-rule="evenodd"
-                            d="M4 3a2 2 0 00-2 2v10a2 2 0 002 2h12a2 2 0 002-2V5a2 2 0 00-2-2H4zm12 12H4l4-8 3 6 2-4 3 6z"
-                            clip-rule="evenodd" />
-                        </svg>
-                      </div>
-                    <?php else: ?>
-                      <div class="w-20 h-20 bg-gray-200 rounded flex items-center justify-center">
-                        <svg class="w-8 h-8 text-gray-400" fill="currentColor" viewBox="0 0 20 20">
-                          <path fill-rule="evenodd"
-                            d="M4 3a2 2 0 00-2 2v10a2 2 0 002 2h12a2 2 0 002-2V5a2 2 0 00-2-2H4zm12 12H4l4-8 3 6 2-4 3 6z"
-                            clip-rule="evenodd" />
-                        </svg>
-                      </div>
-                    <?php endif; ?>
-
-                    <!-- NEW Badge -->
-                    <span
-                      class="absolute -top-1 -right-1 bg-red-600 text-white text-[8px] font-bold px-1.5 py-0.5 rounded-full shadow">
-                      NEW
-                    </span>
-                  </div>
-
-                  <!-- Product Info -->
-                  <div class="flex-1 min-w-0">
-                    <h3 class="font-semibold text-sm text-gray-900 mb-1 line-clamp-2">
-                      <?php echo htmlspecialchars($product['name']); ?>
-                    </h3>
-
-                    <?php if (!empty($product['description'])): ?>
-                      <p class="text-xs text-gray-600 mb-2 line-clamp-2">
-                        <?php echo htmlspecialchars($product['description']); ?>
-                      </p>
-                    <?php endif; ?>
-
-                    <!-- Category & Date -->
-                    <div class="flex items-center gap-2 text-xs text-gray-500 mb-2">
-                      <span class="flex items-center gap-1">
-                        <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                            d="M7 7h.01M7 3h5c.512 0 1.024.195 1.414.586l7 7a2 2 0 010 2.828l-7 7a2 2 0 01-2.828 0l-7-7A1.994 1.994 0 013 12V7a4 4 0 014-4z" />
-                        </svg>
-                        <?php echo htmlspecialchars($product['category_name']); ?>
-                      </span>
-                      <span>•</span>
-                      <span><?php echo date('M j', strtotime($product['created_at'])); ?></span>
-                    </div>
-
-                    <!-- Stock Status -->
-                    <?php if ($product['stock_status'] === 'In Stock'): ?>
-                      <span
-                        class="inline-flex items-center gap-1 text-xs text-green-600 bg-green-50 px-2 py-0.5 rounded-full mb-2">
-                        <span class="w-1.5 h-1.5 bg-green-600 rounded-full"></span>
-                        In Stock
-                      </span>
-                    <?php else: ?>
-                      <span
-                        class="inline-flex items-center gap-1 text-xs text-red-600 bg-red-50 px-2 py-0.5 rounded-full mb-2">
-                        <span class="w-1.5 h-1.5 bg-red-600 rounded-full"></span>
-                        Out of Stock
-                      </span>
-                    <?php endif; ?>
-
-                    <!-- Action Button -->
-                    <form action="<?= BASE_URL ?>/productview" method="GET" class="mt-2">
-                      <input type="hidden" name="id" value="<?= (int) $product['id'] ?>">
-                      <button type="submit"
-                        class="w-full bg-black hover:bg-gray-800 text-white text-xs py-2 px-3 rounded-lg transition-all duration-200 flex items-center justify-center gap-2">
-                        <i class="fa-solid fa-eye"></i>
-                        <span>View Product</span>
-                      </button>
-                    </form>
-                  </div>
-                </div>
-              </div>
-            <?php endforeach; ?>
-          </div>
-        </div>
-
-        <!-- Sidebar Footer -->
-        <div class="p-4 bg-gray-50 border-t shrink-0">
-          <button onclick="window.location.href='allproduct'"
-            class="w-full bg-orange-500 hover:bg-orange-600 text-white font-medium py-3 px-4 rounded-lg transition-all duration-200 flex items-center justify-center gap-2">
-            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                d="M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z" />
-            </svg>
-            View All Products
-          </button>
-        </div>
-      </div>
-
-      <style>
-        /* Line clamp utilities */
-        .line-clamp-2 {
-          display: -webkit-box;
-          -webkit-line-clamp: 2;
-          line-clamp: 2;
-          -webkit-box-orient: vertical;
-          overflow: hidden;
-        }
-      </style>
-    <?php endif; ?>
-
-    <!-- Login Modal - Full Screen on Mobile -->
-    <div x-show="loginOpen" x-cloak x-transition
-      class="fixed inset-0 z-9999 flex items-center justify-center bg-black/40 bg-opacity-50 p-4 lg:hidden">
-
-      <div class="bg-white w-full max-w-md max-h-[95vh] overflow-y-auto rounded-lg shadow-lg relative">
-
-        <!-- Modal Header -->
-        <div class="sticky top-0 bg-white border-b px-6 py-4 flex items-center justify-between">
-          <h2 class="text-xl font-bold text-gray-800">Logins</h2>
-          <button @click="loginOpen = false" class="text-gray-500 hover:text-gray-800 text-2xl font-bold p-1">
-            &times;
-          </button>
-        </div>
-
-        <!-- Modal Content -->
-        <div class="p-6">
-          <form x-data="loginForm()" @submit.prevent="handleLogin($event)" class="space-y-4">
-            <div>
-              <label for="mobile_login" class="block text-sm font-medium text-gray-600 mb-2">Email or Mobile</label>
-              <input type="text" id="mobile_login" name="login" x-model="loginInput" @input="checkLoginType"
-                autocomplete="mob-and-email" placeholder="you@example.com or 09123456789" required
-                class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-500 focus:border-orange-500">
-            </div>
-
-            <div x-show="(isMobile) || (isEmail && otpVerified)" x-transition class="space-y-2">
-              <label for="mobile_password" class="block text-sm font-medium text-gray-600">Password</label>
-              <input type="password" id="mobile_password" name="password" x-model="password"
-                autocomplete="password-auto"
-                class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-500 focus:border-orange-500">
-            </div>
-
-            <div x-show="isEmail && !otpSent && !otpVerified" x-transition class="space-y-2">
-              <label class="block text-sm font-medium text-gray-600">OTP Verification</label>
-              <button type="button" @click="sendOTP" :disabled="otpLoading || resendCooldown > 0"
-                class="w-full bg-blue-600 hover:bg-blue-700 disabled:bg-blue-400 text-white px-4 py-3 rounded-lg font-medium flex items-center justify-center space-x-2">
-
-                <template x-if="!otpLoading && resendCooldown === 0">
-                  <span>Send OTP</span>
-                </template>
-
-                <template x-if="otpLoading">
-                  <div class="flex items-center space-x-2">
-                    <!-- Spinner -->
-                    <svg class="animate-spin h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none"
-                      viewBox="0 0 24 24">
-                      <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
-                      <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v4a4 4 0 00-4 4H4z"></path>
-                    </svg>
-                    <span>Verifying...</span>
-                  </div>
-                </template>
-
-                <template x-if="!otpLoading && resendCooldown > 0">
-                  <span>Resend in <span x-text="resendCooldown"></span>s</span>
-                </template>
-              </button>
-            </div>
-
-
-            <div x-show="otpSent && !otpVerified" x-transition class="space-y-3">
-              <div>
-                <label class="block text-sm font-medium text-gray-600 mb-2">Enter OTP</label>
-                <p class="text-xs text-gray-500 mb-3">We sent a verification code to your email</p>
-                <input type="text" x-model="otp" maxlength="6"
-                  class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-500 text-center text-lg tracking-widest"
-                  placeholder="000000">
-              </div>
-
-              <div class="flex gap-3">
-                <button type="button" @click="cancelOTP"
-                  class="flex-1 py-3 bg-gray-200 text-gray-700 rounded-lg hover:bg-gray-300 transition font-medium">Cancel</button>
-                <button type="button" @click="verifyOTP" :disabled="!otp || otp.length < 4"
-                  class="flex-1 py-3 bg-orange-500 text-white rounded-lg hover:bg-orange-600 disabled:bg-orange-300 transition font-medium">
-                  Verify
-                </button>
-              </div>
-
-              <div class="text-center">
-                <template x-if="resendCooldown > 0">
-                  <p class="text-sm text-gray-500">Resend in <span x-text="resendCooldown"></span>s</p>
-                </template>
-                <template x-if="resendCooldown === 0">
-                  <button @click="sendOTP" class="text-blue-500 hover:underline text-sm font-medium" type="button">
-                    Resend OTP
-                  </button>
-                </template>
-              </div>
-            </div>
-
-            <div class="flex items-center gap-2" x-show="isMobile">
-              <input type="checkbox" id="mobile_remember" name="remember" class="h-4 w-4 text-orange-500 rounded">
-              <label for="mobile_remember" class="text-sm text-gray-600">Remember me</label>
-            </div>
-
-            <button type="submit" :disabled="submitLoading"
-              class="w-full bg-orange-500 hover:bg-orange-600 disabled:bg-orange-300 text-white font-semibold py-3 px-4 rounded-lg transition"
-              x-show="(isMobile) || (isEmail && otpVerified)">
-              <span x-show="!submitLoading">Log In</span>
-              <span x-show="submitLoading">Logging in...</span>
-            </button>
-
-            <div x-show="errorMessage" x-transition
-              class="p-3 bg-red-50 border border-red-200 text-red-700 rounded-lg text-sm">
-              <span x-text="errorMessage"></span>
-            </div>
-
-            <div x-show="successMessage" x-transition
-              class="p-3 bg-green-50 border border-green-200 text-green-700 rounded-lg text-sm">
-              <span x-text="successMessage"></span>
-            </div>
-
-            <div class="text-center space-y-3 pt-4 border-t border-gray-200">
-              <div>
-                <a href="../forgot_password.php" class="text-orange-500 hover:underline text-sm font-medium">Forgot
-                  password?</a>
-              </div>
-              <div>
-                <span class="text-sm text-gray-600">Don't have an account?</span>
-                <a href="#" @click.prevent="registerOpen = true; loginOpen = false"
-                  class="text-orange-500 hover:underline font-medium text-sm">Register</a>
-              </div>
-            </div>
-
-            <div class="pt-4 border-t border-gray-200">
-              <a href="javascript:void(0)" onclick="openGooglePopup('<?= BASE_URL ?>/login')"
-                class="inline-flex items-center justify-center w-full gap-3 bg-red-500 hover:bg-red-600 text-white font-semibold py-3 px-4 rounded-lg transition">
-                <svg class="w-5 h-5 bg-white rounded-full p-[2px]" viewBox="0 0 48 48">
-                  <path fill="#EA4335"
-                    d="M24 9.5c3.5 0 6.3 1.2 8.3 3.2l6.2-6.2C34.8 2.6 29.7 0 24 0 14.8 0 6.8 5.9 3.2 14.1l7.3 5.7C12.7 13.2 17.9 9.5 24 9.5z" />
-                  <path fill="#34A853"
-                    d="M24 48c6.5 0 12-2.1 16.1-5.7l-7.4-6.1C30.5 38.7 27.5 40 24 40c-6 0-11.2-3.7-13.4-8.8l-7.2 5.5C6.3 43.8 14.6 48 24 48z" />
-                  <path fill="#FBBC05"
-                    d="M43.6 20H24v8.4h11.3c-1.1 3.2-3.4 5.8-6.5 7.6l7.4 6.1c4.3-4 6.8-9.9 6.8-17.1 0-1.2-.1-2.3-.3-3.4z" />
-                  <path fill="#4285F4"
-                    d="M10.6 29.6C9.7 27.2 9.2 24.7 9.2 22s.5-5.2 1.4-7.6l-7.4-5.7C1.1 13.6 0 17.7 0 22c0 4.2 1.1 8.3 3.2 11.8l7.4-4.2z" />
-                </svg>
-                Login with Google
-              </a>
-            </div>
-          </form>
-        </div>
+      <div>
+        <h2 class="text-white text-sm font-semibold leading-tight">New Arrivals</h2>
+        <p class="text-white/40 text-[10px]">
+          <?= count($newProducts) ?> product<?= count($newProducts) > 1 ? 's' : '' ?> added recently
+        </p>
       </div>
     </div>
+    <button
+      @click="newProductsSidebarMobile = false"
+      class="w-8 h-8 rounded-lg flex items-center justify-center bg-white/10 hover:bg-white/20 transition-colors"
+      aria-label="Close">
+      <svg width="13" height="13" fill="none" stroke="white" stroke-width="2.5" viewBox="0 0 24 24">
+        <path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12"/>
+      </svg>
+    </button>
+  </div>
+
+  <!-- Product List -->
+  <div class="flex-1 overflow-y-auto divide-y divide-gray-100">
+    <?php foreach ($newProducts as $product): ?>
+      <div class="flex items-center gap-3 px-4 py-3.5 hover:bg-orange-50/60 transition-colors">
+
+        <!-- Image -->
+        <div class="relative shrink-0">
+          <div class="w-16 h-16 rounded-xl overflow-hidden border border-gray-100 bg-gray-50 flex items-center justify-center">
+            <?php if (!empty($product['main_image'])): ?>
+              <img
+                src="<?= BASE_URL ?>/<?= htmlspecialchars($product['main_image']) ?>"
+                alt="<?= htmlspecialchars($product['name']) ?>"
+                class="w-full h-full object-contain"
+                onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';">
+              <div class="w-full h-full hidden items-center justify-center">
+                <svg class="w-6 h-6 text-gray-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5"
+                    d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 16M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"/>
+                </svg>
+              </div>
+            <?php else: ?>
+              <svg class="w-6 h-6 text-gray-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5"
+                  d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 16M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"/>
+              </svg>
+            <?php endif; ?>
+          </div>
+          <span class="absolute -top-1 -left-1 bg-red-500 text-white text-[8px] font-bold px-1 py-0.5 rounded uppercase tracking-wide">
+            NEW
+          </span>
+        </div>
+
+        <!-- Info -->
+        <div class="flex-1 min-w-0">
+          <!-- Name -->
+          <h3 class="text-sm font-semibold text-gray-900 uppercase tracking-wide truncate mb-1">
+            <?= htmlspecialchars($product['name']) ?>
+          </h3>
+
+          <!-- Meta row -->
+          <div class="flex items-center gap-1.5 mb-2">
+            <span class="text-[11px] text-gray-400 truncate max-w-[100px]">
+              <?= htmlspecialchars($product['codename']) ?>
+            </span>
+            <span class="text-gray-300 text-[9px]">•</span>
+            <?php if ($product['stock_status'] === 'In Stock'): ?>
+              <span class="text-[11px] text-green-600 font-medium">● In Stock</span>
+            <?php else: ?>
+              <span class="text-[11px] text-red-500 font-medium">● Out of Stock</span>
+            <?php endif; ?>
+          </div>
+
+          <!-- Date + View -->
+          <div class="flex items-center justify-between gap-2">
+            <span class="text-[11px] text-gray-400">
+              <i class="fa-regular fa-calendar text-[9px] mr-0.5"></i>
+              <?= date('M j, Y', strtotime($product['created_at'])) ?>
+            </span>
+            <form action="<?= BASE_URL ?>/productview" method="GET">
+              <input type="hidden" name="id" value="<?= (int) $product['id'] ?>">
+              <button
+                type="submit"
+                class="text-xs font-semibold text-orange-500 border border-orange-400 px-3 py-1 rounded-lg hover:bg-orange-500 hover:text-white transition-colors shrink-0">
+                View →
+              </button>
+            </form>
+          </div>
+        </div>
+
+      </div>
+    <?php endforeach; ?>
+  </div>
+
+  <!-- Footer -->
+  <div class="px-4 py-3 bg-gray-50 border-t border-gray-100 shrink-0">
+    <button
+      onclick="window.location.href='<?= BASE_URL ?>/shop'"
+      class="w-full bg-black hover:bg-orange-500 text-white text-sm font-semibold py-2.5 rounded-xl flex items-center justify-center gap-2 transition-colors">
+      <i class="fa-solid fa-store text-xs"></i>
+      Browse All Products
+    </button>
+  </div>
+
+</div>
+
+<?php endif; ?>
 
     <div x-show="registerOpen" x-cloak x-transition
       class="fixed inset-0 z-9999 flex items-center justify-center bg-black/50 p-4"
@@ -2762,208 +2059,8 @@ pss.tag as sub_subcategory_tag,
     </div>
   </div>
 
-
-  <section>
-    <!-- New Products Modal - List Style with Scroll Buttons -->
-    <?php if (count($newProducts) > 0): ?>
-      <!-- Modal Overlay -->
-      <div x-show="newProductsModal" x-cloak @click.self="newProductsModal = false"
-        x-transition:enter="transition ease-out duration-300" x-transition:enter-start="opacity-0"
-        x-transition:enter-end="opacity-100" x-transition:leave="transition ease-in duration-200"
-        x-transition:leave-start="opacity-100" x-transition:leave-end="opacity-0"
-        class="fixed inset-0 z-9999 bg-black bg-opacity-50 flex items-center justify-center p-4">
-
-        <!-- Modal Content -->
-        <div x-show="newProductsModal" x-transition:enter="transition ease-out duration-300"
-          x-transition:enter-start="opacity-0 scale-95" x-transition:enter-end="opacity-100 scale-100"
-          x-transition:leave="transition ease-in duration-200" x-transition:leave-start="opacity-100 scale-100"
-          x-transition:leave-end="opacity-0 scale-95" @click.stop x-data="{ showScrollUp: false, showScrollDown: true }"
-          class="bg-white rounded-xl shadow-2xl w-full max-w-3xl max-h-[85vh] overflow-hidden flex flex-col relative">
-
-          <!-- Modal Header -->
-          <div class="flex justify-between items-center p-4 border-b bg-black text-white shrink-0">
-            <div class="flex items-center gap-3">
-              <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                  d="M12 8v13m0-13V6a2 2 0 112 2h-2zm0 0V5.5A2.5 2.5 0 109.5 8H12zm-7 4h14M5 12a2 2 0 110-4h14a2 2 0 110 4M5 12v7a2 2 0 002 2h10a2 2 0 002-2v-7" />
-              </svg>
-              <div>
-                <h2 class="text-base sm:text-lg">New Products</h2>
-                <p class="text-xs text-white">Latest additions to our store</p>
-              </div>
-            </div>
-            <button @click="newProductsModal = false"
-              class="text-white text-2xl w-8 h-8 flex items-center justify-center transition-all">
-              <i class="fa-solid fa-circle-xmark"></i>
-            </button>
-          </div>
-
-          <!-- Scroll Up Button -->
-          <button x-show="showScrollUp" x-transition @click="$refs.modalBody.scrollBy({ top: -300, behavior: 'smooth' })"
-            class="absolute top-20 right-4 z-10 bg-black hover:bg-orange-600 text-white p-2 rounded-full shadow-lg transition-all">
-            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 15l7-7 7 7" />
-            </svg>
-          </button>
-
-          <!-- Modal Body - List View -->
-          <div x-ref="modalBody" @scroll="
-          showScrollUp = $el.scrollTop > 100;
-          showScrollDown = $el.scrollTop < ($el.scrollHeight - $el.clientHeight - 100);
-        " class="flex-1 overflow-y-auto" style="-webkit-overflow-scrolling: touch;">
-            <div class="divide-y divide-gray-200">
-              <?php foreach ($newProducts as $index => $product): ?>
-                <div class="p-4 hover:bg-orange-50 transition-all duration-200 group">
-                  <div class="flex gap-4">
-                    <!-- Product Image -->
-                    <div class="shrink-0 relative">
-                      <?php if (!empty($product['main_image'])): ?>
-                        <img src="<?= BASE_URL ?>/<?php echo htmlspecialchars($product['main_image']); ?>"
-                          alt="<?php echo htmlspecialchars($product['name']); ?>"
-                          class="w-20 h-20 sm:w-24 sm:h-24 object-contain rounded-lg border border-gray-200 group-hover:border-orange-300 transition"
-                          onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';">
-                        <div
-                          class="w-20 h-20 sm:w-24 sm:h-24 bg-gray-100 rounded-lg hidden items-center justify-center border border-gray-200">
-                          <svg class="w-8 h-8 text-gray-300" fill="currentColor" viewBox="0 0 20 20">
-                            <path fill-rule="evenodd"
-                              d="M4 3a2 2 0 00-2 2v10a2 2 0 002 2h12a2 2 0 002-2V5a2 2 0 00-2-2H4zm12 12H4l4-8 3 6 2-4 3 6z"
-                              clip-rule="evenodd" />
-                          </svg>
-                        </div>
-                      <?php else: ?>
-                        <div
-                          class="w-20 h-20 sm:w-24 sm:h-24 bg-gray-100 rounded-lg flex items-center justify-center border border-gray-200">
-                          <svg class="w-8 h-8 text-gray-300" fill="currentColor" viewBox="0 0 20 20">
-                            <path fill-rule="evenodd"
-                              d="M4 3a2 2 0 00-2 2v10a2 2 0 002 2h12a2 2 0 002-2V5a2 2 0 00-2-2H4zm12 12H4l4-8 3 6 2-4 3 6z"
-                              clip-rule="evenodd" />
-                          </svg>
-                        </div>
-                      <?php endif; ?>
-
-                      <!-- NEW Badge -->
-                      <span
-                        class="absolute -top-1 -right-1 bg-red-600 text-white text-[9px] px-1.5 py-0.5 rounded-full shadow-sm">
-                        NEW
-                      </span>
-                    </div>
-
-                    <!-- Product Info -->
-                    <div class="flex-1 min-w-0">
-                      <div class="flex items-start justify-between gap-2 mb-2">
-                        <h3
-                          class="uppercase text-sm sm:text-base text-gray-900 group-hover:text-orange-600 transition line-clamp-2">
-                          <?php echo htmlspecialchars($product['name']); ?>
-                        </h3>
-
-                        <!-- Stock Status Badge -->
-                        <?php if ($product['stock_status'] === 'In Stock'): ?>
-                          <span
-                            class="inline-flex items-center gap-1 text-[10px] text-green-600 bg-green-50 px-2 py-0.5 rounded-full whitespace-nowrap shrink-0">
-                            <span class="w-1.5 h-1.5 bg-green-600 rounded-full"></span>
-                            In Stock
-                          </span>
-                        <?php else: ?>
-                          <span
-                            class="inline-flex items-center gap-1 text-[10px] text-red-600 bg-red-50 px-2 py-0.5 rounded-full whitespace-nowrap shrink-0">
-                            <span class="w-1.5 h-1.5 bg-red-600 rounded-full"></span>
-                            Out of Stock
-                          </span>
-                        <?php endif; ?>
-                      </div>
-
-
-                      <!-- Meta Info -->
-                      <div class="flex flex-wrap items-center gap-3 text-xs text-gray-500 mb-3">
-                        <span class="flex items-center gap-1">
-                          <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                              d="M7 7h.01M7 3h5c.512 0 1.024.195 1.414.586l7 7a2 2 0 010 2.828l-7 7a2 2 0 01-2.828 0l-7-7A1.994 1.994 0 013 12V7a4 4 0 014-4z" />
-                          </svg>
-                          <?php echo htmlspecialchars($product['codename']); ?>
-                        </span>
-                        <span class="text-gray-300">•</span>
-                        <span class="flex items-center gap-1">
-                          <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                              d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
-                          </svg>
-                          <?php echo date('M j, Y', strtotime($product['created_at'])); ?>
-                        </span>
-                      </div>
-
-                      <!-- Action Button -->
-                      <form action="<?= BASE_URL ?>/productview" method="GET">
-                        <input type="hidden" name="id" value="<?= (int) $product['id'] ?>">
-                        <button type="submit"
-                          class="inline-flex items-center gap-2 bg-black hover:bg-orange-600 text-white text-xs py-2 px-4 transition-all">
-                          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                              d="M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z" />
-                          </svg>
-                          View Details
-                        </button>
-                      </form>
-                    </div>
-                  </div>
-                </div>
-              <?php endforeach; ?>
-            </div>
-          </div>
-
-          <!-- Scroll Down Button -->
-          <button x-show="showScrollDown" x-transition @click="$refs.modalBody.scrollBy({ top: 300, behavior: 'smooth' })"
-            class="absolute bottom-20 right-4 z-10 bg-black hover:bg-orange-600 text-white p-2 rounded-full shadow-lg transition-all">
-            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" />
-            </svg>
-          </button>
-
-          <!-- Modal Footer -->
-          <div class="p-4 bg-gray-50 border-t shrink-0">
-            <div class="flex flex-col sm:flex-row gap-2">
-              <button onclick="window.location.href='<?= BASE_URL ?>/product-normal-and-discounted'"
-                class="flex-1 bg-black hover:bg-orange-600 text-white py-2.5 px-4 transition-all flex items-center justify-center gap-2 text-sm">
-                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                    d="M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z" />
-                </svg>
-                View All Products
-              </button>
-              <button @click="newProductsModal = false"
-                class="sm:w-auto px-6 py-2.5 bg-gray-200 hover:bg-gray-300 text-gray-700 transition-all text-sm">
-                Close
-              </button>
-            </div>
-          </div>
-        </div>
-      </div>
-
-      <script>
-        //Auto-refresh new products count
-        setInterval(function () {
-          fetch(window.location.pathname + '?action=get_new_products_count')
-            .then(response => {
-              const contentType = response.headers.get('content-type');
-              if (contentType && contentType.includes('application/json')) {
-                return response.json();
-              }
-              throw new Error('Not JSON');
-            })
-            .then(data => {
-              const badge = document.querySelector('button[\\@click="newProductsModal = true"] span');
-              if (badge && data.count !== undefined) {
-                badge.textContent = data.count;
-                badge.style.display = data.count > 0 ? 'inline-flex' : 'none';
-              }
-            })
-            .catch(error => {
-              console.log('Silent error:', error);
-            });
-        }, 30000); // Every 30 seconds
-      </script>
-    <?php endif; ?>
-  </section>
+  <?php include ROOT_PATH . '/user/navbar/partials/new-products-modal.php'; ?>
+  <?php include ROOT_PATH . '/user/navbar/partials/login-modal.php'; ?>
 </nav>
 
 <script

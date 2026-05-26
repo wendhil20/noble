@@ -1,5 +1,5 @@
 <?php
-// update_process-page-2-A.php - UPDATED WITH DESCRIP1/6/7 SUPPORT
+// update_process-page-2-A.php - FIXED: type_image upload now uses ROOT_PATH consistently
 include ROOT_PATH . "/connection/connect.php";
 include ROOT_PATH . "/admin/authentication/index-admin-role.php";
 require_role(['productspecialist', 'superadmin']);
@@ -39,12 +39,12 @@ function convertDatetimeLocalToMySql($datetimeLocal)
   try {
     $dt = DateTime::createFromFormat('Y-m-d\TH:i', $datetimeLocal, new DateTimeZone('Asia/Manila'));
     if (!$dt) {
-      error_log("❌ Failed to parse datetime-local: $datetimeLocal");
+      error_log("Failed to parse datetime-local: $datetimeLocal");
       return null;
     }
     return $dt->format('Y-m-d H:i:s');
   } catch (Exception $e) {
-    error_log("❌ DateTime conversion error: " . $e->getMessage());
+    error_log("DateTime conversion error: " . $e->getMessage());
     return null;
   }
 }
@@ -93,13 +93,11 @@ try {
   $productNameRow = $productNameResult->fetch_assoc();
   $product_name = $productNameRow['product_name'] ?? 'Unknown Product';
 
-  // ── 1. UPDATE BASIC PRODUCT INFO + EXTENDED DESCRIPTIONS ──────
+  // ── 1. UPDATE BASIC PRODUCT INFO ──────────────────────────────
   $product_name_new = $conn->real_escape_string($_POST['product_name']);
   $quantity = (int) $_POST['quantity'];
   $description = $conn->real_escape_string($_POST['description']);
   $category = $conn->real_escape_string($_POST['category']);
-
-  // ✅ EXTENDED DESCRIPTIONS
   $descrip1 = $conn->real_escape_string($_POST['descrip1'] ?? '');
   $descrip6 = $conn->real_escape_string($_POST['descrip6'] ?? '');
   $descrip7 = $conn->real_escape_string($_POST['descrip7'] ?? '');
@@ -113,10 +111,8 @@ try {
                            descrip6     = '$descrip6',
                            descrip7     = '$descrip7'
                        WHERE id = $product_id";
-
-  if (!$conn->query($updateProductSQL)) {
+  if (!$conn->query($updateProductSQL))
     throw new Exception("Failed to update product: " . $conn->error);
-  }
 
   if ($product_name_new !== $product_name)
     $product_name = $product_name_new;
@@ -129,14 +125,12 @@ try {
       $oldMainImagePath = $oldMainRow['main_image'] ?? null;
       if (!empty($oldMainImagePath)) {
         $fullOldPath = ROOT_PATH . '/' . $oldMainImagePath;
-
         if (file_exists($fullOldPath))
           unlink($fullOldPath);
       }
     }
     $mainImageName = time() . '_main_' . basename($_FILES['main_image']['name']);
     $uploadDir = ROOT_PATH . '/uploads/';
-
     if (!is_dir($uploadDir))
       mkdir($uploadDir, 0755, true);
     $mainImagePath = $uploadDir . $mainImageName;
@@ -158,22 +152,16 @@ try {
       $existingSubImages = $decoded;
   }
   $subImagesToKeep = [];
-  if (empty($existingSubImages)) {
-    // walang sub images, skip
-  } else {
-    foreach ($existingSubImages as $index => $subImageFilename) {
-      $shouldKeep = isset($subImagesKeepArray[$index]) && $subImagesKeepArray[$index] == '1';
-      if (!$shouldKeep) {
-        $fullPath = '../../sub_images/' . $subImageFilename;
-        if (file_exists($fullPath))
-          unlink($fullPath);
-      } else {
-        $subImagesToKeep[] = $subImageFilename;
-      }
+  foreach ($existingSubImages as $index => $subImageFilename) {
+    $shouldKeep = isset($subImagesKeepArray[$index]) && $subImagesKeepArray[$index] == '1';
+    if (!$shouldKeep) {
+      $fullPath = ROOT_PATH . '/sub_images/' . $subImageFilename;
+      if (file_exists($fullPath))
+        unlink($fullPath);
+    } else {
+      $subImagesToKeep[] = $subImageFilename;
     }
   }
-
-
   $updatedSubImagesJson = json_encode($subImagesToKeep);
   $conn->query("UPDATE products SET sub_images = '$updatedSubImagesJson' WHERE id = $product_id");
 
@@ -185,16 +173,14 @@ try {
         $uploadDir = ROOT_PATH . '/sub_images/';
         if (!is_dir($uploadDir))
           mkdir($uploadDir, 0755, true);
-        $uploadPath = $uploadDir . $subImageName;
-        if (move_uploaded_file($_FILES['new_sub_images']['tmp_name'][$fileIndex], $uploadPath)) {
+        if (move_uploaded_file($_FILES['new_sub_images']['tmp_name'][$fileIndex], $uploadDir . $subImageName)) {
           $newSubImages[] = $subImageName;
         } else {
           throw new Exception("Failed to upload sub image at index $fileIndex");
         }
       }
     }
-    $newSubImagesJson = json_encode($newSubImages);
-    $conn->query("UPDATE products SET sub_images = '$newSubImagesJson' WHERE id = $product_id");
+    $conn->query("UPDATE products SET sub_images = '" . json_encode($newSubImages) . "' WHERE id = $product_id");
   }
 
   // ── 4. PRODUCT COLORS ──────────────────────────────────────────
@@ -216,15 +202,12 @@ try {
         $getColorImagesResult = $conn->query("SELECT image, image2 FROM product_colors WHERE id = $colorId");
         if ($getColorImagesResult) {
           $colorRow = $getColorImagesResult->fetch_assoc();
-          if (!empty($colorRow['image'])) {
-            $fp = '../../' . $colorRow['image'];
-            if (file_exists($fp))
-              unlink($fp);
-          }
-          if (!empty($colorRow['image2'])) {
-            $fp = '../../' . $colorRow['image2'];
-            if (file_exists($fp))
-              unlink($fp);
+          foreach (['image', 'image2'] as $imgCol) {
+            if (!empty($colorRow[$imgCol])) {
+              $fp = ROOT_PATH . '/' . $colorRow[$imgCol];
+              if (file_exists($fp))
+                unlink($fp);
+            }
           }
         }
         $conn->query("DELETE FROM product_variant_colors WHERE color_id = $colorId");
@@ -240,69 +223,49 @@ try {
         if (!empty($_FILES['color_image']['name'][$fileIndex])) {
           $colorImageName = time() . '_' . basename($_FILES['color_image']['name'][$fileIndex]);
           $uploadDir = ROOT_PATH . '/uploads/';
-
           if (!is_dir($uploadDir))
             mkdir($uploadDir, 0755, true);
-          $colorImagePath = $uploadDir . $colorImageName;
-          if (move_uploaded_file($_FILES['color_image']['tmp_name'][$fileIndex], $colorImagePath)) {
+          if (move_uploaded_file($_FILES['color_image']['tmp_name'][$fileIndex], $uploadDir . $colorImageName))
             $colorImagePath = 'uploads/' . $colorImageName;
-          } else {
-            throw new Exception("Failed to upload main color image");
-          }
         }
         if (!empty($_FILES['color_image2']['name'][$fileIndex])) {
           $colorImage2Name = time() . '_secondary_' . basename($_FILES['color_image2']['name'][$fileIndex]);
           $uploadDir = ROOT_PATH . '/uploads/';
-
           if (!is_dir($uploadDir))
             mkdir($uploadDir, 0755, true);
-          $colorImage2Path = $uploadDir . $colorImage2Name;
-          if (move_uploaded_file($_FILES['color_image2']['tmp_name'][$fileIndex], $colorImage2Path)) {
+          if (move_uploaded_file($_FILES['color_image2']['tmp_name'][$fileIndex], $uploadDir . $colorImage2Name))
             $colorImage2Path = 'uploads/' . $colorImage2Name;
-          } else {
-            throw new Exception("Failed to upload secondary color image");
-          }
         }
-        $insertColorSQL = "INSERT INTO product_colors (product_id, color_name, color_code, price, image, image2, stock) VALUES ($product_id, '$colorName', '$colorCode', $colorPrice, '$colorImagePath', '$colorImage2Path', $colorStock)";
-        if (!$conn->query($insertColorSQL))
-          throw new Exception("Failed to insert color: " . $conn->error);
+        $conn->query("INSERT INTO product_colors (product_id, color_name, color_code, price, image, image2, stock) VALUES ($product_id, '$colorName', '$colorCode', $colorPrice, '$colorImagePath', '$colorImage2Path', $colorStock)");
       } else {
-        $updateSQL = "UPDATE product_colors SET color_name = '$colorName', color_code = '$colorCode', price = $colorPrice, stock = $colorStock";
+        $updateSQL = "UPDATE product_colors SET color_name='$colorName', color_code='$colorCode', price=$colorPrice, stock=$colorStock";
         if (!empty($_FILES['color_image']['name'][$fileIndex])) {
           $old = $conn->query("SELECT image FROM product_colors WHERE id = $colorId")->fetch_assoc();
           if (!empty($old['image'])) {
-            $fp = '../../' . $old['image'];
+            $fp = ROOT_PATH . '/' . $old['image'];
             if (file_exists($fp))
               unlink($fp);
           }
           $colorImageName = time() . '_' . basename($_FILES['color_image']['name'][$fileIndex]);
           $uploadDir = ROOT_PATH . '/uploads/';
-
           if (!is_dir($uploadDir))
             mkdir($uploadDir, 0755, true);
-          $colorImagePath = $uploadDir . $colorImageName;
-          if (move_uploaded_file($_FILES['color_image']['tmp_name'][$fileIndex], $colorImagePath)) {
-            $colorImagePath = 'uploads/' . $colorImageName;
-            $updateSQL .= ", image = '$colorImagePath'";
-          }
+          if (move_uploaded_file($_FILES['color_image']['tmp_name'][$fileIndex], $uploadDir . $colorImageName))
+            $updateSQL .= ", image='uploads/$colorImageName'";
         }
         if (!empty($_FILES['color_image2']['name'][$fileIndex])) {
           $old2 = $conn->query("SELECT image2 FROM product_colors WHERE id = $colorId")->fetch_assoc();
           if (!empty($old2['image2'])) {
-            $fp = '../../' . $old2['image2'];
+            $fp = ROOT_PATH . '/' . $old2['image2'];
             if (file_exists($fp))
               unlink($fp);
           }
           $colorImage2Name = time() . '_secondary_' . basename($_FILES['color_image2']['name'][$fileIndex]);
           $uploadDir = ROOT_PATH . '/uploads/';
-
           if (!is_dir($uploadDir))
             mkdir($uploadDir, 0755, true);
-          $colorImage2Path = $uploadDir . $colorImage2Name;
-          if (move_uploaded_file($_FILES['color_image2']['tmp_name'][$fileIndex], $colorImage2Path)) {
-            $colorImage2Path = 'uploads/' . $colorImage2Name;
-            $updateSQL .= ", image2 = '$colorImage2Path'";
-          }
+          if (move_uploaded_file($_FILES['color_image2']['tmp_name'][$fileIndex], $uploadDir . $colorImage2Name))
+            $updateSQL .= ", image2='uploads/$colorImage2Name'";
         }
         $updateSQL .= " WHERE id = $colorId";
         if (!$conn->query($updateSQL))
@@ -324,16 +287,16 @@ try {
         if ($getTypeImageResult) {
           $typeRow = $getTypeImageResult->fetch_assoc();
           if (!empty($typeRow['type_image'])) {
-            $fp = '../../' . $typeRow['type_image'];
+            // ✅ FIX: ROOT_PATH based delete
+            $fp = ROOT_PATH . '/' . $typeRow['type_image'];
             if (file_exists($fp))
               unlink($fp);
           }
         }
         $variantCheck = $conn->query("SELECT id FROM product_variants WHERE type_id = $typeId");
         if ($variantCheck && $variantCheck->num_rows > 0) {
-          while ($vrow = $variantCheck->fetch_assoc()) {
+          while ($vrow = $variantCheck->fetch_assoc())
             $conn->query("DELETE FROM product_variant_colors WHERE variant_id = " . $vrow['id']);
-          }
         }
         $conn->query("DELETE FROM product_variants WHERE type_id = $typeId");
         $conn->query("DELETE FROM product_types WHERE id = $typeId");
@@ -341,42 +304,63 @@ try {
       }
 
       $typeImagePath = null;
+      $uploadDir = ROOT_PATH . '/uploads/type_images/'; // ✅ Always ROOT_PATH
+
+      if (!is_dir($uploadDir))
+        mkdir($uploadDir, 0755, true);
+
       if ($typeId === 'new') {
-        if (!empty($_FILES['type_image']['name'][$typeIndex])) {
+        // ── INSERT NEW TYPE ────────────────────────────────────
+        if (
+          !empty($_FILES['type_image']['name'][$typeIndex]) &&
+          $_FILES['type_image']['error'][$typeIndex] === UPLOAD_ERR_OK
+        ) {
           $typeImageName = time() . '_' . basename($_FILES['type_image']['name'][$typeIndex]);
-          $uploadDir = ROOT_PATH . '/uploads/type_images/';
-          if (!is_dir($uploadDir))
-            mkdir($uploadDir, 0755, true);
           $uploadPath = $uploadDir . $typeImageName;
           if (move_uploaded_file($_FILES['type_image']['tmp_name'][$typeIndex], $uploadPath))
             $typeImagePath = 'uploads/type_images/' . $typeImageName;
         }
-        $insertTypeSQL = "INSERT INTO product_types (product_id, type_name, type_image) VALUES ($product_id, '$typeName', " . ($typeImagePath ? "'$typeImagePath'" : "NULL") . ")";
+        $imgVal = $typeImagePath ? "'$typeImagePath'" : "NULL";
+        $insertTypeSQL = "INSERT INTO product_types (product_id, type_name, type_image) VALUES ($product_id, '$typeName', $imgVal)";
         if (!$conn->query($insertTypeSQL))
           throw new Exception("Failed to insert type: " . $conn->error);
         $typeId = $conn->insert_id;
+
       } else {
-        if (!empty($_FILES['type_image']['name'][$typeIndex])) {
+        // ── UPDATE EXISTING TYPE ───────────────────────────────
+        if (
+          !empty($_FILES['type_image']['name'][$typeIndex]) &&
+          $_FILES['type_image']['error'][$typeIndex] === UPLOAD_ERR_OK
+        ) {
+
+          // ✅ FIX: Delete old file using ROOT_PATH
           $oldType = $conn->query("SELECT type_image FROM product_types WHERE id = $typeId")->fetch_assoc();
           if (!empty($oldType['type_image'])) {
-            $fp = '../../' . $oldType['type_image'];
+            $fp = ROOT_PATH . '/' . $oldType['type_image'];
             if (file_exists($fp))
               unlink($fp);
           }
+
+          // ✅ FIX: Upload using ROOT_PATH
           $typeImageName = time() . '_' . basename($_FILES['type_image']['name'][$typeIndex]);
-          $uploadDir = '../../uploads/type_images/';
-          if (!is_dir($uploadDir))
-            mkdir($uploadDir, 0755, true);
           $uploadPath = $uploadDir . $typeImageName;
+
           if (move_uploaded_file($_FILES['type_image']['tmp_name'][$typeIndex], $uploadPath)) {
             $typeImagePath = 'uploads/type_images/' . $typeImageName;
-            $conn->query("UPDATE product_types SET type_name = '$typeName', type_image = '$typeImagePath' WHERE id = $typeId");
+            // ✅ FIX: Update both name AND image in one query
+            $conn->query("UPDATE product_types SET type_name='$typeName', type_image='$typeImagePath' WHERE id=$typeId");
+          } else {
+            // Upload failed — still update name at least
+            $conn->query("UPDATE product_types SET type_name='$typeName' WHERE id=$typeId");
+            throw new Exception("Failed to upload type image for type_id=$typeId. Check folder permissions on: $uploadDir");
           }
         } else {
-          $conn->query("UPDATE product_types SET type_name = '$typeName' WHERE id = $typeId");
+          // No new image — just update name
+          $conn->query("UPDATE product_types SET type_name='$typeName' WHERE id=$typeId");
         }
       }
 
+      // ── VARIANTS ───────────────────────────────────────────────
       if (isset($_POST['variant_id'][$typeIndex])) {
         $variantIds = $_POST['variant_id'][$typeIndex] ?? [];
         $variantSizes = $_POST['variant_size'][$typeIndex] ?? [];
@@ -422,7 +406,6 @@ try {
             if ($timerStartFormatted)
               $timerStart = "'" . $conn->real_escape_string($timerStartFormatted) . "'";
           }
-
           $timerEndFormatted = null;
           $timerEnd = "NULL";
           if (!empty($variantTimerEnds[$variantIndex])) {
@@ -459,69 +442,63 @@ try {
           }
 
           $oldVariantId = $variantId;
+          $wNull = $variantWidth !== null ? $variantWidth : "NULL";
+          $hNull = $variantHeight !== null ? $variantHeight : "NULL";
+          $lNull = $variantLength !== null ? $variantLength : "NULL";
+          $wtNull = $variantWeight !== null ? $variantWeight : "NULL";
 
           if ($variantId === 'new') {
             $insertVariantSQL = "INSERT INTO product_variants 
-                                (product_id, type_id, size, namevariant, original_price, percent, discount, price,
-                                 width, height, length, dimension_unit, weight, weight_unit,
-                                 timer_discount_percent, timer_discount_active, timer_discount_start, timer_discount_end,
-                                 timer_discount_duration_seconds, timer_discount_duration_formatted)
-                                VALUES ($product_id, $typeId, '$variantSize', '$variantNamevariant', $variantOriginalPrice,
-                                        $variantPercent, $variantDiscount, $finalPrice,
-                                        " . ($variantWidth !== null ? $variantWidth : "NULL") . ",
-                                        " . ($variantHeight !== null ? $variantHeight : "NULL") . ",
-                                        " . ($variantLength !== null ? $variantLength : "NULL") . ",
-                                        '$variantDimensionUnit',
-                                        " . ($variantWeight !== null ? $variantWeight : "NULL") . ",
-                                        '$variantWeightUnit',
-                                        $timerDiscount, $finalTimerActive, $timerStart, $timerEnd,
-                                        $timerDurationSeconds, '$timerDurationFormatted')";
+                (product_id, type_id, size, namevariant, original_price, percent, discount, price,
+                 width, height, length, dimension_unit, weight, weight_unit,
+                 timer_discount_percent, timer_discount_active, timer_discount_start, timer_discount_end,
+                 timer_discount_duration_seconds, timer_discount_duration_formatted)
+                VALUES ($product_id, $typeId, '$variantSize', '$variantNamevariant', $variantOriginalPrice,
+                        $variantPercent, $variantDiscount, $finalPrice,
+                        $wNull, $hNull, $lNull, '$variantDimensionUnit', $wtNull, '$variantWeightUnit',
+                        $timerDiscount, $finalTimerActive, $timerStart, $timerEnd,
+                        $timerDurationSeconds, '$timerDurationFormatted')";
             if (!$conn->query($insertVariantSQL))
               throw new Exception("Failed to insert variant: " . $conn->error);
             $variantId = $conn->insert_id;
           } else {
             $updateVariantSQL = "UPDATE product_variants SET
-                                size = '$variantSize', namevariant = '$variantNamevariant',
-                                original_price = $variantOriginalPrice, percent = $variantPercent,
-                                discount = $variantDiscount, price = $finalPrice,
-                                width  = " . ($variantWidth !== null ? $variantWidth : "NULL") . ",
-                                height = " . ($variantHeight !== null ? $variantHeight : "NULL") . ",
-                                length = " . ($variantLength !== null ? $variantLength : "NULL") . ",
-                                dimension_unit = '$variantDimensionUnit',
-                                weight = " . ($variantWeight !== null ? $variantWeight : "NULL") . ",
-                                weight_unit = '$variantWeightUnit',
-                                timer_discount_percent = $timerDiscount,
-                                timer_discount_active  = $finalTimerActive,
-                                timer_discount_start   = $timerStart,
-                                timer_discount_end     = $timerEnd,
-                                timer_discount_duration_seconds  = $timerDurationSeconds,
-                                timer_discount_duration_formatted = '$timerDurationFormatted'
-                                WHERE id = $variantId";
+                size='$variantSize', namevariant='$variantNamevariant',
+                original_price=$variantOriginalPrice, percent=$variantPercent,
+                discount=$variantDiscount, price=$finalPrice,
+                width=$wNull, height=$hNull, length=$lNull,
+                dimension_unit='$variantDimensionUnit',
+                weight=$wtNull, weight_unit='$variantWeightUnit',
+                timer_discount_percent=$timerDiscount,
+                timer_discount_active=$finalTimerActive,
+                timer_discount_start=$timerStart,
+                timer_discount_end=$timerEnd,
+                timer_discount_duration_seconds=$timerDurationSeconds,
+                timer_discount_duration_formatted='$timerDurationFormatted'
+                WHERE id=$variantId";
             if (!$conn->query($updateVariantSQL))
               throw new Exception("Failed to update variant: " . $conn->error);
           }
 
           // Variant-color junction
           if (isset($_POST['delete_variant_color'][$typeIndex][$oldVariantId])) {
-            foreach ($_POST['delete_variant_color'][$typeIndex][$oldVariantId] as $vcId) {
+            foreach ($_POST['delete_variant_color'][$typeIndex][$oldVariantId] as $vcId)
               $conn->query("DELETE FROM product_variant_colors WHERE id = $vcId");
-            }
           }
           if (isset($_POST['variant_color_id'][$typeIndex][$oldVariantId])) {
             $variantColorIds = $_POST['variant_color_id'][$typeIndex][$oldVariantId] ?? [];
             $variantColorStocks = $_POST['variant_color_stock'][$typeIndex][$oldVariantId] ?? [];
             foreach ($variantColorIds as $vcIndex => $vcId) {
               $stock = (int) ($variantColorStocks[$vcIndex] ?? 0);
-              $conn->query("UPDATE product_variant_colors SET stock_quantity = $stock WHERE id = $vcId");
+              $conn->query("UPDATE product_variant_colors SET stock_quantity=$stock WHERE id=$vcId");
             }
           }
 
           $colorKeysToCheck = [$oldVariantId];
           if ($oldVariantId === 'new') {
-            foreach ($_POST['new_variant_color'][$typeIndex] ?? [] as $key => $value) {
+            foreach ($_POST['new_variant_color'][$typeIndex] ?? [] as $key => $value)
               if (strpos($key, 'new-') === 0)
                 $colorKeysToCheck[] = $key;
-            }
           }
 
           foreach ($colorKeysToCheck as $checkKey) {
@@ -531,12 +508,9 @@ try {
               foreach ($newColorIds as $colorIndex => $newColorId) {
                 if (!empty($newColorId)) {
                   $stock = (int) ($newColorStocks[$colorIndex] ?? 0);
-                  $checkResult = $conn->query("SELECT id FROM product_variant_colors WHERE variant_id = $variantId AND color_id = $newColorId");
-                  if (!$checkResult || $checkResult->num_rows === 0) {
-                    $insertJunctionSQL = "INSERT INTO product_variant_colors (variant_id, color_id, stock_quantity) VALUES ($variantId, $newColorId, $stock)";
-                    if (!$conn->query($insertJunctionSQL))
-                      throw new Exception("Failed to insert variant-color: " . $conn->error);
-                  }
+                  $checkResult = $conn->query("SELECT id FROM product_variant_colors WHERE variant_id=$variantId AND color_id=$newColorId");
+                  if (!$checkResult || $checkResult->num_rows === 0)
+                    $conn->query("INSERT INTO product_variant_colors (variant_id, color_id, stock_quantity) VALUES ($variantId, $newColorId, $stock)");
                 }
               }
             }
@@ -557,4 +531,3 @@ try {
   header("Location: " . BASE_URL . "/updateproducts?id=$product_id&error=1");
   exit();
 }
-?>

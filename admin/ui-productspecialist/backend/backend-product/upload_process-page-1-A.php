@@ -5,8 +5,13 @@ include ROOT_PATH . "/connection/connect.php";
 include ROOT_PATH . "/admin/authentication/index-admin-role.php";
 require_role(['productspecialist', 'superadmin']);
 
-function saveImageToFolder($file, $targetDir = '../../uploads/')
+function saveImageToFolder($file, $targetDir = null)
 {
+    // Always use ROOT_PATH-based absolute path
+    if ($targetDir === null) {
+        $targetDir = ROOT_PATH . '/uploads/';
+    }
+
     if (!file_exists($targetDir)) {
         mkdir($targetDir, 0777, true);
     }
@@ -23,18 +28,21 @@ function saveImageToFolder($file, $targetDir = '../../uploads/')
         case 'image/jpeg':
         case 'image/jpg':
             $sourceImage = @imagecreatefromjpeg($file['tmp_name']);
-            if (!$sourceImage) return null;
+            if (!$sourceImage)
+                return null;
             break;
         case 'image/png':
             $sourceImage = @imagecreatefrompng($file['tmp_name']);
-            if (!$sourceImage) return null;
+            if (!$sourceImage)
+                return null;
             imagepalettetotruecolor($sourceImage);
             imagealphablending($sourceImage, true);
             imagesavealpha($sourceImage, true);
             break;
         case 'image/gif':
             $sourceImage = @imagecreatefromgif($file['tmp_name']);
-            if (!$sourceImage) return null;
+            if (!$sourceImage)
+                return null;
             imagepalettetotruecolor($sourceImage);
             imagealphablending($sourceImage, true);
             imagesavealpha($sourceImage, true);
@@ -52,7 +60,8 @@ function saveImageToFolder($file, $targetDir = '../../uploads/')
             return null;
     }
 
-    if (!$sourceImage) return null;
+    if (!$sourceImage)
+        return null;
 
     if (imagewebp($sourceImage, $targetPath, 80)) {
         imagedestroy($sourceImage);
@@ -63,8 +72,13 @@ function saveImageToFolder($file, $targetDir = '../../uploads/')
     return null;
 }
 
-function saveSubImages($subImagesFiles, $targetDir = ROOT_PATH . '/sub_images/')
+function saveSubImages($subImagesFiles, $targetDir = null)
 {
+    // Always use ROOT_PATH-based absolute path
+    if ($targetDir === null) {
+        $targetDir = ROOT_PATH . '/sub_images/';
+    }
+
     if (!file_exists($targetDir)) {
         mkdir($targetDir, 0777, true);
     }
@@ -85,7 +99,7 @@ function saveSubImages($subImagesFiles, $targetDir = ROOT_PATH . '/sub_images/')
             $relativePath = 'sub_images/' . $filename;
 
             $file = [
-                'name'     => $subImagesFiles['name'][$i],
+                'name' => $subImagesFiles['name'][$i],
                 'tmp_name' => $subImagesFiles['tmp_name'][$i]
             ];
 
@@ -96,18 +110,21 @@ function saveSubImages($subImagesFiles, $targetDir = ROOT_PATH . '/sub_images/')
                 case 'image/jpeg':
                 case 'image/jpg':
                     $sourceImage = @imagecreatefromjpeg($file['tmp_name']);
-                    if (!$sourceImage) continue 2;
+                    if (!$sourceImage)
+                        continue 2;
                     break;
                 case 'image/png':
                     $sourceImage = @imagecreatefrompng($file['tmp_name']);
-                    if (!$sourceImage) continue 2;
+                    if (!$sourceImage)
+                        continue 2;
                     imagepalettetotruecolor($sourceImage);
                     imagealphablending($sourceImage, true);
                     imagesavealpha($sourceImage, true);
                     break;
                 case 'image/gif':
                     $sourceImage = @imagecreatefromgif($file['tmp_name']);
-                    if (!$sourceImage) continue 2;
+                    if (!$sourceImage)
+                        continue 2;
                     imagepalettetotruecolor($sourceImage);
                     imagealphablending($sourceImage, true);
                     imagesavealpha($sourceImage, true);
@@ -125,7 +142,8 @@ function saveSubImages($subImagesFiles, $targetDir = ROOT_PATH . '/sub_images/')
                     continue 2;
             }
 
-            if (!$sourceImage) continue;
+            if (!$sourceImage)
+                continue;
 
             if (imagewebp($sourceImage, $targetPath, 80)) {
                 imagedestroy($sourceImage);
@@ -143,8 +161,8 @@ function saveSubImages($subImagesFiles, $targetDir = ROOT_PATH . '/sub_images/')
 $tables = ['products', 'product_types', 'product_variants', 'product_colors'];
 foreach ($tables as $table) {
     $result = $conn->query("SELECT MAX(id) AS max_id FROM $table");
-    $row    = $result->fetch_assoc();
-    $max_id = (int)$row['max_id'];
+    $row = $result->fetch_assoc();
+    $max_id = (int) $row['max_id'];
     $next_id = $max_id > 0 ? $max_id + 1 : 1;
     $conn->query("ALTER TABLE $table AUTO_INCREMENT = $next_id");
 }
@@ -163,6 +181,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $main_image = null;
         if (isset($_FILES['main_image']) && $_FILES['main_image']['error'] === UPLOAD_ERR_OK) {
             $main_image = saveImageToFolder($_FILES['main_image']);
+            if (!$main_image) {
+                throw new Exception("Failed to save main image. Check uploads folder permissions.");
+            }
         }
 
         // Sub images
@@ -172,7 +193,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         }
         $sub_images_json = !empty($sub_images) ? json_encode($sub_images) : null;
 
-        $_POST['quantity'] = (int)$_POST['quantity'];
+        $_POST['quantity'] = (int) $_POST['quantity'];
 
         // ── Ensure columns exist ────────────────────────────────────────
 
@@ -230,7 +251,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 (product_name, codename, quantity, main_image, sub_images, description, descrip1, descrip6, descrip7, added_by) 
             VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
         ");
-        if (!$stmt) throw new Exception("Prepare failed: " . $conn->error);
+        if (!$stmt)
+            throw new Exception("Prepare failed: " . $conn->error);
 
         $stmt->bind_param(
             "ssisssssss",
@@ -246,7 +268,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             $added_by
         );
         $stmt->execute();
-        $product_id   = $conn->insert_id;
+        $product_id = $conn->insert_id;
         $product_name = $_POST['product_name'];
         $stmt->close();
 
@@ -259,14 +281,15 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                     $_FILES['type_image']['error'][$type_index] === UPLOAD_ERR_OK
                 ) {
                     $file = [
-                        'name'     => $_FILES['type_image']['name'][$type_index],
+                        'name' => $_FILES['type_image']['name'][$type_index],
                         'tmp_name' => $_FILES['type_image']['tmp_name'][$type_index]
                     ];
                     $type_image = saveImageToFolder($file);
                 }
 
                 $stmt = $conn->prepare("INSERT INTO product_types (product_id, type_name, type_image) VALUES (?, ?, ?)");
-                if (!$stmt) throw new Exception("Type insert failed: " . $conn->error);
+                if (!$stmt)
+                    throw new Exception("Type insert failed: " . $conn->error);
                 $stmt->bind_param("iss", $product_id, $type_name, $type_image);
                 $stmt->execute();
                 $type_id = $stmt->insert_id;
@@ -276,9 +299,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 if (isset($_POST['color_name'][$type_index]) && is_array($_POST['color_name'][$type_index])) {
                     foreach ($_POST['color_name'][$type_index] as $color_index => $color_name) {
                         if (!empty($color_name)) {
-                            $color_code  = $_POST['color_code'][$type_index][$color_index]  ?? '';
-                            $color_price = (float)($_POST['color_price'][$type_index][$color_index] ?? 0);
-                            $color_image  = null;
+                            $color_code = $_POST['color_code'][$type_index][$color_index] ?? '';
+                            $color_price = (float) ($_POST['color_price'][$type_index][$color_index] ?? 0);
+                            $color_image = null;
                             $color_image2 = null;
 
                             if (
@@ -286,7 +309,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                                 $_FILES['color_image']['error'][$type_index][$color_index] === UPLOAD_ERR_OK
                             ) {
                                 $file = [
-                                    'name'     => $_FILES['color_image']['name'][$type_index][$color_index],
+                                    'name' => $_FILES['color_image']['name'][$type_index][$color_index],
                                     'tmp_name' => $_FILES['color_image']['tmp_name'][$type_index][$color_index]
                                 ];
                                 $color_image = saveImageToFolder($file);
@@ -297,14 +320,15 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                                 $_FILES['color_image2']['error'][$type_index][$color_index] === UPLOAD_ERR_OK
                             ) {
                                 $file = [
-                                    'name'     => $_FILES['color_image2']['name'][$type_index][$color_index],
+                                    'name' => $_FILES['color_image2']['name'][$type_index][$color_index],
                                     'tmp_name' => $_FILES['color_image2']['tmp_name'][$type_index][$color_index]
                                 ];
                                 $color_image2 = saveImageToFolder($file);
                             }
 
                             $stmt = $conn->prepare("INSERT INTO product_colors (product_id, color_name, color_code, price, image, image2) VALUES (?, ?, ?, ?, ?, ?)");
-                            if (!$stmt) throw new Exception("Color insert failed: " . $conn->error);
+                            if (!$stmt)
+                                throw new Exception("Color insert failed: " . $conn->error);
                             $stmt->bind_param("issdss", $product_id, $color_name, $color_code, $color_price, $color_image, $color_image2);
                             $stmt->execute();
                             $stmt->close();
@@ -315,21 +339,21 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 // Variants
                 if (isset($_POST['variant_size'][$type_index]) && is_array($_POST['variant_size'][$type_index])) {
                     foreach ($_POST['variant_size'][$type_index] as $variant_index => $size) {
-                        $name_variant   = $_POST['variant_namevariant'][$type_index][$variant_index]   ?? '';
-                        $color          = $_POST['variant_color'][$type_index][$variant_index]          ?? '';
-                        $original_price = (float)($_POST['variant_original_price'][$type_index][$variant_index] ?? 0);
-                        $price          = (float)($_POST['variant_price'][$type_index][$variant_index]          ?? 0);
-                        $percent        = (float)($_POST['variant_percent'][$type_index][$variant_index]        ?? 0);
-                        $discount       = (float)($_POST['variant_discount'][$type_index][$variant_index]       ?? 0);
-                        $width          = !empty($_POST['variant_width'][$type_index][$variant_index])   ? (float)$_POST['variant_width'][$type_index][$variant_index]   : null;
-                        $height         = !empty($_POST['variant_height'][$type_index][$variant_index])  ? (float)$_POST['variant_height'][$type_index][$variant_index]  : null;
-                        $length         = !empty($_POST['variant_length'][$type_index][$variant_index])  ? (float)$_POST['variant_length'][$type_index][$variant_index]  : null;
-                        $dimension_unit = $_POST['variant_dimension_unit'][$type_index][$variant_index]  ?? 'cm';
-                        $weight         = !empty($_POST['variant_weight'][$type_index][$variant_index])  ? (float)$_POST['variant_weight'][$type_index][$variant_index]  : null;
-                        $weight_unit    = $_POST['variant_weight_unit'][$type_index][$variant_index]     ?? 'kg';
+                        $name_variant = $_POST['variant_namevariant'][$type_index][$variant_index] ?? '';
+                        $color = $_POST['variant_color'][$type_index][$variant_index] ?? '';
+                        $original_price = (float) ($_POST['variant_original_price'][$type_index][$variant_index] ?? 0);
+                        $price = (float) ($_POST['variant_price'][$type_index][$variant_index] ?? 0);
+                        $percent = (float) ($_POST['variant_percent'][$type_index][$variant_index] ?? 0);
+                        $discount = (float) ($_POST['variant_discount'][$type_index][$variant_index] ?? 0);
+                        $width = !empty($_POST['variant_width'][$type_index][$variant_index]) ? (float) $_POST['variant_width'][$type_index][$variant_index] : null;
+                        $height = !empty($_POST['variant_height'][$type_index][$variant_index]) ? (float) $_POST['variant_height'][$type_index][$variant_index] : null;
+                        $length = !empty($_POST['variant_length'][$type_index][$variant_index]) ? (float) $_POST['variant_length'][$type_index][$variant_index] : null;
+                        $dimension_unit = $_POST['variant_dimension_unit'][$type_index][$variant_index] ?? 'cm';
+                        $weight = !empty($_POST['variant_weight'][$type_index][$variant_index]) ? (float) $_POST['variant_weight'][$type_index][$variant_index] : null;
+                        $weight_unit = $_POST['variant_weight_unit'][$type_index][$variant_index] ?? 'kg';
 
                         if (!empty($size) || !empty($name_variant)) {
-                            $final_price   = $price + ($price * $percent / 100);
+                            $final_price = $price + ($price * $percent / 100);
                             $variant_image = null;
 
                             if (
@@ -337,21 +361,33 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                                 $_FILES['variant_image']['error'][$type_index][$variant_index] === UPLOAD_ERR_OK
                             ) {
                                 $file = [
-                                    'name'     => $_FILES['variant_image']['name'][$type_index][$variant_index],
+                                    'name' => $_FILES['variant_image']['name'][$type_index][$variant_index],
                                     'tmp_name' => $_FILES['variant_image']['tmp_name'][$type_index][$variant_index]
                                 ];
                                 $variant_image = saveImageToFolder($file);
                             }
 
                             $stmt = $conn->prepare("INSERT INTO product_variants (product_id, type_id, color, size, original_price, price, percent, discount, namevariant, image, width, height, length, dimension_unit, weight, weight_unit) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)");
-                            if (!$stmt) throw new Exception("Variant insert failed: " . $conn->error);
+                            if (!$stmt)
+                                throw new Exception("Variant insert failed: " . $conn->error);
                             $stmt->bind_param(
                                 "iissddddssdddsds",
-                                $product_id, $type_id, $color, $size,
-                                $original_price, $final_price, $percent, $discount,
-                                $name_variant, $variant_image,
-                                $width, $height, $length, $dimension_unit,
-                                $weight, $weight_unit
+                                $product_id,
+                                $type_id,
+                                $color,
+                                $size,
+                                $original_price,
+                                $final_price,
+                                $percent,
+                                $discount,
+                                $name_variant,
+                                $variant_image,
+                                $width,
+                                $height,
+                                $length,
+                                $dimension_unit,
+                                $weight,
+                                $weight_unit
                             );
                             $stmt->execute();
                             $stmt->close();

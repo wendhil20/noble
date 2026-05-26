@@ -486,8 +486,8 @@ $total_cart_items = count($cart_items);
                         ₱<?= number_format($subtotal, 2) ?></td>
                       <td class="py-4 px-4">
                         <?php if (!empty($item['type_image'])): ?>
-                          <img src="<?= BASE_URL?>/<?= ($item['type_image']) ?>" class="w-16 h-16 object-cover rounded-lg shadow-sm"
-                            alt="Product Image">
+                          <img src="<?= BASE_URL ?>/<?= ($item['type_image']) ?>"
+                            class="w-16 h-16 object-cover rounded-lg shadow-sm" alt="Product Image">
                         <?php else: ?>
                           <div
                             class="w-16 h-16 bg-gray-200 flex items-center justify-center text-gray-500 text-xs rounded-lg">No
@@ -565,8 +565,8 @@ $total_cart_items = count($cart_items);
                 <!-- Product Image and Basic Info -->
                 <div class="flex items-start gap-4">
                   <?php if (!empty($item['type_image'])): ?>
-                    <img src="<?= BASE_URL ?>/<?= ($item['type_image']) ?>" class="w-20 h-20 object-cover rounded-lg shadow-sm shrink-0"
-                      alt="Product Image">
+                    <img src="<?= BASE_URL ?>/<?= ($item['type_image']) ?>"
+                      class="w-20 h-20 object-cover rounded-lg shadow-sm shrink-0" alt="Product Image">
                   <?php else: ?>
                     <div
                       class="w-20 h-20 bg-gray-200 flex items-center justify-center text-gray-500 text-xs rounded-lg shrink-0">
@@ -575,7 +575,8 @@ $total_cart_items = count($cart_items);
 
                   <div class="flex-1 min-w-0">
                     <h3 class="font-semibold text-gray-800 uppercase text-sm mb-1">
-                      <?= htmlspecialchars($item['codename']) ?></h3>
+                      <?= htmlspecialchars($item['codename']) ?>
+                    </h3>
                     <div class="space-y-1 text-xs text-gray-600">
                       <div><span class="font-medium">Variant:</span> <?= htmlspecialchars($item['variant_name'] ?: '—') ?>
                       </div>
@@ -1021,13 +1022,13 @@ $total_cart_items = count($cart_items);
 
     // Batch update function (for manual update button if you want to keep it)
     function updateCartManually() {
-  const form = document.querySelector('form[action="' + BASE_URL + '/updatecart"]');
-  if (form) {
-    form.submit();
-  } else {
-    console.error('Form not found!');
-  }
-}
+      const form = document.querySelector('form[action="' + BASE_URL + '/updatecart"]');
+      if (form) {
+        form.submit();
+      } else {
+        console.error('Form not found!');
+      }
+    }
 
     // Initialize enhanced functionality on page load
     document.addEventListener('DOMContentLoaded', function () {

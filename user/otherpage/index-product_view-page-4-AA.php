@@ -100,13 +100,6 @@ if (!$product) {
   exit;
 }
 
-error_log("=== PRODUCT FETCH DEBUG ===");
-error_log("Product ID: " . $product['id']);
-error_log("Product Name: " . $product['product_name']);
-error_log("Has descriptionpic: " . (!empty($product['descriptionpic']) ? 'YES (' . strlen($product['descriptionpic']) . ' chars)' : 'NO'));
-error_log("Has product_images: " . (!empty($product['product_images']) ? 'YES (' . strlen($product['product_images']) . ' chars)' : 'NO'));
-error_log("Product Images Content: " . substr($product['product_images'] ?? '', 0, 100));
-
 $ORIGINAL_PRODUCT = $product;
 
 for ($i = 1; $i <= 10; $i++) {
@@ -401,10 +394,6 @@ $is_guest = !isset($_SESSION['user_id']);
   <?php endif; ?>
   <?php include ROOT_PATH . '/user/navbar/top.php'; ?>
   <style>
-    footer * {
-      font-family: 'Plus Jakarta Sans', sans-serif;
-    }
-
     /* Selection States */
     .selected {
       border-color: #f97316;
@@ -462,49 +451,6 @@ $is_guest = !isset($_SESSION['user_id']);
       box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -4px rgba(0, 0, 0, 0.1);
     }
 
-
-    /* Swiper Styles */
-    .related-swiper {
-      position: relative;
-      padding-left: 1rem;
-      padding-right: 1rem;
-    }
-
-    @media (min-width: 768px) {
-      .related-swiper {
-        padding-left: 4rem;
-        padding-right: 4rem;
-      }
-    }
-
-    .related-swiper .swiper-button-next,
-    .related-swiper .swiper-button-prev {
-      top: 50%;
-      transform: translateY(-50%);
-      width: 2.5rem;
-      height: 2.5rem;
-      background-color: #f97316;
-      border-radius: 9999px;
-      color: #fff;
-      transition: all 0.3s;
-    }
-
-    .related-swiper .swiper-button-next:hover,
-    .related-swiper .swiper-button-prev:hover {
-      background-color: #ea580c;
-      transform: scale(1.10);
-    }
-
-    .related-swiper .swiper-button-next {
-      right: 0.5rem;
-      /* Tailwind's right-2 */
-    }
-
-    .related-swiper .swiper-button-prev {
-      left: 0.5rem;
-      /* Tailwind's left-2 */
-    }
-
     .line-clamp-2 {
       display: -webkit-box;
       -webkit-line-clamp: 2;
@@ -522,18 +468,7 @@ $is_guest = !isset($_SESSION['user_id']);
       /* Tailwind's orange-500 */
       outline-offset: 1px;
     }
-
-    /* Mobile Swiper Hide Navigation */
-    @media (max-width: 768px) {
-
-      .related-swiper .swiper-button-next,
-      .related-swiper .swiper-button-prev {
-        display: none;
-      }
-    }
-
-    /* ==== COLOR SELECTION SECTION SPACING ==== */
-
+  
     /* Section Header Spacing */
     .color-section-header {
       margin-bottom: 1.5rem;
@@ -693,34 +628,6 @@ $is_guest = !isset($_SESSION['user_id']);
       box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
     }
 
-    /* ==== MAIN ISSUES AND FIXES ==== */
-
-    /* 1. SWIPER SLIDE OVERLAP FIX */
-    .colorSwiper .swiper-slide {
-      width: auto;
-      min-width: 280px;
-      /* Was causing overlap - reduce this */
-      margin-right: 0.75rem;
-      /* Reduce margin */
-      flex-shrink: 0;
-      /* Prevent shrinking */
-    }
-
-    /* Better responsive widths */
-    @media (max-width: 640px) {
-      .colorSwiper .swiper-slide {
-        min-width: 260px;
-        margin-right: 0.5rem;
-      }
-    }
-
-    @media (max-width: 480px) {
-      .colorSwiper .swiper-slide {
-        min-width: 240px;
-        margin-right: 0.25rem;
-      }
-    }
-
     /* 2. COLOR BUTTON CLICKABILITY FIX */
     .color-btn {
       /* Ensure proper button behavior */
@@ -758,39 +665,7 @@ $is_guest = !isset($_SESSION['user_id']);
       /* Prevent content overflow */
     }
 
-    /* 4. SWIPER CONTAINER FIXES */
-    .colorSwiper {
-      padding: 0.5rem 0;
-      overflow: visible;
-      /* Allow content to be clickable */
-    }
-
-    /* Ensure swiper wrapper doesn't block clicks */
-    .colorSwiper .swiper-wrapper {
-      position: relative;
-      z-index: 1;
-    }
-
-    /* 5. NAVIGATION BUTTON POSITIONING FIX */
-    .color-swiper-prev,
-    .color-swiper-next {
-      position: absolute;
-      top: 50%;
-      transform: translateY(-50%);
-      z-index: 20;
-      pointer-events: auto;
-      width: 32px;
-      height: 32px;
-    }
-
-    .color-swiper-prev {
-      left: 0.5rem;
-    }
-
-    .color-swiper-next {
-      right: 0.5rem;
-    }
-
+  
     /* 6. SELECTION STATE FIXES */
     .color-selected {
       border-color: #f97316 !important;
@@ -952,7 +827,6 @@ $is_guest = !isset($_SESSION['user_id']);
     /* Ensure button is ALWAYS on top */
     #addToCartBtn {
       position: relative !important;
-      z-index: 20 !important;
       pointer-events: auto !important;
     }
 
@@ -974,18 +848,6 @@ $is_guest = !isset($_SESSION['user_id']);
     #productOptionsContainer {
       pointer-events: auto;
 
-    }
-
-    #productOptionsContainer.sidebar-open {
-      pointer-events: auto;
-      z-index: 101;
-      transform: translateX(0) !important;
-    }
-
-    /* Overlay - should NOT block button clicks */
-    #sidebarOverlay {
-      z-index: 100;
-      pointer-events: auto;
     }
 
     /* Remove any blocking elements */
@@ -1017,11 +879,11 @@ $is_guest = !isset($_SESSION['user_id']);
 </head>
 
 <body class="">
- 
+
   <!-- Breadcrumb -->
   <nav class="bg-white border-b border-gray-200 px-4 py-3">
     <div class="container mx-auto">
-      <div class="flex items-center space-x-2 text-sm" style="font-family: 'Montserrat', sans-serif; color: #2f1200">
+      <div class="flex items-center space-x-2 text-sm">
         <a href="<?= BASE_URL ?>/" class=" hover:text-orange-700 transition duration-200 flex items-center">
           <i class="fas fa-home mr-1"></i>Home
         </a>
@@ -1039,7 +901,6 @@ $is_guest = !isset($_SESSION['user_id']);
   <div class="container mx-auto">
     <div class="bg-white rounded-xl overflow-hidden">
       <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 lg:gap-8">
-
         <!-- PRODUCT IMAGE & INFO SECTION -->
         <div class="p-4 lg:p-8">
           <div class="relative">
@@ -1101,30 +962,8 @@ $is_guest = !isset($_SESSION['user_id']);
           <?php endif; ?>
         </div>
 
-        <!-- Mobile Sidebar Toggle Button -->
-        <button id="mobileSidebarToggle"
-          class="lg:hidden fixed bottom-3 right-3 z-90 bg-black text-white px-4 py-2 text-sm rounded-full shadow-md hover:bg-orange-600 transition-all active:scale-95">
-          <i class="fas fa-shopping-cart text-xs lg:text-base"></i>
-          <span>Add to Cart</span>
-        </button>
-
-        <!-- Overlay for mobile sidebar -->
-        <div id="sidebarOverlay" class="fixed inset-0 bg-black bg-opacity-50 z-100 hidden lg:hidden"></div>
-
         <!-- Product Options Section - Sidebar on mobile, normal on desktop -->
-        <div id="productOptionsContainer" class="fixed lg:relative top-0 right-0 h-full lg:h-auto w-full sm:w-80 lg:w-full 
-         transform translate-x-full lg:translate-x-0 transition-transform duration-300 ease-in-out
-         z-101 lg:z-auto bg-white lg:bg-white shadow-xl lg:shadow-none overflow-y-auto">
-
-          <!-- Mobile Sidebar Header -->
-          <div
-            class="lg:hidden sticky top-0 bg-white border-b border-gray-200 p-4 flex items-center justify-between z-20 shadow-sm "
-            style="font-family: 'Montserrat', sans-serif; color: #2f1200">
-            <h2 class="text-lg">Product Options</h2>
-            <button id="closeSidebar" class="text-black hover:text-white p-1">
-              <i class="fas fa-times text-xl"></i>
-            </button>
-          </div>
+        <div id="productOptionsContainer" class="bg-white overflow-y-auto">
 
           <div class="p-2 flex flex-col space-y-6 lg:space-y-8">
 
@@ -1134,10 +973,8 @@ $is_guest = !isset($_SESSION['user_id']);
               <!-- Product Name & Price Display -->
               <div>
                 <div class="flex items-center justify-between gap-4">
-
                   <!-- PRODUCT NAME -->
-                  <h1 class="text-xl sm:text-2xl lg:text-3xl font-bold "
-                    style="font-family: 'Montserrat', sans-serif; color: #2f1200">
+                  <h1 class="text-xl sm:text-2xl lg:text-3xl font-bold ">
                     <?php
                     $safe_product = isset($ORIGINAL_PRODUCT) ? $ORIGINAL_PRODUCT : $product;
                     echo htmlspecialchars($display_name ?? $safe_product['product_name'] ?? 'Product');
@@ -1146,19 +983,16 @@ $is_guest = !isset($_SESSION['user_id']);
 
                   <!-- RIGHT SIDE BUTTONS -->
                   <div class="flex items-center gap-3">
-
                     <!-- Share -->
                     <button onclick="shareProduct()"
                       class="flex items-center gap-2 bg-gray-100 px-3 py-2 rounded-xl hover:bg-gray-200 transition">
                       <i class="fas fa-share-alt text-lg text-black"></i>
-
                     </button>
 
                     <!-- Customer Service -->
-                    <button onclick="window.location.href='../rules/customer-services.php'"
+                    <button onclick="window.location.href='<?= BASE_URL ?>/customerservices'"
                       class="flex items-center gap-2 bg-gray-100 px-3 py-2 rounded-xl hover:bg-gray-200 transition">
                       <i class="fas fa-headset text-lg text-black"></i>
-
                     </button>
 
                   </div>
@@ -1166,8 +1000,7 @@ $is_guest = !isset($_SESSION['user_id']);
 
 
                 <div class="flex flex-wrap gap-2 mb-3 mt-2">
-                  <span class="bg-orange-100  px-3 py-1 rounded-full text-xs font-medium uppercase"
-                    style="font-family: 'Montserrat', sans-serif; color: #2f1200">
+                  <span class="bg-orange-100  px-3 py-1 rounded-full text-xs font-medium uppercase">
                     <?php
                     $safe_product = isset($ORIGINAL_PRODUCT) ? $ORIGINAL_PRODUCT : $product;
                     echo htmlspecialchars($safe_product['codename']);
@@ -1178,8 +1011,7 @@ $is_guest = !isset($_SESSION['user_id']);
 
               <!-- Product Description -->
               <div>
-                <p class=" leading-relaxed text-sm lg:text-base"
-                  style="font-family: 'Montserrat', sans-serif; color: #2f1200">
+                <p class=" leading-relaxed text-sm lg:text-base">
                   <?= htmlspecialchars($safe_product['description'] ?? 'No description available.') ?>
                 </p>
               </div>
@@ -1188,13 +1020,10 @@ $is_guest = !isset($_SESSION['user_id']);
             <?php if (!empty($types_data)): ?>
               <div class="step-section">
                 <div class="flex items-center justify-between mb-4">
-                  <h3 class="text-base lg:text-xl font-semibold text-gray-800"
-                    style="font-family: 'Montserrat', sans-serif; color: #2f1200">
-
+                  <h3 class="text-base lg:text-xl font-semibold text-gray-800">
                     Click Item Type
                   </h3>
-                  <div class="text-xs lg:text-sm text-orange-600 font-medium"
-                    style="font-family: 'Montserrat', sans-serif; color: #2f1200">Required</div>
+                  <div class="text-xs lg:text-sm text-orange-600 font-medium">Required</div>
                 </div>
 
                 <div class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-2">
@@ -1238,25 +1067,10 @@ $is_guest = !isset($_SESSION['user_id']);
             <?php if (!empty($product_colors)): ?>
               <div class="step-section">
                 <div class="flex items-center justify-between mb-4">
-                  <h3 class="text-base lg:text-xl font-semibold "
-                    style="font-family: 'Montserrat', sans-serif; color: #2f1200">
+                  <h3 class="text-base lg:text-xl font-semibold ">
                     Choose Color
                   </h3>
-                  <div class="text-xs lg:text-sm  font-medium"
-                    style="font-family: 'Montserrat', sans-serif; color: #2f1200">Required</div>
-                </div>
-
-                <!-- Product Image - Mobile Sidebar Only -->
-                <div class="lg:hidden py-3 px-0 bg-white border-b border-gray-100 mb-4">
-                  <div class="aspect-square w-32 mx-auto overflow-hidden">
-                    <h1 class="text-center mb-2 text-xs text-gray-600">Display</h1>
-                    <img id="sidebar-product-image" src="<?= BASE_URL ?>/<?= htmlspecialchars($display_image) ?>"
-                      class="w-full h-full object-contain" alt="<?= htmlspecialchars($product['product_name']) ?>">
-                  </div>
-                  <h3 class="text-center mt-2 font-semibold text-gray-800 text-xs line-clamp-2"
-                    style="font-family: 'Montserrat', sans-serif; color: #2f1200">
-                    <?= htmlspecialchars($product['product_name']) ?>
-                  </h3>
+                  <div class="text-xs lg:text-sm  font-medium">Required</div>
                 </div>
 
                 <div id="color-selection-container" class="opacity-50 pointer-events-none">
@@ -1272,13 +1086,11 @@ $is_guest = !isset($_SESSION['user_id']);
                           data-price="<?= $color['price'] ?>"
                           data-color-code="<?= htmlspecialchars($color['color_code']) ?>"
                           data-image="<?= !empty($color['image']) ? htmlspecialchars($color['image']) : '' ?>">
-                          <span class="text-gray-700 block truncate text-[10px] lg:text-[11px] leading-tight font-medium"
-                            style="font-family: 'Montserrat', sans-serif; color: #2f1200">
+                          <span class="text-gray-700 block truncate text-[10px] lg:text-[11px] leading-tight font-medium">
                             <?= htmlspecialchars($color['color_name']) ?>
                           </span>
                           <!-- Stock indicator - Shows total stock for this color across ALL sizes -->
-                          <span class="color-stock-display text-[8px] lg:text-[9px]  font-semibold block mt-1"
-                            style="font-family: 'Montserrat', sans-serif; color: #2f1200">
+                          <span class="color-stock-display text-[8px] lg:text-[9px]  font-semibold block mt-1">
                             -
                           </span>
                         </button>
@@ -1298,12 +1110,11 @@ $is_guest = !isset($_SESSION['user_id']);
             <!-- STEP 3: SIZE/VARIANT SELECTION -->
             <div class="step-section">
               <div class="flex items-center justify-between mb-4">
-                <h3 class="text-base lg:text-xl font-semibold "
-                  style="font-family: 'Montserrat', sans-serif; color: #2f1200">
+                <h3 class="text-base lg:text-xl font-semibold ">
                   Choose Size
                 </h3>
-                <div class="text-xs lg:text-sm  font-medium"
-                  style="font-family: 'Montserrat', sans-serif; color: #2f1200">Required</div>
+                <div class="text-xs lg:text-sm  font-medium">
+                  Required</div>
               </div>
 
               <div id="variant-container"
@@ -1538,312 +1349,6 @@ $is_guest = !isset($_SESSION['user_id']);
               });
             </script>
 
-
-            <!-- Calculator Guide Display -->
-            <?php if (isset($product['guide_enabled']) && $product['guide_enabled'] == 1): ?>
-              <div id="calculatorSection" class="mt-4 bg-white rounded p-3 lg:p-4 border border-gray-200 hidden">
-                <div class="flex items-center gap-2 mb-4">
-                  <div>
-                    <h3 class="text-base text-gray-900 font-semibold">Area</h3>
-                    <p class="text-xs text-gray-600">Calculate coverage based on selected size</p>
-                  </div>
-                </div>
-
-                <!-- Selected Size Display -->
-                <div class="mb-4 bg-gray-100 border border-gray-300 rounded p-3">
-                  <div class="flex items-center justify-between">
-                    <div>
-                      <label class="block text-xs text-gray-600 mb-1">Selected Size</label>
-                      <div id="selectedSizeDisplay" class="text-sm font-medium text-gray-900">-</div>
-                    </div>
-                    <div class="text-xs text-gray-600">
-                      <i class="fas fa-check-circle"></i>
-                    </div>
-                  </div>
-                </div>
-
-                <!-- Dimensions Display -->
-                <div id="calculatorDimensionsDisplay" class="mb-4">
-                  <div class="grid grid-cols-4 gap-2">
-                    <div class="text-center">
-                      <label class="block text-xs text-gray-600 mb-1">Length (mm)</label>
-                      <div class="bg-gray-50 rounded px-2 py-2">
-                        <div id="calcLength" class="text-xs font-semibold text-gray-900">-</div>
-                      </div>
-                    </div>
-                    <div class="text-center">
-                      <label class="block text-xs text-gray-600 mb-1">Height (mm)</label>
-                      <div class="bg-gray-50 rounded px-2 py-2">
-                        <div id="calcHeight" class="text-xs font-semibold text-gray-900">-</div>
-                      </div>
-                    </div>
-                    <div class="text-center">
-                      <label class="block text-xs text-gray-600 mb-1">Width (mm)</label>
-                      <div class="bg-gray-50 rounded px-2 py-2">
-                        <div id="calcWidth" class="text-xs font-semibold text-gray-900">-</div>
-                      </div>
-                    </div>
-                    <div class="text-center">
-                      <label class="block text-xs text-gray-600 mb-1">Per Piece</label>
-                      <div class="bg-gray-200 rounded px-2 py-2">
-                        <div id="calcAreaPerPiece" class="text-xs font-bold text-gray-900"></div>
-                      </div>
-                    </div>
-                  </div>
-                </div>
-
-                <!-- Calculator Input -->
-                <div class="mb-4">
-                  <div class="flex items-center gap-3">
-                    <div class="flex-1">
-                      <label class="block text-xs font-semibold text-gray-900 mb-1">
-                        <i class="fas fa-ruler-combined text-gray-700 mr-1"></i>
-                        Area (sqm)
-                      </label>
-                      <div class="bg-gray-50 rounded">
-                        <input type="number" id="userArea" step="0.01" placeholder="Enter area"
-                          oninput="calculateFromArea()"
-                          class="w-full px-3 py-2 bg-transparent text-center text-sm text-gray-900 outline-none border border-gray-200 rounded">
-                      </div>
-                    </div>
-                    <div class="text-gray-700 text-xl pt-5">
-                      <i class="fas fa-arrow-right"></i>
-                    </div>
-                    <div class="flex-1">
-                      <label class="block text-xs font-semibold text-gray-900 mb-1">
-                        <i class="fas fa-box text-gray-700 mr-1"></i>
-                        Pieces
-                      </label>
-                      <div class="bg-gray-100 rounded border border-gray-300">
-                        <div id="piecesFromArea" class="px-3 py-2 text-center text-sm font-bold text-gray-900">0</div>
-                      </div>
-                    </div>
-                  </div>
-                </div>
-
-                <!-- Additional Results -->
-                <div id="userCalculationResults" class="hidden">
-                  <div class="bg-gray-100 rounded-lg p-3 border border-gray-300">
-                    <h4 class="text-xs font-semibold text-gray-900 mb-2">
-                      <i class="fas fa-tools text-gray-700 mr-1"></i>
-                      Additional Materials Needed
-                    </h4>
-                    <div class="grid grid-cols-2 gap-3">
-                      <div class="bg-white rounded px-3 py-2 text-center border border-gray-200">
-                        <label class="block text-xs text-gray-600 mb-1">Adhesive</label>
-                        <div class="text-sm font-bold text-gray-900">
-                          <span id="userAdhesiveNeededKg">0</span> kg
-                          <div class="text-xs text-gray-600 mt-1" id="userAdhesiveBagsDisplay">(<span
-                              id="userAdhesiveBags">0</span> bags, buy <span id="userAdhesiveWholeBags">0</span>)</div>
-                        </div>
-                      </div>
-                      <div class="bg-white rounded px-3 py-2 text-center border border-gray-200">
-                        <label class="block text-xs text-gray-600 mb-1">Brackets</label>
-                        <div class="text-sm font-bold text-gray-900">
-                          <span id="userBracketsNeeded">0</span> pcs
-                        </div>
-                      </div>
-                    </div>
-                  </div>
-                </div>
-              </div>
-
-              <script>
-                let selectedVariantDimensions = {
-                  width: 0,
-                  height: 0,
-                  length: 0,
-                  size: '',
-                  areaPerPiece: 0
-                };
-
-                function updateCalculatorFromVariant(button) {
-                  const width = parseFloat(button.dataset.width) || 0;
-                  const height = parseFloat(button.dataset.height) || 0;
-                  const length = parseFloat(button.dataset.length) || 0;
-                  // prefer data-size if available, otherwise fallback to inner text
-                  const size = button.dataset.size || (button.querySelector('.text-gray-700') ? button.querySelector('.text-gray-700').textContent.trim() : '');
-
-                  // Convert mm to meters
-                  const widthM = width / 1000;
-                  const heightM = height / 1000;
-                  const areaPerPiece = widthM * heightM;
-
-                  // Store dimensions
-                  selectedVariantDimensions = {
-                    width,
-                    height,
-                    length,
-                    size,
-                    areaPerPiece
-                  };
-
-                  // Show calculator section
-                  const calcSection = document.getElementById('calculatorSection');
-                  if (calcSection) {
-                    calcSection.classList.remove('hidden');
-                  }
-
-                  // SET SIZE ONCE - THIS WILL NOT CHANGE
-                  const sizeDisplay = document.getElementById('selectedSizeDisplay');
-                  if (sizeDisplay) {
-                    sizeDisplay.textContent = size || `${width}×${height}`;
-                  }
-
-                  // Update dimension displays
-                  const widthEl = document.getElementById('calcWidth');
-                  const heightEl = document.getElementById('calcHeight');
-                  const lengthEl = document.getElementById('calcLength');
-                  const areaEl = document.getElementById('calcAreaPerPiece');
-
-                  if (widthEl) widthEl.textContent = width || '-';
-                  if (heightEl) heightEl.textContent = height || '-';
-                  if (lengthEl) lengthEl.textContent = length || '-';
-                  if (areaEl) areaEl.textContent = areaPerPiece > 0 ? areaPerPiece.toFixed(4) + ' m²' : '-';
-
-                  // Clear previous calculations
-                  const areaInput = document.getElementById('userArea');
-                  const piecesDisplay = document.getElementById('piecesFromArea');
-                  const resultsSection = document.getElementById('userCalculationResults');
-
-                  if (areaInput) areaInput.value = '';
-                  if (piecesDisplay) piecesDisplay.textContent = '0';
-                  if (resultsSection) resultsSection.classList.add('hidden');
-                }
-
-                function calculateFromArea() {
-                  const areaInput = document.getElementById('userArea');
-                  const piecesDisplay = document.getElementById('piecesFromArea');
-                  const resultsSection = document.getElementById('userCalculationResults');
-                  const adhesiveKgEl = document.getElementById('userAdhesiveNeededKg');
-                  const adhesiveBagsEl = document.getElementById('userAdhesiveBags');
-                  const adhesiveWholeBagsEl = document.getElementById('userAdhesiveWholeBags');
-                  const bracketsEl = document.getElementById('userBracketsNeeded');
-
-                  if (!areaInput || !piecesDisplay) return;
-
-                  const area = parseFloat(areaInput.value);
-
-                  // Validation
-                  if (!area || area <= 0) {
-                    piecesDisplay.textContent = '0';
-                    if (resultsSection) resultsSection.classList.add('hidden');
-                    return;
-                  }
-
-                  if (!selectedVariantDimensions.areaPerPiece || selectedVariantDimensions.areaPerPiece <= 0) {
-                    piecesDisplay.textContent = '0';
-                    if (resultsSection) resultsSection.classList.add('hidden');
-                    return;
-                  }
-
-                  // CALCULATE PIECES NEEDED (SIZE STAYS THE SAME)
-                  const piecesNeeded = Math.ceil(area / selectedVariantDimensions.areaPerPiece);
-
-                  // ---------- ADHESIVE CALC (explicit units) ----------
-                  // Default adhesive consumption in kg per sqm (adjustable)
-                  const adhesiveRateKgPerSqm = 3.0; // default: 3 kg per sqm (changeable)
-                  const bagWeightKg = 20.0; // default: 20 kg per bag (change if your product uses 25kg bags)
-
-                  // adhesive in kilograms required
-                  const adhesiveKgNeeded = +(area * adhesiveRateKgPerSqm).toFixed(2);
-
-                  // adhesive in sacks/bags (float). Round up to get whole bags if you buy by bag.
-                  const adhesiveBagsNeededFloat = +(adhesiveKgNeeded / bagWeightKg).toFixed(3);
-                  const adhesiveWholeBags = Math.ceil(adhesiveBagsNeededFloat);
-
-                  // ---------- BRACKETS ----------
-                  // Rate: 0.25 means 1 bracket per 4 pieces (adjustable)
-                  const bracketRatePerPiece = 0.25;
-                  const bracketsNeeded = Math.ceil(piecesNeeded * bracketRatePerPiece);
-
-                  // UPDATE DISPLAY - SIZE DOES NOT CHANGE
-                  piecesDisplay.textContent = piecesNeeded.toLocaleString();
-
-                  if (adhesiveKgEl) adhesiveKgEl.textContent = adhesiveKgNeeded.toLocaleString(undefined, {
-                    minimumFractionDigits: 2,
-                    maximumFractionDigits: 2
-                  });
-                  if (adhesiveBagsEl) adhesiveBagsEl.textContent = adhesiveBagsNeededFloat;
-                  if (adhesiveWholeBagsEl) adhesiveWholeBagsEl.textContent = adhesiveWholeBags;
-                  if (bracketsEl) bracketsEl.textContent = bracketsNeeded.toLocaleString();
-                  if (resultsSection) resultsSection.classList.remove('hidden');
-                }
-
-                // DISABLE KEYBOARD SHORTCUTS COMPLETELY WHEN IN INPUTS
-                document.addEventListener('keydown', function (e) {
-                  const activeElement = document.activeElement;
-
-                  if (activeElement &&
-                    (activeElement.tagName === 'INPUT' ||
-                      activeElement.tagName === 'TEXTAREA' ||
-                      activeElement.isContentEditable)) {
-                    // Let the user type freely
-                    return;
-                  }
-
-                  // ESC key to close modals (only when NOT typing)
-                  if (e.key === 'Escape') {
-                    if (typeof closeContactModal === 'function') {
-                      closeContactModal();
-                    }
-                  }
-
-                  // Number keys to select variants (ONLY when NOT in ANY input field)
-                  if (e.key >= '1' && e.key <= '9' && !e.ctrlKey && !e.altKey && !e.metaKey) {
-                    const variantButtons = document.querySelectorAll('.variant-btn:not([disabled])');
-                    const index = parseInt(e.key) - 1;
-                    if (variantButtons[index]) {
-                      e.preventDefault();
-                      e.stopPropagation();
-                      variantButtons[index].click();
-                    }
-                  }
-                });
-
-                // Prevent keydown on area input from triggering shortcuts
-                document.addEventListener('DOMContentLoaded', function () {
-                  const areaInput = document.getElementById('userArea');
-                  if (areaInput) {
-                    areaInput.addEventListener('keydown', function (e) {
-                      e.stopPropagation();
-                    });
-                  }
-                });
-
-                // CLEAR CALCULATOR FUNCTION
-                function clearCalculator() {
-                  const calcSection = document.getElementById('calculatorSection');
-                  const areaInput = document.getElementById('userArea');
-                  const piecesDisplay = document.getElementById('piecesFromArea');
-                  const resultsSection = document.getElementById('userCalculationResults');
-                  const adhesiveKgEl = document.getElementById('userAdhesiveNeededKg');
-                  const adhesiveBagsEl = document.getElementById('userAdhesiveBags');
-                  const adhesiveWholeBagsEl = document.getElementById('userAdhesiveWholeBags');
-                  const bracketsEl = document.getElementById('userBracketsNeeded');
-
-                  if (calcSection) calcSection.classList.add('hidden');
-                  if (areaInput) areaInput.value = '';
-                  if (piecesDisplay) piecesDisplay.textContent = '0';
-                  if (resultsSection) resultsSection.classList.add('hidden');
-
-                  if (adhesiveKgEl) adhesiveKgEl.textContent = '0';
-                  if (adhesiveBagsEl) adhesiveBagsEl.textContent = '0';
-                  if (adhesiveWholeBagsEl) adhesiveWholeBagsEl.textContent = '0';
-                  if (bracketsEl) bracketsEl.textContent = '0';
-
-                  selectedVariantDimensions = {
-                    width: 0,
-                    height: 0,
-                    length: 0,
-                    size: '',
-                    areaPerPiece: 0
-                  };
-                }
-              </script>
-            <?php endif; ?>
-
-
             <!-- SKU Info Display Section -->
             <div id="sku-info-display" class="hidden mt-4 p-2 lg:p-4 bg-gray-50 border border-gray-200 rounded-lg">
               <div class="flex items-start justify-between mb-3">
@@ -1919,9 +1424,10 @@ $is_guest = !isset($_SESSION['user_id']);
             </div>
           </div>
 
+
           <!-- PURCHASE SECTION -->
           <div
-            class="mt-6 p-2 sticky bottom-0 lg:relative bg-white lg:bg-transparent pt-4 lg:pt-0 border-t lg:border-0 border-gray-200 z-10 shadow-lg lg:shadow-none">
+            class="mt-6 p-2 fixed bottom-0 left-0 right-0 bg-white pt-3 border-t border-gray-200 z-40 shadow-lg lg:relative lg:bottom-auto lg:left-auto lg:right-auto lg:shadow-none lg:border-0 lg:pt-0">
             <form id="productForm" method="POST" class="space-y-3 lg:space-y-4">
               <input type="hidden" name="product_id" value="<?= $product_id ?>" />
               <input type="hidden" name="selected_color_id" id="selected_color_id">
@@ -1959,8 +1465,7 @@ $is_guest = !isset($_SESSION['user_id']);
               <?php endif; ?>
               <div class="flex gap-2 lg:gap-3 w-full">
                 <button type="submit" id="addToCartBtn" disabled
-                  class="flex-1 py-3 lg:py-4 text-sm lg:text-lg font-semibold transition-all duration-300 bg-gray-400 text-white disabled:cursor-not-allowed disabled:opacity-75 "
-                  style="font-family: 'Montserrat', sans-serif; ">
+                  class="flex-1 py-3 lg:py-4 text-sm lg:text-lg font-semibold transition-all duration-300 bg-gray-400 text-white disabled:cursor-not-allowed disabled:opacity-75 ">
                   <span id="btnText" class="flex items-center justify-center gap-2">
                     <i class="fas fa-shopping-cart text-sm lg:text-base"></i>
                     Add to Cart
@@ -1968,8 +1473,7 @@ $is_guest = !isset($_SESSION['user_id']);
                 </button>
 
                 <button type="button" onclick="window.location.href='<?= BASE_URL ?>/cartview'"
-                  class="flex-1 py-3 lg:py-4 text-sm lg:text-lg font-semibold transition-all duration-300 bg-black hover:bg-orange-500 text-white"
-                  style="font-family: 'Montserrat', sans-serif;">
+                  class="flex-1 py-3 lg:py-4 text-sm lg:text-lg font-semibold transition-all duration-300 bg-black hover:bg-orange-500 text-white">
                   <span class="flex items-center justify-center gap-2">
                     <i class="fas fa-shopping-cart text-sm lg:text-base"></i>
                     View Cart
@@ -2093,567 +1597,7 @@ $is_guest = !isset($_SESSION['user_id']);
     <?php include ROOT_PATH . '/user/otherpage/index-product-related-products.php'; ?>
   <?php endif; ?>
 
-  <?php if (!empty($product_specs)): ?>
-    <section class="mt-6 lg:mt-8 px-4 lg:px-0 max-w-7xl mx-auto">
-      <div class="bg-white rounded-xl overflow-hidden shadow-sm">
-
-        <!-- Tab Navigation -->
-        <div class="border-b border-gray-200">
-          <div class="flex">
-            <button onclick="switchTab('specifications')" id="tab-specifications"
-              class="product-tab flex-1 px-4 lg:px-6 py-3 lg:py-4 text-sm lg:text-base font-semibold  hover:text-orange-600 border-b-2 border-transparent transition-all duration-200 active"
-              style="font-family: 'Montserrat', sans-serif; color: #2f1200">
-              <i class="fas fa-list-alt mr-2"></i>
-              Product Specifications
-            </button>
-
-            <button onclick="switchTab('reviews')" id="tab-reviews"
-              class="product-tab flex-1 px-4 lg:px-6 py-3 lg:py-4 text-sm lg:text-base font-semibold  hover:text-orange-600 border-b-2 border-transparent transition-all duration-200"
-              style="font-family: 'Montserrat', sans-serif; color: #2f1200">
-              <i class="fas fa-star mr-2"></i>
-              Reviews
-              <?php if ($total_raters > 0): ?>
-                <span class="ml-1 text-md bg-orange-500 text-white px-2 py-0.5 rounded-full"><?= $total_raters ?></span>
-              <?php endif; ?>
-            </button>
-
-            <button onclick="switchTab('productinfo')" id="tab-productinfo"
-              class="product-tab flex-1 px-4 lg:px-6 py-3 lg:py-4 text-sm lg:text-base font-semibold  hover:text-orange-600 border-b-2 border-transparent transition-all duration-200"
-              style="font-family: 'Montserrat', sans-serif; color: #2f1200">
-              <i class="fas fa-info-circle mr-2"></i>
-              Product Information
-            </button>
-          </div>
-        </div>
-
-        <!-- Tab Content -->
-        <div class="p-4 lg:p-8">
-
-          <!-- Specifications Tab Content -->
-          <div id="content-specifications" class="tab-content">
-            <div class="space-y-6">
-
-
-              <!-- Description 1: Product Details -->
-              <?php if (!empty($product_specs['descrip1'])): ?>
-                <div>
-                  <h3 class="text-lg font-bold text-gray-900 mb-4 flex items-center">
-                    <i class="fas fa-align-left mr-3"></i>
-                    Product Details
-                  </h3>
-                  <div class="text-gray-700 text-base space-y-2">
-                    <?php
-                    $lines = explode("\n", $product_specs['descrip1']);
-                    foreach ($lines as $line):
-                      $trimmed = trim($line);
-                      if (!empty($trimmed)):
-                        ?>
-                        <div class="py-1 border-b border-gray-200 last:border-b-0">
-                          <?= htmlspecialchars($trimmed) ?>
-                        </div>
-                        <?php
-                      endif;
-                    endforeach;
-                    ?>
-                  </div>
-                </div>
-              <?php endif; ?>
-
-              <!-- Description 6 & 7: Unit & Specifications -->
-              <?php if (!empty($product_specs['descrip6']) || !empty($product_specs['descrip7'])): ?>
-                <div class="space-y-3">
-
-                  <!-- Unit Information Section -->
-                  <?php if (!empty($product_specs['descrip6'])): ?>
-                    <div class="py-2 border-b border-gray-200">
-                      <div class="text-gray-700 text-base">
-                        <?= htmlspecialchars($product_specs['descrip6']) ?>
-                      </div>
-                    </div>
-                  <?php endif; ?>
-
-                  <!-- Technical Specifications Section -->
-                  <?php if (!empty($product_specs['descrip7'])): ?>
-                    <div class="py-2 border-b border-gray-200 last:border-b-0">
-                      <div class="text-gray-700 text-base">
-                        <?= htmlspecialchars($product_specs['descrip7']) ?>
-                      </div>
-                    </div>
-                  <?php endif; ?>
-
-                </div>
-              <?php endif; ?>
-
-              <!-- No Descriptions Message -->
-              <?php if (empty($product_specs['descrip1']) && empty($product_specs['descrip6']) && empty($product_specs['descrip7'])): ?>
-                <div class="bg-gray-50 rounded-xl p-6 text-center border border-dashed border-gray-300">
-                  <i class="fas fa-inbox text-gray-300 text-4xl mb-3 block"></i>
-                  <p class="text-gray-400 italic">No product descriptions available</p>
-                </div>
-              <?php endif; ?>
-
-            </div>
-          </div>
-
-          <!-- Reviews Tab Content -->
-          <div id="content-reviews" class="tab-content hidden">
-            <div class="space-y-6">
-
-              <!-- Rating Summary -->
-              <div class="bg-linear-to-r from-orange-50 to-yellow-50 rounded-lg p-6 border border-orange-100">
-                <div class="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-6">
-
-                  <!-- Average Rating -->
-                  <div class="text-center lg:text-left">
-                    <div class="text-5xl font-bold text-orange-600 mb-2">
-                      <?= $total_raters > 0 ? $avg_rating : '0.0' ?>
-                    </div>
-                    <div class="flex items-center justify-center lg:justify-start gap-1 mb-2">
-                      <div class="flex text-yellow-400 text-xl">
-                        <?php
-                        if ($total_raters > 0) {
-                          $full = floor($avg_rating);
-                          $half = ($avg_rating - $full >= 0.5) ? 1 : 0;
-                          $empty = 5 - $full - $half;
-
-                          for ($i = 0; $i < $full; $i++)
-                            echo '<i class="fas fa-star"></i>';
-                          if ($half)
-                            echo '<i class="fas fa-star-half-alt"></i>';
-                          for ($i = 0; $i < $empty; $i++)
-                            echo '<i class="far fa-star text-gray-300"></i>';
-                        } else {
-                          for ($i = 0; $i < 5; $i++)
-                            echo '<i class="far fa-star text-gray-300"></i>';
-                        }
-                        ?>
-                      </div>
-                    </div>
-                    <div class="text-sm text-gray-600">
-                      Based on <?= $total_raters ?> review<?= $total_raters == 1 ? '' : 's' ?>
-                    </div>
-                  </div>
-
-                  <!-- Rating Distribution -->
-                  <?php if ($total_raters > 0): ?>
-                    <div class="flex-1 max-w-md">
-                      <?php
-                      // Get rating distribution
-                      $rating_dist_query = $conn->prepare("
-                      SELECT rating, COUNT(*) as count 
-                      FROM product_ratings 
-                      WHERE product_id = ? 
-                      GROUP BY rating 
-                      ORDER BY rating DESC
-                    ");
-                      $rating_dist_query->bind_param("i", $product_id);
-                      $rating_dist_query->execute();
-                      $rating_dist_result = $rating_dist_query->get_result();
-
-                      $rating_counts = [5 => 0, 4 => 0, 3 => 0, 2 => 0, 1 => 0];
-                      while ($dist = $rating_dist_result->fetch_assoc()) {
-                        $rating_counts[$dist['rating']] = $dist['count'];
-                      }
-                      $rating_dist_query->close();
-
-                      foreach ([5, 4, 3, 2, 1] as $star):
-                        $count = $rating_counts[$star];
-                        $percentage = $total_raters > 0 ? ($count / $total_raters) * 100 : 0;
-                        ?>
-                        <div class="flex items-center gap-2 mb-2">
-                          <div class="flex items-center gap-1 w-16">
-                            <span class="text-sm font-medium text-gray-700"><?= $star ?></span>
-                            <i class="fas fa-star text-yellow-400 text-xs"></i>
-                          </div>
-                          <div class="flex-1 bg-gray-200 rounded-full h-2">
-                            <div class="bg-orange-500 h-2 rounded-full transition-all duration-300"
-                              style="width: <?= $percentage ?>%"></div>
-                          </div>
-                          <span class="text-sm text-gray-600 w-12 text-right"><?= $count ?></span>
-                        </div>
-                      <?php endforeach; ?>
-                    </div>
-                  <?php endif; ?>
-                </div>
-              </div>
-
-              <!-- Reviews List -->
-              <?php if ($total_raters > 0): ?>
-                <div class="space-y-4">
-                  <h3 class="text-lg font-semibold text-gray-800 mb-4">Customer Reviews</h3>
-
-                  <?php
-                  // Fetch all reviews for this product
-                  $reviews_query = $conn->prepare("
-                  SELECT pr.*, u.name as user_name, u.profile_picture 
-                  FROM product_ratings pr
-                  LEFT JOIN users u ON pr.user_id = u.id
-                  WHERE pr.product_id = ?
-                  ORDER BY pr.created_at DESC
-                  LIMIT 10
-                ");
-                  $reviews_query->bind_param("i", $product_id);
-                  $reviews_query->execute();
-                  $reviews_result = $reviews_query->get_result();
-
-                  while ($review = $reviews_result->fetch_assoc()):
-                    ?>
-                    <div class="bg-white border border-gray-200 rounded-lg p-4 hover:shadow-md transition-shadow">
-                      <div class="flex items-start gap-4">
-
-                        <!-- User Avatar -->
-                        <div class="shrink-0">
-                          <?php if (!empty($review['profile_picture'])): ?>
-                            <img src="<?= htmlspecialchars($review['profile_picture']) ?>"
-                              alt="<?= htmlspecialchars($review['user_name']) ?>" class="w-10 h-10 rounded-full object-cover">
-                          <?php else: ?>
-                            <div
-                              class="w-10 h-10 rounded-full bg-orange-500 flex items-center justify-center text-white font-semibold">
-                              <?= strtoupper(substr($review['user_name'], 0, 1)) ?>
-                            </div>
-                          <?php endif; ?>
-                        </div>
-
-                        <!-- Review Content -->
-                        <div class="flex-1">
-                          <div class="flex items-center justify-between mb-2">
-                            <div>
-                              <h4 class="font-semibold text-gray-800"><?= htmlspecialchars($review['user_name']) ?></h4>
-                              <div class="flex items-center gap-2 mt-1">
-                                <div class="flex text-yellow-400 text-sm">
-                                  <?php
-                                  $review_rating = (int) $review['rating'];
-                                  for ($i = 0; $i < $review_rating; $i++)
-                                    echo '<i class="fas fa-star"></i>';
-                                  for ($i = $review_rating; $i < 5; $i++)
-                                    echo '<i class="far fa-star text-gray-300"></i>';
-                                  ?>
-                                </div>
-                                <span class="text-xs text-gray-500">
-                                  <?= date('M d, Y', strtotime($review['created_at'])) ?>
-                                </span>
-                              </div>
-                            </div>
-                          </div>
-                          <!-- Review Title/Comment -->
-                          <?php if (!empty($review['comment'])): ?>
-                            <h5 class="font-semibold text-gray-700 text-sm mb-2">
-                              <?= htmlspecialchars($review['comment']) ?>
-                            </h5>
-                          <?php endif; ?>
-                          <?php if (!empty($review['review'])): ?>
-                            <p class="text-gray-700 text-sm leading-relaxed">
-                              <?= nl2br(htmlspecialchars($review['review'])) ?>
-                            </p>
-                          <?php endif; ?>
-                        </div>
-                      </div>
-                    </div>
-                  <?php endwhile; ?>
-                  <?php $reviews_query->close(); ?>
-                </div>
-              <?php else: ?>
-                <!-- No Reviews State -->
-                <div class="text-center py-12 bg-gray-50 rounded-lg">
-                  <div class="w-20 h-20 mx-auto mb-4 bg-gray-200 rounded-full flex items-center justify-center">
-                    <i class="fas fa-star text-3xl text-gray-400"></i>
-                  </div>
-                  <h3 class="text-xl font-semibold text-gray-700 mb-2">No Reviews Yet</h3>
-                  <p class="text-gray-500 text-sm">Be the first to review this product!</p>
-                </div>
-              <?php endif; ?>
-            </div>
-          </div>
-
-
-          <!-- Product Info Tab Content -->
-          <div id="content-productinfo" class="tab-content hidden">
-
-            <!-- Hero Section with Gradient Background -->
-            <div class="relative overflow-hidden rounded-2xl p-8 mb-8">
-              <div class="relative z-10 text-center">
-                <h2 class="text-3xl font-bold text-black mb-2">Product Details</h2>
-                <p class="text-black max-w-2xl mx-auto">Explore high-quality images and comprehensive information about
-                  this product</p>
-              </div>
-            </div>
-
-            <div class="space-y-8">
-
-              <!-- PRODUCT SPECIFICATIONS SECTION -->
-              <?php
-              $has_specs = false;
-              for ($i = 1; $i <= 10; $i++) {
-                if (!empty($product_specs["descrip$i"])) {
-                  $has_specs = true;
-                  break;
-                }
-              }
-              ?>
-
-              <!-- PRODUCT IMAGES SECTION -->
-              <div class="bg-white rounded-2xl overflow-hidden shadow-sm">
-                <!-- Section Header -->
-                <div class="px-6 py-4 border-b border-gray-200">
-                  <div class="flex items-center justify-between">
-                    <div class="flex items-center gap-3">
-
-                      <div>
-                        <h3 class="text-lg font-semibold text-gray-900">Product</h3>
-                        <p class="text-xs text-gray-500">High-quality product images</p>
-                      </div>
-                    </div>
-                    <!-- ✅ FIXED: $product_images already processed above - no need to decode again! -->
-                    <?php if (!empty($product_images)): ?>
-                      <span class="bg-blue-100 text-blue-700 text-xs font-semibold px-3 py-1 rounded-full">
-                        <?= count($product_images) ?>     <?= count($product_images) == 1 ? 'Image' : 'Images' ?>
-                      </span>
-                    <?php endif; ?>
-                  </div>
-                </div>
-
-                <!-- Images Grid -->
-                <div class="p-6">
-                  <?php if (!empty($product_images)): ?>
-                    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
-                      <!-- ✅ FIXED: Use pre-processed $product_images array -->
-                      <?php foreach ($product_images as $imageData): ?>
-                        <div
-                          class="group relative overflow-hidden rounded-xl bg-linear-to-br from-gray-50 to-gray-100 shadow-md hover:shadow-2xl transition-all duration-300">
-
-                          <!-- Zoom Icon -->
-                          <div
-                            class="absolute top-3 right-3 z-10 w-8 h-8 bg-white/90 backdrop-blur-sm rounded-full flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity duration-300 shadow-lg">
-                            <i class="fas fa-search-plus text-gray-700 text-sm"></i>
-                          </div>
-
-                          <!-- Image -->
-                          <div class="aspect-square relative overflow-hidden cursor-pointer"
-                            onclick="openImageModal('<?= htmlspecialchars($imageData['src']) ?>')">
-                            <img src="<?= htmlspecialchars($imageData['src']) ?>"
-                              alt="Product Image <?= $imageData['index'] + 1 ?>"
-                              class="w-full h-full object-cover transition-all duration-500 group-hover:scale-110 group-hover:brightness-110"
-                              loading="lazy"
-                              onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';">
-
-                            <!-- Error State -->
-                            <div class="hidden absolute inset-0 items-center justify-center bg-red-50 text-red-500">
-                              <div class="text-center">
-                                <i class="fas fa-exclamation-triangle text-3xl mb-2"></i>
-                                <div class="text-sm font-medium">Image Not Found</div>
-                              </div>
-                            </div>
-                          </div>
-
-                          <!-- Hover Overlay -->
-                          <div
-                            class="absolute inset-0 bg-linear-to-t from-black/60 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex items-end p-4">
-                            <span class="text-white text-sm font-medium">Click to enlarge</span>
-                          </div>
-                        </div>
-                      <?php endforeach; ?>
-                    </div>
-                  <?php else: ?>
-                    <!-- Empty State -->
-                    <div class="text-center py-16 px-4">
-                      <div
-                        class="inline-flex items-center justify-center w-20 h-20 bg-linear-to-br from-gray-100 to-gray-200 rounded-2xl mb-4">
-                        <i class="fas fa-images text-4xl text-gray-400"></i>
-                      </div>
-                      <h4 class="text-lg font-semibold text-gray-700 mb-2">No Images Available</h4>
-                      <p class="text-sm text-gray-500 max-w-sm mx-auto">Product images haven't been uploaded yet. Check back
-                        later for visual content.</p>
-                    </div>
-                  <?php endif; ?>
-                </div>
-              </div>
-
-              <!-- DETAILED DESCRIPTION SECTION - DESCRIPTIONPIC -->
-              <?php if (!empty($product_specs['descriptionpic'])): ?>
-                <div class="bg-white rounded-2xl overflow-hidden shadow-sm">
-                  <!-- Section Header -->
-                  <div class="px-6 py-4 border-b border-gray-200">
-                    <div class="flex items-center gap-3">
-                      <div>
-                        <h3 class="text-lg font-semibold text-gray-900">Detailed Description</h3>
-                        <p class="text-xs text-gray-500">Complete product information</p>
-                      </div>
-                    </div>
-                  </div>
-
-                  <!-- Description Content -->
-                  <div class="p-6">
-                    <div class=" rounded-xl p-6">
-                      <div class="prose prose-gray max-w-none">
-                        <p class="text-gray-800 leading-relaxed text-base">
-                          <?= nl2br(htmlspecialchars($product_specs['descriptionpic'])) ?>
-                        </p>
-                      </div>
-                    </div>
-                  </div>
-                </div>
-              <?php endif; ?>
-
-            </div>
-          </div>
-        </div>
-      </div>
-    </section>
-
-    <style>
-      /* Tab Styles */
-      .product-tab {
-        position: relative;
-      }
-
-      .product-tab.active {
-        color: #f97316;
-        /* orange-600 */
-        border-bottom-color: #f97316;
-        background-color: #fff7ed;
-        /* orange-50 */
-      }
-
-      .tab-content {
-        animation: fadeIn 0.3s ease-in-out;
-      }
-
-      @keyframes fadeIn {
-        from {
-          opacity: 0;
-          transform: translateY(10px);
-        }
-
-        to {
-          opacity: 1;
-          transform: translateY(0);
-        }
-      }
-
-      /* Smooth transitions */
-      .product-tab:hover {
-        background-color: #f9fafb;
-      }
-
-      /* Image hover effect for product info tab */
-      .image-hover {
-        transition: transform 0.2s ease;
-        cursor: pointer;
-      }
-
-      .image-hover:hover {
-        transform: scale(1.02);
-      }
-    </style>
-
-    <script>
-      function switchTab(tabName) {
-        // Hide all tab contents
-        const allContents = document.querySelectorAll('.tab-content');
-        allContents.forEach(content => {
-          content.classList.add('hidden');
-        });
-
-        // Remove active class from all tabs
-        const allTabs = document.querySelectorAll('.product-tab');
-        allTabs.forEach(tab => {
-          tab.classList.remove('active');
-        });
-
-        // Show selected tab content
-        const selectedContent = document.getElementById('content-' + tabName);
-        if (selectedContent) {
-          selectedContent.classList.remove('hidden');
-        }
-
-        // Add active class to selected tab
-        const selectedTab = document.getElementById('tab-' + tabName);
-        if (selectedTab) {
-          selectedTab.classList.add('active');
-        }
-
-        // Save active tab to localStorage
-        localStorage.setItem('activeProductTab', tabName);
-      }
-
-      // Open image modal
-      function openImageModal(src) {
-        // Create modal if it doesn't exist
-        let modal = document.getElementById('productImageModal');
-        if (!modal) {
-          modal = document.createElement('div');
-          modal.id = 'productImageModal';
-          modal.className = 'fixed inset-0 bg-black bg-opacity-75 z-50 flex items-center justify-center p-4 hidden';
-          modal.onclick = closeImageModal;
-
-          const modalContent = document.createElement('div');
-          modalContent.className = 'relative max-w-4xl max-h-full';
-          modalContent.onclick = function (e) {
-            e.stopPropagation();
-          };
-
-          const closeBtn = document.createElement('button');
-          closeBtn.onclick = closeImageModal;
-          closeBtn.className = 'absolute -top-10 right-0 text-white hover:text-gray-300 text-2xl';
-          closeBtn.innerHTML = '<i class="fas fa-times"></i>';
-
-          const img = document.createElement('img');
-          img.id = 'modalProductImage';
-          img.className = 'max-w-full max-h-screen object-contain rounded-lg';
-
-          modalContent.appendChild(closeBtn);
-          modalContent.appendChild(img);
-          modal.appendChild(modalContent);
-          document.body.appendChild(modal);
-        }
-
-        document.getElementById('modalProductImage').src = src;
-        modal.classList.remove('hidden');
-        document.body.style.overflow = 'hidden';
-      }
-
-      // Close image modal
-      function closeImageModal() {
-        const modal = document.getElementById('productImageModal');
-        if (modal) {
-          modal.classList.add('hidden');
-          document.body.style.overflow = 'auto';
-        }
-      }
-
-      // Share product function
-      function shareProduct() {
-        if (navigator.share) {
-          navigator.share({
-            title: document.title,
-            text: 'Check out this product!',
-            url: window.location.href
-          }).catch(err => console.log('Error sharing:', err));
-        } else {
-          // Fallback to copy link
-          navigator.clipboard.writeText(window.location.href).then(() => {
-            alert('Product link copied to clipboard!');
-          }).catch(err => {
-            console.log('Error copying link:', err);
-            alert('Could not copy link. Please copy manually: ' + window.location.href);
-          });
-        }
-      }
-
-      // Restore active tab on page load
-      document.addEventListener('DOMContentLoaded', function () {
-        const savedTab = localStorage.getItem('activeProductTab') || 'specifications';
-        switchTab(savedTab);
-
-        // Close modal with escape key
-        document.addEventListener('keydown', function (e) {
-          if (e.key === 'Escape') {
-            closeImageModal();
-          }
-        });
-      });
-    </script>
-  <?php endif; ?>
+  <?php include ROOT_PATH . '/user/otherpage/index-product-tabs.php'; ?>
 
   <script
     src="<?= BASE_URL ?>/user/otherpage/js/index-product-view-junction-stock.obfuscated.js?v=<?= filemtime(ROOT_PATH . '/user/otherpage/js/index-product-view-junction-stock.obfuscated.js') ?>"></script>
@@ -2665,10 +1609,8 @@ $is_guest = !isset($_SESSION['user_id']);
 
   <script>
 
-
     // ✅ REAL-TIME TIMER - Accurate countdown
     function initFlashSaleTimers() {
-      console.log('🔥 Initializing flash sale timers...');
 
       const timerBadges = document.querySelectorAll('.timer-badge');
       console.log(`Found ${timerBadges.length} timer badges`);
@@ -2699,7 +1641,7 @@ $is_guest = !isset($_SESSION['user_id']);
           return;
         }
 
-        console.log(`\n✅ Timer for variant ${variantId}:`);
+        console.log(`\n Timer for variant ${variantId}:`);
         console.log(`   End time (unix): ${endTime}`);
         console.log(`   End time (readable): ${new Date(endTime * 1000).toLocaleString('en-US', {
           year: 'numeric', month: '2-digit', day: '2-digit',

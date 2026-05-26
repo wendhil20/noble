@@ -17,6 +17,7 @@ if ($request === '' || $request === 'home') {
     $request = 'home';
 }
 
+
 // ✅ ADMIN ROUTES — gumamit ng nobleadmin session
 $adminRoutes = [
     'main', 

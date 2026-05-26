@@ -585,8 +585,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         </div>
 
         <!-- Map Modal -->
-        <!-- TAMA - idagdag ang flex -->
-<div id="mapModal" class="hidden fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center">
+        <div id="mapModal" class="hidden fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center">
             <div class="bg-white rounded-lg w-full max-w-4xl mx-4 max-h-[90vh] overflow-hidden">
                 <div class="p-4 border-b flex justify-between items-center">
                     <h3 class="text-xl font-bold text-gray-800">Delivery Route Map</h3>
@@ -734,22 +733,26 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 subtree: true
             });
 
-            console.log('✅ Alert cleanup system active');
+            console.log(' Alert cleanup system active');
         })();
     </script>
 
     <!-- Core Scripts (Order Matters!) -->
-<script src="<?= BASE_URL ?>/user/otherpage/js/index-checkout-main-page-12-3.obfuscated.js?v=<?= filemtime(ROOT_PATH . '/user/otherpage/js/index-checkout-main-page-12-3.obfuscated.js') ?>"></script>
+    <script
+        src="<?= BASE_URL ?>/user/otherpage/js/index-checkout-main-page-12-3.obfuscated.js?v=<?= filemtime(ROOT_PATH . '/user/otherpage/js/index-checkout-main-page-12-3.obfuscated.js') ?>"></script>
 
-<script src="<?= BASE_URL ?>/user/otherpage/js/index-checkout-stepNavigation-page-12-3.obfuscated.js?v=<?= filemtime(ROOT_PATH . '/user/otherpage/js/index-checkout-stepNavigation-page-12-3.obfuscated.js') ?>"></script>
+    <script
+        src="<?= BASE_URL ?>/user/otherpage/js/index-checkout-stepNavigation-page-12-3.obfuscated.js?v=<?= filemtime(ROOT_PATH . '/user/otherpage/js/index-checkout-stepNavigation-page-12-3.obfuscated.js') ?>"></script>
 
-<script src="<?= BASE_URL ?>/user/otherpage/js/index-checkout-distanceCalculation-page-12-3.obfuscated.js?v=<?= filemtime(ROOT_PATH . '/user/otherpage/js/index-checkout-distanceCalculation-page-12-3.obfuscated.js') ?>"></script>
+    <script
+        src="<?= BASE_URL ?>/user/otherpage/js/index-checkout-distanceCalculation-page-12-3.obfuscated.js?v=<?= filemtime(ROOT_PATH . '/user/otherpage/js/index-checkout-distanceCalculation-page-12-3.obfuscated.js') ?>"></script>
 
-<script src="<?= BASE_URL ?>/user/otherpage/js/index-checkout-mapModal-page-12-3.obfuscated.js?v=<?= filemtime(ROOT_PATH . '/user/otherpage/js/index-checkout-mapModal-page-12-3.obfuscated.js') ?>"></script>
+    <script
+        src="<?= BASE_URL ?>/user/otherpage/js/index-checkout-mapModal-page-12-3.obfuscated.js?v=<?= filemtime(ROOT_PATH . '/user/otherpage/js/index-checkout-mapModal-page-12-3.obfuscated.js') ?>"></script>
     <!-- Initialize Step 3 -->
     <script>
         document.addEventListener('DOMContentLoaded', function () {
-            console.log('🚀 Initializing Step 3...');
+            console.log(' Initializing Step 3...');
 
             // ✅ OVERRIDE showNotification to block address alerts
             const originalShowNotification = window.showNotification;
@@ -762,7 +765,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                     window.selectedAddress &&
                     window.selectedAddress.latitude &&
                     window.selectedAddress.longitude) {
-                    console.log('🚫 Blocked notification:', message);
+                    console.log(' Blocked notification:', message);
                     return; // Don't show the alert
                 }
 
@@ -775,46 +778,46 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 }
             };
 
-            console.log('✅ Notification blocker installed');
+            console.log(' Notification blocker installed');
 
             // Initialize delivery type selection
             if (typeof initializeDeliveryTypeSelection === 'function') {
                 initializeDeliveryTypeSelection();
             } else {
-                console.warn('⚠️ initializeDeliveryTypeSelection not found');
+                console.warn(' initializeDeliveryTypeSelection not found');
             }
 
             // Initialize distance calculation
             if (typeof initializeDistanceCalculation === 'function') {
                 initializeDistanceCalculation();
             } else {
-                console.warn('⚠️ initializeDistanceCalculation not found');
+                console.warn(' initializeDistanceCalculation not found');
             }
 
             // Initialize map modal
             if (typeof initializeMapModal === 'function') {
                 initializeMapModal();
             } else {
-                console.warn('⚠️ initializeMapModal not found');
+                console.warn(' initializeMapModal not found');
             }
 
             // ✅ AUTO-TRIGGER CALCULATION after everything loads
             setTimeout(() => {
                 const courierSelect = document.getElementById('courierSelection');
                 if (courierSelect && courierSelect.value) {
-                    console.log('✅ Courier already selected:', courierSelect.value);
+                    console.log(' Courier already selected:', courierSelect.value);
 
                     // Trigger calculation automatically
                     if (typeof autoCalculateDelivery === 'function') {
-                        console.log('🔄 Auto-triggering delivery calculation...');
+                        console.log('Auto-triggering delivery calculation...');
                         autoCalculateDelivery();
                     }
                 } else {
-                    console.log('⏭️ No courier selected yet - waiting for user');
+                    console.log('⏭ No courier selected yet - waiting for user');
                 }
             }, 1500); // Wait 1.5 seconds for everything to load
 
-            console.log('✅ Step 3 fully initialized');
+            console.log(' Step 3 fully initialized');
         });
     </script>
 

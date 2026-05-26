@@ -80,37 +80,6 @@ document.addEventListener("DOMContentLoaded", function () {
   });
 });
 
-// ===== MOBILE SIDEBAR FUNCTIONALITY =====
-document.addEventListener("DOMContentLoaded", function () {
-  const sidebarToggle = document.getElementById("mobileSidebarToggle");
-  const closeSidebar = document.getElementById("closeSidebar");
-  const sidebarOverlay = document.getElementById("sidebarOverlay");
-  const productOptions = document.getElementById("productOptionsContainer");
-
-  function openSidebar() {
-    productOptions.classList.add("sidebar-open");
-    sidebarOverlay.classList.remove("hidden");
-    document.body.style.overflow = "hidden";
-  }
-
-  function closeSidebarFunc() {
-    productOptions.classList.remove("sidebar-open");
-    sidebarOverlay.classList.add("hidden");
-    document.body.style.overflow = "";
-  }
-
-  if (sidebarToggle) {
-    sidebarToggle.addEventListener("click", openSidebar);
-  }
-
-  if (closeSidebar) {
-    closeSidebar.addEventListener("click", closeSidebarFunc);
-  }
-
-  if (sidebarOverlay) {
-    sidebarOverlay.addEventListener("click", closeSidebarFunc);
-  }
-});
 
 // ===== THUMBNAIL GALLERY =====
 document.addEventListener("DOMContentLoaded", function () {
@@ -614,33 +583,32 @@ class ProductSelector {
               <div class="flex justify-between items-center">
                 <span class="opacity-75">Price:</span>
                 <span class="font-semibold">₱${afterMarkup.toLocaleString(
-                  "en-PH",
-                  { minimumFractionDigits: 2 }
-                )}</span>
+            "en-PH",
+            { minimumFractionDigits: 2 }
+          )}</span>
               </div>
               
-              ${
-                discount > 0
-                  ? `
+              ${discount > 0
+              ? `
                 <div class="flex justify-between items-center">
                   <span class="opacity-75">Regular Discount (-${Math.round(
-                    discount
-                  )}%):</span>
+                discount
+              )}%):</span>
                   <span class="font-semibold line-through">₱${afterRegularDiscount.toLocaleString(
-                    "en-PH",
-                    { minimumFractionDigits: 2 }
-                  )}</span>
+                "en-PH",
+                { minimumFractionDigits: 2 }
+              )}</span>
                 </div>
               `
-                  : ""
-              }
+              : ""
+            }
               
               <div class="border-t border-white/20 pt-1 mt-1"></div>
               
               <div class="flex justify-between items-center">
                 <span class="text-white font-bold" style="font-family: 'Montserrat', sans-serif; ">Flash Sale (-${Math.round(
-                  timerDiscount
-                )}%):</span>
+              timerDiscount
+            )}%):</span>
                
               </div>
             </div>
@@ -648,8 +616,8 @@ class ProductSelector {
             <!-- Savings Display -->
             <div class="mt-2 text-center bg-yellow-400  font-black text-xs px-2 py-1 rounded" style="font-family: 'Montserrat', sans-serif; color: #2f1200">
               YOU SAVE ₱${(
-                afterRegularDiscount - afterTimerDiscount
-              ).toLocaleString("en-PH", { minimumFractionDigits: 2 })}!
+              afterRegularDiscount - afterTimerDiscount
+            ).toLocaleString("en-PH", { minimumFractionDigits: 2 })}!
             </div>
           </div>
         `;
@@ -662,7 +630,7 @@ class ProductSelector {
             if (timerElement) {
               const endTime = parseInt(
                 timerElement.closest(".timer-badge")?.dataset?.endTime ||
-                  timerEndTime
+                timerEndTime
               );
               const timerInterval = setInterval(() => {
                 const now = Math.floor(Date.now() / 1000);
@@ -865,25 +833,25 @@ class ProductSelector {
       this.elements.selectedColor.value = colorName;
     }
 
-if (image && image.trim() !== '') {
-  // image from DB = "uploads/img_xxx.webp"
-  // BASE_URL = "/noble"
-  let imagePath = `${BASE_URL}/${image}`;
-  
-  if (this.elements.mainImage) {
-    this.elements.mainImage.src = imagePath;
-  }
-  const sidebarImage = document.getElementById("sidebar-product-image");
-  if (sidebarImage) {
-    sidebarImage.src = imagePath;
-  }
-} else {
-  // No color image - restore original type/product image
-  const originalSrc = this.elements.mainImage?.dataset.originalImage;
-  if (originalSrc && this.elements.mainImage) {
-    this.elements.mainImage.src = originalSrc;
-  }
-}
+    if (image && image.trim() !== '') {
+      // image from DB = "uploads/img_xxx.webp"
+      // BASE_URL = "/noble"
+      let imagePath = `${BASE_URL}/${image}`;
+
+      if (this.elements.mainImage) {
+        this.elements.mainImage.src = imagePath;
+      }
+      const sidebarImage = document.getElementById("sidebar-product-image");
+      if (sidebarImage) {
+        sidebarImage.src = imagePath;
+      }
+    } else {
+      // No color image - restore original type/product image
+      const originalSrc = this.elements.mainImage?.dataset.originalImage;
+      if (originalSrc && this.elements.mainImage) {
+        this.elements.mainImage.src = originalSrc;
+      }
+    }
 
     // ✅ If variant is already selected, update the price display
     if (this.selectedVariantData) {
@@ -972,35 +940,35 @@ if (image && image.trim() !== '') {
       "ring-orange-500"
     );
     button.classList.remove("border-gray-200", "bg-white");
-const originalPrice = parseFloat(button.dataset.price);
-const percent = parseFloat(button.dataset.percent) || 0;
-const discount = parseFloat(button.dataset.discount) || 0;
-const variantId = button.dataset.variantId;
+    const originalPrice = parseFloat(button.dataset.price);
+    const percent = parseFloat(button.dataset.percent) || 0;
+    const discount = parseFloat(button.dataset.discount) || 0;
+    const variantId = button.dataset.variantId;
 
-// ✅ Price from DB is already the final discounted price — use directly
-const finalPrice = parseFloat(button.dataset.price);
-const timerBadge = button.querySelector('.timer-badge');
-let timerDiscount = 0;
+    // ✅ Price from DB is already the final discounted price — use directly
+    const finalPrice = parseFloat(button.dataset.price);
+    const timerBadge = button.querySelector('.timer-badge');
+    let timerDiscount = 0;
 
-if (timerBadge) {
-    const endTime = parseInt(timerBadge.dataset.endTime || 0);
-    const now = Math.floor(Date.now() / 1000);
-    if (endTime > now) {
+    if (timerBadge) {
+      const endTime = parseInt(timerBadge.dataset.endTime || 0);
+      const now = Math.floor(Date.now() / 1000);
+      if (endTime > now) {
         timerDiscount = parseFloat(button.dataset.timerDiscount || 0);
+      }
     }
-}
 
-this.selectedVariantData = {
-    price: finalPrice,
-    originalPrice: originalPrice,
-    percent: percent,
-    discount: discount,
-    timerDiscount: timerDiscount,
-    variantId: variantId,
-    size: size,
-    color: color || "",
-    stock: stock,
-};
+    this.selectedVariantData = {
+      price: finalPrice,
+      originalPrice: originalPrice,
+      percent: percent,
+      discount: discount,
+      timerDiscount: timerDiscount,
+      variantId: variantId,
+      size: size,
+      color: color || "",
+      stock: stock,
+    };
 
     if (this.elements.selectedVariant) {
       this.elements.selectedVariant.value = size;
@@ -1145,7 +1113,7 @@ this.selectedVariantData = {
           this.selectedVariantData.originalPrice +
           (this.selectedVariantData.originalPrice *
             this.selectedVariantData.percent) /
-            100;
+          100;
         let priceBeforeDiscount = originalWithMarkup;
 
         if (this.selectedColorData && this.selectedColorData.price) {
@@ -1353,15 +1321,15 @@ this.selectedVariantData = {
       const data = await response.json();
 
       if (data.success) {
-              if (typeof refreshCart === 'function') {
-            refreshCart();
+        if (typeof refreshCart === 'function') {
+          refreshCart();
         }
         this.showNotification(
           data.message || "Product added to cart!",
           "success"
         );
-       
-       // ✅ Direct badge update - no extra fetch
+
+        // ✅ Direct badge update - no extra fetch
         if (window.updateCartBadge) window.updateCartBadge(data.cart_count);
       } else {
         if (data.message === "You must be logged in to pre-order.") {
@@ -1726,6 +1694,17 @@ document.addEventListener("DOMContentLoaded", function () {
 
     quantityInput.addEventListener("input", validateQuantity);
     quantityInput.addEventListener("change", validateQuantity);
+
+    // Pag umalis ng input field, i-force ang valid value
+    quantityInput.addEventListener("blur", function () {
+      const raw = this.value;
+      if (raw === '' || isNaN(parseInt(raw)) || parseInt(raw) < 1) {
+        this.value = 1;
+        if (window.productSelector?.selectedVariantData) {
+          updateAllPriceDisplays();
+        }
+      }
+    });
   }
 });
 
@@ -1804,9 +1783,22 @@ function selectVariant(button, size, color = null) {
 
 function validateQuantity() {
   const input = document.getElementById("quantityInput");
-  let val = parseInt(input.value) || 1;
-  val = Math.max(1, Math.min(9999, val));
-  input.value = val;
+  const raw = input.value;
+
+  // Habang nagta-type pa lang, huwag i-force ang value
+  // Para makapag-backspace ng maayos
+  if (raw === '' || raw === '-') return;
+
+  let val = parseInt(raw);
+
+  // Kung hindi valid number, i-reset sa 1
+  if (isNaN(val) || val < 1) {
+    input.value = 1;
+    val = 1;
+  } else if (val > 9999) {
+    input.value = 9999;
+    val = 9999;
+  }
 
   if (window.productSelector?.selectedVariantData) {
     updateAllPriceDisplays();
@@ -2197,8 +2189,8 @@ function showSkuInfo(button) {
           key.charAt(0).toUpperCase() + key.slice(1).replace(/_/g, " ");
         html += `<div class="flex items-start border-b border-gray-100 pb-2 last:border-0 last:pb-0">
           <span class="text-sm font-semibold text-orange-600 min-w-[120px]">${escapeHtml(
-            label
-          )}:</span>
+          label
+        )}:</span>
           <span class="text-sm text-gray-800 flex-1">${escapeHtml(value)}</span>
         </div>`;
       }

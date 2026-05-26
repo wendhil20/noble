@@ -360,9 +360,8 @@ $filter_description = ($show_sale == 1) ? 'discounted' : '';
     </style>
 </head>
 
-<body class="min-h-screen " style="font-family: 'Montserrat', sans-serif; color: #2f1200">
+<body class="min-h-screen ">
  
-<?php include ROOT_PATH . '/user/otherpage/push-notification.php'; ?>
     <!-- Header Section -->
     <div class="bg-black text-white">
         <div class="container mx-auto px-3 py-5">

@@ -124,7 +124,8 @@ try {
                     <div
                         class="hero-slide absolute inset-0 transition-opacity duration-1000 <?= $first ? 'opacity-100' : 'opacity-0' ?>">
                         <img src="<?= BASE_URL ?>/uploads/<?= basename($banner['filename']) ?>" alt="Sale Banner"
-                            class="w-full h-full object-cover opacity-50" onerror="this.src='<?= BASE_URL ?>/uploads/placeholder.jpg'">
+                            class="w-full h-full object-cover opacity-50"
+                            onerror="this.src='<?= BASE_URL ?>/uploads/placeholder.jpg'">
                     </div>
                     <?php $first = false; endwhile; ?>
             </div>
@@ -279,13 +280,13 @@ try {
                                 <div
                                     class="group bg-white rounded-xl overflow-hidden hover:-translate-y-1 hover:shadow-xl transition-all duration-200 cursor-pointer shadow-lg">
                                     <!-- Image -->
-                                    <div class="relative h-36 bg-stone-100 flex items-center justify-center p-3 overflow-hidden">
+                                    <div
+                                        class="relative h-36 bg-stone-100 flex items-center justify-center p-3 overflow-hidden">
                                         <?php if (!empty($imgSrc)): ?>
                                             <img src="<?= BASE_URL ?>/<?= ltrim(htmlspecialchars($imgSrc), '/') ?>"
                                                 alt="<?= htmlspecialchars($row['product_name']) ?>"
                                                 class="w-full h-full object-contain group-hover:scale-105 transition-transform duration-300"
-                                                loading="lazy"
-                                                onerror="this.style.display='none'">
+                                                loading="lazy" onerror="this.style.display='none'">
                                         <?php else: ?>
                                             <span class="text-stone-400 text-xs">No image</span>
                                         <?php endif; ?>
@@ -379,7 +380,7 @@ try {
         function salLoadSubs(catId, catName) {
             var drawer = document.getElementById('subDrawer');
             var prevActive = document.querySelector('.cat-card.active');
-            document.querySelectorAll('.cat-card').forEach(function(c) {
+            document.querySelectorAll('.cat-card').forEach(function (c) {
                 c.classList.remove('active', 'border-red-600', 'shadow-[0_0_0_2px_#fde8e6]');
             });
             document.getElementById('subSubWrap').innerHTML = '';
@@ -398,11 +399,11 @@ try {
             drawer.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
 
             fetch(SALE_BASE_URL + '/productsubview?category_id=' + catId)
-                .then(function(r) {
+                .then(function (r) {
                     if (!r.ok) throw new Error('HTTP ' + r.status);
                     return r.text();
                 })
-                .then(function(text) {
+                .then(function (text) {
                     var data;
                     try { data = JSON.parse(text); }
                     catch (e) {
@@ -412,7 +413,7 @@ try {
                     }
                     if (data.success && data.subcategories && data.subcategories.length) {
                         var html = '';
-                        data.subcategories.forEach(function(sub) {
+                        data.subcategories.forEach(function (sub) {
                             var img = sub.image_path
                                 ? SALE_BASE_URL + '/uploads/' + sub.subcategory_slug + '/' + sub.image_path
                                 : null;
@@ -428,7 +429,7 @@ try {
                             '<p class="text-stone-400 text-xs p-3">No subcategories found.</p>';
                     }
                 })
-                .catch(function(err) {
+                .catch(function (err) {
                     document.getElementById('subGrid').innerHTML =
                         '<p class="text-red-600 text-xs p-3">Error: ' + err.message + '</p>';
                 });
@@ -439,11 +440,11 @@ try {
             wrap.innerHTML = '<div class="flex gap-1 mt-3 pt-3 border-t border-stone-200"><span class="w-1.5 h-1.5 rounded-full bg-stone-400 animate-bounce"></span><span class="w-1.5 h-1.5 rounded-full bg-stone-400 animate-bounce [animation-delay:150ms]"></span><span class="w-1.5 h-1.5 rounded-full bg-stone-400 animate-bounce [animation-delay:300ms]"></span></div>';
 
             fetch(SALE_BASE_URL + '/productsubview?subcategory_id=' + subId)
-                .then(function(r) { return r.json(); })
-                .then(function(data) {
+                .then(function (r) { return r.json(); })
+                .then(function (data) {
                     if (data.success && data.subsubcategories && data.subsubcategories.length) {
                         var html = '<div class="grid grid-cols-[repeat(auto-fill,minmax(120px,1fr))] gap-1.5 mt-3 pt-3 border-t border-stone-200">';
-                        data.subsubcategories.forEach(function(ss) {
+                        data.subsubcategories.forEach(function (ss) {
                             html += '<a href="' + SALE_BASE_URL + '/productsubviews?sub_subcategory_id=' + ss.id + '&sale=1" class="block px-2.5 py-1.5 bg-white rounded text-[10px] font-semibold uppercase tracking-wider text-stone-900 hover:bg-red-50 hover:border-red-600 hover:text-red-700 transition-colors">' + ss.sub_subcategory_name + '</a>';
                         });
                         html += '</div>';
@@ -452,14 +453,14 @@ try {
                         wrap.innerHTML = '<p class="text-stone-400 text-[11px] mt-3">No collections found.</p>';
                     }
                 })
-                .catch(function() {
+                .catch(function () {
                     wrap.innerHTML = '<p class="text-red-600 text-[11px] mt-3">Error loading.</p>';
                 });
         }
 
         function salCloseDrawer() {
             document.getElementById('subDrawer').classList.add('hidden');
-            document.querySelectorAll('.cat-card').forEach(function(c) {
+            document.querySelectorAll('.cat-card').forEach(function (c) {
                 c.classList.remove('active', '!border-red-600', 'shadow-[0_0_0_2px_#fde8e6]');
             });
             document.getElementById('subSubWrap').innerHTML = '';
@@ -475,7 +476,7 @@ try {
             document.getElementById('mOverlay').classList.add('hidden');
         }
 
-        document.addEventListener('keydown', function(e) {
+        document.addEventListener('keydown', function (e) {
             if (e.key === 'Escape') { salCloseMSidebar(); salCloseDrawer(); }
         });
     </script>

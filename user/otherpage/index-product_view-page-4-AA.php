@@ -102,11 +102,6 @@ if (!$product) {
 
 $ORIGINAL_PRODUCT = $product;
 
-for ($i = 1; $i <= 10; $i++) {
-  $key = "descrip$i";
-  error_log("$key: " . (!empty($product[$key]) ? htmlspecialchars($product[$key]) : 'EMPTY'));
-}
-
 // ✅ STEP 2: FETCH FROM PRODUCT_TYPES TABLE
 $type_main_image = null;
 $type_main_name = null;
@@ -316,7 +311,7 @@ $stmt_variant_colors->close();
 
 $stock_json = json_encode($variant_color_stock_map);
 
-error_log("Stock map: " . $stock_json);
+
 
 // ✅ FETCH RELATED PRODUCTS
 $codename = $product['codename'];
@@ -872,10 +867,6 @@ $is_guest = !isset($_SESSION['user_id']);
       }
     }
   </style>
-
-  <script>
-    const BASE_URL = '<?= BASE_URL ?>';
-  </script>
 </head>
 
 <body class="">
@@ -1060,7 +1051,6 @@ $is_guest = !isset($_SESSION['user_id']);
             <!-- Store stock data as JSON for JavaScript -->
             <script>
               const variantColorStockMap = <?php echo $stock_json; ?>;
-              console.log('Stock Map Loaded:', variantColorStockMap);
             </script>
 
             <!-- STEP 2: COLOR SELECTION -->
@@ -1273,8 +1263,6 @@ $is_guest = !isset($_SESSION['user_id']);
             <script>
               // ✅ Show total stock for each color (sum of all variants)
               function initializeColorStockDisplay() {
-                console.log('Initializing color stock display...');
-
                 document.querySelectorAll('.color-btn').forEach(btn => {
                   const colorId = parseInt(btn.dataset.colorId);
                   let totalStock = 0;
@@ -1284,8 +1272,6 @@ $is_guest = !isset($_SESSION['user_id']);
                     const stock = variantColorStockMap[variantId][colorId] ?? 0;
                     totalStock += stock;
                   }
-
-                  console.log(`Color ${colorId} - Total stock across all sizes:`, totalStock);
 
                   // Update display
                   let stockSpan = btn.querySelector('.color-stock-display');
@@ -1313,15 +1299,10 @@ $is_guest = !isset($_SESSION['user_id']);
 
                 const variantId = parseInt(selectedVariantBtn.dataset.variantId);
 
-                console.log('Updating color display for variant:', variantId);
-                console.log('Stock map:', variantColorStockMap);
-
                 // Update ALL color buttons with their respective stock for THIS VARIANT
                 document.querySelectorAll('.color-btn').forEach(btn => {
                   const btnColorId = parseInt(btn.dataset.colorId);
                   const btnStock = variantColorStockMap[variantId]?.[btnColorId] ?? 0;
-
-                  console.log(`Color ${btnColorId} for variant ${variantId} - Stock:`, btnStock);
 
                   // Update the color button display
                   let stockSpan = btn.querySelector('.color-stock-display');
@@ -1608,12 +1589,10 @@ $is_guest = !isset($_SESSION['user_id']);
   <?php include ROOT_PATH . '/user/navbar/footer.php'; ?>
 
   <script>
-
     // ✅ REAL-TIME TIMER - Accurate countdown
     function initFlashSaleTimers() {
 
       const timerBadges = document.querySelectorAll('.timer-badge');
-      console.log(`Found ${timerBadges.length} timer badges`);
 
       if (timerBadges.length === 0) return;
 
@@ -1625,12 +1604,6 @@ $is_guest = !isset($_SESSION['user_id']);
       const clientTime = Math.floor(Date.now() / 1000);
       const timeOffset = serverTime - clientTime;
 
-      console.log(`📅 Server time: ${new Date(serverTime * 1000).toLocaleString('en-US', {
-        year: 'numeric', month: '2-digit', day: '2-digit',
-        hour: '2-digit', minute: '2-digit', second: '2-digit', hour12: true
-      })}`);
-      console.log(`⏱️ Time offset: ${timeOffset}s`);
-
       timerBadges.forEach((badge) => {
         const endTime = parseInt(badge.dataset.endTime); // Unix timestamp from database
         const variantId = badge.dataset.variantId;
@@ -1640,13 +1613,6 @@ $is_guest = !isset($_SESSION['user_id']);
           console.warn(`⚠️ Invalid timer for variant ${variantId}`);
           return;
         }
-
-        console.log(`\n Timer for variant ${variantId}:`);
-        console.log(`   End time (unix): ${endTime}`);
-        console.log(`   End time (readable): ${new Date(endTime * 1000).toLocaleString('en-US', {
-          year: 'numeric', month: '2-digit', day: '2-digit',
-          hour: '2-digit', minute: '2-digit', second: '2-digit', hour12: true
-        })}`);
 
         let timerInterval;
 

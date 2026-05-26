@@ -269,6 +269,7 @@ $routes = [
     'register'                        => 'user/register.php',
     'forgotpass'                      => 'user/forgot_password.php',
     'resetpass'                       => 'user/reset_password.php',
+    'verifyregistration'              => 'user/verifyregistration.php',
 
     // admin authentication
     'main'                            => 'admin/authentication/index-admin-login.php',

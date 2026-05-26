@@ -45,12 +45,41 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
     if (empty($email) || !validateEmail($email)) {
         $errors[] = "A valid email is required.";
     } elseif (emailExists($conn, $email)) {
-        $check_stmt = $conn->prepare("SELECT login_method FROM users WHERE email = ?");
+        $check_stmt = $conn->prepare("SELECT mobile, password FROM users WHERE email = ?");
         $check_stmt->bind_param("s", $email);
         $check_stmt->execute();
         $existing = $check_stmt->get_result()->fetch_assoc();
 
-        if ($existing['login_method'] === 'google') {
+        if (empty($existing['mobile']) || empty($existing['password'])) {
+            // Validate muna bago mag-update
+            $errors_pre = [];
+
+            if (empty($mobile) || !validateMobileNumber($mobile)) {
+                $errors_pre[] = "A valid mobile number is required.";
+            } else {
+                // Check kung may ibang user na may same mobile (hindi yung sarili)
+                $mob_check = $conn->prepare("SELECT id FROM users WHERE mobile = ? AND email != ?");
+                $mob_check->bind_param("ss", $mobile, $email);
+                $mob_check->execute();
+                if ($mob_check->get_result()->num_rows > 0) {
+                    $errors_pre[] = "Mobile number already exists.";
+                }
+            }
+
+            if (empty($password) || strlen($password) < 6) {
+                $errors_pre[] = "Password must be at least 6 characters.";
+            }
+            if ($password !== $confirm_password) {
+                $errors_pre[] = "Passwords do not match.";
+            }
+
+            if (!empty($errors_pre)) {
+                $_SESSION['register_error'] = implode("<br>", $errors_pre);
+                header("Location: " . BASE_URL . "/");
+                exit();
+            }
+
+            // Safe na mag-update
             $hashed_password = password_hash($password, PASSWORD_DEFAULT);
             $verify_token = bin2hex(random_bytes(32));
 
@@ -96,7 +125,7 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
                 ";
 
                 $mail->send();
-                $_SESSION['register_success'] = "Password added! Please check your email to verify your account.";
+                $_SESSION['register_success'] = "Account updated! Please check your email to verify.";
 
             } catch (Exception $e) {
                 $_SESSION['register_error'] = "Account updated but failed to send verification email.";
@@ -109,6 +138,7 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
             $errors[] = "Email already exists.";
         }
     }
+
     if (empty($mobile) || !validateMobileNumber($mobile)) {
         $errors[] = "A valid mobile number is required.";
     } elseif (mobileExists($conn, $mobile)) {

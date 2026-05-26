@@ -2006,7 +2006,7 @@ pss.tag as sub_subcategory_tag,
 
         <!-- Modal Content -->
         <div class="p-6">
-          <form action="../register.php" method="POST" class="space-y-4">
+          <form action="<?= BASE_URL ?>/register" method="POST" class="space-y-4">
             <div>
               <label for="name" class="block text-sm font-medium text-gray-700 mb-2">Full Name</label>
               <input type="text" name="name" id="name" required

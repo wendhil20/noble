@@ -39,48 +39,55 @@ try {
 
     $user = $result->fetch_assoc();
 
-    switch ($user['login_method']) {
-        case 'google':
-            // Allow password login kahit google — basta may password
-            if (empty($password)) {
-                throw new Exception("Password is required.");
-            }
-            if (empty($user['password'])) {
-                throw new Exception("This account has no password. Please login with Google.");
-            }
-            if (!password_verify($password, $user['password'])) {
-                throw new Exception("Incorrect password.");
-            }
-            break;
+    // ✅ Check kung trusted device (OTP already verified before)
+    $otp_trust = $_COOKIE['otp_trust_token'] ?? '';
+    $is_trusted_device = false;
 
-        case 'otp':
-            if (empty($otp)) {
-                throw new Exception("OTP is required.");
-            }
-            if (!isset($_SESSION['otp_code']) || !isset($_SESSION['otp_email']) || $_SESSION['otp_email'] !== $user['email']) {
-                throw new Exception("OTP session is missing. Please request a new code.");
-            }
-            if ($otp !== $_SESSION['otp_code']) {
-                throw new Exception("Incorrect OTP.");
-            }
-            unset($_SESSION['otp_code'], $_SESSION['otp_email']);
-            break;
-
-        case 'normal':
-            if (empty($password)) {
-                throw new Exception("Password is required.");
-            }
-            if (!password_verify($password, $user['password'])) {
-                throw new Exception("Incorrect password.");
-            }
-            break;
-
-        default:
-            throw new Exception("Unknown login method.");
+    if (!empty($otp_trust) && !empty($user['otp_trust_token'])) {
+        if (hash_equals($user['otp_trust_token'], $otp_trust)) {
+            $is_trusted_device = true;
+        }
     }
 
+    // ✅ Login logic
+    if (!empty($password)) {
+        // Normal / Google login with password
+        if (empty($user['password'])) {
+            throw new Exception("This account has no password. Please login with Google.");
+        }
+        if (!password_verify($password, $user['password'])) {
+            throw new Exception("Incorrect password.");
+        }
 
-    // ← DITO ILAGAY - pagkatapos ng closing brace ng switch
+    } else if (!empty($otp)) {
+        // OTP login
+        if (!isset($_SESSION['otp_code']) || !isset($_SESSION['otp_email']) || $_SESSION['otp_email'] !== $user['email']) {
+            throw new Exception("OTP session is missing. Please request a new code.");
+        }
+        if ($otp !== $_SESSION['otp_code']) {
+            throw new Exception("Incorrect OTP.");
+        }
+        unset($_SESSION['otp_code'], $_SESSION['otp_email']);
+
+        // ✅ Mark device as trusted - 30 days
+        $otp_token = bin2hex(random_bytes(32));
+        setcookie("otp_trust_token", $otp_token, time() + (30 * 24 * 60 * 60), "/", "", false, true);
+        $update = $conn->prepare("UPDATE users SET otp_trust_token = ? WHERE id = ?");
+        $update->bind_param("si", $otp_token, $user['id']);
+        $update->execute();
+
+    } else if ($is_trusted_device) {
+        // ✅ Trusted device - skip OTP, pero kailangan pa rin ng password
+        if (empty($user['password'])) {
+            throw new Exception("Please login with Google.");
+        }
+        throw new Exception("Trusted device detected. Please enter your password.");
+
+    } else {
+        throw new Exception("Password is required.");
+    }
+
+    // ✅ Verify email
     if (!$user['is_verified']) {
         throw new Exception("Please verify your email first. Check your inbox.");
     }
@@ -92,17 +99,17 @@ try {
     $_SESSION['user_mobile'] = $user['mobile'];
 
     if (!empty($user['profile_picture'])) {
-    $_SESSION['user_picture'] = $user['profile_picture'];
-}
+        $_SESSION['user_picture'] = $user['profile_picture'];
+    }
 
     // ✅ Assign referral code if user came from a referral link
     require_once ROOT_PATH . '/includes/referral_tracker.php';
     assignReferralToUser($conn, $user['id']);
 
-    // ✅ Remember Me (set only after correct login)
+    // ✅ Remember Me
     if ($remember) {
         $token = bin2hex(random_bytes(32));
-        setcookie("remember_token", $token, time() + (30 * 24 * 60 * 60), "/", "", false, true);
+        setcookie("otp_trust_token", $otp_token, time() + (7 * 24 * 60 * 60), "/", "", false, true);
 
         $update = $conn->prepare("UPDATE users SET remember_token = ? WHERE id = ?");
         $update->bind_param("si", $token, $user['id']);
@@ -110,7 +117,8 @@ try {
     }
 
     $response['success'] = true;
-    $response['redirect'] = '../otherpage/index-page-1-A-B-C-D-E.php';
+    $response['redirect'] = BASE_URL . "/home";
+
 } catch (Exception $e) {
     $response['message'] = $e->getMessage();
 }

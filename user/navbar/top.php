@@ -2127,10 +2127,8 @@ pss.tag as sub_subcategory_tag,
 
             // IMPORTANT: Only schedule next fetch if may data
             if (this.unreadCount > 0) {
-              console.log(`[NOTIF] Found ${this.unreadCount} unread - will check again in 5s`);
               this.scheduleNextPoll(5000); // Check every 5 seconds when there's data
             } else {
-              console.log(`[NOTIF] No notifications - stopping polls`);
               // Don't schedule anything - stop polling
             }
           })
@@ -2167,7 +2165,7 @@ pss.tag as sub_subcategory_tag,
           .then(res => res.json())
           .then(data => {
             this.unreadCount = 0;
-            console.log('[NOTIF] Marked as read');
+            
           })
           .catch(error => console.error('[NOTIF] Error:', error));
       },
@@ -2185,7 +2183,6 @@ pss.tag as sub_subcategory_tag,
               this.notifications = [];
               this.unreadCount = 0;
               this.notifOpen = false;
-              console.log('[NOTIF] All cleared');
             }
           })
           .catch(error => console.error('[NOTIF] Error:', error));
@@ -2214,8 +2211,7 @@ pss.tag as sub_subcategory_tag,
       },
 
       init() {
-        console.log('[NOTIF] System initialized - will only poll when notifs exist');
-
+       
         // Initial fetch
         this.fetchNotifications();
 

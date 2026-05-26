@@ -54,9 +54,20 @@ try {
     $clear_stmt->bind_param("i", $user['id']);
     $clear_stmt->execute();
 
+    // Generate at i-save ang trust token
+    $trust_token = bin2hex(random_bytes(32));
+    $trust_stmt = $conn->prepare("UPDATE users SET otp_trust_token = ? WHERE id = ?");
+    $trust_stmt->bind_param("si", $trust_token, $user['id']);
+    $trust_stmt->execute();
+
     $_SESSION['pending_password_email'] = $user['email'];
 
-    echo json_encode(['success' => true, 'next' => 'password']);
+    echo json_encode([
+        'success' => true,
+        'next' => 'password',
+        'trust_token' => $trust_token
+    ]);
+
 } catch (Exception $e) {
     echo json_encode(['success' => false, 'message' => 'Server error', 'debug_error' => $e->getMessage()]);
 }

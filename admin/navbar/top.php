@@ -276,9 +276,6 @@ if (!isset($_SESSION['noble_name']) || !isset($_SESSION['noble_lvl']) || !isset(
         </nav>
     </aside>
 
-    <!-- ════════════════════════════════════════════════
-     DESKTOP NAVBAR
-════════════════════════════════════════════════ -->
     <nav class="sticky top-0 z-30 bg-white border-b border-gray-100 shadow-sm">
         <div class="flex items-center justify-between h-14 px-5 gap-4">
 
@@ -532,7 +529,7 @@ if (!isset($_SESSION['noble_name']) || !isset($_SESSION['noble_lvl']) || !isset(
                                         class="qa-link flex items-center gap-2.5 px-3 py-2.5 rounded-lg text-sm text-gray-600 transition-all">
                                         <i class="ri-archive-line text-base text-orange-400 w-4"></i> Head Dashboard
                                     </a>
-                                    <a href="../warehouse_management/warehouse_staff_management_main"
+                                    <a href="<?= BASE_URL ?>/warehousestaff"
                                         class="qa-link flex items-center gap-2.5 px-3 py-2.5 rounded-lg text-sm text-gray-600 transition-all">
                                         <i class="ri-list-check-2 text-base text-orange-400 w-4"></i> Assign Orders
                                     </a>
@@ -657,9 +654,8 @@ if (!isset($_SESSION['noble_name']) || !isset($_SESSION['noble_lvl']) || !isset(
                             </a>
                         </div>
                     </div>
-                </div><!-- /profile -->
-
-            </div><!-- /right controls -->
+                </div>
+            </div>
         </div>
     </nav>
 
@@ -668,7 +664,7 @@ if (!isset($_SESSION['noble_name']) || !isset($_SESSION['noble_lvl']) || !isset(
         document.addEventListener('DOMContentLoaded', function () {
             <?php if (hasAnyRole(['sales'])): ?>
                 function checkQuoteNotifications() {
-                    fetch('<?= BASE_URL ?>/main-get-request-details-page-1-A.php?action=get-notification-count')
+                    fetch('<?= BASE_URL ?>/getcustomizereq?action=get-notification-count')
                         .then(r => r.json())
                         .then(data => {
                             const badge = document.getElementById('quote-badge');

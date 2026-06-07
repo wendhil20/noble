@@ -24,6 +24,7 @@ $adminRoutes = [
     'loggingadmin', 
     'logoutadmin',
     'indexcheck',
+    'getmark',
 
     //sales
     'ordermain', 

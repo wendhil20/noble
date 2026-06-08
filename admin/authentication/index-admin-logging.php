@@ -3,8 +3,6 @@
 
 // Add this at the top of index-admin-logging.php, before the match()
 require_once ROOT_PATH . '/admin/authentication/index-admin-role.php';
-// ✅ SET TIMEZONE CONSISTENTLY
-date_default_timezone_set('Asia/Manila');
 
 // ✅ LOCAL ENVIRONMENT DETECTION
 $is_local = in_array($_SERVER['HTTP_HOST'], ['localhost', '127.0.0.1']) ||
@@ -12,13 +10,10 @@ $is_local = in_array($_SERVER['HTTP_HOST'], ['localhost', '127.0.0.1']) ||
 
 include ROOT_PATH . '/connection/connect.php';
 
-// ✅ SET MYSQL TIMEZONE TO MATCH PHP
-$conn->query("SET time_zone = '+08:00'");
-
 $response = [];
 
 if ($_SERVER["REQUEST_METHOD"] !== "POST") {
-    header("Location: index.php");
+    header("Location: " . BASE_URL . "/main");
     exit();
 }
 

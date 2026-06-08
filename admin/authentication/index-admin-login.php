@@ -1,11 +1,7 @@
 <?php
 
 include ROOT_PATH . '/connection/connect.php';
-// ✅ SET TIMEZONE CONSISTENTLY FIRST
-date_default_timezone_set('Asia/Manila');
-// ✅ SET MYSQL TIMEZONE TO MATCH PHP
-$conn->query("SET time_zone = '+08:00'");
-// ✅ FIXED: Optimize database operations and reduce timeout issues
+
 function updateUserActivity($conn, $email)
 {
     $stmt = $conn->prepare("UPDATE nobleaccount SET last_activity = NOW(), is_online = 1, last_login = NOW() WHERE email = ?");
@@ -19,14 +15,14 @@ function determineRedirect($userLevel)
 {
     return match (strtolower($userLevel)) {
         'superadmin', 'admin' => BASE_URL . "/admin/client/owner_dashboard",
-        'sales'               => BASE_URL . "/ordermain",
-        'accountant'          => BASE_URL . "/accountant",
-        'supplier'            => BASE_URL . "/admin/suppliermain/suppliercompany",
-        'productspecialist'   => BASE_URL . "/admin/shop/main-adminshop-page-1",
-        'logistic'            => BASE_URL . "/logistic",
-        'warehouse'           => BASE_URL . "/warehousedashboard",
-        'hr'                  => BASE_URL . "/admin/hr/account",
-        default               => BASE_URL . "/admin/client/dashboard.php"
+        'sales' => BASE_URL . "/ordermain",
+        'accountant' => BASE_URL . "/accountant",
+        'supplier' => BASE_URL . "/admin/suppliermain/suppliercompany",
+        'productspecialist' => BASE_URL . "/admin/shop/main-adminshop-page-1",
+        'logistic' => BASE_URL . "/logistic",
+        'warehouse' => BASE_URL . "/warehousedashboard",
+        'hr' => BASE_URL . "/admin/hr/account",
+        default => BASE_URL . "/admin/client/dashboard.php"
     };
 }
 
@@ -127,132 +123,12 @@ $conn->close();
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
     <link href="https://cdn.jsdelivr.net/npm/remixicon@4.5.0/fonts/remixicon.css" rel="stylesheet" />
-    <style>
-        .fade-in-up {
-            animation: fadeInUp 0.6s ease-out;
-        }
-
-        .input-focus:focus {
-            box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
-            border-color: #3b82f6;
-        }
-
-        .btn-primary {
-            background: linear-gradient(135deg, #000000ff 0%, #000000ff 100%);
-            transition: all 0.2s ease-in-out;
-        }
-
-        .btn-primary:hover:not(:disabled) {
-            background: linear-gradient(135deg, #2563eb 0%, #1e40af 100%);
-            transform: translateY(-1px);
-            box-shadow: 0 4px 12px rgba(59, 130, 246, 0.4);
-        }
-
-        .btn-primary:active {
-            transform: translateY(0);
-        }
-
-        .btn-primary:disabled {
-            opacity: 0.6;
-            cursor: not-allowed;
-            transform: none;
-        }
-
-        .logo-animation {
-            animation: subtlePulse 4s ease-in-out infinite;
-        }
-
-        .grid-pattern {
-            background-image: radial-gradient(circle at 1px 1px, rgba(255, 255, 255, 0.3) 1px, transparent 0);
-            background-size: 20px 20px;
-        }
-
-        .spinner {
-            animation: spin 1s linear infinite;
-        }
-
-        .error-shake {
-            animation: shake 0.5s ease-in-out;
-        }
-
-        @keyframes shake {
-
-            0%,
-            100% {
-                transform: translateX(0);
-            }
-
-            25% {
-                transform: translateX(-5px);
-            }
-
-            75% {
-                transform: translateX(5px);
-            }
-        }
-
-        .toast {
-            position: fixed;
-            top: 20px;
-            right: 20px;
-            z-index: 1000;
-            transform: translateX(100%);
-            transition: transform 0.3s ease-in-out;
-        }
-
-        .toast.show {
-            transform: translateX(0);
-        }
-
-        /* ✅ Force Login Modal Styles */
-        .modal-overlay {
-            background: rgba(0, 0, 0, 0.5);
-            backdrop-filter: blur(4px);
-        }
-
-        .modal-content {
-            animation: fadeInUp 0.3s ease-out;
-        }
-
-        @keyframes slideIn {
-            from {
-                opacity: 0;
-                transform: scale(0.95);
-            }
-
-            to {
-                opacity: 1;
-                transform: scale(1);
-            }
-        }
-
-        .slide-in {
-            animation: slideIn 0.3s ease-out;
-        }
-    </style>
 </head>
 
 <body class="min-h-screen flex items-center justify-center p-4 relative"
     style="background-image: url('<?= BASE_URL ?>/uploads/building2.png'); background-size: cover; background-position: center; background-repeat: no-repeat; background-attachment: fixed;">
-    <!-- Toast Notifications -->
-    <div id="toast" class="toast hidden">
-        <div class="bg-white border border-red-200 rounded-lg shadow-lg p-4 max-w-sm">
-            <div class="flex items-start">
-                <div class="flex-shrink-0">
-                    <i id="toast-icon" class="ri-error-warning-line text-red-500 text-lg"></i>
-                </div>
-                <div class="ml-3">
-                    <p id="toast-message" class="text-sm font-medium text-gray-900"></p>
-                </div>
-                <div class="ml-auto pl-3">
-                    <button onclick="hideToast()" class="text-gray-400 hover:text-gray-600">
-                        <i class="ri-close-line"></i>
-                    </button>
-                </div>
-            </div>
-        </div>
-    </div>
 
+    <div id="toast-container" class="fixed top-5 right-5 z-[1000] flex flex-col gap-2 w-80"></div>
 
     <!-- ✅ Force Login Modal -->
     <div id="forceLoginModal" class="fixed inset-0 z-50 hidden">
@@ -553,36 +429,6 @@ $conn->close();
             document.getElementById('error-message').classList.add('hidden');
         }
 
-        // Toast notification functions
-        function showToast(message, type = 'error') {
-            const toast = document.getElementById('toast');
-            const toastMessage = document.getElementById('toast-message');
-            const toastIcon = document.getElementById('toast-icon');
-
-            toastMessage.textContent = message;
-
-            // Set icon and color based on type
-            if (type === 'success') {
-                toastIcon.className = 'ri-check-line text-green-500 text-lg';
-                toast.querySelector('.border').className = 'bg-white border border-green-200 rounded-lg shadow-lg p-4 max-w-sm';
-            } else {
-                toastIcon.className = 'ri-error-warning-line text-red-500 text-lg';
-                toast.querySelector('.border').className = 'bg-white border border-red-200 rounded-lg shadow-lg p-4 max-w-sm';
-            }
-
-            toast.classList.remove('hidden');
-            setTimeout(() => toast.classList.add('show'), 100);
-
-            // Auto-hide after 4 seconds
-            setTimeout(hideToast, 4000);
-        }
-
-        function hideToast() {
-            const toast = document.getElementById('toast');
-            toast.classList.remove('show');
-            setTimeout(() => toast.classList.add('hidden'), 300);
-        }
-
         // Input validation feedback
         document.getElementById('email').addEventListener('blur', function () {
             const email = this.value.trim();
@@ -629,6 +475,119 @@ $conn->close();
                 doForceLogin();
             }
         });
+
+        const toastConfig = {
+    success: {
+        icon: 'ri-checkbox-circle-line',
+        containerClass: 'border-green-200 bg-white',
+        iconClass: 'text-green-500',
+        barClass: 'bg-green-500',
+        labelClass: 'text-green-700',
+        label: 'Success'
+    },
+    error: {
+        icon: 'ri-error-warning-line',
+        containerClass: 'border-red-200 bg-white',
+        iconClass: 'text-red-500',
+        barClass: 'bg-red-500',
+        labelClass: 'text-red-700',
+        label: 'Error'
+    },
+    warning: {
+        icon: 'ri-alert-line',
+        containerClass: 'border-yellow-200 bg-white',
+        iconClass: 'text-yellow-500',
+        barClass: 'bg-yellow-500',
+        labelClass: 'text-yellow-700',
+        label: 'Warning'
+    },
+    info: {
+        icon: 'ri-information-line',
+        containerClass: 'border-blue-200 bg-white',
+        iconClass: 'text-blue-500',
+        barClass: 'bg-blue-500',
+        labelClass: 'text-blue-700',
+        label: 'Info'
+    }
+};
+
+function showToast(message, type = 'error', duration = 4000) {
+    const config = toastConfig[type] || toastConfig.error;
+    const container = document.getElementById('toast-container');
+    const id = 'toast-' + Date.now();
+
+    const toast = document.createElement('div');
+    toast.id = id;
+    toast.className = `relative overflow-hidden rounded-lg border shadow-lg translate-x-full opacity-0 transition-all duration-300 ease-in-out ${config.containerClass}`;
+
+    toast.innerHTML = `
+        <div class="flex items-start gap-3 p-4">
+            <i class="${config.icon} ${config.iconClass} text-xl mt-0.5 shrink-0"></i>
+            <div class="flex-1 min-w-0">
+                <p class="text-xs font-semibold uppercase tracking-wide ${config.labelClass} mb-0.5">${config.label}</p>
+                <p class="text-sm text-gray-700 leading-snug">${message}</p>
+            </div>
+            <button onclick="dismissToast('${id}')" class="text-gray-400 hover:text-gray-600 transition-colors shrink-0 -mt-0.5">
+                <i class="ri-close-line text-base"></i>
+            </button>
+        </div>
+        <div class="absolute bottom-0 left-0 h-0.5 w-full ${config.barClass} origin-left" id="${id}-bar"></div>
+    `;
+
+    container.appendChild(toast);
+
+    // Slide in
+    requestAnimationFrame(() => {
+        requestAnimationFrame(() => {
+            toast.classList.remove('translate-x-full', 'opacity-0');
+        });
+    });
+
+    // Progress bar animation
+    const bar = document.getElementById(`${id}-bar`);
+    bar.style.transition = `transform ${duration}ms linear`;
+    bar.style.transformOrigin = 'left';
+
+    let paused = false;
+    let remaining = duration;
+    let startTime = Date.now();
+    let timer;
+
+    function startTimer() {
+        startTime = Date.now();
+        timer = setTimeout(() => dismissToast(id), remaining);
+        bar.style.transform = 'scaleX(0)';
+    }
+
+    // Pause on hover
+    toast.addEventListener('mouseenter', () => {
+        clearTimeout(timer);
+        remaining -= Date.now() - startTime;
+        bar.style.transition = 'none';
+        const currentScale = remaining / duration;
+        bar.style.transform = `scaleX(${currentScale})`;
+    });
+
+    toast.addEventListener('mouseleave', () => {
+        bar.style.transition = `transform ${remaining}ms linear`;
+        startTimer();
+    });
+
+    startTimer();
+}
+
+function dismissToast(id) {
+    const toast = document.getElementById(id);
+    if (!toast) return;
+
+    toast.classList.add('translate-x-full', 'opacity-0');
+    setTimeout(() => toast.remove(), 300);
+}
+
+function hideToast() {
+    // Legacy fallback — dismisses all toasts
+    document.querySelectorAll('#toast-container > div').forEach(t => dismissToast(t.id));
+}
     </script>
 
 </body>
